@@ -21,7 +21,8 @@ COPY . .
 RUN composer dump-autoload --optimize
 RUN npm run build
 
-RUN chmod -R 775 storage bootstrap/cache
+RUN mkdir -p bootstrap/cache storage/framework/{cache,sessions,views} storage/logs \
+    && chmod -R 775 storage bootstrap/cache
 
 CMD rm -f bootstrap/cache/packages.php bootstrap/cache/services.php && \
     php artisan package:discover --ansi && \
