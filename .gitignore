@@ -16,3 +16,16 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+.env
+.env.*
+node_modules
+vendor
+.git
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+tests
+.phpunit.result.cache
+/bootstrap/cache/*.php
+!bootstrap/cache/.gitignore
