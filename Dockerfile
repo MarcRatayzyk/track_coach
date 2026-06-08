@@ -24,7 +24,7 @@ RUN npm run build
 RUN mkdir -p bootstrap/cache storage/framework/{cache,sessions,views} storage/logs \
     && chmod -R 775 storage bootstrap/cache
 
-CMD rm -f bootstrap/cache/packages.php bootstrap/cache/services.php && \
+CMD rm -f bootstrap/cache/packages.php bootstrap/cache/services.php bootstrap/cache/config.php && \
     php artisan package:discover --ansi && \
     php artisan migrate --force && \
     php artisan config:cache && \

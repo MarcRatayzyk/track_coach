@@ -10,9 +10,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('athlete_readiness_entries', function (Blueprint $table): void {
-            $table->unsignedTinyInteger('sleep_score')->nullable()->after('score');
-            $table->unsignedTinyInteger('stress_score')->nullable()->after('sleep_score');
-            $table->unsignedTinyInteger('motivation_score')->nullable()->after('stress_score');
+            $table->unsignedTinyInteger('sleep_score')->nullable();
+            $table->unsignedTinyInteger('stress_score')->nullable();
+            $table->unsignedTinyInteger('motivation_score')->nullable();
         });
 
         DB::table('athlete_readiness_entries')->update([
