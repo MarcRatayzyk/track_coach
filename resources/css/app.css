@@ -1,0 +1,86 @@
+@import 'tailwindcss';
+
+@theme {
+    --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --color-surface-900: #0f172a;
+    --color-surface-800: #1e293b;
+    --color-surface-700: #334155;
+    --color-accent: #3b82f6;
+    --color-accent-hover: #2563eb;
+}
+
+body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+}
+
+.tc-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(71, 85, 105, 0.85) rgba(15, 23, 42, 0.35);
+}
+
+.tc-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.tc-scrollbar::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.35);
+    border-radius: 9999px;
+}
+
+.tc-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.55), rgba(71, 85, 105, 0.8));
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.tc-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(96, 165, 250, 0.7), rgba(100, 116, 139, 0.9));
+}
+
+.tc-scrollbar-alerts {
+    scrollbar-color: rgba(251, 146, 60, 0.55) rgba(15, 23, 42, 0.45);
+}
+
+.tc-scrollbar-alerts::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(251, 146, 60, 0.65), rgba(234, 88, 12, 0.5));
+}
+
+.tc-scrollbar-alerts::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(253, 186, 116, 0.85), rgba(249, 115, 22, 0.65));
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+@layer components {
+    .app-main input:not([type='checkbox']):not([type='radio']),
+    .app-main select,
+    .app-main textarea {
+        @apply rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white;
+    }
+
+    .app-main input:focus,
+    .app-main select:focus,
+    .app-main textarea:focus {
+        @apply border-blue-500 outline-none ring-2 ring-blue-500/25;
+    }
+
+    .app-main label {
+        @apply text-sm text-slate-400;
+    }
+
+    .app-main button[type='submit'],
+    .app-main button[type='button']:not(.btn-ghost) {
+        @apply text-sm;
+    }
+}
