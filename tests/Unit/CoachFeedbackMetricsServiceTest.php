@@ -107,6 +107,68 @@ class CoachFeedbackMetricsServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_weekly_received_ignores_daily_session_feedbacks(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-06-09 10:00:00'));
+
+        $coach = User::query()->create([
+            'name' => 'Coach',
+            'email' => uniqid('coach-', true).'@test.dev',
+            'password' => bcrypt('password'),
+            'role' => 'coach',
+        ]);
+
+        $dailyAthlete = User::query()->create([
+            'name' => 'Daily Athlete',
+            'email' => uniqid('daily-', true).'@test.dev',
+            'password' => bcrypt('password'),
+            'role' => 'athlete',
+        ]);
+
+        $weeklyAthlete = User::query()->create([
+            'name' => 'Weekly Athlete',
+            'email' => uniqid('weekly-', true).'@test.dev',
+            'password' => bcrypt('password'),
+            'role' => 'athlete',
+        ]);
+
+        $coach->athletes()->attach($dailyAthlete->id, ['status' => 'active']);
+        $coach->athletes()->attach($weeklyAthlete->id, ['status' => 'active']);
+
+        AthleteProfile::query()->create([
+            'user_id' => $dailyAthlete->id,
+            'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
+        ]);
+
+        AthleteProfile::query()->create([
+            'user_id' => $weeklyAthlete->id,
+            'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
+        ]);
+
+        DashboardTask::query()->create([
+            'coach_id' => $coach->id,
+            'athlete_id' => $weeklyAthlete->id,
+            'type' => DashboardTask::TYPE_FEEDBACK_SESSION,
+            'period_week_start' => '2026-06-08',
+            'due_at' => '2026-06-14 23:59:59',
+            'status' => 'pending',
+        ]);
+
+        SessionFeedback::query()->create([
+            'coach_id' => $coach->id,
+            'athlete_id' => $dailyAthlete->id,
+            'session_date' => '2026-06-09',
+            'status' => 'submitted',
+            'submitted_at' => '2026-06-09 12:00:00',
+        ]);
+
+        $metrics = app(CoachFeedbackMetricsService::class)->forCoach($coach);
+
+        $this->assertSame(0, $metrics['weekly']['received_week']);
+
+        Carbon::setTestNow();
+    }
+
     public function test_weekly_pending_task_links_existing_week_feedback(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-05-31 10:00:00'));

@@ -91,17 +91,16 @@ class CoachFeedbackMetricsService
             ->whereNotNull('period_week_start')
             ->whereDate('period_week_start', $weekStart->toDateString());
 
-        $weeklyReceived = SessionFeedback::query()
-            ->where('coach_id', $coach->id)
-            ->whereDate('session_date', '>=', $weekStart->toDateString())
-            ->whereDate('session_date', '<=', $weekEnd->toDateString())
+        $weeklyReceived = (clone $weeklyTasksQuery)
+            ->whereNotNull('session_feedback_id')
             ->count();
 
-        $weeklyProcessed = SessionFeedback::query()
-            ->where('coach_id', $coach->id)
-            ->where('status', SessionFeedback::STATUS_COACH_REPLIED)
-            ->whereDate('session_date', '>=', $weekStart->toDateString())
-            ->whereDate('session_date', '<=', $weekEnd->toDateString())
+        $weeklyProcessed = (clone $weeklyTasksQuery)
+            ->whereNotNull('session_feedback_id')
+            ->whereHas(
+                'sessionFeedback',
+                fn ($query) => $query->where('status', SessionFeedback::STATUS_COACH_REPLIED),
+            )
             ->count();
 
         $weeklyPendingTasks = DashboardTask::query()
@@ -351,25 +350,6 @@ class CoachFeedbackMetricsService
             } else {
                 $pending[] = $this->presentBreakdownFromTask($task, $weekStartString);
             }
-        }
-
-        $weekFeedbacks = SessionFeedback::query()
-            ->where('coach_id', $coach->id)
-            ->whereDate('session_date', '>=', $weekStartString)
-            ->whereDate('session_date', '<=', $weekEnd->toDateString())
-            ->whereIn('athlete_id', $athleteIds)
-            ->with('athlete:id,name')
-            ->orderByDesc('submitted_at')
-            ->get();
-
-        $submittedAthleteIds = collect($submittedFromTasks)->pluck('athlete_id')->filter();
-
-        foreach ($weekFeedbacks as $feedback) {
-            if ($submittedAthleteIds->contains($feedback->athlete_id)) {
-                continue;
-            }
-            $submittedFromTasks[] = $this->presentBreakdownFromFeedback($feedback, $weekStartString);
-            $submittedAthleteIds->push($feedback->athlete_id);
         }
 
         $weeklyAthleteIds = collect($pending)->pluck('athlete_id')

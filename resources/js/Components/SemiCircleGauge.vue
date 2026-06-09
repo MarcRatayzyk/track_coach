@@ -26,25 +26,37 @@ const props = defineProps({
 
 const radius = 36;
 const arcLength = Math.PI * radius;
+const arcPath = `M 14 50 A ${radius} ${radius} 0 0 1 86 50`;
+
+const gaugeValue = computed(() => {
+  if (props.total <= 0) {
+    return 0;
+  }
+
+  return Math.min(props.value, props.total);
+});
 
 const percent = computed(() => {
   if (props.total <= 0) {
     return props.value > 0 ? 1 : 0;
   }
-  return Math.min(props.value / props.total, 1);
+
+  return gaugeValue.value / props.total;
 });
 
 const dashOffset = computed(() => arcLength * (1 - percent.value));
 
-const arcPath = `M 14 50 A ${radius} ${radius} 0 0 1 86 50`;
+const containerHeight = computed(() => Math.round(props.size * 0.72));
 </script>
 
 <template>
-  <div class="relative inline-flex flex-col items-center" :style="{ width: `${size}px` }">
+  <div
+    class="relative mx-auto"
+    :style="{ width: `${size}px`, height: `${containerHeight}px` }"
+  >
     <svg
       :viewBox="'0 0 100 56'"
-      class="w-full"
-      :style="{ height: `${size * 0.58}px` }"
+      class="absolute inset-0 h-full w-full"
       aria-hidden="true"
     >
       <path
@@ -65,13 +77,12 @@ const arcPath = `M 14 50 A ${radius} ${radius} 0 0 1 86 50`;
         class="transition-[stroke-dashoffset] duration-500 ease-out"
       />
     </svg>
-    <div
-      class="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end pb-0.5"
-      :style="{ top: `${size * 0.22}px` }"
-    >
-      <p class="text-xl font-bold tabular-nums leading-none text-white">
-        {{ value }}
-        <span class="text-base font-semibold text-slate-400">/ {{ total }}</span>
+
+    <div class="absolute inset-x-0 bottom-0 flex items-end justify-center pb-0.5">
+      <p class="flex items-baseline justify-center gap-0.5 leading-none">
+        <span class="text-lg font-bold tabular-nums text-white">{{ value }}</span>
+        <span class="text-sm font-semibold text-slate-500">/</span>
+        <span class="text-lg font-bold tabular-nums text-slate-300">{{ total }}</span>
       </p>
     </div>
   </div>

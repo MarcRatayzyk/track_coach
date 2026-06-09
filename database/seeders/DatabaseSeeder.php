@@ -83,6 +83,7 @@ class DatabaseSeeder extends Seeder
             }
 
             $this->seedSessionFeedbacks($coach, $athletes, $assignments);
+            $this->call(SeedCurrentPeriodFeedbacksSeeder::class);
             $this->seedMessageThreads($coach, $athletes);
             $this->seedReadinessEntries($athletes);
         });
