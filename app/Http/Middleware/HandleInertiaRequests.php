@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Exercise;
 use App\Support\MessagingInboxSupport;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -53,6 +54,9 @@ class HandleInertiaRequests extends Middleware
             'messagingInbox' => fn () => $request->user()?->role === 'athlete'
                 ? MessagingInboxSupport::athleteInboxSummary($request->user())
                 : null,
+            'exerciseLibrary' => fn () => $request->user()?->role === 'coach'
+                ? Exercise::query()->with('variants')->orderBy('name')->get()
+                : [],
         ]);
     }
 }

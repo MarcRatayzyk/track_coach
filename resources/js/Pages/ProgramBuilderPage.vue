@@ -25,18 +25,26 @@ import BlockSetupTableCard from '../Components/BlockSetupTableCard.vue';
 
 import ProgramBlockCalendar from '../Components/ProgramBlockCalendar.vue';
 import ProgramBlockTableBuilder from '../Components/ProgramBlockTableBuilder.vue';
+import ProgramBlockTableBuilderV2 from '../Components/ProgramBlockTableBuilderV2.vue';
+import ProgramPasteIncrementModal from '../Components/ProgramPasteIncrementModal.vue';
 
 import ProgramBlockStatsTab from '../Components/ProgramBlockStatsTab.vue';
 import SessionEditorPanel from '../Components/SessionEditorPanel.vue';
 import DayTableLayoutModal from '../Components/DayTableLayoutModal.vue';
 
-import { cellKey } from '../utils/programBuilder';
+import { cellKey, weekdayShortLabel } from '../utils/programBuilder';
 
 import {
+
+  applyClipboardWeekIncrements,
+
+  prepareClipboardSessionForPaste,
 
   clipboardSessionToOperation,
 
   clipboardWeekToOperations,
+
+  collectClipboardExerciseNames,
 
   sessionHasClipboardContent,
 
@@ -127,7 +135,7 @@ const pasting = ref(false);
 
 const pasteMode = ref(false);
 const activeTab = ref(
-  ['calendar', 'table', 'stats'].includes(initialTab) ? initialTab : 'calendar',
+  ['calendar', 'table', 'table_v2', 'stats'].includes(initialTab) ? initialTab : 'calendar',
 );
 
 
@@ -135,6 +143,22 @@ const activeTab = ref(
 const clipboardSession = ref(null);
 
 const clipboardWeek = ref(null);
+
+const incrementModalOpen = ref(false);
+
+const incrementModalTitle = ref('');
+
+const incrementModalHint = ref('');
+
+const incrementModalExerciseNames = ref([]);
+
+const incrementModalPasteKind = ref('session');
+
+const incrementModalDefaultSessionLabel = ref('');
+
+const incrementModalDefaultSessionNotes = ref('');
+
+const pendingPasteAction = ref(null);
 
 
 
@@ -144,7 +168,22 @@ const showCalendar = computed(() => Boolean(props.activeBlock));
 
 const isAssigned = computed(() => props.activeBlock?.status === 'active');
 
+const athletePrSummary = computed(() => {
+  const pr = props.activeBlock?.athlete_one_rm;
+  if (!pr) {
+    return null;
+  }
 
+  const squat = Number(pr.squat ?? 0);
+  const bench = Number(pr.bench ?? 0);
+  const deadlift = Number(pr.deadlift ?? 0);
+
+  if (!squat && !bench && !deadlift) {
+    return null;
+  }
+
+  return { squat, bench, deadlift };
+});
 
 const selectedSession = computed(() => {
 
@@ -294,7 +333,7 @@ function backToSetup() {
 
   router.get(
     '/program-builder',
-    activeTab.value === 'table' ? { tab: 'table' } : {},
+    ['table', 'table_v2'].includes(activeTab.value) ? { tab: activeTab.value } : {},
     { preserveState: false },
   );
 
@@ -378,6 +417,50 @@ function copySessionFromCell(cell) {
 
 
 
+function openIncrementModal(action) {
+
+  pendingPasteAction.value = action;
+
+  incrementModalTitle.value = action.title;
+
+  incrementModalHint.value = action.hint;
+
+  incrementModalExerciseNames.value = action.exerciseNames ?? [];
+
+  incrementModalPasteKind.value = action.pasteKind ?? 'session';
+
+  incrementModalDefaultSessionLabel.value = action.defaultSessionLabel ?? '';
+
+  incrementModalDefaultSessionNotes.value = action.defaultSessionNotes ?? '';
+
+  incrementModalOpen.value = true;
+
+}
+
+
+
+function closeIncrementModal() {
+
+  incrementModalOpen.value = false;
+
+  incrementModalTitle.value = '';
+
+  incrementModalHint.value = '';
+
+  incrementModalExerciseNames.value = [];
+
+  incrementModalPasteKind.value = 'session';
+
+  incrementModalDefaultSessionLabel.value = '';
+
+  incrementModalDefaultSessionNotes.value = '';
+
+  pendingPasteAction.value = null;
+
+}
+
+
+
 function pasteSessionToCell(cell) {
 
   if (!clipboardSession.value || !props.activeBlock?.id || pasting.value) {
@@ -388,6 +471,34 @@ function pasteSessionToCell(cell) {
 
 
 
+  openIncrementModal({
+
+    type: 'session',
+
+    cell,
+
+    title: `Coller la séance sur ${weekdayShortLabel(cell.weekday)}`,
+
+    hint: 'Définis le titre, les notes, les incréments et les lignes concernées avant de coller.',
+
+    pasteKind: 'session',
+
+    defaultSessionLabel: clipboardSession.value.session_label ?? '',
+
+    defaultSessionNotes: clipboardSession.value.notes ?? '',
+
+    exerciseNames: collectClipboardExerciseNames(clipboardSession.value),
+
+  });
+
+}
+
+
+
+function executePasteSession(cell, options) {
+
+  const payload = prepareClipboardSessionForPaste(clipboardSession.value, options);
+
   pasting.value = true;
 
   router.post(
@@ -396,7 +507,7 @@ function pasteSessionToCell(cell) {
 
     {
 
-      operations: [clipboardSessionToOperation(clipboardSession.value, cell.weekNumber, cell.weekday)],
+      operations: [clipboardSessionToOperation(payload, cell.weekNumber, cell.weekday)],
 
     },
 
@@ -484,6 +595,32 @@ function pasteWeek(targetWeekNumber) {
 
 
 
+  openIncrementModal({
+
+    type: 'week',
+
+    targetWeekNumber,
+
+    title: `Coller sur la semaine ${targetWeekNumber}`,
+
+    hint: 'Définis les notes, les incréments et les lignes concernées pour toutes les séances collées.',
+
+    pasteKind: 'week',
+
+    defaultSessionNotes: '',
+
+    exerciseNames: collectClipboardExerciseNames(clipboardWeek.value),
+
+  });
+
+}
+
+
+
+function executePasteWeek(targetWeekNumber, options) {
+
+  const payload = applyClipboardWeekIncrements(clipboardWeek.value, options);
+
   pasting.value = true;
 
   router.post(
@@ -492,7 +629,7 @@ function pasteWeek(targetWeekNumber) {
 
     {
 
-      operations: clipboardWeekToOperations(clipboardWeek.value, targetWeekNumber),
+      operations: clipboardWeekToOperations(payload, targetWeekNumber),
 
     },
 
@@ -511,6 +648,42 @@ function pasteWeek(targetWeekNumber) {
     },
 
   );
+
+}
+
+
+
+function confirmIncrementModal(options) {
+
+  if (!pendingPasteAction.value) {
+
+    return;
+
+  }
+
+
+
+  const action = pendingPasteAction.value;
+
+  closeIncrementModal();
+
+
+
+  if (action.type === 'session') {
+
+    executePasteSession(action.cell, options);
+
+    return;
+
+  }
+
+
+
+  if (action.type === 'week') {
+
+    executePasteWeek(action.targetWeekNumber, options);
+
+  }
 
 }
 
@@ -562,7 +735,7 @@ function clearClipboard() {
 
         <p v-if="!showCalendar" class="mt-3 max-w-3xl text-base leading-relaxed text-slate-400">
 
-          <template v-if="activeTab === 'table'">
+          <template v-if="activeTab === 'table' || activeTab === 'table_v2'">
             Crée un bloc puis remplis les séances dans un format tableur, jour par jour.
           </template>
 
@@ -579,6 +752,14 @@ function clearClipboard() {
           <span aria-hidden="true">·</span>
 
           <span>{{ activeBlock.athlete_name }}</span>
+
+          <template v-if="athletePrSummary">
+            <span aria-hidden="true">·</span>
+
+            <span class="tabular-nums text-slate-300">
+              S {{ athletePrSummary.squat }} · B {{ athletePrSummary.bench }} · D {{ athletePrSummary.deadlift }} kg
+            </span>
+          </template>
 
           <span aria-hidden="true">·</span>
 
@@ -693,6 +874,19 @@ function clearClipboard() {
         type="button"
         class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
         :class="
+          activeTab === 'table_v2'
+            ? 'border-blue-500 text-blue-300'
+            : 'border-transparent text-slate-400 hover:text-white'
+        "
+        @click="activeTab = 'table_v2'"
+      >
+        Tableur V2
+      </button>
+      <button
+        v-if="showCalendar"
+        type="button"
+        class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+        :class="
           activeTab === 'stats'
             ? 'border-blue-500 text-blue-300'
             : 'border-transparent text-slate-400 hover:text-white'
@@ -704,7 +898,7 @@ function clearClipboard() {
       </div>
 
       <button
-        v-if="!showCalendar"
+        v-if="!showCalendar || activeTab === 'table' || activeTab === 'table_v2'"
         type="button"
         class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
         @click="layoutModalOpen = true"
@@ -746,6 +940,11 @@ function clearClipboard() {
 
       <ProgramBlockTableBuilder
         v-else-if="activeTab === 'table'"
+        :active-block="activeBlock"
+      />
+
+      <ProgramBlockTableBuilderV2
+        v-else-if="activeTab === 'table_v2'"
         :active-block="activeBlock"
       />
 
@@ -876,6 +1075,8 @@ function clearClipboard() {
 
           {{ clipboardStatus }}
 
+          <span class="text-amber-300/60">· Le collage demandera des incréments (kg, %, RPE).</span>
+
         </p>
 
 
@@ -935,6 +1136,18 @@ function clearClipboard() {
       :layouts="dayTableLayouts"
       :default-layout-id="defaultDayTableLayoutId"
       @close="layoutModalOpen = false"
+    />
+
+    <ProgramPasteIncrementModal
+      :open="incrementModalOpen"
+      :title="incrementModalTitle"
+      :hint="incrementModalHint"
+      :exercise-names="incrementModalExerciseNames"
+      :paste-kind="incrementModalPasteKind"
+      :default-session-label="incrementModalDefaultSessionLabel"
+      :default-session-notes="incrementModalDefaultSessionNotes"
+      @confirm="confirmIncrementModal"
+      @cancel="closeIncrementModal"
     />
 
   </div>

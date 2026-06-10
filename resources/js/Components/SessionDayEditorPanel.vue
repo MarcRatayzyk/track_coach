@@ -35,6 +35,10 @@ const notes = defineModel('notes', { type: String, default: '' });
 
 defineEmits(['save', 'delete', 'close']);
 
+function onSessionLabelInput(event) {
+  sessionLabel.value = event.target.value.toUpperCase();
+}
+
 function formatErrorMessages(errors) {
   return Object.values(errors)
     .flat()
@@ -68,11 +72,12 @@ function formatErrorMessages(errors) {
         <label class="mt-3 block text-sm text-slate-400">
           Nom de la séance
           <input
-            v-model="sessionLabel"
+            :value="sessionLabel"
             type="text"
             maxlength="255"
             placeholder="Ex. Force jambes, Volume bench…"
-            class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-600"
+            class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm uppercase text-white placeholder:text-slate-600"
+            @input="onSessionLabelInput"
           />
         </label>
       </div>

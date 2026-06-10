@@ -1,8 +1,15 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import ProgramSessionInstructionsModal from './ProgramSessionInstructionsModal.vue';
 import ProgramTableExerciseRow from './ProgramTableExerciseRow.vue';
-import { classicTableLayout, normalizeTableLayout, resolveVisibleColumns } from '../config/dayTableColumns';
+import {
+  classicTableLayout,
+  normalizeTableLayout,
+  resolveVisibleColumns,
+  spacedColumnPercent,
+} from '../config/dayTableColumns';
+import { programSessionVisitOptions } from '../utils/programBuilderVisit';
 
 const props = defineProps({
   assignmentId: {
@@ -25,6 +32,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  columnHeading: {
+    type: String,
+    default: '',
+  },
   tableLayout: {
     type: Object,
     default: null,
@@ -45,6 +56,19 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isDropTarget: {
+    type: Boolean,
+    default: false,
+  },
+  builderTab: {
+    type: String,
+    default: 'table',
+  },
+  layoutVariant: {
+    type: String,
+    default: 'stacked',
+    validator: (value) => ['stacked', 'spaced'].includes(value),
+  },
 });
 
 const emit = defineEmits(['copy-session', 'paste-session', 'delete-session', 'drag-start', 'drag-end']);
@@ -53,6 +77,10 @@ let nextRowId = 1;
 
 const normalizedLayout = computed(() => normalizeTableLayout(props.tableLayout ?? classicTableLayout()));
 const visibleColumns = computed(() => resolveVisibleColumns(normalizedLayout.value));
+
+function spacedColumnStyle(column) {
+  return { width: spacedColumnPercent(column.id, visibleColumns.value) };
+}
 
 function makeRow(overrides = {}) {
   nextRowId += 1;
@@ -100,15 +128,17 @@ function normaliseRows(items = []) {
 
 const rows = ref([]);
 const sessionLabel = ref(props.defaultSessionLabel);
+const sessionNotes = ref('');
 
 const form = useForm({
   week_number: props.weekNumber,
   weekday: props.weekday,
   session_label: props.defaultSessionLabel,
+  notes: null,
   main_lift: 'squat',
   items: [],
   blocks: [],
-  builder_tab: 'table',
+  builder_tab: props.builderTab,
 });
 
 watch(
@@ -116,16 +146,27 @@ watch(
   (session) => {
     rows.value = normaliseRows(session?.items ?? []);
     sessionLabel.value = session?.session_label ?? props.defaultSessionLabel;
+    sessionNotes.value = session?.notes ?? '';
   },
   { immediate: true },
+);
+
+watch(
+  () => props.builderTab,
+  (tab) => {
+    form.builder_tab = tab;
+  },
 );
 
 const populatedRows = computed(() =>
   rows.value.filter((row) => String(row.exercise_name ?? '').trim() !== ''),
 );
 
-const sessionHeading = computed(() => sessionLabel.value?.trim() || props.defaultSessionLabel);
 const hasSession = computed(() => Boolean(props.session));
+const sessionHeading = computed(() => sessionLabel.value?.trim() || props.defaultSessionLabel);
+const hasInstructions = computed(() => Boolean(sessionNotes.value?.trim()));
+const instructionsModalOpen = ref(false);
+
 const primaryLift = computed(() => {
   const firstLift = rows.value.find((row) =>
     ['squat', 'bench', 'deadlift'].includes(row.lift),
@@ -149,14 +190,18 @@ function removeRow(index) {
   }
 }
 
-function nullableNumber(value) {
+function parseDecimal(value) {
   if (value === '' || value === null || typeof value === 'undefined') {
     return null;
   }
 
-  const parsed = Number(value);
+  const parsed = Number(String(value).replace(',', '.'));
 
   return Number.isNaN(parsed) ? null : parsed;
+}
+
+function nullableNumber(value) {
+  return parseDecimal(value);
 }
 
 function buildItemsPayload() {
@@ -167,25 +212,24 @@ function buildItemsPayload() {
     lift: row.lift ?? primaryLift.value,
     sets: Number(row.sets),
     reps: Number(row.reps),
-    load: row.load === '' ? null : Number(row.load),
-    load_percent: row.load_percent === '' ? null : Number(row.load_percent),
-    rpe: row.rpe === '' ? null : Number(row.rpe),
+    load: parseDecimal(row.load),
+    load_percent: parseDecimal(row.load_percent),
+    rpe: parseDecimal(row.rpe),
     rest_seconds: nullableNumber(row.rest_seconds),
   }));
 }
 
 function saveSession() {
+  form.builder_tab = props.builderTab;
   form.week_number = props.weekNumber;
   form.weekday = props.weekday;
   form.session_label = sessionLabel.value?.trim() || props.defaultSessionLabel;
+  form.notes = sessionNotes.value?.trim() || null;
   form.main_lift = primaryLift.value;
   form.items = buildItemsPayload();
   form.blocks = [];
 
-  form.put(`/coach/program-blocks/${props.assignmentId}/sessions`, {
-    preserveScroll: true,
-    preserveState: true,
-  });
+  form.put(`/coach/program-blocks/${props.assignmentId}/sessions`, programSessionVisitOptions());
 }
 
 function copySession() {
@@ -199,12 +243,33 @@ function pasteSession() {
 function deleteSession() {
   emit('delete-session', { weekNumber: props.weekNumber, weekday: props.weekday });
 }
+
+function openInstructionsModal() {
+  instructionsModalOpen.value = true;
+}
+
+function closeInstructionsModal() {
+  instructionsModalOpen.value = false;
+}
+
+function saveInstructions({ sessionLabel: label, sessionNotes: notes }) {
+  sessionLabel.value = label;
+  sessionNotes.value = notes;
+  saveSession();
+  closeInstructionsModal();
+}
 </script>
 
 <template>
   <article
-    class="flex h-full w-[28rem] shrink-0 flex-col overflow-visible rounded-xl border border-slate-700 bg-slate-950 shadow-lg transition-shadow duration-200"
-    :class="isDragging ? 'shadow-none' : ''"
+    class="flex w-full flex-col overflow-visible rounded-xl border border-slate-700 bg-slate-950 shadow-lg transition-all duration-200"
+    :class="[
+      layoutVariant === 'stacked' ? 'min-w-[28rem]' : 'min-w-0',
+      isDragging ? 'shadow-none' : '',
+      isDropTarget
+        ? 'z-10 scale-[1.02] shadow-xl shadow-blue-900/40 ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-950'
+        : '',
+    ]"
   >
     <div
       v-if="reorderable"
@@ -233,10 +298,18 @@ function deleteSession() {
     </div>
     <div class="border-l-2 border-amber-400 bg-black px-3 py-2">
       <div class="flex items-center justify-between gap-3">
-        <div class="min-w-0">
-          <p class="text-center text-xs font-semibold uppercase tracking-wide text-amber-300">
+        <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <p class="text-xs font-semibold uppercase tracking-wide text-amber-300">
             {{ sessionHeading }}
           </p>
+          <button
+            type="button"
+            class="text-[10px] font-medium text-slate-400 hover:text-slate-200"
+            :class="hasInstructions ? 'text-amber-300/80' : ''"
+            @click="openInstructionsModal"
+          >
+            + instructions
+          </button>
         </div>
         <div class="flex flex-wrap justify-end gap-1.5">
           <button
@@ -266,8 +339,18 @@ function deleteSession() {
       </div>
     </div>
 
-    <div class="flex-1 overflow-x-hidden overflow-y-visible">
-      <table class="w-full table-auto border-collapse">
+    <div class="overflow-x-auto overflow-y-visible">
+      <table
+        class="w-full border-collapse"
+        :class="layoutVariant === 'spaced' ? 'table-fixed' : 'table-auto'"
+      >
+        <colgroup v-if="layoutVariant === 'spaced'">
+          <col
+            v-for="column in visibleColumns"
+            :key="`col-${column.id}`"
+            :style="spacedColumnStyle(column)"
+          />
+        </colgroup>
         <thead class="bg-slate-950">
           <tr class="text-center text-[11px] font-medium uppercase tracking-wide text-slate-300">
             <th
@@ -276,7 +359,7 @@ function deleteSession() {
               class="border-b border-t border-slate-700 px-1.5 py-1.5"
               :class="[
                 index < visibleColumns.length - 1 ? 'border-r' : '',
-                column.widthClass,
+                layoutVariant === 'stacked' ? column.widthClass : '',
                 column.align === 'left' ? 'text-left px-2' : 'text-center',
               ]"
             >
@@ -290,6 +373,7 @@ function deleteSession() {
             :key="row.id"
             :row="row"
             :table-layout="normalizedLayout"
+            :layout-variant="layoutVariant"
             :default-lift="primaryLift"
             :removable="rows.length > 1"
             @update="updateRow(index, $event)"
@@ -323,5 +407,15 @@ function deleteSession() {
         </button>
       </div>
     </div>
+
+    <ProgramSessionInstructionsModal
+      :open="instructionsModalOpen"
+      :session-label="sessionLabel"
+      :session-notes="sessionNotes"
+      :default-session-label="defaultSessionLabel"
+      :processing="form.processing"
+      @confirm="saveInstructions"
+      @cancel="closeInstructionsModal"
+    />
   </article>
 </template>

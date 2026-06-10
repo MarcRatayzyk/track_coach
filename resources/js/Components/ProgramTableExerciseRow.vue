@@ -21,6 +21,11 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  layoutVariant: {
+    type: String,
+    default: 'stacked',
+    validator: (value) => ['stacked', 'spaced'].includes(value),
+  },
 });
 
 const emit = defineEmits(['update', 'remove']);
@@ -40,7 +45,13 @@ function updateRow(value) {
       v-for="(column, index) in visibleColumns"
       :key="column.id"
       class="border-b border-slate-800 px-1 py-1"
-      :class="index < visibleColumns.length - 1 ? 'border-r' : ''"
+      :class="[
+        index < visibleColumns.length - 1 ? 'border-r' : '',
+        layoutVariant === 'spaced' && ['sets', 'reps', 'load', 'section'].includes(column.id)
+          ? 'text-center'
+          : '',
+        layoutVariant === 'spaced' ? 'overflow-hidden' : '',
+      ]"
     >
       <div v-if="column.id === 'exercise'" class="flex items-start gap-1.5">
         <div class="min-w-0 flex-1">

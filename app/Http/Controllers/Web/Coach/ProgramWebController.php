@@ -25,7 +25,7 @@ class ProgramWebController extends Controller
     {
         $params = ['assignment' => $assignmentId];
 
-        if (is_string($tab) && in_array($tab, ['calendar', 'table', 'stats'], true)) {
+        if (is_string($tab) && in_array($tab, ['calendar', 'table', 'table_v2', 'stats'], true)) {
             $params['tab'] = $tab;
         }
 

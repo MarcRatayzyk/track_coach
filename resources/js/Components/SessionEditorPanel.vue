@@ -27,12 +27,14 @@ const emit = defineEmits(['saved', 'cleared', 'close']);
 
 const day = ref(sessionToDay(props.session));
 const sessionLabel = ref(props.session?.session_label ?? '');
+const sessionNotes = ref(props.session?.notes ?? '');
 
 const form = useForm({
   week_number: 1,
   weekday: 1,
   main_lift: 'squat',
   session_label: null,
+  notes: null,
   items: [],
   blocks: [],
 });
@@ -42,13 +44,19 @@ watch(
   () => {
     day.value = sessionToDay(props.session);
     sessionLabel.value = props.session?.session_label ?? '';
+    sessionNotes.value = props.session?.notes ?? '';
     day.value.session_label = sessionLabel.value;
+    day.value.notes = sessionNotes.value;
   },
   { immediate: true },
 );
 
 watch(sessionLabel, (value) => {
   day.value.session_label = value;
+});
+
+watch(sessionNotes, (value) => {
+  day.value.notes = value;
 });
 
 const headerTitle = computed(() => {
@@ -64,6 +72,7 @@ const headerTitle = computed(() => {
 
 function save() {
   day.value.session_label = sessionLabel.value;
+  day.value.notes = sessionNotes.value;
 
   const payload = {
     week_number: props.selectedCell.weekNumber,
@@ -75,6 +84,7 @@ function save() {
   form.weekday = payload.weekday;
   form.main_lift = payload.main_lift;
   form.session_label = payload.session_label;
+  form.notes = payload.notes;
   form.items = payload.items;
   form.blocks = payload.blocks;
 
@@ -116,10 +126,12 @@ function deleteSession() {
     <SessionDayEditorPanel
       v-model:day="day"
       v-model:session-label="sessionLabel"
+      v-model:notes="sessionNotes"
       :title="headerTitle"
       :processing="form.processing"
       :errors="form.errors"
       :show-delete="hasSavedSession"
+      show-notes
       @save="save"
       @delete="deleteSession"
       @close="emit('close')"

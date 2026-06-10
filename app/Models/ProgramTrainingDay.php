@@ -19,6 +19,7 @@ class ProgramTrainingDay extends Model
         'day_number',
         'main_lift',
         'session_label',
+        'notes',
     ];
 
     public function week(): BelongsTo

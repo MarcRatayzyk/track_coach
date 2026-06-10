@@ -1,5 +1,7 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { filterExerciseCatalog } from '../utils/exerciseLibrary';
 
 const props = defineProps({
   defaultLift: {
@@ -18,6 +20,9 @@ const props = defineProps({
 
 const emit = defineEmits(['select']);
 
+const page = usePage();
+const catalog = computed(() => page.props.exerciseLibrary ?? []);
+
 const filters = [
   { id: 'squat', label: 'Squat', lift: 'squat', category: 'main_lift' },
   { id: 'bench', label: 'Bench', lift: 'bench', category: 'main_lift' },
@@ -28,13 +33,18 @@ const filters = [
 const activeFilter = ref(
   ['squat', 'bench', 'deadlift'].includes(props.defaultLift) ? props.defaultLift : 'accessory',
 );
-const exercises = ref([]);
-const loading = ref(false);
 const stripRef = ref(null);
 const isDragging = ref(false);
 const dragStartX = ref(0);
 const dragStartScroll = ref(0);
 const localSelectedKey = ref(null);
+
+const activeFilterConfig = computed(() => filters.find((item) => item.id === activeFilter.value) ?? filters[0]);
+
+const exercises = computed(() => filterExerciseCatalog(catalog.value, {
+  category: activeFilterConfig.value.category,
+  lift: activeFilterConfig.value.lift || null,
+}));
 
 const chips = computed(() => {
   const items = [];
@@ -60,31 +70,6 @@ const chips = computed(() => {
   }
   return items;
 });
-
-async function fetchExercises() {
-  loading.value = true;
-  try {
-    const filter = filters.find((item) => item.id === activeFilter.value);
-    const params = new URLSearchParams();
-    if (filter?.category) {
-      params.set('category', filter.category);
-    }
-    if (filter?.lift) {
-      params.set('lift', filter.lift);
-    }
-
-    const response = await fetch(`/coach/exercises?${params.toString()}`, {
-      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      credentials: 'same-origin',
-    });
-
-    if (response.ok) {
-      exercises.value = await response.json();
-    }
-  } finally {
-    loading.value = false;
-  }
-}
 
 function isChipSelected(chip) {
   if (localSelectedKey.value === chip.key) {
@@ -151,17 +136,12 @@ function onPointerUp(event) {
   });
 }
 
-watch(activeFilter, fetchExercises);
-
 watch(
   () => props.defaultLift,
   (lift) => {
     activeFilter.value = ['squat', 'bench', 'deadlift'].includes(lift) ? lift : 'accessory';
-    fetchExercises();
   },
 );
-
-onMounted(fetchExercises);
 </script>
 
 <template>
@@ -183,9 +163,7 @@ onMounted(fetchExercises);
       </button>
     </div>
 
-    <p v-if="loading" class="mt-2 text-xs text-slate-500">Chargement…</p>
     <div
-      v-else
       ref="stripRef"
       class="tc-scrollbar mt-2 flex cursor-grab gap-2 overflow-x-auto pb-2 active:cursor-grabbing"
       @pointerdown="onPointerDown"

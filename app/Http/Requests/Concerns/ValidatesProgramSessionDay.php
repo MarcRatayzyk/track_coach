@@ -6,6 +6,34 @@ use Illuminate\Validation\Rule;
 
 trait ValidatesProgramSessionDay
 {
+    protected function prepareProgramSessionDecimalInputs(): void
+    {
+        $this->replace($this->normalizeProgramSessionDecimalInput($this->all()));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeProgramSessionDecimalInput(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = $this->normalizeProgramSessionDecimalInput($value);
+                continue;
+            }
+
+            if (! in_array($key, ['load', 'load_percent', 'rpe'], true) || ! is_string($value)) {
+                continue;
+            }
+
+            $normalized = str_replace(',', '.', trim($value));
+            $data[$key] = $normalized === '' ? null : $normalized;
+        }
+
+        return $data;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -69,6 +97,7 @@ trait ValidatesProgramSessionDay
             'items.*.rest_seconds' => $exerciseLine['rest_seconds'],
             'main_lift' => ['nullable', Rule::in(['squat', 'bench', 'deadlift'])],
             'session_label' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:2000'],
         ];
 
         foreach ($blockRules as $key => $rule) {

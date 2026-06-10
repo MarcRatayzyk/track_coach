@@ -136,9 +136,8 @@ const placeholder = computed(() => {
     <input
       v-if="activeMode === LOAD_MODE_KG"
       :value="row.load"
-      type="number"
-      min="0"
-      step="0.5"
+      type="text"
+      inputmode="decimal"
       :placeholder="placeholder"
       :readonly="preview"
       class="w-full border-0 bg-transparent px-1 py-0.5 text-center text-xs text-white outline-none"

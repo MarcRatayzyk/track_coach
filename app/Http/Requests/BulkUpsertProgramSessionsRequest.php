@@ -14,6 +14,11 @@ class BulkUpsertProgramSessionsRequest extends FormRequest
         return $this->user()?->role === 'coach';
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->prepareProgramSessionDecimalInputs();
+    }
+
     public function rules(): array
     {
         $rules = [

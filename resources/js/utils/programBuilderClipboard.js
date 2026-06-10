@@ -1,5 +1,19 @@
 import { cellKey, sessionToDay } from './programBuilder';
 
+export const DEFAULT_INCREMENT_SECTIONS = ['topset', 'backoff', 'accessory'];
+export const DEFAULT_INCREMENT_LIFTS = ['squat', 'bench', 'deadlift'];
+
+export function defaultIncrementOptions() {
+  return {
+    incrementKg: 0,
+    incrementPercent: 0,
+    incrementRpe: 0,
+    sections: [...DEFAULT_INCREMENT_SECTIONS],
+    lifts: [...DEFAULT_INCREMENT_LIFTS],
+    exerciseNames: [],
+  };
+}
+
 export function sessionHasClipboardContent(payload) {
   if (!payload) {
     return false;
@@ -38,6 +52,7 @@ export function sessionToClipboardPayload(session) {
   return {
     main_lift: day.lift ?? 'squat',
     session_label: day.session_label?.trim() || null,
+    notes: day.notes?.trim() || null,
     items,
   };
 }
@@ -56,12 +71,29 @@ export function weekSessionsToClipboard(sessions, weekNumber) {
   return Object.keys(days).length > 0 ? { weekNumber, sessions: days } : null;
 }
 
+export function resolvePasteSessionLabel(copiedLabel, options = {}) {
+  const label = (options.sessionLabel ?? '').trim() || (copiedLabel ?? '').trim();
+
+  if (!label) {
+    return null;
+  }
+
+  return label.toUpperCase();
+}
+
+export function resolvePasteSessionNotes(sessionNotes) {
+  const notes = (sessionNotes ?? '').trim();
+
+  return notes !== '' ? notes : null;
+}
+
 export function clipboardSessionToOperation(payload, weekNumber, weekday) {
   return {
     week_number: weekNumber,
     weekday,
     main_lift: payload.main_lift ?? 'squat',
     session_label: payload.session_label,
+    notes: payload.notes ?? null,
     items: payload.items ?? [],
     blocks: [],
   };
@@ -73,43 +105,148 @@ export function clipboardWeekToOperations(weekClipboard, targetWeekNumber) {
   );
 }
 
+function normalizeExerciseName(name) {
+  return (name ?? '').trim().toLowerCase();
+}
+
+export function collectClipboardExerciseNames(source) {
+  const names = new Set();
+
+  if (source?.items) {
+    for (const item of source.items) {
+      const name = item.exercise_name?.trim();
+      if (name) {
+        names.add(name);
+      }
+    }
+  } else if (source?.sessions) {
+    for (const payload of Object.values(source.sessions)) {
+      for (const item of payload?.items ?? []) {
+        const name = item.exercise_name?.trim();
+        if (name) {
+          names.add(name);
+        }
+      }
+    }
+  }
+
+  return [...names].sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
 function roundLoad(value) {
   return Number.parseFloat((Math.round(value * 100) / 100).toFixed(2));
 }
 
-function incrementClipboardItemLoad(item, incrementKg) {
-  const load = item?.load;
-
-  if (load === null || load === '' || typeof load === 'undefined') {
-    return { ...item };
-  }
-
-  const numericLoad = Number(load);
-  if (!Number.isFinite(numericLoad)) {
-    return { ...item };
-  }
-
-  return {
-    ...item,
-    load: roundLoad(numericLoad + incrementKg),
-  };
+export function roundPercent(value) {
+  return roundLoad(value);
 }
 
-export function incrementClipboardSessionLoads(payload, incrementKg = 0) {
+export function roundRpe(value) {
+  return Number.parseFloat((Math.round(value * 2) / 2).toFixed(1));
+}
+
+function hasNumericValue(value) {
+  if (value === null || value === '' || typeof value === 'undefined') {
+    return false;
+  }
+
+  return Number.isFinite(Number(value));
+}
+
+export function itemMatchesIncrementFilters(item, filters) {
+  const sections = filters.sections ?? DEFAULT_INCREMENT_SECTIONS;
+  const lifts = filters.lifts ?? DEFAULT_INCREMENT_LIFTS;
+  const exerciseNames = filters.exerciseNames ?? [];
+
+  if (!sections.includes(item.section ?? 'accessory')) {
+    return false;
+  }
+
+  const itemLift = item.lift;
+  if (!itemLift) {
+    return false;
+  }
+
+  if (!lifts.includes(itemLift)) {
+    return false;
+  }
+
+  const normalizedName = normalizeExerciseName(item.exercise_name);
+  if (!normalizedName) {
+    return false;
+  }
+
+  if (exerciseNames.length > 0) {
+    const allowed = new Set(exerciseNames.map(normalizeExerciseName));
+    if (!allowed.has(normalizedName)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function incrementClipboardItem(item, options) {
+  if (!itemMatchesIncrementFilters(item, options)) {
+    return { ...item };
+  }
+
+  const next = { ...item };
+
+  if (options.incrementKg !== 0 && hasNumericValue(item.load)) {
+    next.load = roundLoad(Number(item.load) + options.incrementKg);
+  }
+
+  if (options.incrementPercent !== 0 && hasNumericValue(item.load_percent)) {
+    next.load_percent = roundPercent(Number(item.load_percent) + options.incrementPercent);
+  }
+
+  if (options.incrementRpe !== 0 && hasNumericValue(item.rpe)) {
+    next.rpe = roundRpe(Number(item.rpe) + options.incrementRpe);
+  }
+
+  return next;
+}
+
+export function applyClipboardSessionIncrements(payload, options = defaultIncrementOptions()) {
   return {
     ...payload,
-    items: (payload?.items ?? []).map((item) => incrementClipboardItemLoad(item, incrementKg)),
+    items: (payload?.items ?? []).map((item) => incrementClipboardItem(item, options)),
   };
 }
 
-export function incrementClipboardWeekLoads(weekClipboard, incrementKg = 0) {
+export function prepareClipboardSessionForPaste(payload, options = defaultIncrementOptions()) {
+  const withIncrements = applyClipboardSessionIncrements(payload, options);
+
+  return {
+    ...withIncrements,
+    session_label: resolvePasteSessionLabel(withIncrements.session_label, options),
+    notes: resolvePasteSessionNotes(options.sessionNotes),
+  };
+}
+
+export function applyClipboardWeekIncrements(weekClipboard, options = defaultIncrementOptions()) {
   return {
     ...weekClipboard,
     sessions: Object.fromEntries(
       Object.entries(weekClipboard?.sessions ?? {}).map(([weekday, payload]) => [
         weekday,
-        incrementClipboardSessionLoads(payload, incrementKg),
+        prepareClipboardSessionForPaste(payload, options),
       ]),
     ),
   };
+}
+
+export function incrementClipboardSessionLoads(payload, incrementKg = 0) {
+  return applyClipboardSessionIncrements(payload, {
+    ...defaultIncrementOptions(),
+    incrementKg,
+  });
+}
+
+export function incrementClipboardWeekLoads(weekClipboard, incrementKg = 0) {
+  return applyClipboardWeekIncrements(weekClipboard, {
+    ...defaultIncrementOptions(),
+    incrementKg,
+  });
 }

@@ -40,6 +40,11 @@ class UpsertProgramSessionAction
                 ? trim($sessionLabel)
                 : null;
 
+            $notes = $request->input('notes');
+            $notes = is_string($notes) && trim($notes) !== ''
+                ? trim($notes)
+                : null;
+
             $day = ProgramTrainingDay::query()->updateOrCreate(
                 [
                     'week_id' => $week->id,
@@ -48,6 +53,7 @@ class UpsertProgramSessionAction
                 [
                     'main_lift' => $primaryLift,
                     'session_label' => $sessionLabel,
+                    'notes' => $notes,
                 ],
             );
 

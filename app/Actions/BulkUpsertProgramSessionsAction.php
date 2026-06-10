@@ -52,6 +52,11 @@ class BulkUpsertProgramSessionsAction
                     ? trim($sessionLabel)
                     : null;
 
+                $notes = $operation['notes'] ?? null;
+                $notes = is_string($notes) && trim($notes) !== ''
+                    ? trim($notes)
+                    : null;
+
                 $day = ProgramTrainingDay::query()->updateOrCreate(
                     [
                         'week_id' => $week->id,
@@ -60,6 +65,7 @@ class BulkUpsertProgramSessionsAction
                     [
                         'main_lift' => $primaryLift,
                         'session_label' => $sessionLabel,
+                        'notes' => $notes,
                     ],
                 );
 

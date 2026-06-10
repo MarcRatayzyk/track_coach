@@ -1,5 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { filterExerciseCatalog } from '../utils/exerciseLibrary';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -9,8 +11,9 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'select']);
 
-const exercises = ref([]);
-const loading = ref(false);
+const page = usePage();
+const catalog = computed(() => page.props.exerciseLibrary ?? []);
+
 const activeTab = ref('squat');
 const accessoryLiftFilter = ref('');
 const accessoryEquipmentFilter = ref('');
@@ -23,6 +26,21 @@ const selectorOptions = [
 ];
 
 const isAccessoryTab = computed(() => activeTab.value === 'accessory');
+
+const exercises = computed(() => {
+  if (isAccessoryTab.value) {
+    return filterExerciseCatalog(catalog.value, {
+      category: 'accessory',
+      lift: accessoryLiftFilter.value || null,
+      equipment: accessoryEquipmentFilter.value || null,
+    });
+  }
+
+  return filterExerciseCatalog(catalog.value, {
+    category: 'main_lift',
+    lift: activeTab.value,
+  });
+});
 
 watch(
   () => props.open,
@@ -40,47 +58,8 @@ watch(
       ? props.mainLift
       : '';
     accessoryEquipmentFilter.value = '';
-    fetchExercises();
   },
 );
-
-watch([activeTab, accessoryLiftFilter, accessoryEquipmentFilter], () => {
-  if (props.open) {
-    fetchExercises();
-  }
-});
-
-async function fetchExercises() {
-  loading.value = true;
-
-  try {
-    const params = new URLSearchParams();
-
-    if (isAccessoryTab.value) {
-      params.set('category', 'accessory');
-      if (accessoryLiftFilter.value) {
-        params.set('lift', accessoryLiftFilter.value);
-      }
-      if (accessoryEquipmentFilter.value) {
-        params.set('equipment', accessoryEquipmentFilter.value);
-      }
-    } else {
-      params.set('category', 'main_lift');
-      params.set('lift', activeTab.value);
-    }
-
-    const response = await fetch(`/coach/exercises?${params.toString()}`, {
-      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      credentials: 'same-origin',
-    });
-
-    if (response.ok) {
-      exercises.value = await response.json();
-    }
-  } finally {
-    loading.value = false;
-  }
-}
 
 function selectExercise(exercise, variant = null) {
   emit('select', {
@@ -172,10 +151,8 @@ function close() {
           </label>
         </div>
 
-        <p v-if="loading" class="mt-6 text-center text-sm text-slate-500">Chargement…</p>
-
         <div
-          v-else-if="exercises.length"
+          v-if="exercises.length"
           class="mt-6 grid gap-3 lg:grid-cols-2"
         >
           <section

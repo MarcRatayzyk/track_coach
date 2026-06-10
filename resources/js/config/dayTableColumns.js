@@ -111,6 +111,18 @@ export function normalizeTableLayout(layout) {
   };
 }
 
+const SPACED_COLUMN_WEIGHTS = {
+  exercise: 3.4,
+  main_lift: 1.1,
+  variant: 2.3,
+  section: 0.9,
+  sets: 1.2,
+  reps: 1.2,
+  load: 2.8,
+  rest: 1.0,
+  muscles: 1.3,
+};
+
 export function resolveVisibleColumns(layout) {
   const normalized = normalizeTableLayout(layout);
   const exerciseColumns =
@@ -123,6 +135,17 @@ export function resolveVisibleColumns(layout) {
     .filter(Boolean);
 
   return [...exerciseColumns, ...optionalColumns];
+}
+
+export function spacedColumnPercent(columnId, visibleColumns) {
+  const columns = Array.isArray(visibleColumns) ? visibleColumns : [];
+  const totalWeight = columns.reduce(
+    (sum, column) => sum + (SPACED_COLUMN_WEIGHTS[column.id] ?? 1),
+    0,
+  );
+  const weight = SPACED_COLUMN_WEIGHTS[columnId] ?? 1;
+
+  return `${((weight / totalWeight) * 100).toFixed(2)}%`;
 }
 
 export function layoutHasPrescriptionColumn(layout) {

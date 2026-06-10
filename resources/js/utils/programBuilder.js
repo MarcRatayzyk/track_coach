@@ -189,9 +189,14 @@ export function emptySessionDay() {
   return {
     lift: 'squat',
     session_label: '',
+    notes: '',
     items: [],
     editingId: null,
   };
+}
+
+export function uppercaseSessionLabel(value) {
+  return (value ?? '').trim().toUpperCase();
 }
 
 export function sessionItemHasContent(item) {
@@ -246,6 +251,21 @@ export function isoWeekdayFromDate(value) {
 
 export function weekdayLabelFromDate(value) {
   return WEEKDAY_LABELS[isoWeekdayFromDate(value) - 1] ?? '';
+}
+
+export function weekdayShortLabel(weekday) {
+  return WEEKDAY_LABELS[weekday - 1] ?? `J${weekday}`;
+}
+
+/** Ex. "Mer · 12 juin" */
+export function columnHeading(dateStart, weekNumber, weekday) {
+  const date = parseYmd(cellDate(dateStart, weekNumber, weekday));
+  if (!date || Number.isNaN(date.getTime())) {
+    return weekdayShortLabel(weekday);
+  }
+
+  const dayMonth = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  return `${weekdayShortLabel(weekday)} · ${dayMonth}`;
 }
 
 export function cellKey(weekNumber, weekday) {
@@ -424,6 +444,7 @@ export function sessionToDay(session) {
     'squat';
 
   day.session_label = session.session_label ?? '';
+  day.notes = session.notes ?? '';
 
   return day;
 }
@@ -503,10 +524,12 @@ export function dayToSessionPayload(day) {
 
   const hasContent = items.length > 0;
   const label = day.session_label?.trim() ?? '';
+  const notes = day.notes?.trim() ?? '';
 
   return {
     main_lift: lift,
     session_label: label !== '' ? label : null,
+    notes: notes !== '' ? notes : null,
     items: hasContent ? items : [],
     blocks: hasContent ? [block] : [],
   };

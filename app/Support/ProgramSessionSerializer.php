@@ -20,6 +20,7 @@ class ProgramSessionSerializer
             'weekday' => $day->day_number,
             'main_lift' => $day->main_lift,
             'session_label' => $day->session_label,
+            'notes' => $day->notes,
             'items' => self::itemsFromExercises($day->exercises),
             'blocks' => self::blocksFromExercises($day->exercises),
         ];

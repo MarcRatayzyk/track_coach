@@ -30,6 +30,7 @@ class ProgramDayExercise extends Model
     ];
 
     protected $casts = [
+        'load' => 'float',
         'rpe' => 'float',
         'load_percent' => 'float',
         'rest_seconds' => 'integer',
