@@ -39,6 +39,7 @@ class AthleteDashboardPresenter
         $activeAssignment = self::activeAssignment($athlete, $date);
         $programBlock = ProgramBlockPresenter::forAssignment($activeAssignment);
         $readiness = AthleteReadinessPresenter::forAthlete($athlete);
+        $bodyWeight = AthleteBodyWeightPresenter::forAthlete($athlete);
 
         $trainingSessions = $athlete->trainingSessions()
             ->orderByDesc('session_date')
@@ -89,6 +90,8 @@ class AthleteDashboardPresenter
             'todayLoggedSession' => $todayLoggedSession,
             'todayReadiness' => $readiness['todayReadiness'],
             'readinessRecent' => $readiness['readinessRecent'],
+            'todayBodyWeight' => $bodyWeight['todayBodyWeight'],
+            'bodyWeightRecent' => $bodyWeight['bodyWeightRecent'],
             'nextCompetition' => self::nextCompetitionPayload($athlete->upcomingCompetition, $date),
             'programBlock' => $programBlock,
             'activeProgram' => self::activeProgramPayload($activeAssignment),

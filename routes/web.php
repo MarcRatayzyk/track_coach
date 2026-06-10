@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Web\AccountSetupController;
 use App\Http\Controllers\Web\AppPageController;
+use App\Http\Controllers\Web\AthleteCompetitionController;
+use App\Http\Controllers\Web\AthleteBodyWeightController;
 use App\Http\Controllers\Web\AthleteReadinessController;
 use App\Http\Controllers\Web\Coach\AthleteDataWebController;
 use App\Http\Controllers\Web\Coach\ExerciseLibraryController;
@@ -55,6 +57,10 @@ Route::middleware('auth')->group(function (): void {
         ->name('athletes.training-sessions.destroy');
     Route::post('/athletes/{athlete}/readiness', [AthleteReadinessController::class, 'store'])
         ->name('athletes.readiness.store');
+    Route::post('/athletes/{athlete}/body-weight', [AthleteBodyWeightController::class, 'store'])
+        ->name('athletes.body-weight.store');
+    Route::patch('/athletes/{athlete}/competitions/{competition}/match-plan', [AthleteCompetitionController::class, 'updateMatchPlan'])
+        ->name('athletes.competitions.match-plan.update');
     Route::post('/athletes/{athlete}/prs', [AthleteDataWebController::class, 'storePr'])
         ->name('athletes.prs.store');
 

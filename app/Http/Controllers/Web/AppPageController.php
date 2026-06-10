@@ -12,6 +12,7 @@ use App\Services\CoachFeedbackMetricsService;
 use App\Models\ProgramTemplate;
 use App\Models\User;
 use App\Support\AthleteDashboardPresenter;
+use App\Support\AthleteBodyWeightPresenter;
 use App\Support\AthleteReadinessPresenter;
 use App\Support\MessagingInboxSupport;
 use App\Support\ChartTemplatePresenter;
@@ -115,11 +116,17 @@ class AppPageController extends Controller
 
         $todayReadiness = null;
         $readinessRecent = [];
+        $todayBodyWeight = null;
+        $bodyWeightRecent = [];
 
         if ($viewer?->id === $athlete->id || $viewer?->role === 'coach') {
             $readiness = AthleteReadinessPresenter::forAthlete($athlete);
             $todayReadiness = $readiness['todayReadiness'];
             $readinessRecent = $readiness['readinessRecent'];
+
+            $bodyWeight = AthleteBodyWeightPresenter::forAthlete($athlete);
+            $todayBodyWeight = $bodyWeight['todayBodyWeight'];
+            $bodyWeightRecent = $bodyWeight['bodyWeightRecent'];
         }
 
         $activeProgram = $athlete->programAssignments()
@@ -149,6 +156,8 @@ class AppPageController extends Controller
             'followUpStartedAt' => $followUpStartedAt,
             'todayReadiness' => $todayReadiness,
             'readinessRecent' => $readinessRecent,
+            'todayBodyWeight' => $todayBodyWeight,
+            'bodyWeightRecent' => $bodyWeightRecent,
         ]);
     }
 

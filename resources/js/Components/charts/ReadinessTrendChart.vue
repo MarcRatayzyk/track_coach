@@ -8,12 +8,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  embedded: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const sortedEntries = computed(() =>
-  [...props.entries]
-    .sort((a, b) => String(a.entry_date).localeCompare(String(b.entry_date)))
-    .slice(-7),
+  [...props.entries].sort((a, b) => String(a.entry_date).localeCompare(String(b.entry_date))),
 );
 
 const chartData = computed(() => {
@@ -89,11 +91,18 @@ const hasData = computed(() => sortedEntries.value.length > 0);
 </script>
 
 <template>
-  <div v-if="hasData" class="h-36 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
-    <p class="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+  <div
+    v-if="hasData"
+    class="rounded-xl border border-slate-800 bg-slate-950/40 p-3"
+    :class="embedded ? 'h-64 p-4' : 'h-36'"
+  >
+    <p
+      v-if="!embedded"
+      class="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
+    >
       Tendance 7 jours
     </p>
-    <div class="h-24">
+    <div :class="embedded ? 'h-52' : 'h-24'">
       <LineChart :chart-data="chartData" :options="chartOptions" />
     </div>
   </div>

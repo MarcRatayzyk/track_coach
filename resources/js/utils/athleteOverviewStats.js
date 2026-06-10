@@ -509,6 +509,84 @@ function buildAdherence(programBlock, trainingSessions = [], oneRm = {}) {
   };
 }
 
+function subtractMonths(date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() - months);
+  return d;
+}
+
+export function filterEntriesByRange(entries = [], dateField = 'entry_date', range = '1m') {
+  if (!entries.length) {
+    return [];
+  }
+
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+
+  let minDate = null;
+  if (range === '7d') {
+    minDate = new Date(today);
+    minDate.setDate(minDate.getDate() - 7);
+  } else if (range === '1m') {
+    minDate = subtractMonths(today, 1);
+  } else if (range === '3m') {
+    minDate = subtractMonths(today, 3);
+  } else if (range === '6m') {
+    minDate = subtractMonths(today, 6);
+  } else if (range === '1y') {
+    minDate = subtractMonths(today, 12);
+  } else {
+    return [...entries];
+  }
+
+  return entries.filter((entry) => {
+    const date = parseIsoDate(entry?.[dateField]);
+    return date && date >= minDate && date <= today;
+  });
+}
+
+function buildTonnageAverages(trainingSessions = [], oneRm = {}, recentDays = 30) {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+
+  const flatItems = flattenTrainingSessions(trainingSessions, oneRm);
+  const sessionIds = new Set();
+  let totalTonnage = 0;
+  let totalSets = 0;
+
+  for (const row of flatItems) {
+    const date = parseIsoDate(row.sessionDate);
+    if (!date) {
+      continue;
+    }
+
+    const daysAgo = diffInDays(date, today);
+    if (daysAgo < 0 || daysAgo >= recentDays) {
+      continue;
+    }
+
+    if (Number.isFinite(row.volume) && row.volume > 0) {
+      totalTonnage += row.volume;
+      if (row.sessionId != null) {
+        sessionIds.add(row.sessionId);
+      }
+    }
+
+    const sets = Number(row.line?.sets ?? 0);
+    if (Number.isFinite(sets) && sets > 0 && row.loadKg != null) {
+      totalSets += sets;
+    }
+  }
+
+  const sessionCount = sessionIds.size;
+
+  return {
+    averageSessionTonnage:
+      sessionCount > 0 ? Math.round(totalTonnage / sessionCount) : null,
+    averageSetTonnage: totalSets > 0 ? Math.round(totalTonnage / totalSets) : null,
+  };
+}
+
 export function buildAthleteOverviewStats({
   trainingSessions = [],
   programBlock = null,
@@ -518,12 +596,14 @@ export function buildAthleteOverviewStats({
   const weeklyTonnage = buildWeeklyTonnage(flatItems);
   const recentActivity = buildRecentActivity(trainingSessions, flatItems);
   const adherence = buildAdherence(programBlock, trainingSessions, oneRm);
+  const tonnageAverages = buildTonnageAverages(trainingSessions, oneRm);
 
   return {
     flatItems,
     weeklyTonnage,
     sessionCount7d: countSessionsWithinDays(trainingSessions, 7),
     sessionCount30d: countSessionsWithinDays(trainingSessions, 30),
+    tonnageAverages,
     distribution30d: buildDistribution(flatItems, 30),
     recentActivity,
     adherence,

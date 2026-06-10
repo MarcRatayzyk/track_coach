@@ -37,4 +37,9 @@ class AthletePolicy
     {
         return $user->id === $athlete->id && $athlete->role === 'athlete';
     }
+
+    public function proposeCompetitionMatchPlan(User $user, User $athlete): bool
+    {
+        return $user->id === $athlete->id && $athlete->role === 'athlete';
+    }
 }

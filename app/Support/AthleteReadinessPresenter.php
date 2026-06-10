@@ -13,7 +13,7 @@ class AthleteReadinessPresenter
      *     readinessRecent: list<array<string, mixed>>,
      * }
      */
-    public static function forAthlete(User $athlete, int $recentDays = 7): array
+    public static function forAthlete(User $athlete, int $recentDays = 365): array
     {
         $today = now()->toDateString();
         $readinessStart = now()->copy()->subDays($recentDays)->toDateString();

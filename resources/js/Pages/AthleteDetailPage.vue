@@ -9,7 +9,6 @@ export default {
 <script setup>
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
-import AthletePrForm from '../Components/AthletePrForm.vue';
 import AthleteProfileOverview from '../Components/AthleteProfileOverview.vue';
 import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
 import AthleteStatsOverview from '../Components/AthleteStatsOverview.vue';
@@ -57,6 +56,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  todayBodyWeight: {
+    type: Object,
+    default: null,
+  },
+  bodyWeightRecent: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -67,11 +74,11 @@ const canManageSessions = computed(
 const canLogReadiness = computed(
   () => !isCoach.value && page.props.auth?.user?.id === props.athlete.id,
 );
-const canManageOfficialPr = computed(
-  () => isCoach.value || page.props.auth?.user?.id === props.athlete.id,
+const canProposeMatchPlan = computed(
+  () => !isCoach.value && page.props.auth?.user?.id === props.athlete.id,
 );
-const showPrForm = ref(false);
 const readinessRecent = computed(() => props.readinessRecent ?? []);
+const bodyWeightRecent = computed(() => props.bodyWeightRecent ?? []);
 const todayReadiness = computed(() => props.todayReadiness);
 const showReadinessSection = computed(() => isCoach.value);
 
@@ -88,8 +95,9 @@ const compForm = useForm({
 
 const showCompModal = ref(false);
 const editingComp = ref(false);
+const editingMatchPlan = ref(false);
+const addingCompetition = ref(false);
 const selectedCompetition = ref(null);
-const showAddCompetitionForm = ref(false);
 const sessionModalOpen = ref(false);
 const editingSession = ref(null);
 const selectedSessionDay = ref(null);
@@ -103,6 +111,10 @@ const editCompForm = useForm({
   match_plan_data: defaultStructuredPlan(),
 });
 
+const matchPlanForm = useForm({
+  match_plan_data: defaultStructuredPlan(),
+});
+
 function compDateKey(comp) {
   const s = String(comp.competition_date ?? '');
   const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
@@ -113,9 +125,41 @@ const upcomingCompetitions = computed(() =>
   (props.athlete.competitions ?? []).filter((c) => compDateKey(c) >= today),
 );
 
-const pastCompetitions = computed(() =>
-  (props.athlete.competitions ?? []).filter((c) => compDateKey(c) < today),
-);
+const nextCompetition = computed(() => {
+  const upcoming = [...upcomingCompetitions.value].sort((a, b) =>
+    compDateKey(a).localeCompare(compDateKey(b)),
+  );
+
+  if (!upcoming.length) {
+    return null;
+  }
+
+  const comp = upcoming[0];
+  const compDate = new Date(compDateKey(comp));
+  compDate.setHours(12, 0, 0, 0);
+  const todayDate = new Date(today);
+  todayDate.setHours(12, 0, 0, 0);
+  const daysUntil = Math.floor((compDate.getTime() - todayDate.getTime()) / (24 * 60 * 60 * 1000));
+
+  return {
+    ...comp,
+    days_until: daysUntil,
+  };
+});
+
+function isUpcomingCompetition(comp) {
+  return compDateKey(comp) >= today;
+}
+
+function competitionHasMatchPlan(comp) {
+  if (!comp) {
+    return false;
+  }
+  if (String(comp.match_plan ?? '').trim()) {
+    return true;
+  }
+  return Boolean(comp.match_plan_data?.scenarios?.length);
+}
 
 function competitionForPanel(comp) {
   return {
@@ -128,6 +172,19 @@ function competitionForPanel(comp) {
 function openCompetition(comp) {
   selectedCompetition.value = competitionForPanel(comp);
   editingComp.value = false;
+  editingMatchPlan.value = false;
+  addingCompetition.value = false;
+  showCompModal.value = true;
+}
+
+function openAddCompetitionModal() {
+  selectedCompetition.value = null;
+  editingComp.value = false;
+  editingMatchPlan.value = false;
+  addingCompetition.value = true;
+  compForm.reset();
+  compForm.competition_date = today;
+  compForm.match_plan_data = defaultStructuredPlan();
   showCompModal.value = true;
 }
 
@@ -161,7 +218,39 @@ function maybeOpenCompetitionFromQuery() {
 function closeCompModal() {
   showCompModal.value = false;
   editingComp.value = false;
+  editingMatchPlan.value = false;
+  addingCompetition.value = false;
   selectedCompetition.value = null;
+}
+
+function startEditMatchPlan() {
+  if (!selectedCompetition.value) {
+    return;
+  }
+  matchPlanForm.match_plan_data = matchPlanFromCompetition(selectedCompetition.value);
+  editingMatchPlan.value = true;
+}
+
+function cancelEditMatchPlan() {
+  editingMatchPlan.value = false;
+  matchPlanForm.reset();
+}
+
+function submitMatchPlan() {
+  if (!selectedCompetition.value) {
+    return;
+  }
+
+  matchPlanForm.patch(
+    `/athletes/${props.athlete.id}/competitions/${selectedCompetition.value.id}/match-plan`,
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        editingMatchPlan.value = false;
+        closeCompModal();
+      },
+    },
+  );
 }
 
 function startEditCompetition() {
@@ -425,7 +514,7 @@ function submitComp() {
       compForm.reset();
       compForm.competition_date = today;
       compForm.match_plan_data = defaultStructuredPlan();
-      showAddCompetitionForm.value = false;
+      closeCompModal();
     },
   });
 }
@@ -577,16 +666,14 @@ onMounted(() => {
     <div class="mt-10">
       <AthleteProfileOverview
         :weight-class="athlete.profile?.weight_class ?? '—'"
-        :feedback-label="feedbackLabels[athlete.profile?.feedback_frequency] ?? 'Hebdomadaire'"
-        :is-coach="isCoach"
-        :feedback-processing="profileForm.processing"
-        :next-feedback-button-label="nextFeedbackButtonLabel"
         :practice-duration-label="practiceDurationLabel"
-        :follow-up-started-at-label="followUpStartedAtLabel"
         :latest-competition-date-label="latestCompetitionDateLabel"
         :latest-competition-bars="latestCompetitionBars"
         :training-prs="trainingPrs"
-        @toggle-feedback="toggleFeedbackFrequency"
+        :next-competition="nextCompetition"
+        :is-coach="isCoach"
+        @open-competition="openCompetition"
+        @add-competition="openAddCompetitionModal"
       />
 
       <div class="mt-5">
@@ -594,6 +681,8 @@ onMounted(() => {
           :stats="overviewStats"
           :has-active-program="Boolean(programBlock)"
           :pr-records="filteredPrRecords"
+          :readiness-recent="readinessRecent"
+          :body-weight-recent="bodyWeightRecent"
           :time-range="timeRange"
           :time-range-options="timeRangeOptions"
           @update:time-range="timeRange = $event"
@@ -764,150 +853,9 @@ onMounted(() => {
       />
     </section>
 
-    <section class="mt-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="text-sm font-semibold text-white">Progression des PR officiels</h2>
-          <p v-if="latestOfficialPr" class="mt-1 text-xs text-slate-500">
-            Actuel — S {{ latestOfficialPr.squat }} · B {{ latestOfficialPr.bench }} · D
-            {{ latestOfficialPr.deadlift }} kg
-          </p>
-        </div>
-        <button
-          v-if="canManageOfficialPr"
-          type="button"
-          class="rounded-xl border border-blue-500/50 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/10"
-          @click="showPrForm = !showPrForm"
-        >
-          {{ showPrForm ? 'Fermer' : isCoach ? 'Ajouter un PR' : 'Mettre à jour mes PR' }}
-        </button>
-      </div>
-
-      <AthletePrForm
-        v-if="showPrForm && canManageOfficialPr"
-        class="mt-4"
-        :athlete-id="athlete.id"
-        :latest-pr="latestOfficialPr"
-        title="Nouveau PR officiel"
-        description="Ajoute une nouvelle entrée pour mettre à jour tes records (squat, bench, terre)."
-      />
-
-    </section>
-
-    <section class="mt-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-sm font-semibold text-white">Compétitions</h2>
-        <button
-          v-if="isCoach"
-          type="button"
-          class="rounded-xl border border-blue-500/50 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/10"
-          @click="showAddCompetitionForm = !showAddCompetitionForm"
-        >
-          {{ showAddCompetitionForm ? 'Fermer' : 'Ajouter compétition' }}
-        </button>
-      </div>
-
-      <div v-if="upcomingCompetitions.length" class="mt-4">
-        <p class="text-xs font-medium uppercase tracking-wide text-rose-400/90">À venir</p>
-        <ul class="mt-2 space-y-2">
-          <li v-for="comp in upcomingCompetitions" :key="comp.id">
-            <button
-              type="button"
-              class="w-full rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-left transition hover:border-rose-500/40 hover:bg-slate-800/50"
-              @click="openCompetition(comp)"
-            >
-              <span class="font-medium text-white">{{ comp.name }}</span>
-              <span class="text-slate-500">
-                — {{ formatCalendarFr(comp.competition_date, 'medium') }}
-              </span>
-              <p v-if="comp.location" class="mt-1 text-xs text-slate-400">{{ comp.location }}</p>
-            </button>
-          </li>
-        </ul>
-      </div>
-
-      <div v-if="pastCompetitions.length" class="mt-6">
-        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Passées</p>
-        <ul class="mt-2 space-y-2">
-          <li v-for="comp in pastCompetitions" :key="comp.id">
-            <button
-              type="button"
-              class="w-full rounded-xl border border-slate-800/80 px-4 py-3 text-left text-slate-400 transition hover:border-slate-600 hover:bg-slate-800/30"
-              @click="openCompetition(comp)"
-            >
-              <span class="font-medium text-slate-300">{{ comp.name }}</span>
-              <span class="text-slate-500">
-                — {{ formatCalendarFr(comp.competition_date, 'medium') }}
-              </span>
-            </button>
-          </li>
-        </ul>
-      </div>
-
-      <p
-        v-if="!upcomingCompetitions.length && !pastCompetitions.length"
-        class="mt-4 text-slate-500"
-      >
-        Aucune compétition planifiée.
-      </p>
-      <form
-        v-if="isCoach && showAddCompetitionForm"
-        class="mt-6 space-y-5 rounded-2xl border border-slate-800 bg-slate-950/40 p-4"
-        @submit.prevent="submitComp"
-      >
-        <h3 class="text-sm font-semibold text-white">Ajouter une compétition</h3>
-        <label class="block text-base text-slate-400 ">
-          Nom
-          <input
-            v-model="compForm.name"
-            type="text"
-            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-          />
-        </label>
-        <label class="block text-base text-slate-400 ">
-          Date
-          <input
-            v-model="compForm.competition_date"
-            type="date"
-            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-          />
-        </label>
-        <label class="block text-base text-slate-400 ">
-          Lieu (optionnel)
-          <input
-            v-model="compForm.location"
-            type="text"
-            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-          />
-        </label>
-        <label class="block text-base text-slate-400 ">
-          Objectif (optionnel)
-          <input
-            v-model="compForm.goal"
-            type="text"
-            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-          />
-        </label>
-        <div class="block text-base text-slate-400">
-          <span class="block">Plan de match (optionnel)</span>
-          <MatchPlanBuilder v-model="compForm.match_plan_data" class="mt-3" />
-        </div>
-        <p v-if="Object.keys(compForm.errors).length" class="text-sm text-red-400">
-          {{ Object.values(compForm.errors).flat().join(' ') }}
-        </p>
-        <button
-          type="submit"
-          :disabled="compForm.processing"
-          class="rounded-xl bg-blue-600 px-8 py-4 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 disabled:opacity-50"
-        >
-          Enregistrer
-        </button>
-      </form>
-    </section>
-
     <Teleport to="body">
       <div
-        v-if="showCompModal && selectedCompetition"
+        v-if="showCompModal && (selectedCompetition || addingCompetition)"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
         role="dialog"
         aria-modal="true"
@@ -918,7 +866,9 @@ onMounted(() => {
           @click.stop
         >
           <div class="flex items-start justify-between gap-4">
-            <h2 class="text-base font-semibold text-white">Détail compétition</h2>
+            <h2 class="text-base font-semibold text-white">
+              {{ addingCompetition ? 'Ajouter une compétition' : 'Détail compétition' }}
+            </h2>
             <button
               type="button"
               class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
@@ -930,7 +880,71 @@ onMounted(() => {
           </div>
 
           <form
-            v-if="editingComp && isCoach"
+            v-if="addingCompetition && isCoach"
+            class="mt-4 space-y-4"
+            @submit.prevent="submitComp"
+          >
+            <label class="block text-sm text-slate-400">
+              Nom
+              <input
+                v-model="compForm.name"
+                type="text"
+                required
+                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+              />
+            </label>
+            <label class="block text-sm text-slate-400">
+              Date
+              <input
+                v-model="compForm.competition_date"
+                type="date"
+                required
+                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+              />
+            </label>
+            <label class="block text-sm text-slate-400">
+              Lieu
+              <input
+                v-model="compForm.location"
+                type="text"
+                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+              />
+            </label>
+            <label class="block text-sm text-slate-400">
+              Objectif
+              <input
+                v-model="compForm.goal"
+                type="text"
+                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+              />
+            </label>
+            <div class="block text-sm text-slate-400">
+              <span class="block">Plan de match (optionnel)</span>
+              <MatchPlanBuilder v-model="compForm.match_plan_data" class="mt-3" />
+            </div>
+            <p v-if="Object.keys(compForm.errors).length" class="text-sm text-red-400">
+              {{ Object.values(compForm.errors).flat().join(' ') }}
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <button
+                type="button"
+                class="rounded-xl border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+                @click="closeCompModal"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                :disabled="compForm.processing"
+                class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+              >
+                Enregistrer
+              </button>
+            </div>
+          </form>
+
+          <form
+            v-else-if="editingComp && isCoach"
             class="mt-4 space-y-4"
             @submit.prevent="submitEditCompetition"
           >
@@ -1001,8 +1015,46 @@ onMounted(() => {
             </div>
           </form>
 
+          <form
+            v-else-if="editingMatchPlan && canProposeMatchPlan"
+            class="mt-4 space-y-4"
+            @submit.prevent="submitMatchPlan"
+          >
+            <p class="text-sm text-slate-400">
+              Propose tes barres visées pour {{ selectedCompetition.name }}.
+            </p>
+            <MatchPlanBuilder v-model="matchPlanForm.match_plan_data" />
+            <p v-if="Object.keys(matchPlanForm.errors).length" class="text-sm text-red-400">
+              {{ Object.values(matchPlanForm.errors).flat().join(' ') }}
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <button
+                type="button"
+                class="rounded-xl border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+                @click="cancelEditMatchPlan"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                :disabled="matchPlanForm.processing"
+                class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+              >
+                Enregistrer le plan
+              </button>
+            </div>
+          </form>
+
           <template v-else>
             <CompetitionDetailPanel :competition="selectedCompetition" class="mt-4" />
+            <button
+              v-if="canProposeMatchPlan && isUpcomingCompetition(selectedCompetition)"
+              type="button"
+              class="mt-6 rounded-xl border border-blue-500/50 bg-blue-600/15 px-4 py-2 text-sm font-semibold text-blue-200 hover:bg-blue-600/25"
+              @click="startEditMatchPlan"
+            >
+              {{ competitionHasMatchPlan(selectedCompetition) ? 'Mettre à jour mon plan' : 'Proposer mon plan de match' }}
+            </button>
             <button
               v-if="isCoach"
               type="button"

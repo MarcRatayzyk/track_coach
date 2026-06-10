@@ -1,6 +1,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { filterEntriesByRange } from '../utils/athleteOverviewStats';
 import { formatCalendarFr } from '../utils/formatDates';
 import { BLOCK_TYPES } from '../utils/programBuilder';
 import {
@@ -88,7 +89,7 @@ const competitionCountdown = computed(() => {
 });
 
 const readinessAverage7d = computed(() => {
-  const scores = props.readinessRecent
+  const scores = filterEntriesByRange(props.readinessRecent, 'entry_date', '7d')
     .map((entry) => Number(entry.score))
     .filter((score) => Number.isFinite(score));
 
