@@ -10,6 +10,7 @@ import {
   spacedColumnPercent,
 } from '../config/dayTableColumns';
 import { programSessionVisitOptions } from '../utils/programBuilderVisit';
+import { useTableRowEditor } from '../composables/useTableRowEditor';
 
 const props = defineProps({
   assignmentId: {
@@ -72,6 +73,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['copy-session', 'paste-session', 'delete-session', 'drag-start', 'drag-end']);
+
+const tableRowEditor = useTableRowEditor();
+const rowEditorEnabled = computed(() => props.builderTab === 'table_v2' && Boolean(tableRowEditor));
 
 let nextRowId = 1;
 
@@ -179,8 +183,28 @@ function addRow() {
   rows.value.push(makeRow());
 }
 
+function syncEditorRowReference(index) {
+  if (!rowEditorEnabled.value) {
+    return;
+  }
+
+  const state = tableRowEditor.state;
+  const updatedRow = rows.value[index];
+
+  if (
+    state.weekNumber === props.weekNumber &&
+    state.weekday === props.weekday &&
+    updatedRow &&
+    (state.rowIndex === index || state.row?.id === updatedRow.id)
+  ) {
+    state.rowIndex = index;
+    state.row = updatedRow;
+  }
+}
+
 function updateRow(index, value) {
   rows.value.splice(index, 1, value);
+  syncEditorRowReference(index);
 }
 
 function removeRow(index) {
@@ -257,6 +281,42 @@ function saveInstructions({ sessionLabel: label, sessionNotes: notes }) {
   sessionNotes.value = notes;
   saveSession();
   closeInstructionsModal();
+}
+
+const selectedRowId = computed(() => {
+  if (!rowEditorEnabled.value) {
+    return null;
+  }
+
+  const state = tableRowEditor.state;
+
+  if (
+    state.weekNumber === props.weekNumber &&
+    state.weekday === props.weekday &&
+    state.row?.id != null
+  ) {
+    return state.row.id;
+  }
+
+  return null;
+});
+
+function selectRow(index) {
+  if (!rowEditorEnabled.value) {
+    return;
+  }
+
+  const row = rows.value[index];
+
+  tableRowEditor.selectRow({
+    weekNumber: props.weekNumber,
+    weekday: props.weekday,
+    rowIndex: index,
+    row,
+    sessionHeading: sessionHeading.value,
+    defaultLift: primaryLift.value,
+    onUpdate: (value) => updateRow(index, value),
+  });
 }
 </script>
 
@@ -376,8 +436,11 @@ function saveInstructions({ sessionLabel: label, sessionNotes: notes }) {
             :layout-variant="layoutVariant"
             :default-lift="primaryLift"
             :removable="rows.length > 1"
+            :selectable="rowEditorEnabled"
+            :selected="selectedRowId === row.id"
             @update="updateRow(index, $event)"
             @remove="removeRow(index)"
+            @select="selectRow(index)"
           />
         </tbody>
       </table>

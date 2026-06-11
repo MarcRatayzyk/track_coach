@@ -110,11 +110,10 @@ function deleteSession() {
     return;
   }
 
+  form.week_number = props.selectedCell.weekNumber;
+  form.weekday = props.selectedCell.weekday;
+
   form.delete(`/coach/program-blocks/${props.activeBlock.id}/sessions`, {
-    data: {
-      week_number: props.selectedCell.weekNumber,
-      weekday: props.selectedCell.weekday,
-    },
     preserveScroll: true,
     onSuccess: () => emit('cleared'),
   });

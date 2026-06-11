@@ -3,11 +3,18 @@ import { cellKey, sessionToDay } from './programBuilder';
 export const DEFAULT_INCREMENT_SECTIONS = ['topset', 'backoff', 'accessory'];
 export const DEFAULT_INCREMENT_LIFTS = ['squat', 'bench', 'deadlift'];
 
+export function defaultIncrementsByLift() {
+  return Object.fromEntries(
+    DEFAULT_INCREMENT_LIFTS.map((lift) => [lift, { kg: 0, percent: 0, rpe: 0 }]),
+  );
+}
+
 export function defaultIncrementOptions() {
   return {
     incrementKg: 0,
     incrementPercent: 0,
     incrementRpe: 0,
+    incrementsByLift: defaultIncrementsByLift(),
     sections: [...DEFAULT_INCREMENT_SECTIONS],
     lifts: [...DEFAULT_INCREMENT_LIFTS],
     exerciseNames: [],
@@ -186,23 +193,34 @@ export function itemMatchesIncrementFilters(item, filters) {
   return true;
 }
 
+function resolveIncrementsForLift(options, lift) {
+  const byLift = options.incrementsByLift?.[lift];
+
+  return {
+    kg: byLift?.kg ?? options.incrementKg ?? 0,
+    percent: byLift?.percent ?? options.incrementPercent ?? 0,
+    rpe: byLift?.rpe ?? options.incrementRpe ?? 0,
+  };
+}
+
 function incrementClipboardItem(item, options) {
   if (!itemMatchesIncrementFilters(item, options)) {
     return { ...item };
   }
 
   const next = { ...item };
+  const { kg, percent, rpe } = resolveIncrementsForLift(options, item.lift);
 
-  if (options.incrementKg !== 0 && hasNumericValue(item.load)) {
-    next.load = roundLoad(Number(item.load) + options.incrementKg);
+  if (kg !== 0 && hasNumericValue(item.load)) {
+    next.load = roundLoad(Number(item.load) + kg);
   }
 
-  if (options.incrementPercent !== 0 && hasNumericValue(item.load_percent)) {
-    next.load_percent = roundPercent(Number(item.load_percent) + options.incrementPercent);
+  if (percent !== 0 && hasNumericValue(item.load_percent)) {
+    next.load_percent = roundPercent(Number(item.load_percent) + percent);
   }
 
-  if (options.incrementRpe !== 0 && hasNumericValue(item.rpe)) {
-    next.rpe = roundRpe(Number(item.rpe) + options.incrementRpe);
+  if (rpe !== 0 && hasNumericValue(item.rpe)) {
+    next.rpe = roundRpe(Number(item.rpe) + rpe);
   }
 
   return next;

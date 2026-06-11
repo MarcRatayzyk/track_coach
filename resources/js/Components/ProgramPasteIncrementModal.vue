@@ -1,10 +1,11 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { MAIN_LIFTS, uppercaseSessionLabel } from '../utils/programBuilder';
 import { PROGRAM_TABLE_SECTIONS } from '../config/programTableSections';
 import {
   DEFAULT_INCREMENT_LIFTS,
   DEFAULT_INCREMENT_SECTIONS,
+  defaultIncrementsByLift,
 } from '../utils/programBuilderClipboard';
 
 const props = defineProps({
@@ -41,9 +42,7 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm', 'cancel']);
 
-const incrementKg = ref('0');
-const incrementPercent = ref('0');
-const incrementRpe = ref('0');
+const incrementsByLift = ref(defaultIncrementsByLift());
 const sessionLabel = ref('');
 const sessionNotes = ref('');
 const selectedSections = ref([...DEFAULT_INCREMENT_SECTIONS]);
@@ -51,10 +50,25 @@ const selectedLifts = ref([...DEFAULT_INCREMENT_LIFTS]);
 const selectedExercises = ref([]);
 const errorMessage = ref('');
 
+const visibleLifts = computed(() =>
+  MAIN_LIFTS.filter((lift) => selectedLifts.value.includes(lift.value)),
+);
+
+function createEmptyIncrementsByLift() {
+  return Object.fromEntries(
+    DEFAULT_INCREMENT_LIFTS.map((lift) => [
+      lift,
+      {
+        kg: '0',
+        percent: '0',
+        rpe: '0',
+      },
+    ]),
+  );
+}
+
 function resetForm() {
-  incrementKg.value = '0';
-  incrementPercent.value = '0';
-  incrementRpe.value = '0';
+  incrementsByLift.value = createEmptyIncrementsByLift();
   sessionLabel.value = uppercaseSessionLabel(props.defaultSessionLabel);
   sessionNotes.value = props.defaultSessionNotes;
   selectedSections.value = [...DEFAULT_INCREMENT_SECTIONS];
@@ -105,13 +119,24 @@ function onSessionLabelInput(event) {
 }
 
 function onConfirm() {
-  const kg = parseIncrementValue(incrementKg.value);
-  const percent = parseIncrementValue(incrementPercent.value);
-  const rpe = parseIncrementValue(incrementRpe.value);
+  const parsedIncrementsByLift = {};
 
-  if (kg === null || percent === null || rpe === null) {
-    errorMessage.value = 'Entre des nombres valides, par exemple 0, 2.5 ou -2.5.';
-    return;
+  for (const lift of selectedLifts.value) {
+    const raw = incrementsByLift.value[lift];
+    if (!raw) {
+      continue;
+    }
+
+    const kg = parseIncrementValue(raw.kg);
+    const percent = parseIncrementValue(raw.percent);
+    const rpe = parseIncrementValue(raw.rpe);
+
+    if (kg === null || percent === null || rpe === null) {
+      errorMessage.value = 'Entre des nombres valides, par exemple 0, 2.5 ou -2.5.';
+      return;
+    }
+
+    parsedIncrementsByLift[lift] = { kg, percent, rpe };
   }
 
   if (selectedSections.value.length === 0) {
@@ -131,9 +156,7 @@ function onConfirm() {
 
   errorMessage.value = '';
   emit('confirm', {
-    incrementKg: kg,
-    incrementPercent: percent,
-    incrementRpe: rpe,
+    incrementsByLift: parsedIncrementsByLift,
     sections: [...selectedSections.value],
     lifts: [...selectedLifts.value],
     exerciseNames: [...selectedExercises.value],
@@ -155,9 +178,9 @@ function onCancel() {
       @click.self="onCancel"
     >
       <div
-        class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl"
+        class="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
       >
-        <div class="flex items-start justify-between gap-3">
+        <div class="flex shrink-0 items-start justify-between gap-3 border-b border-slate-800 px-5 py-4">
           <div>
             <h3 class="text-sm font-semibold text-white">{{ title }}</h3>
             <p v-if="hint" class="mt-1 text-xs text-slate-500">
@@ -173,7 +196,8 @@ function onCancel() {
           </button>
         </div>
 
-        <label v-if="pasteKind === 'session'" class="mt-4 block text-xs text-slate-500">
+        <div class="tc-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4">
+        <label v-if="pasteKind === 'session'" class="block text-xs text-slate-500">
           Titre de la séance
           <input
             :value="sessionLabel"
@@ -196,40 +220,69 @@ function onCancel() {
           />
         </label>
 
-        <div class="mt-4 grid gap-3 sm:grid-cols-3">
-          <label class="block text-xs text-slate-500">
-            Incrément kg
-            <input
-              v-model="incrementKg"
-              type="text"
-              inputmode="decimal"
-              placeholder="0"
-              class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
-              @keydown.enter.prevent="onConfirm"
-            />
-          </label>
-          <label class="block text-xs text-slate-500">
-            Incrément %
-            <input
-              v-model="incrementPercent"
-              type="text"
-              inputmode="decimal"
-              placeholder="0"
-              class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
-              @keydown.enter.prevent="onConfirm"
-            />
-          </label>
-          <label class="block text-xs text-slate-500">
-            Incrément RPE
-            <input
-              v-model="incrementRpe"
-              type="text"
-              inputmode="decimal"
-              placeholder="0"
-              class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
-              @keydown.enter.prevent="onConfirm"
-            />
-          </label>
+        <fieldset class="mt-4">
+          <legend class="text-xs font-medium text-slate-400">Mouvement</legend>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <label
+              v-for="lift in MAIN_LIFTS"
+              :key="lift.value"
+              class="flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-700 px-2.5 py-1.5 text-xs text-slate-300"
+            >
+              <input
+                type="checkbox"
+                class="rounded border-slate-600"
+                :checked="selectedLifts.includes(lift.value)"
+                @change="selectedLifts = toggleValue(selectedLifts, lift.value)"
+              />
+              {{ lift.label }}
+            </label>
+          </div>
+        </fieldset>
+
+        <div v-if="visibleLifts.length > 0" class="mt-4 space-y-3">
+          <p class="text-xs font-medium text-slate-400">Incréments par mouvement</p>
+          <div
+            v-for="lift in visibleLifts"
+            :key="lift.value"
+            class="rounded-lg border border-slate-800 bg-slate-950/50 p-3"
+          >
+            <p class="text-xs font-medium text-slate-300">{{ lift.label }}</p>
+            <div class="mt-2 grid gap-3 sm:grid-cols-3">
+              <label class="block text-xs text-slate-500">
+                Incrément kg
+                <input
+                  v-model="incrementsByLift[lift.value].kg"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                  @keydown.enter.prevent="onConfirm"
+                />
+              </label>
+              <label class="block text-xs text-slate-500">
+                Incrément %
+                <input
+                  v-model="incrementsByLift[lift.value].percent"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                  @keydown.enter.prevent="onConfirm"
+                />
+              </label>
+              <label class="block text-xs text-slate-500">
+                Incrément RPE
+                <input
+                  v-model="incrementsByLift[lift.value].rpe"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0"
+                  class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                  @keydown.enter.prevent="onConfirm"
+                />
+              </label>
+            </div>
+          </div>
         </div>
 
         <fieldset class="mt-4">
@@ -251,28 +304,9 @@ function onCancel() {
           </div>
         </fieldset>
 
-        <fieldset class="mt-4">
-          <legend class="text-xs font-medium text-slate-400">Mouvement</legend>
-          <div class="mt-2 flex flex-wrap gap-2">
-            <label
-              v-for="lift in MAIN_LIFTS"
-              :key="lift.value"
-              class="flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-700 px-2.5 py-1.5 text-xs text-slate-300"
-            >
-              <input
-                type="checkbox"
-                class="rounded border-slate-600"
-                :checked="selectedLifts.includes(lift.value)"
-                @change="selectedLifts = toggleValue(selectedLifts, lift.value)"
-              />
-              {{ lift.label }}
-            </label>
-          </div>
-        </fieldset>
-
         <fieldset v-if="exerciseNames.length > 0" class="mt-4">
           <legend class="text-xs font-medium text-slate-400">Exercice</legend>
-          <div class="mt-2 max-h-32 space-y-1 overflow-y-auto rounded-lg border border-slate-800 p-2">
+          <div class="tc-scrollbar tc-scrollbar-thin mt-2 max-h-32 space-y-1 overflow-y-auto rounded-lg border border-slate-800 p-2 pr-1">
             <label
               v-for="name in exerciseNames"
               :key="name"
@@ -292,8 +326,9 @@ function onCancel() {
         <p v-if="errorMessage" class="mt-3 text-xs text-red-400">
           {{ errorMessage }}
         </p>
+        </div>
 
-        <div class="mt-5 flex justify-end gap-2">
+        <div class="flex shrink-0 justify-end gap-2 border-t border-slate-800 px-5 py-4">
           <button
             type="button"
             class="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"

@@ -1,7 +1,9 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import ProgramPasteIncrementModal from './ProgramPasteIncrementModal.vue';
+import ProgramTableRowEditorPanel from './ProgramTableRowEditorPanel.vue';
 import ProgramTableWeekSection from './ProgramTableWeekSection.vue';
+import { provideTableRowEditor } from '../composables/useTableRowEditor';
 import { useProgramTableBuilder } from '../composables/useProgramTableBuilder';
 
 const props = defineProps({
@@ -89,10 +91,17 @@ watch(selectedWeek, (week) => {
 });
 
 const activeWeekNumber = computed(() => selectedWeek.value);
+
+const { clearSelection } = provideTableRowEditor();
+
+watch(selectedWeek, () => {
+  clearSelection();
+});
 </script>
 
 <template>
-  <section class="space-y-6 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
+  <div class="flex items-start gap-4">
+  <section class="min-w-0 flex-1 space-y-6 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 class="text-lg font-semibold text-white">Builder tableur V2</h2>
@@ -171,6 +180,11 @@ const activeWeekNumber = computed(() => selectedWeek.value);
       @cancel="closeIncrementModal"
     />
   </section>
+
+  <div class="sticky top-4 hidden shrink-0 self-start lg:block">
+    <ProgramTableRowEditorPanel />
+  </div>
+  </div>
 </template>
 
 <style>

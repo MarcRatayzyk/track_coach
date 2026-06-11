@@ -51,6 +51,30 @@ body {
     background: linear-gradient(180deg, rgba(253, 186, 116, 0.85), rgba(249, 115, 22, 0.65));
 }
 
+.tc-scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(71, 85, 105, 0.65) transparent;
+}
+
+.tc-scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.tc-scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 9999px;
+}
+
+.tc-scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(71, 85, 105, 0.75);
+    border-radius: 9999px;
+}
+
+.tc-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.9);
+}
+
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
     -webkit-appearance: none;

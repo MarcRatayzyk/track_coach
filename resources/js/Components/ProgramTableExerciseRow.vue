@@ -26,9 +26,17 @@ const props = defineProps({
     default: 'stacked',
     validator: (value) => ['stacked', 'spaced'].includes(value),
   },
+  selectable: {
+    type: Boolean,
+    default: false,
+  },
+  selected: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(['update', 'remove']);
+const emit = defineEmits(['update', 'remove', 'select']);
 
 const normalizedLayout = computed(() => normalizeTableLayout(props.tableLayout));
 const visibleColumns = computed(() => resolveVisibleColumns(normalizedLayout.value));
@@ -37,10 +45,30 @@ const rowBackgroundClass = computed(() => sectionRowClass(props.row.section ?? '
 function updateRow(value) {
   emit('update', value);
 }
+
+function onRowClick(event) {
+  if (!props.selectable) {
+    return;
+  }
+
+  if (event.target.closest('input, button, select, textarea, a, [role="button"]')) {
+    return;
+  }
+
+  emit('select');
+}
 </script>
 
 <template>
-  <tr class="align-top transition-colors" :class="rowBackgroundClass">
+  <tr
+    class="align-top transition-colors"
+    :class="[
+      rowBackgroundClass,
+      selectable ? 'cursor-pointer' : '',
+      selected ? 'ring-2 ring-inset ring-blue-400' : '',
+    ]"
+    @click="onRowClick"
+  >
     <td
       v-for="(column, index) in visibleColumns"
       :key="column.id"

@@ -164,8 +164,6 @@ const pendingPasteAction = ref(null);
 
 const showCalendar = computed(() => Boolean(props.activeBlock));
 
-
-
 const isAssigned = computed(() => props.activeBlock?.status === 'active');
 
 const athletePrSummary = computed(() => {
@@ -845,56 +843,56 @@ function clearClipboard() {
 
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
       <div class="flex gap-2">
-      <button
-        type="button"
-        class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
-        :class="
-          activeTab === 'calendar'
-            ? 'border-blue-500 text-blue-300'
-            : 'border-transparent text-slate-400 hover:text-white'
-        "
-        @click="activeTab = 'calendar'"
-      >
-        Calendrier
-      </button>
-      <button
-        type="button"
-        class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
-        :class="
-          activeTab === 'table'
-            ? 'border-blue-500 text-blue-300'
-            : 'border-transparent text-slate-400 hover:text-white'
-        "
-        @click="activeTab = 'table'"
-      >
-        Tableur
-      </button>
-      <button
-        v-if="showCalendar"
-        type="button"
-        class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
-        :class="
-          activeTab === 'table_v2'
-            ? 'border-blue-500 text-blue-300'
-            : 'border-transparent text-slate-400 hover:text-white'
-        "
-        @click="activeTab = 'table_v2'"
-      >
-        Tableur V2
-      </button>
-      <button
-        v-if="showCalendar"
-        type="button"
-        class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
-        :class="
-          activeTab === 'stats'
-            ? 'border-blue-500 text-blue-300'
-            : 'border-transparent text-slate-400 hover:text-white'
-        "
-        @click="activeTab = 'stats'"
-      >
-        Graphiques & stats
-      </button>
+        <button
+          type="button"
+          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          :class="
+            activeTab === 'calendar'
+              ? 'border-blue-500 text-blue-300'
+              : 'border-transparent text-slate-400 hover:text-white'
+          "
+          @click="activeTab = 'calendar'"
+        >
+          Calendrier
+        </button>
+        <button
+          type="button"
+          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          :class="
+            activeTab === 'table'
+              ? 'border-blue-500 text-blue-300'
+              : 'border-transparent text-slate-400 hover:text-white'
+          "
+          @click="activeTab = 'table'"
+        >
+          Tableur
+        </button>
+        <button
+          v-if="showCalendar"
+          type="button"
+          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          :class="
+            activeTab === 'table_v2'
+              ? 'border-blue-500 text-blue-300'
+              : 'border-transparent text-slate-400 hover:text-white'
+          "
+          @click="activeTab = 'table_v2'"
+        >
+          Tableur V2
+        </button>
+        <button
+          v-if="showCalendar"
+          type="button"
+          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          :class="
+            activeTab === 'stats'
+              ? 'border-blue-500 text-blue-300'
+              : 'border-transparent text-slate-400 hover:text-white'
+          "
+          @click="activeTab = 'stats'"
+        >
+          Graphiques & stats
+        </button>
       </div>
 
       <button
