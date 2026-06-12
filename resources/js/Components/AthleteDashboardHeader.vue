@@ -11,6 +11,7 @@ import {
   prGlowCardStyle,
   READINESS_COLORS,
 } from '../utils/chartTheme';
+import { theme } from '../composables/useTheme';
 import UiIcon from './UiIcon.vue';
 
 const props = defineProps({
@@ -100,6 +101,30 @@ const readinessAverage7d = computed(() => {
   const sum = scores.reduce((total, score) => total + score, 0);
   return Math.round((sum / scores.length) * 10) / 10;
 });
+
+const blockGlowStyle = computed(() => {
+  void theme.value;
+
+  return glowCardStyle(blockTypeColors.value);
+});
+
+const prGlowStyle = computed(() => {
+  void theme.value;
+
+  return prGlowCardStyle();
+});
+
+const competitionGlowStyle = computed(() => {
+  void theme.value;
+
+  return glowCardStyle(COMPETITION_COLORS);
+});
+
+const readinessGlowStyle = computed(() => {
+  void theme.value;
+
+  return glowCardStyle(READINESS_COLORS.score);
+});
 </script>
 
 <template>
@@ -114,7 +139,7 @@ const readinessAverage7d = computed(() => {
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <div
         class="glow-card rounded-xl px-3 py-2.5 transition-shadow duration-300"
-        :style="glowCardStyle(blockTypeColors)"
+        :style="blockGlowStyle"
       >
         <p class="text-[10px] uppercase tracking-wide text-slate-500">Phase</p>
         <p class="mt-0.5 text-lg font-bold tabular-nums text-white">
@@ -124,7 +149,7 @@ const readinessAverage7d = computed(() => {
 
       <div
         class="glow-card rounded-xl px-3 py-2.5 transition-shadow duration-300"
-        :style="prGlowCardStyle()"
+        :style="prGlowStyle"
       >
         <p class="text-[10px] uppercase tracking-wide text-slate-500">Total PR</p>
         <template v-if="prValues">
@@ -149,7 +174,7 @@ const readinessAverage7d = computed(() => {
 
       <div
         class="glow-card glow-card--pulse rounded-xl px-3 py-2.5 transition-shadow duration-300"
-        :style="glowCardStyle(COMPETITION_COLORS)"
+        :style="competitionGlowStyle"
       >
         <p class="text-[10px] uppercase tracking-wide text-slate-500">Compétition</p>
         <template v-if="competitionCountdown">
@@ -171,7 +196,7 @@ const readinessAverage7d = computed(() => {
 
       <div
         class="glow-card rounded-xl px-3 py-2.5 transition-shadow duration-300"
-        :style="glowCardStyle(READINESS_COLORS.score)"
+        :style="readinessGlowStyle"
       >
         <p class="text-[10px] uppercase tracking-wide text-slate-500">Forme 7j</p>
         <p class="mt-0.5 text-lg font-bold tabular-nums text-white">

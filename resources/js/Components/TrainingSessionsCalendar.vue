@@ -378,7 +378,7 @@ watch(
     </div>
 
     <div
-      class="flex min-h-[14rem] flex-col rounded-xl border border-slate-800 bg-slate-950/50 p-4 lg:min-h-[18rem]"
+      class="tc-session-panel flex min-h-[14rem] flex-col rounded-xl border border-slate-800 bg-slate-950/50 p-4 lg:min-h-[18rem]"
     >
       <template v-if="selectedDayLocal && daySessions.length">
         <div class="border-b border-slate-800/80 pb-3">
@@ -395,7 +395,7 @@ watch(
           <article
             v-for="(session, sessionIndex) in daySessions"
             :key="session.id"
-            class="rounded-xl border border-slate-800 bg-slate-900/60 p-3"
+            class="tc-session-card rounded-xl border border-slate-800 bg-slate-900/60 p-3"
           >
             <div class="flex flex-wrap items-start justify-between gap-2">
               <div class="min-w-0 flex-1">

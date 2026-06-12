@@ -3,12 +3,14 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import UiIcon from '../Components/UiIcon.vue';
+import { useTheme } from '../composables/useTheme';
 import { echo } from '../echo';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
 const flash = computed(() => page.props.flash ?? {});
 const isSidebarCollapsed = ref(false);
+const { isLight, toggleTheme } = useTheme();
 
 const isCoach = computed(() => user.value?.role === 'coach');
 const messagingInbox = computed(() => page.props.messagingInbox ?? null);
@@ -259,7 +261,18 @@ watch(isSidebarCollapsed, (value) => {
                 </Link>
             </nav>
 
-            <div class="mt-auto border-t border-slate-800 pt-4">
+            <div class="mt-auto space-y-2 border-t border-slate-800 pt-4">
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
+                    :class="isSidebarCollapsed ? 'px-2' : ''"
+                    :title="isLight ? 'Passer au thème sombre' : 'Passer au thème clair'"
+                    @click="toggleTheme"
+                >
+                    <UiIcon :name="isLight ? 'moon' : 'sun'" class="h-4 w-4" />
+                    <span v-if="!isSidebarCollapsed">{{ isLight ? 'Thème sombre' : 'Thème clair' }}</span>
+                </button>
+
                 <Link
                     href="/logout"
                     method="post"

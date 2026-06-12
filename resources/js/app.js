@@ -5,6 +5,9 @@ import './plugins/charts';
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { initTheme } from './composables/useTheme';
+
+initTheme();
 
 createInertiaApp({
     title: (title) => (title ? `${title} — Track Coach` : 'Track Coach'),

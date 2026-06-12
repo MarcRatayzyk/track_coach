@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { COMPETITION_COLORS, glowCardStyle } from '../utils/chartTheme';
+import { theme } from '../composables/useTheme';
 
 const props = defineProps({
   weightClass: {
@@ -61,6 +62,12 @@ function openNextCompetition() {
     emit('open-competition', props.nextCompetition);
   }
 }
+
+const nextCompGlowStyle = computed(() => {
+  void theme.value;
+
+  return glowCardStyle(COMPETITION_COLORS);
+});
 </script>
 
 <template>
@@ -88,7 +95,7 @@ function openNextCompetition() {
         v-if="nextCompetition"
         type="button"
         class="glow-card glow-card--pulse min-h-[6.5rem] rounded-xl px-3 py-3 text-left transition-shadow duration-300"
-        :style="glowCardStyle(COMPETITION_COLORS)"
+        :style="nextCompGlowStyle"
         @click="openNextCompetition"
       >
         <p class="text-[11px] uppercase tracking-wide text-slate-500">Prochaine comp</p>

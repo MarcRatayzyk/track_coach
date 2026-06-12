@@ -28,21 +28,39 @@ function withAlpha(color, alpha) {
   return color.replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
 }
 
-const GLOW_CARD_BG = 'linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(2, 6, 23, 0.78) 100%)';
+function isLightTheme() {
+  if (typeof document === 'undefined') {
+    return false;
+  }
+
+  return document.documentElement.dataset.theme === 'light';
+}
+
+const GLOW_CARD_BG_DARK =
+  'linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(2, 6, 23, 0.78) 100%)';
+const GLOW_CARD_BG_LIGHT =
+  'linear-gradient(145deg, #ffffff 0%, #fffbeb 100%)';
 
 export function glowCardStyle(colors) {
   const glow = colors.border ?? colors;
+  const isLight = isLightTheme();
 
   return {
-    background: GLOW_CARD_BG,
+    background: isLight ? GLOW_CARD_BG_LIGHT : GLOW_CARD_BG_DARK,
     borderWidth: '1px',
     borderStyle: 'solid',
-    borderColor: withAlpha(glow, 0.32),
-    boxShadow: [
-      `0 0 14px ${withAlpha(glow, 0.3)}`,
-      `0 0 28px ${withAlpha(glow, 0.12)}`,
-      'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-    ].join(', '),
+    borderColor: withAlpha(glow, isLight ? 0.45 : 0.32),
+    boxShadow: isLight
+      ? [
+          `0 0 16px ${withAlpha(glow, 0.28)}`,
+          `0 0 32px ${withAlpha(glow, 0.12)}`,
+          'inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+        ].join(', ')
+      : [
+          `0 0 14px ${withAlpha(glow, 0.3)}`,
+          `0 0 28px ${withAlpha(glow, 0.12)}`,
+          'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+        ].join(', '),
   };
 }
 
@@ -50,18 +68,26 @@ export function prGlowCardStyle() {
   const squat = LIFT_COLORS.squat.border;
   const bench = LIFT_COLORS.bench.border;
   const deadlift = LIFT_COLORS.deadlift.border;
+  const isLight = isLightTheme();
 
   return {
-    background: GLOW_CARD_BG,
+    background: isLight ? GLOW_CARD_BG_LIGHT : GLOW_CARD_BG_DARK,
     borderWidth: '1px',
     borderStyle: 'solid',
     borderColor: withAlpha(LIFT_COLORS.total.border, 0.28),
-    boxShadow: [
-      `-8px 0 22px ${withAlpha(squat, 0.2)}`,
-      `0 0 20px ${withAlpha(bench, 0.14)}`,
-      `8px 0 22px ${withAlpha(deadlift, 0.2)}`,
-      'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-    ].join(', '),
+    boxShadow: isLight
+      ? [
+          `-8px 0 22px ${withAlpha(squat, 0.18)}`,
+          `0 0 20px ${withAlpha(bench, 0.12)}`,
+          `8px 0 22px ${withAlpha(deadlift, 0.18)}`,
+          'inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+        ].join(', ')
+      : [
+          `-8px 0 22px ${withAlpha(squat, 0.2)}`,
+          `0 0 20px ${withAlpha(bench, 0.14)}`,
+          `8px 0 22px ${withAlpha(deadlift, 0.2)}`,
+          'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+        ].join(', '),
   };
 }
 

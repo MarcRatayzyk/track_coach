@@ -301,6 +301,34 @@ const selectedRowId = computed(() => {
   return null;
 });
 
+function goToNextRow() {
+  if (!rowEditorEnabled.value) {
+    return;
+  }
+
+  const state = tableRowEditor.state;
+
+  if (state.weekNumber !== props.weekNumber || state.weekday !== props.weekday) {
+    return;
+  }
+
+  const currentIndex = state.rowIndex;
+
+  if (currentIndex == null) {
+    return;
+  }
+
+  const nextIndex = currentIndex + 1;
+
+  if (nextIndex < rows.value.length) {
+    selectRow(nextIndex);
+    return;
+  }
+
+  addRow();
+  selectRow(rows.value.length - 1);
+}
+
 function selectRow(index) {
   if (!rowEditorEnabled.value) {
     return;
@@ -316,6 +344,7 @@ function selectRow(index) {
     sessionHeading: sessionHeading.value,
     defaultLift: primaryLift.value,
     onUpdate: (value) => updateRow(index, value),
+    onGoToNextRow: goToNextRow,
   });
 }
 </script>
