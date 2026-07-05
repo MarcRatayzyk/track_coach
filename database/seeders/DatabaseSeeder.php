@@ -297,6 +297,7 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'role' => $attributes['role'],
                 'initial_setup_completed_at' => now(),
+                'email_verified_at' => now(),
             ],
         );
     }

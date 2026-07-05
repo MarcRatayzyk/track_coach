@@ -60,7 +60,7 @@ class AthleteDashboardPresenter
 
         $recentFeedbacks = SessionFeedback::query()
             ->where('athlete_id', $athlete->id)
-            ->with(['programTrainingDay', 'athleteVideos', 'reply'])
+            ->with(['programTrainingDay', 'athleteVideos', 'latestReplyMessage'])
             ->orderByDesc('session_date')
             ->orderByDesc('id')
             ->limit(3)

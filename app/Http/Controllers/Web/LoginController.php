@@ -50,7 +50,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        if (! $user->hasVerifiedEmail()) {
+        if ($user->role === 'coach' && ! $user->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
 
