@@ -49,10 +49,17 @@ const emit = defineEmits(['close']);
                     </button>
                 </div>
 
+                <p class="mt-3 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+                    Un simple raccourci ouvre l’app dans le navigateur. Suis bien les étapes ci-dessous pour l’installer en plein écran.
+                </p>
+
                 <ol v-if="guideType === 'ios'" class="mt-4 space-y-3 text-sm text-slate-300">
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">1</span>
-                        <span>Ouvre Track Coach dans <strong class="text-white">Safari</strong>.</span>
+                        <span>
+                            Utilise <strong class="text-white">Safari</strong> uniquement
+                            (Chrome sur iPhone ne crée qu’un raccourci navigateur).
+                        </span>
                     </li>
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">2</span>
@@ -76,18 +83,24 @@ const emit = defineEmits(['close']);
                 <ol v-else-if="guideType === 'android'" class="mt-4 space-y-3 text-sm text-slate-300">
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">1</span>
-                        <span>Ouvre le menu du navigateur <strong class="text-white">⋮</strong> (Chrome ou Edge).</span>
+                        <span>
+                            Dans <strong class="text-white">Chrome</strong>, accepte la proposition
+                            <strong class="text-white">Installer l’application</strong> si elle apparaît.
+                        </span>
                     </li>
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">2</span>
                         <span>
-                            Choisis <strong class="text-white">Installer l’application</strong>
-                            ou <strong class="text-white">Ajouter à l’écran d’accueil</strong>.
+                            Sinon : menu <strong class="text-white">⋮</strong> →
+                            <strong class="text-white">Installer l’application</strong>
+                            (pas seulement « Ajouter à l’écran d’accueil »).
                         </span>
                     </li>
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">3</span>
-                        <span>Confirme : l’icône Track Coach apparaîtra sur ton téléphone.</span>
+                        <span>
+                            Supprime l’ancien raccourci si besoin, puis réinstalle pour ouvrir sans barre d’adresse.
+                        </span>
                     </li>
                 </ol>
 
@@ -111,8 +124,7 @@ const emit = defineEmits(['close']);
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">3</span>
                         <span>
-                            Sur mobile, utilise plutôt le menu du navigateur pour
-                            <strong class="text-white">Ajouter à l’écran d’accueil</strong>.
+                            L’app installée s’ouvre sans barre d’adresse, comme une application native.
                         </span>
                     </li>
                 </ol>

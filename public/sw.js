@@ -6,5 +6,17 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim());
 });
 
-// Pas d'interception fetch : évite les erreurs "Failed to fetch" en pass-through.
-// Le SW reste enregistré pour l'installation PWA sans gêner le réseau.
+// Garde le scope sous contrôle du SW pour un lancement standalone fiable.
+self.addEventListener('fetch', (event) => {
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    const url = new URL(event.request.url);
+
+    if (url.origin !== self.location.origin) {
+        return;
+    }
+
+    event.respondWith(fetch(event.request));
+});

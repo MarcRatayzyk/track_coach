@@ -4,8 +4,10 @@ export function registerServiceWorker() {
     }
 
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {
-            // Ignore registration errors (unsupported browser, invalid scope, etc.).
-        });
+        navigator.serviceWorker
+            .register('/sw.js', { scope: '/' })
+            .catch(() => {
+                // Ignore registration errors (unsupported browser, invalid scope, etc.).
+            });
     });
 }

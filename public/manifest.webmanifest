@@ -1,12 +1,16 @@
 {
+    "id": "/",
     "name": "Track Coach",
     "short_name": "Track Coach",
     "description": "Suivi d'entraînement et coaching athlétique",
-    "start_url": "/login",
+    "start_url": "/?source=pwa",
+    "scope": "/",
     "display": "standalone",
+    "display_override": ["standalone", "minimal-ui"],
     "background_color": "#020617",
     "theme_color": "#2563eb",
     "orientation": "portrait-primary",
+    "prefer_related_applications": false,
     "icons": [
         {
             "src": "/icons/icon-192.png",
