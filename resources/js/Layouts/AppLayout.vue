@@ -2,8 +2,10 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import InstallAppButton from '../Components/InstallAppButton.vue';
+import InstallAppGuideModal from '../Components/InstallAppGuideModal.vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import UiIcon from '../Components/UiIcon.vue';
+import { usePwaInstall } from '../composables/usePwaInstall';
 import { useTheme } from '../composables/useTheme';
 import { echo } from '../echo';
 
@@ -13,6 +15,7 @@ const flash = computed(() => page.props.flash ?? {});
 const isSidebarCollapsed = ref(false);
 const isMobileMenuOpen = ref(false);
 const { isLight, toggleTheme } = useTheme();
+const { showInstallGuide, installGuideType, closeInstallGuide } = usePwaInstall();
 
 const isCoach = computed(() => user.value?.role === 'coach');
 const messagingInbox = computed(() => page.props.messagingInbox ?? null);
@@ -484,5 +487,11 @@ watch(() => page.url, () => {
                 </div>
             </main>
         </div>
+
+        <InstallAppGuideModal
+            :open="showInstallGuide"
+            :guide-type="installGuideType"
+            @close="closeInstallGuide"
+        />
     </div>
 </template>

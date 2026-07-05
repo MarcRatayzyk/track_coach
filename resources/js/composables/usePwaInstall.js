@@ -9,8 +9,10 @@ const isInstalled = ref(false);
 const isDismissed = ref(false);
 const isMobile = ref(false);
 const isIos = ref(false);
+const isAndroid = ref(false);
 const listenersBound = ref(false);
-const showIosGuide = ref(false);
+const showInstallGuide = ref(false);
+const installGuideType = ref('desktop');
 
 let mobileMediaQuery = null;
 
@@ -59,7 +61,20 @@ function detectIos() {
 
     const userAgent = window.navigator.userAgent || '';
 
-    return /iPhone|iPad|iPod/i.test(userAgent);
+    if (/iPhone|iPad|iPod/i.test(userAgent)) {
+        return true;
+    }
+
+    // iPadOS 13+ se présente parfois comme Mac.
+    return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+}
+
+function detectAndroid() {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    return /Android/i.test(window.navigator.userAgent || '');
 }
 
 function bindInstallListeners() {
@@ -77,7 +92,7 @@ function bindInstallListeners() {
     window.addEventListener('appinstalled', () => {
         isInstalled.value = true;
         deferredPrompt.value = null;
-        showIosGuide.value = false;
+        showInstallGuide.value = false;
     });
 }
 
@@ -86,7 +101,20 @@ function refreshEnvironment() {
     isDismissed.value = readDismissedState();
     isMobile.value = detectMobile();
     isIos.value = detectIos();
+    isAndroid.value = detectAndroid();
     bindInstallListeners();
+}
+
+function resolveGuideType() {
+    if (isIos.value) {
+        return 'ios';
+    }
+
+    if (isAndroid.value || isMobile.value) {
+        return 'android';
+    }
+
+    return 'desktop';
 }
 
 export function usePwaInstall() {
@@ -106,7 +134,7 @@ export function usePwaInstall() {
     });
 
     const platform = computed(() => {
-        if (!isMobile.value || isInstalled.value) {
+        if (isInstalled.value) {
             return null;
         }
 
@@ -118,21 +146,19 @@ export function usePwaInstall() {
             return 'ios';
         }
 
+        if (isAndroid.value) {
+            return 'android';
+        }
+
         return null;
     });
 
     const canPromptInstall = computed(
-        () => !isInstalled.value && isMobile.value && deferredPrompt.value !== null,
-    );
-
-    const isIosGuide = computed(() => !isInstalled.value && isMobile.value && isIos.value);
-
-    const showInstallAction = computed(
-        () => !isInstalled.value && (canPromptInstall.value || isIosGuide.value),
+        () => !isInstalled.value && deferredPrompt.value !== null,
     );
 
     const showBanner = computed(() => {
-        if (!isMobile.value || isInstalled.value || isDismissed.value) {
+        if (isInstalled.value || isDismissed.value) {
             return false;
         }
 
@@ -155,13 +181,12 @@ export function usePwaInstall() {
             return;
         }
 
-        if (isIos.value && isMobile.value) {
-            showIosGuide.value = true;
-        }
+        installGuideType.value = resolveGuideType();
+        showInstallGuide.value = true;
     }
 
-    function closeIosGuide() {
-        showIosGuide.value = false;
+    function closeInstallGuide() {
+        showInstallGuide.value = false;
     }
 
     function dismiss() {
@@ -174,15 +199,14 @@ export function usePwaInstall() {
 
     return {
         showBanner,
-        showInstallAction,
         canPromptInstall,
-        isIosGuide,
         isInstalled,
         platform,
-        showIosGuide,
+        showInstallGuide,
+        installGuideType,
         install,
         installOrGuide,
-        closeIosGuide,
+        closeInstallGuide,
         dismiss,
     };
 }

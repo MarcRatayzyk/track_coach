@@ -1,6 +1,5 @@
 <script setup>
 import UiIcon from './UiIcon.vue';
-import InstallAppIosGuide from './InstallAppIosGuide.vue';
 import { usePwaInstall } from '../composables/usePwaInstall';
 
 const props = defineProps({
@@ -17,12 +16,7 @@ const props = defineProps({
 
 const emit = defineEmits(['interacted']);
 
-const {
-    isInstalled,
-    installOrGuide,
-    showIosGuide,
-    closeIosGuide,
-} = usePwaInstall();
+const { isInstalled, installOrGuide } = usePwaInstall();
 
 async function handleClick() {
     await installOrGuide();
@@ -41,17 +35,14 @@ const buttonClasses = {
 </script>
 
 <template>
-    <template v-if="!isInstalled">
-        <button
-            type="button"
-            :class="[buttonClasses[props.variant], props.variant === 'sidebar' && props.collapsed ? 'px-2' : '']"
-            :title="props.variant === 'sidebar' && props.collapsed ? 'Installer l\'app' : undefined"
-            @click="handleClick"
-        >
-            <UiIcon name="bolt" class="h-4 w-4 shrink-0 text-blue-300" />
-            <span v-if="props.variant !== 'sidebar' || !props.collapsed">Installer l'app</span>
-        </button>
-
-        <InstallAppIosGuide :open="showIosGuide" @close="closeIosGuide" />
-    </template>
+    <button
+        v-if="!isInstalled"
+        type="button"
+        :class="[buttonClasses[props.variant], props.variant === 'sidebar' && props.collapsed ? 'px-2' : '']"
+        :title="props.variant === 'sidebar' && props.collapsed ? 'Installer l\'app' : undefined"
+        @click="handleClick"
+    >
+        <UiIcon name="bolt" class="h-4 w-4 shrink-0 text-blue-300" />
+        <span v-if="props.variant !== 'sidebar' || !props.collapsed">Installer l'app</span>
+    </button>
 </template>
