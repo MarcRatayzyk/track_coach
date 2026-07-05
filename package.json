@@ -3,7 +3,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "node scripts/generate-pwa-icons.mjs && vite build"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

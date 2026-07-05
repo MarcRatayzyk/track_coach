@@ -19,6 +19,7 @@ RUN npm ci
 COPY . .
 
 RUN composer dump-autoload --optimize
+RUN node scripts/generate-pwa-icons.mjs
 RUN npm run build
 
 RUN mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/{sessions,views} storage/logs \

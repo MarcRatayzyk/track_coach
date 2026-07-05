@@ -115,6 +115,7 @@ function createPng(size) {
 
 mkdirSync(outDir, { recursive: true });
 
+writeFileSync(join(outDir, 'icon-144.png'), createPng(144));
 writeFileSync(join(outDir, 'icon-192.png'), createPng(192));
 writeFileSync(join(outDir, 'icon-512.png'), createPng(512));
 writeFileSync(join(outDir, 'apple-touch-icon.png'), createPng(180));
