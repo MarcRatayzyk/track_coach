@@ -44,18 +44,18 @@ const features = [
 const steps = [
     {
         step: '01',
-        title: 'Invite ton athlète',
-        description: 'Crée la fiche, envoie le lien d’activation et constitue ta roster en quelques minutes.',
+        title: 'Crée ton compte coach',
+        description: 'Inscription gratuite en quelques clics — tu accèdes immédiatement à ton dashboard.',
     },
     {
         step: '02',
-        title: 'Construis le bloc',
-        description: 'Définis tes templates de force, assigne-les et garde une vision claire de qui fait quoi.',
+        title: 'Invite tes athlètes',
+        description: 'Ajoute tes athlètes par e-mail : ils reçoivent un lien pour activer leur compte.',
     },
     {
         step: '03',
         title: 'Coache au quotidien',
-        description: 'Messages, tâches et PRs : tout converge vers un suivi structuré jusqu’à la plateforme.',
+        description: 'Programmes, messagerie et retours vidéo : tout converge vers un suivi structuré.',
     },
 ];
 </script>
@@ -77,12 +77,20 @@ const steps = [
                     </span>
                     <span class="text-xl font-bold tracking-tight text-white">Track Coach</span>
                 </a>
-                <a
-                    href="/login"
-                    class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500"
-                >
-                    Se connecter
-                </a>
+                <div class="flex items-center gap-3">
+                    <a
+                        href="/login"
+                        class="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800/50"
+                    >
+                        Se connecter
+                    </a>
+                    <a
+                        href="/register"
+                        class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500"
+                    >
+                        Créer un compte
+                    </a>
+                </div>
             </div>
         </header>
 
@@ -118,15 +126,21 @@ const steps = [
                 </p>
                 <div class="mt-10 flex flex-wrap items-center gap-4">
                     <a
-                        href="/login"
+                        href="/register"
                         class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-blue-900/50 transition hover:bg-blue-500"
                     >
-                        Se connecter
+                        Créer mon compte coach
                         <span aria-hidden="true">→</span>
                     </a>
                     <a
-                        href="#fonctionnalites"
+                        href="/login"
                         class="inline-flex items-center rounded-2xl border border-slate-600 bg-slate-900/50 px-8 py-4 text-base font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800/50"
+                    >
+                        Se connecter
+                    </a>
+                    <a
+                        href="#fonctionnalites"
+                        class="inline-flex items-center rounded-2xl border border-transparent px-4 py-4 text-base font-semibold text-slate-400 transition hover:text-slate-200"
                     >
                         Découvrir les fonctionnalités
                     </a>
@@ -138,8 +152,10 @@ const steps = [
                     class="rounded-3xl border border-slate-700/80 bg-slate-900/60 p-8 shadow-2xl shadow-black/40 backdrop-blur-sm lg:p-10"
                 >
                     <p class="text-sm font-semibold uppercase tracking-widest text-blue-400">Accès rapide</p>
-                    <h2 class="mt-2 text-2xl font-bold text-white">Connecte-toi à ton espace</h2>
-                    <p class="mt-2 text-slate-400">Coach ou athlète — retrouve ton dashboard en un clic.</p>
+                    <h2 class="mt-2 text-2xl font-bold text-white">Coach ou athlète ?</h2>
+                    <p class="mt-2 text-slate-400">
+                        Les coachs créent un compte. Les athlètes activent l’accès via l’invitation de leur coach.
+                    </p>
                     <div class="mt-8 space-y-4">
                         <div class="flex items-center gap-4 rounded-2xl border border-slate-700/60 bg-slate-950/80 p-4">
                             <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400">
@@ -161,10 +177,16 @@ const steps = [
                         </div>
                     </div>
                     <a
-                        href="/login"
+                        href="/register"
                         class="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 text-base font-semibold text-white transition hover:bg-blue-500"
                     >
-                        Se connecter <span aria-hidden="true">→</span>
+                        Créer un compte coach <span aria-hidden="true">→</span>
+                    </a>
+                    <a
+                        href="/login"
+                        class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-600 py-4 text-base font-semibold text-slate-200 transition hover:bg-slate-800/50"
+                    >
+                        Déjà inscrit ? Se connecter
                     </a>
                 </div>
 
@@ -272,6 +294,13 @@ const steps = [
                                 Messagerie dédiée par athlète
                             </li>
                         </ul>
+                        <a
+                            href="/register"
+                            class="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+                        >
+                            Créer mon compte
+                            <span aria-hidden="true">→</span>
+                        </a>
                     </div>
                     <div
                         class="rounded-2xl border border-slate-700 bg-slate-950/80 p-8 lg:p-10"
@@ -296,6 +325,10 @@ const steps = [
                                 Échanges directs avec ton coach
                             </li>
                         </ul>
+                        <p class="mt-8 text-sm text-slate-400">
+                            Compte activé sur invitation de ton coach.
+                            <a href="/login" class="font-medium text-blue-400 hover:text-blue-300">Se connecter</a>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -313,16 +346,24 @@ const steps = [
                     Prêt à structurer ton coaching ?
                 </h2>
                 <p class="mx-auto mt-4 max-w-xl text-lg text-slate-300">
-                    Connecte-toi avec ton compte coach ou athlète et accède à ton espace en quelques
-                    secondes.
+                    Crée ton compte coach gratuitement, invite tes athlètes et structure ton coaching dès
+                    aujourd’hui.
                 </p>
-                <a
-                    href="/login"
-                    class="mt-10 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white shadow-xl shadow-blue-900/50 transition hover:bg-blue-500"
-                >
-                    Se connecter
-                    <span aria-hidden="true">→</span>
-                </a>
+                <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+                    <a
+                        href="/register"
+                        class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white shadow-xl shadow-blue-900/50 transition hover:bg-blue-500"
+                    >
+                        Créer mon compte coach
+                        <span aria-hidden="true">→</span>
+                    </a>
+                    <a
+                        href="/login"
+                        class="inline-flex items-center rounded-2xl border border-slate-600 px-10 py-4 text-lg font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800/50"
+                    >
+                        Se connecter
+                    </a>
+                </div>
             </div>
             </div>
         </section>
@@ -337,9 +378,14 @@ const steps = [
                     <span class="font-semibold text-slate-400">Track Coach</span>
                 </div>
                 <p>Coaching powerlifting — roster, programmes & performance.</p>
-                <a href="/login" class="text-blue-400 transition hover:text-blue-300">
-                    Connexion
-                </a>
+                <div class="flex items-center gap-4">
+                    <a href="/register" class="text-blue-400 transition hover:text-blue-300">
+                        Inscription coach
+                    </a>
+                    <a href="/login" class="text-slate-400 transition hover:text-slate-300">
+                        Connexion
+                    </a>
+                </div>
             </div>
         </footer>
     </div>

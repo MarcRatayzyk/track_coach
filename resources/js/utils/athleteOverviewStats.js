@@ -243,7 +243,7 @@ function countSessionsWithinDays(trainingSessions = [], dayCount = 7) {
   }).length;
 }
 
-function buildDistribution(flatItems = [], recentDays = 30) {
+export function buildDistribution(flatItems = [], recentDays = 30) {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
 

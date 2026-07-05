@@ -8,7 +8,9 @@ export default {
 
 <script setup>
 import { Link, router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
+import CoachOnboardingTour from '../Components/CoachOnboardingTour.vue';
 import CompetitionCalendarModal from '../Components/CompetitionCalendarModal.vue';
 import DashboardAlertsPanel from '../Components/DashboardAlertsPanel.vue';
 import FeedbackBreakdownModal from '../Components/FeedbackBreakdownModal.vue';
@@ -20,8 +22,13 @@ import {
   formatDateTimeFr,
   formatShortDateTimeFr,
 } from '../utils/formatDates';
+import { isCoachOnboardingDone } from '../utils/coachOnboarding';
 
 const props = defineProps({
+  athleteCount: {
+    type: Number,
+    default: 0,
+  },
   feedback: {
     type: Object,
     default: () => ({
@@ -123,20 +130,72 @@ const weeklyBreakdown = computed(() => weekly.value.breakdown ?? { pending: [], 
 
 const competitionSummary = computed(() => props.competitionSummary ?? {});
 
-const nextCompetitionLabel = computed(() => {
-  if (!competitionSummary.value.next_date) {
-    return 'Aucune planifiée';
+const hasAthletes = computed(() => props.athleteCount > 0);
+const showAddAthleteModal = ref(false);
+const showOnboardingTour = ref(false);
+
+function openAddAthleteModal() {
+  showAddAthleteModal.value = true;
+}
+
+function onAthleteInvited() {
+  router.reload({ only: ['athleteCount', 'feedback', 'stats', 'alerts', 'recentThreads', 'competitionSummary', 'upcomingCompetitions'] });
+}
+
+onMounted(() => {
+  if (!hasAthletes.value && !isCoachOnboardingDone()) {
+    showOnboardingTour.value = true;
   }
-  let label = formatCalendarFr(competitionSummary.value.next_date);
-  if (competitionSummary.value.next_name) {
-    label += ` · ${competitionSummary.value.next_name}`;
-  }
-  return label;
 });
 </script>
 
 <template>
   <div>
+    <CoachOnboardingTour
+      v-model="showOnboardingTour"
+      @add-athlete="openAddAthleteModal"
+    />
+    <CoachAddAthleteModal v-model="showAddAthleteModal" @invited="onAthleteInvited" />
+
+    <template v-if="!hasAthletes">
+      <div
+        class="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center rounded-2xl border border-dashed border-blue-500/30 bg-gradient-to-b from-blue-600/10 to-slate-900/40 px-6 py-16 text-center shadow-xl"
+      >
+        <span
+          class="flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-600/15 text-blue-400"
+        >
+          <UiIcon name="users" class="h-8 w-8" />
+        </span>
+        <h1 class="mt-6 text-3xl font-bold text-white">Bienvenue sur ton dashboard</h1>
+        <p class="mt-3 max-w-md text-slate-400">
+          Tu n’as pas encore d’athlète. Commence par en inviter un : il recevra un e-mail pour activer
+          son compte et accéder à son espace.
+        </p>
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500"
+            @click="openAddAthleteModal"
+          >
+            <UiIcon name="users" class="h-5 w-5" />
+            Ajouter mon premier athlète
+          </button>
+          <button
+            v-if="!showOnboardingTour"
+            type="button"
+            class="rounded-2xl border border-slate-600 px-6 py-4 text-sm font-medium text-slate-300 hover:bg-slate-800/50"
+            @click="showOnboardingTour = true"
+          >
+            Revoir la visite guidée
+          </button>
+        </div>
+        <p class="mt-8 text-sm text-slate-500">
+          Ensuite : programmes, retours vidéo, messagerie et alertes apparaîtront ici.
+        </p>
+      </div>
+    </template>
+
+    <template v-else>
     <h1 class="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
 
     <!-- Ligne 1 : Retours journaliers + hebdomadaires -->
@@ -147,9 +206,6 @@ const nextCompetitionLabel = computed(() => {
         <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
           <div>
             <h2 class="text-base font-semibold text-white">Retours journaliers à faire</h2>
-            <p class="mt-0.5 text-xs text-slate-400">
-              Un retour attendu par athlète ayant une séance programme ce jour-là
-            </p>
           </div>
           <Link
             href="/feedbacks?filter=pending"
@@ -215,9 +271,6 @@ const nextCompetitionLabel = computed(() => {
         <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
           <div>
             <h2 class="text-base font-semibold text-white">Retours hebdomadaires à faire</h2>
-            <p class="mt-0.5 text-xs text-slate-400">
-              {{ weekLabel }} · athlètes hebdo. avec au moins une séance programme cette semaine
-            </p>
           </div>
           <Link
             href="/feedbacks?filter=pending"
@@ -296,12 +349,6 @@ const nextCompetitionLabel = computed(() => {
               track-color="rgba(120, 53, 15, 0.45)"
             />
           </div>
-          <p class="mt-0.5 text-xs text-slate-400">
-            reçus / attendus
-            <span v-if="(daily.overdue ?? 0) > 0" class="text-amber-400">
-              · {{ daily.overdue }} retard
-            </span>
-          </p>
         </div>
       </button>
 
@@ -325,7 +372,6 @@ const nextCompetitionLabel = computed(() => {
               track-color="rgba(49, 46, 129, 0.45)"
             />
           </div>
-          <p class="mt-0.5 text-xs text-slate-400">reçus / attendus</p>
         </div>
       </button>
 
@@ -343,9 +389,6 @@ const nextCompetitionLabel = computed(() => {
           <p class="text-xs font-semibold text-rose-200/90">Compétitions</p>
           <p class="mt-1.5 text-3xl font-bold tabular-nums text-white">
             {{ competitionSummary.count ?? 0 }}
-          </p>
-          <p class="mt-1 line-clamp-2 text-xs leading-snug text-slate-400">
-            {{ nextCompetitionLabel }}
           </p>
         </div>
       </button>
@@ -432,5 +475,6 @@ const nextCompetitionLabel = computed(() => {
       :breakdown="weeklyBreakdown"
       @close="showWeeklyFeedbackModal = false"
     />
+    </template>
   </div>
 </template>

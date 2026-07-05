@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MessagingInboxSupport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -52,5 +53,7 @@ class MessageThread extends Model
             ->whereNull('read_at')
             ->where('sender_id', '!=', $user->id)
             ->update(['read_at' => now()]);
+
+        MessagingInboxSupport::dispatchThreadUpdated($this);
     }
 }

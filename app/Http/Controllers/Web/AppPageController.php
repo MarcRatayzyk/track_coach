@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AthleteProgramAssignment;
 use App\Models\Competition;
 use App\Models\MessageThread;
+use App\Models\SessionFeedback;
 use App\Services\CoachAlertsService;
 use App\Services\CoachAthleteRosterService;
 use App\Services\CoachFeedbackMetricsService;
@@ -15,11 +16,14 @@ use App\Support\AthleteDashboardPresenter;
 use App\Support\AthleteBodyWeightPresenter;
 use App\Support\AthleteReadinessPresenter;
 use App\Support\MessagingInboxSupport;
+use App\Support\MessagePresenter;
 use App\Support\ChartTemplatePresenter;
 use App\Support\ChartTemplateSupport;
 use App\Support\DayTableLayoutPresenter;
 use App\Support\DayTableLayoutSupport;
 use App\Support\ProgramBlockPresenter;
+use App\Support\ProgramHistorySupport;
+use App\Support\SessionFeedbackPresenter;
 use App\Support\TrainingSessionSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,6 +64,8 @@ class AppPageController extends Controller
             ->withUnreadCountFor($coach)
             ->withCount('messages')
             ->with('athlete:id,name')
+            ->orderByDesc('updated_at')
+            ->limit(24)
             ->get()
             ->sortByDesc(fn (MessageThread $thread) => [
                 (int) ($thread->unread_messages_count > 0),
@@ -80,6 +86,7 @@ class AppPageController extends Controller
         $alerts = $alertsService->forCoach($coach);
 
         return Inertia::render('DashboardPage', [
+            'athleteCount' => $athleteIds->count(),
             'feedback' => $feedback,
             'competitionSummary' => $competitionSummary,
             'upcomingCompetitions' => $upcomingCompetitions,
@@ -101,7 +108,7 @@ class AppPageController extends Controller
         ]);
     }
 
-    public function athlete(User $athlete): Response
+    public function athlete(User $athlete, ProgramHistorySupport $programHistory): Response
     {
         $this->authorize('view', $athlete);
         $viewer = auth()->user();
@@ -135,13 +142,13 @@ class AppPageController extends Controller
             ->latest('date_start')
             ->first();
 
-        $followUpStartedAt = null;
-        if ($viewer?->role === 'coach') {
-            $relation = $viewer->athletes()
-                ->where('athlete_id', $athlete->id)
-                ->first();
-            $followUpStartedAt = $relation?->pivot?->created_at?->toDateString();
-        }
+        $followUpStartedAt = $athlete->coaches()
+            ->wherePivot('status', 'active')
+            ->orderBy('coach_athlete.created_at')
+            ->first()
+            ?->pivot
+            ?->created_at
+            ?->toDateString();
 
         $athletePayload = $athlete->toArray();
         $athletePayload['training_sessions'] = $athlete->trainingSessions
@@ -158,6 +165,9 @@ class AppPageController extends Controller
             'readinessRecent' => $readinessRecent,
             'todayBodyWeight' => $todayBodyWeight,
             'bodyWeightRecent' => $bodyWeightRecent,
+            'programHistory' => $viewer?->role === 'coach'
+                ? $programHistory->historyForAthlete($athlete->id)
+                : [],
         ]);
     }
 
@@ -259,6 +269,7 @@ class AppPageController extends Controller
                 'activeThread' => null,
                 'messages' => [],
                 'athletesForThread' => [],
+                'feedbackContext' => null,
             ]);
         }
 
@@ -272,7 +283,7 @@ class AppPageController extends Controller
         $thread->markAsReadFor($athlete);
 
         $messages = $thread->messages()
-            ->with('sender:id,name')
+            ->with(['sender:id,name', 'audioFiles', 'sessionFeedback.programTrainingDay'])
             ->orderBy('created_at')
             ->get();
 
@@ -290,8 +301,9 @@ class AppPageController extends Controller
                     'name' => $thread->athlete->name,
                 ] : null,
             ],
-            'messages' => $messages,
+            'messages' => MessagePresenter::list($messages),
             'athletesForThread' => [],
+            'feedbackContext' => null,
         ]);
     }
 
@@ -299,6 +311,33 @@ class AppPageController extends Controller
     {
         $activeThreadId = (int) $request->query('thread', 0);
         $athleteId = (int) $request->query('athlete', 0);
+        $feedbackId = (int) $request->query('feedback', 0);
+        $feedbackContext = null;
+
+        if ($feedbackId > 0) {
+            $feedback = SessionFeedback::query()
+                ->where('coach_id', $user->id)
+                ->with('programTrainingDay')
+                ->find($feedbackId);
+
+            if ($feedback !== null && $user->can('view', $feedback)) {
+                $thread = MessageThread::firstOrCreate([
+                    'coach_id' => $user->id,
+                    'athlete_id' => $feedback->athlete_id,
+                ]);
+
+                if ($activeThreadId === 0) {
+                    $activeThreadId = $thread->id;
+                }
+
+                $feedbackContext = [
+                    'id' => $feedback->id,
+                    'session_date' => $feedback->session_date?->toDateString(),
+                    'session_label' => SessionFeedbackPresenter::sessionLabel($feedback->programTrainingDay),
+                    'can_reply' => $feedback->isPendingCoachReply(),
+                ];
+            }
+        }
 
         if ($activeThreadId === 0 && $athleteId > 0) {
             $athlete = User::query()->whereKey($athleteId)->first();
@@ -309,7 +348,10 @@ class AppPageController extends Controller
                     'athlete_id' => $athlete->id,
                 ]);
 
-                return redirect()->route('messaging', ['thread' => $thread->id]);
+                return redirect()->route('messaging', [
+                    'thread' => $thread->id,
+                    'feedback' => $feedbackId > 0 ? $feedbackId : null,
+                ]);
             }
         }
 
@@ -327,7 +369,7 @@ class AppPageController extends Controller
                 $activeThread = $candidate;
                 $candidate->markAsReadFor($user);
                 $messages = $candidate->messages()
-                    ->with('sender')
+                    ->with(['sender:id,name', 'audioFiles', 'sessionFeedback.programTrainingDay'])
                     ->orderBy('created_at')
                     ->get();
             }
@@ -353,12 +395,13 @@ class AppPageController extends Controller
                     'name' => $activeThread->athlete->name,
                 ] : null,
             ] : null,
-            'messages' => $messages,
+            'messages' => MessagePresenter::list($messages),
             'athletesForThread' => $user->athletes()
                 ->where('users.role', 'athlete')
                 ->orderBy('users.name')
                 ->select('users.*')
                 ->get(),
+            'feedbackContext' => $feedbackContext,
         ]);
     }
 }

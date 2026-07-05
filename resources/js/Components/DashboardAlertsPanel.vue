@@ -86,9 +86,6 @@ function athleteLabel(alert) {
         </span>
         <div>
           <h2 class="text-base font-semibold text-white">Alertes</h2>
-          <p class="mt-0.5 text-xs text-slate-400">
-            Blocs, compétitions, adhérence et actions prioritaires
-          </p>
         </div>
       </div>
       <span

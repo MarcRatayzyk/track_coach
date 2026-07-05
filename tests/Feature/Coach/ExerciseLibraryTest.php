@@ -18,6 +18,8 @@ class ExerciseLibraryTest extends TestCase
             'email' => 'coach@exercises.dev',
             'password' => bcrypt('password'),
             'role' => 'coach',
+            'initial_setup_completed_at' => now(),
+            'email_verified_at' => now(),
         ]);
 
         Exercise::query()->create([

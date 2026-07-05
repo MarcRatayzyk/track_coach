@@ -9,6 +9,8 @@ use App\Models\PersonalRecord;
 use App\Models\SessionFeedback;
 use App\Models\TrainingSession;
 use App\Models\User;
+use App\Support\FeedbackFrequencySupport;
+use App\Support\ProgramSchedule;
 use Carbon\CarbonInterface;
 
 class AthleteDashboardPresenter
@@ -111,6 +113,7 @@ class AthleteDashboardPresenter
                 'pending_reply' => $pendingReplyCount,
                 'due_today' => $feedbackDueToday,
             ],
+            'feedbackFrequency' => FeedbackFrequencySupport::frequencyFor($athlete),
             'coachThread' => self::coachThreadPayload($athlete),
             'feedbackDueToday' => $feedbackDueToday,
         ];
@@ -353,13 +356,20 @@ class AthleteDashboardPresenter
             return false;
         }
 
+        if (FeedbackFrequencySupport::isWeekly($athlete)) {
+            [$weekStart, $weekEnd] = FeedbackFrequencySupport::weekBounds($date);
+
+            if (! ProgramSchedule::hasAnySessionBetween($assignment, $weekStart, $weekEnd)) {
+                return false;
+            }
+
+            return ! FeedbackFrequencySupport::hasFeedbackForWeek($athlete, $weekStart);
+        }
+
         if (! ProgramSchedule::hasSessionOnDate($assignment, $date)) {
             return false;
         }
 
-        return ! SessionFeedback::query()
-            ->where('athlete_id', $athlete->id)
-            ->whereDate('session_date', $date->toDateString())
-            ->exists();
+        return ! FeedbackFrequencySupport::hasFeedbackForSessionDay($athlete, $date);
     }
 }

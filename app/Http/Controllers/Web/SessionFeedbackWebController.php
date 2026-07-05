@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\StoreSessionFeedbackAction;
-use App\Actions\StoreSessionFeedbackReplyAction;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreSessionFeedbackReplyRequest;
 use App\Http\Requests\StoreSessionFeedbackRequest;
 use App\Models\SessionFeedback;
 use App\Services\AthleteEligibleFeedbackSessionsService;
+use App\Support\FeedbackFrequencySupport;
 use App\Support\SessionFeedbackPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,23 +57,6 @@ class SessionFeedbackWebController extends Controller
             ->with('success', 'Retour envoyé au coach.');
     }
 
-    public function reply(
-        StoreSessionFeedbackReplyRequest $request,
-        SessionFeedback $feedback,
-        StoreSessionFeedbackReplyAction $action,
-    ): RedirectResponse {
-        $action->execute(
-            $request->user(),
-            $feedback,
-            $request->validated('body'),
-            $request->file('audio_files', []),
-        );
-
-        return redirect()
-            ->route('feedbacks.index', ['feedback' => $feedback->id])
-            ->with('success', 'Réponse envoyée à l\'athlète.');
-    }
-
     private function coachIndex($coach, string $filter, ?int $activeId): Response
     {
         $query = SessionFeedback::query()
@@ -108,6 +90,7 @@ class SessionFeedbackWebController extends Controller
             'feedbacks' => SessionFeedbackPresenter::list($feedbacks),
             'activeFeedback' => $activeFeedback,
             'eligibleSessions' => [],
+            'feedbackFrequency' => null,
         ]);
     }
 
@@ -142,6 +125,7 @@ class SessionFeedbackWebController extends Controller
             'feedbacks' => SessionFeedbackPresenter::list($feedbacks),
             'activeFeedback' => $activeFeedback,
             'eligibleSessions' => $eligibleService->forAthlete($athlete),
+            'feedbackFrequency' => FeedbackFrequencySupport::frequencyFor($athlete),
         ]);
     }
 
@@ -167,6 +151,7 @@ class SessionFeedbackWebController extends Controller
                 'filter' => $filter,
                 'feedbacks' => SessionFeedbackPresenter::list($feedbacks),
                 'eligibleSessions' => [],
+                'feedbackFrequency' => null,
             ];
         }
 
@@ -182,6 +167,7 @@ class SessionFeedbackWebController extends Controller
             'filter' => 'all',
             'feedbacks' => SessionFeedbackPresenter::list($feedbacks),
             'eligibleSessions' => app(AthleteEligibleFeedbackSessionsService::class)->forAthlete($user),
+            'feedbackFrequency' => FeedbackFrequencySupport::frequencyFor($user),
         ];
     }
 }

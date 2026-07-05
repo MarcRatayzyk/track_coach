@@ -47,4 +47,9 @@ class SessionFeedbackPolicy
 
         return $feedback->isPendingCoachReply();
     }
+
+    public function annotate(User $user, SessionFeedback $feedback): bool
+    {
+        return $user->role === 'coach' && $feedback->coach_id === $user->id && $this->view($user, $feedback);
+    }
 }

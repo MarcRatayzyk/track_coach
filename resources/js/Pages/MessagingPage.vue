@@ -8,8 +8,10 @@ export default {
 
 <script setup>
 import { Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
+import SessionFeedbackVoiceRecorder from '../Components/SessionFeedbackVoiceRecorder.vue';
+import { formatCalendarFr } from '../utils/formatDates';
 import { echo } from '../echo';
 
 const props = defineProps({
@@ -33,12 +35,18 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  feedbackContext: {
+    type: Object,
+    default: null,
+  },
 });
 
 const page = usePage();
 const myId = computed(() => page.props.auth?.user?.id);
 const isCoach = computed(() => props.role === 'coach');
 const localMessages = ref([...props.messages]);
+const voiceRecorderRef = ref(null);
+const recordedAudioFiles = ref([]);
 let echoChannel = null;
 
 const threadForm = useForm({
@@ -47,6 +55,7 @@ const threadForm = useForm({
 
 const messageForm = useForm({
   content: '',
+  session_feedback_id: props.feedbackContext?.can_reply ? props.feedbackContext.id : null,
 });
 
 const conversationTitle = computed(() => {
@@ -61,6 +70,8 @@ const conversationTitle = computed(() => {
   return props.activeThread.coach?.name ?? 'Coach';
 });
 
+const isFeedbackReply = computed(() => messageForm.session_feedback_id != null);
+
 function openThreadUrl(id) {
   return `/messaging?thread=${id}`;
 }
@@ -69,14 +80,39 @@ function submitNewThread() {
   threadForm.post('/coach/threads', { preserveScroll: true });
 }
 
+function onAudioImport(event) {
+  const files = Array.from(event.target.files ?? []);
+  recordedAudioFiles.value = [...recordedAudioFiles.value, ...files];
+}
+
+function onVoiceRecorded(file) {
+  recordedAudioFiles.value = [...recordedAudioFiles.value, file];
+}
+
+function removeAudioFile(index) {
+  recordedAudioFiles.value = recordedAudioFiles.value.filter((_, i) => i !== index);
+}
+
 function submitMessage() {
   if (!props.activeThread) {
     return;
   }
-  messageForm.post(`/coach/threads/${props.activeThread.id}/messages`, {
-    preserveScroll: true,
-    onSuccess: () => messageForm.reset('content'),
-  });
+
+  messageForm
+    .transform((data) => ({
+      ...data,
+      audio_files: recordedAudioFiles.value,
+    }))
+    .post(`/coach/threads/${props.activeThread.id}/messages`, {
+      forceFormData: true,
+      preserveScroll: true,
+      onSuccess: () => {
+        messageForm.reset('content');
+        messageForm.session_feedback_id = null;
+        recordedAudioFiles.value = [];
+        voiceRecorderRef.value?.clear?.();
+      },
+    });
 }
 
 function isMine(senderId) {
@@ -135,6 +171,14 @@ watch(
   () => props.activeThread?.id,
   (threadId) => {
     subscribeToThread(threadId);
+  },
+  { immediate: true },
+);
+
+watch(
+  () => props.feedbackContext,
+  (context) => {
+    messageForm.session_feedback_id = context?.can_reply ? context.id : null;
   },
   { immediate: true },
 );
@@ -221,6 +265,23 @@ onUnmounted(() => {
             <h2 class="text-sm font-semibold text-white">{{ conversationTitle }}</h2>
             <p class="mt-1 text-xs text-slate-500">Fil #{{ activeThread.id }}</p>
           </div>
+
+          <div
+            v-if="feedbackContext?.can_reply"
+            class="border-b border-emerald-500/30 bg-emerald-950/20 px-6 py-3 lg:px-8"
+          >
+            <p class="text-sm font-medium text-emerald-300">
+              Réponse au retour vidéo du {{ formatCalendarFr(feedbackContext.session_date) }}
+              <span v-if="feedbackContext.session_label"> — {{ feedbackContext.session_label }}</span>
+            </p>
+            <Link
+              :href="`/feedbacks?feedback=${feedbackContext.id}`"
+              class="mt-1 inline-block text-xs text-emerald-400/80 hover:text-emerald-300"
+            >
+              Voir le retour vidéo →
+            </Link>
+          </div>
+
           <div
             class="tc-scrollbar max-h-[26rem] flex-1 space-y-4 overflow-x-hidden overflow-y-auto p-6 pr-5 lg:max-h-[28rem] lg:p-8 lg:pr-7"
           >
@@ -241,19 +302,71 @@ onUnmounted(() => {
                 <p class="text-base opacity-75">
                   {{ m.sender?.name ?? '?' }} · {{ formatTime(m.created_at) }}
                 </p>
-                <p class="mt-2 whitespace-pre-wrap leading-relaxed">{{ m.content }}</p>
+                <span
+                  v-if="m.session_feedback"
+                  class="mt-2 inline-block rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200"
+                >
+                  Retour séance
+                </span>
+                <p v-if="m.content" class="mt-2 whitespace-pre-wrap leading-relaxed">{{ m.content }}</p>
+                <div v-if="m.audio_files?.length" class="mt-3 space-y-2">
+                  <audio
+                    v-for="audio in m.audio_files"
+                    :key="audio.id"
+                    :src="audio.url"
+                    controls
+                    class="w-full max-w-sm"
+                  />
+                </div>
               </div>
             </div>
           </div>
+
           <form class="border-t border-slate-800 p-3 p-4" @submit.prevent="submitMessage">
             <label class="sr-only">Message</label>
             <textarea
               v-model="messageForm.content"
               rows="4"
-              required
-              placeholder="Écrire un message…"
+              :required="!isFeedbackReply && recordedAudioFiles.length === 0"
+              :placeholder="isFeedbackReply ? 'Commentaire pour l’athlète…' : 'Écrire un message…'"
               class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-4 text-lg text-white placeholder:text-slate-600"
             />
+
+            <SessionFeedbackVoiceRecorder
+              v-if="isCoach"
+              ref="voiceRecorderRef"
+              class="mt-3"
+              @recorded="onVoiceRecorded"
+            />
+
+            <div v-if="isCoach" class="mt-3">
+              <label class="block text-sm text-slate-400">Importer des fichiers audio</label>
+              <input
+                type="file"
+                accept="audio/*"
+                multiple
+                class="mt-1 w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-white"
+                @change="onAudioImport"
+              />
+            </div>
+
+            <ul v-if="recordedAudioFiles.length" class="mt-3 space-y-1 text-sm text-slate-400">
+              <li
+                v-for="(file, index) in recordedAudioFiles"
+                :key="`${file.name}-${index}`"
+                class="flex items-center justify-between gap-2"
+              >
+                <span class="truncate">{{ file.name }}</span>
+                <button
+                  type="button"
+                  class="text-red-400 hover:text-red-300"
+                  @click="removeAudioFile(index)"
+                >
+                  Retirer
+                </button>
+              </li>
+            </ul>
+
             <p v-if="Object.keys(messageForm.errors).length" class="mt-2 text-base text-red-400">
               {{ Object.values(messageForm.errors).flat().join(' ') }}
             </p>
@@ -262,7 +375,7 @@ onUnmounted(() => {
               :disabled="messageForm.processing"
               class="mt-4 rounded-xl bg-blue-600 px-8 py-4 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 disabled:opacity-50"
             >
-              Envoyer
+              {{ isFeedbackReply ? 'Envoyer la réponse' : 'Envoyer' }}
             </button>
           </form>
         </template>

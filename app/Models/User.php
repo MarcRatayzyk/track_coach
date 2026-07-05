@@ -6,14 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Auth\MustVerifyEmail;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\ResetPasswordNotification;
+use App\Notifications\VerifyCoachEmailNotification;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmailContract
 {
     use HasApiTokens;
+    use CanResetPassword;
     use HasFactory;
+    use MustVerifyEmail;
     use Notifiable;
 
     protected $fillable = [
@@ -32,6 +39,7 @@ class User extends Authenticatable
     protected $casts = [
         'password' => 'hashed',
         'initial_setup_completed_at' => 'datetime',
+        'email_verified_at' => 'datetime',
     ];
 
     public function athletes(): BelongsToMany
@@ -103,5 +111,15 @@ class User extends Authenticatable
     public function dayTableLayouts(): HasMany
     {
         return $this->hasMany(DayTableLayout::class, 'coach_id');
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyCoachEmailNotification);
     }
 }

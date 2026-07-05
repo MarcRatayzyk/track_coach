@@ -6,6 +6,7 @@ use App\Models\AthleteProgramAssignment;
 use App\Models\ProgramTrainingDay;
 use App\Models\TrainingSession;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 
 class AthleteAdherenceCalculator
 {
@@ -28,6 +29,7 @@ class AthleteAdherenceCalculator
         AthleteProgramAssignment $assignment,
         CarbonInterface $start,
         CarbonInterface $end,
+        ?Collection $preloadedSessions = null,
     ): array {
         $assignment->loadMissing([
             'template.weeks.trainingDays.exercises',
@@ -47,15 +49,25 @@ class AthleteAdherenceCalculator
             'deadlift' => (int) ($assignment->athlete?->latestPr?->deadlift ?? 0),
         ];
 
-        $actualByDate = $this->mergeSessionsByDate(
-            TrainingSession::query()
-                ->where('athlete_id', $athleteId)
-                ->whereDate('session_date', '>=', $start->toDateString())
-                ->whereDate('session_date', '<=', $end->toDateString())
-                ->orderBy('session_date')
-                ->orderBy('id')
-                ->get(),
-        );
+        $sessions = $preloadedSessions ?? TrainingSession::query()
+            ->where('athlete_id', $athleteId)
+            ->whereDate('session_date', '>=', $start->toDateString())
+            ->whereDate('session_date', '<=', $end->toDateString())
+            ->orderBy('session_date')
+            ->orderBy('id')
+            ->get();
+
+        if ($preloadedSessions !== null) {
+            $startString = $start->toDateString();
+            $endString = $end->toDateString();
+            $sessions = $sessions
+                ->filter(fn (TrainingSession $session) => $session->session_date !== null
+                    && $session->session_date->toDateString() >= $startString
+                    && $session->session_date->toDateString() <= $endString)
+                ->values();
+        }
+
+        $actualByDate = $this->mergeSessionsByDate($sessions);
 
         $plannedSessions = 0;
         $completedSessions = 0;

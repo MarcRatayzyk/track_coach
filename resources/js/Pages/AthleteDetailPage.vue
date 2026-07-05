@@ -7,29 +7,17 @@ export default {
 </script>
 
 <script setup>
-import { Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref, watch } from 'vue';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed, onMounted, ref } from 'vue';
+import AthleteMonthCalendar from '../Components/AthleteMonthCalendar.vue';
 import AthleteProfileOverview from '../Components/AthleteProfileOverview.vue';
-import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
 import AthleteStatsOverview from '../Components/AthleteStatsOverview.vue';
 import CompetitionDetailPanel from '../Components/CompetitionDetailPanel.vue';
 import MatchPlanBuilder from '../Components/MatchPlanBuilder.vue';
-import ProgramSessionEditorModal from '../Components/ProgramSessionEditorModal.vue';
 import TrainingSessionEditorModal from '../Components/TrainingSessionEditorModal.vue';
-import TrainingSessionsCalendar from '../Components/TrainingSessionsCalendar.vue';
 import { buildAthleteOverviewStats } from '../utils/athleteOverviewStats';
 import { formatCalendarFr } from '../utils/formatDates';
 import { defaultStructuredPlan, matchPlanFromCompetition } from '../utils/matchPlan';
-import {
-  BLOCK_TYPES,
-  SECTION_LABELS,
-  cellDate,
-  cellKey,
-  formatLineRecap,
-  formatPrescription,
-  sessionCardTitle,
-  weekDaysWithSessions,
-} from '../utils/programBuilder';
 
 const props = defineProps({
   athlete: {
@@ -64,6 +52,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  programHistory: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -71,18 +63,43 @@ const isCoach = computed(() => page.props.auth?.user?.role === 'coach');
 const canManageSessions = computed(
   () => isCoach.value || page.props.auth?.user?.id === props.athlete.id,
 );
-const canLogReadiness = computed(
-  () => !isCoach.value && page.props.auth?.user?.id === props.athlete.id,
-);
 const canProposeMatchPlan = computed(
   () => !isCoach.value && page.props.auth?.user?.id === props.athlete.id,
 );
 const readinessRecent = computed(() => props.readinessRecent ?? []);
 const bodyWeightRecent = computed(() => props.bodyWeightRecent ?? []);
-const todayReadiness = computed(() => props.todayReadiness);
-const showReadinessSection = computed(() => isCoach.value);
+const compareIds = ref([]);
+const comparisonBlocks = ref([]);
 
-const today = new Date().toISOString().slice(0, 10);
+async function loadComparison() {
+  if (compareIds.value.length !== 2) {
+    comparisonBlocks.value = [];
+    return;
+  }
+
+  const params = new URLSearchParams();
+  compareIds.value.forEach((id) => params.append('ids[]', id));
+
+  const response = await fetch(`/athletes/${props.athlete.id}/program-history/compare?${params.toString()}`, {
+    headers: { Accept: 'application/json' },
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    comparisonBlocks.value = data.blocks ?? [];
+  }
+}
+
+function toggleCompareId(id) {
+  if (compareIds.value.includes(id)) {
+    compareIds.value = compareIds.value.filter((value) => value !== id);
+  } else if (compareIds.value.length < 2) {
+    compareIds.value = [...compareIds.value, id];
+  } else {
+    compareIds.value = [compareIds.value[1], id];
+  }
+  loadComparison();
+}
 
 const compForm = useForm({
   name: '',
@@ -430,12 +447,6 @@ const practiceDurationLabel = computed(() => {
   return `${years} an${years > 1 ? 's' : ''} ${remainingMonths} mois`;
 });
 
-const sortedTrainingSessions = computed(() =>
-  [...trainingSessions.value].sort((a, b) =>
-    String(a.session_date ?? '').localeCompare(String(b.session_date ?? '')),
-  ),
-);
-
 function subtractMonths(date, months) {
   const d = new Date(date);
   d.setMonth(d.getMonth() - months);
@@ -490,10 +501,6 @@ function filterByTimeRange(items, dateField) {
     return Number.isFinite(d.getTime()) && d >= minDate;
   });
 }
-
-const filteredTrainingSessions = computed(() =>
-  filterByTimeRange(sortedTrainingSessions.value, 'session_date'),
-);
 
 const filteredPrRecords = computed(() =>
   filterByTimeRange(sortedPersonalRecords.value, 'reference_date'),
@@ -552,92 +559,6 @@ function toggleFeedbackFrequency() {
   submitProfile();
 }
 
-function blockTypeLabel(type) {
-  return BLOCK_TYPES.find((item) => item.value === type)?.label ?? type;
-}
-
-function sortedExercisesForDay(day) {
-  return [...(day.exercises ?? [])].sort(
-    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
-  );
-}
-
-function sessionDateLabel(day, weekNumber, dateStart) {
-  if (!dateStart) {
-    return null;
-  }
-  return formatCalendarFr(cellDate(dateStart, weekNumber, day.day_number), 'medium');
-}
-
-function exerciseLineText(line) {
-  return formatLineRecap(line) || formatPrescription(line);
-}
-
-function sectionTextClass(section) {
-  if (section === 'topset') {
-    return 'text-emerald-400';
-  }
-  if (section === 'backoff') {
-    return 'text-slate-400';
-  }
-  return 'text-slate-500';
-}
-
-const expandedWeeks = ref(new Set());
-const programSessionModalOpen = ref(false);
-const selectedProgramCell = ref(null);
-
-watch(
-  () => props.activeProgram?.template?.weeks,
-  () => {
-    expandedWeeks.value = new Set();
-    programSessionModalOpen.value = false;
-    selectedProgramCell.value = null;
-  },
-  { immediate: true },
-);
-
-function isWeekExpanded(weekId) {
-  return expandedWeeks.value.has(weekId);
-}
-
-function toggleWeek(weekId) {
-  const next = new Set(expandedWeeks.value);
-  if (next.has(weekId)) {
-    next.delete(weekId);
-  } else {
-    next.add(weekId);
-  }
-  expandedWeeks.value = next;
-}
-
-function canEditProgramSession() {
-  return isCoach.value && Boolean(props.programBlock);
-}
-
-function openProgramSessionEditor(week, day) {
-  if (!canEditProgramSession() || !props.activeProgram?.date_start) {
-    return;
-  }
-  selectedProgramCell.value = {
-    weekNumber: week.week_number,
-    weekday: day.day_number,
-    key: cellKey(week.week_number, day.day_number),
-    date: cellDate(props.activeProgram.date_start, week.week_number, day.day_number),
-  };
-  programSessionModalOpen.value = true;
-}
-
-function closeProgramSessionModal() {
-  programSessionModalOpen.value = false;
-  selectedProgramCell.value = null;
-}
-
-function onProgramSessionSaved() {
-  router.reload({ only: ['activeProgram', 'programBlock'], preserveScroll: true });
-  closeProgramSessionModal();
-}
-
 onMounted(() => {
   maybeOpenCompetitionFromQuery();
 });
@@ -645,38 +566,68 @@ onMounted(() => {
 
 <template>
   <div>
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <Link
-          v-if="isCoach"
-          href="/athletes"
-          class="text-sm font-medium text-blue-400 hover:text-blue-300 "
-        >
-          ← Retour à la liste
-        </Link>
-        <h1 class="mt-3 text-2xl font-bold text-white">
-          {{ athlete.name }}
-        </h1>
-        <p class="mt-2 text-slate-400 ">
-          {{ athlete.email }}
-        </p>
-      </div>
-    </div>
+    <Link
+      v-if="isCoach"
+      href="/athletes"
+      class="text-sm font-medium text-blue-400 hover:text-blue-300"
+    >
+      ← Retour à la liste
+    </Link>
 
-    <div class="mt-10">
+    <div :class="isCoach ? 'mt-4' : ''">
       <AthleteProfileOverview
+        :name="athlete.name"
+        :email="athlete.email"
         :weight-class="athlete.profile?.weight_class ?? '—'"
         :practice-duration-label="practiceDurationLabel"
         :latest-competition-date-label="latestCompetitionDateLabel"
         :latest-competition-bars="latestCompetitionBars"
-        :training-prs="trainingPrs"
+        :personal-records="personalRecords"
         :next-competition="nextCompetition"
+        :athlete-id="athlete.id"
         :is-coach="isCoach"
+        :feedback-frequency-label="feedbackLabels[currentFeedbackFrequency]"
+        :next-feedback-button-label="isCoach ? nextFeedbackButtonLabel : ''"
+        :program-url="programBlock ? `/program-builder?assignment=${programBlock.id}` : null"
+        :program-export-url="programBlock ? `/coach/program-blocks/${programBlock.id}/export-pdf` : null"
         @open-competition="openCompetition"
         @add-competition="openAddCompetitionModal"
+        @toggle-feedback-frequency="toggleFeedbackFrequency"
       />
 
-      <div class="mt-5">
+      <section class="mt-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg lg:p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-sm font-semibold text-white">Calendrier</h2>
+          <button
+            v-if="canManageSessions"
+            type="button"
+            class="rounded-xl border border-blue-500/50 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/10"
+            @click="openAddSessionForm"
+          >
+            Ajouter une séance
+          </button>
+        </div>
+
+        <AthleteMonthCalendar
+          class="mt-3"
+          :program-block="programBlock"
+          :training-sessions="trainingSessions"
+          :competitions="athlete.competitions ?? []"
+          :can-edit="canManageSessions"
+          @edit-session="openEditSession"
+        />
+
+        <TrainingSessionEditorModal
+          :open="sessionModalOpen"
+          :athlete-id="athlete.id"
+          :session="editingSession"
+          :default-date="selectedSessionDay || today"
+          @close="closeSessionModal"
+          @saved="onSessionSaved"
+        />
+      </section>
+
+      <div class="mt-3">
         <AthleteStatsOverview
           :stats="overviewStats"
           :has-active-program="Boolean(programBlock)"
@@ -689,169 +640,76 @@ onMounted(() => {
         />
       </div>
 
-      <div v-if="showReadinessSection" class="mt-5">
-        <AthleteReadinessCheckIn
-          :athlete-id="athlete.id"
-          :today-readiness="todayReadiness"
-          :readiness-recent="readinessRecent"
-          :can-edit="canLogReadiness"
-        />
-      </div>
-
       <section
-        v-if="activeProgram && activeProgram.template"
-        class="mt-5 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6"
+        v-if="isCoach && programHistory.length"
+        class="mt-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg lg:p-5"
       >
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-sm font-semibold text-white">Programme en cours</h2>
-          <Link
-            v-if="isCoach && activeProgram.id"
-            :href="`/program-builder?assignment=${activeProgram.id}`"
-            class="shrink-0 rounded-xl border border-blue-500/50 bg-blue-600/20 px-3 py-1.5 text-xs font-semibold text-blue-300 transition hover:bg-blue-600/30"
-          >
-            Modifier le programme
-          </Link>
-        </div>
-        <p class="mt-3 text-slate-400 ">
-          {{ activeProgram.template.name }} · du
-          {{ formatCalendarFr(activeProgram.date_start, 'medium') }} au
-          {{
-            activeProgram.date_end
-              ? formatCalendarFr(activeProgram.date_end, 'medium')
-              : '—'
-          }}
-        </p>
-        <div
-          v-for="week in activeProgram.template.weeks ?? []"
-          :key="week.id"
-          class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/60"
-        >
-          <button
-            type="button"
-            class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-slate-900/60"
-            :aria-expanded="isWeekExpanded(week.id)"
-            @click="toggleWeek(week.id)"
-          >
-            <span
-              class="inline-block w-4 shrink-0 text-center text-lg font-semibold text-slate-400 transition-transform duration-200"
-              :class="isWeekExpanded(week.id) ? 'rotate-90' : ''"
-              aria-hidden="true"
-            >
-              &gt;
-            </span>
-            <span class="min-w-0 flex-1 text-base font-semibold text-white">
-              Semaine {{ week.week_number }}
-              <span class="text-slate-400">— {{ blockTypeLabel(week.block_type) }}</span>
-            </span>
-            <span class="shrink-0 text-xs text-slate-500">
-              {{ weekDaysWithSessions(week).length }}
-              séance{{ weekDaysWithSessions(week).length > 1 ? 's' : '' }}
-            </span>
-          </button>
-          <div v-show="isWeekExpanded(week.id)" class="border-t border-slate-800/80 px-4 pb-4 pt-1">
-          <div
-            v-if="weekDaysWithSessions(week).length"
-            class="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-          >
-            <article
-              v-for="day in weekDaysWithSessions(week)"
-              :key="day.id"
-              class="flex flex-col rounded-xl border border-slate-800 bg-slate-950/50 p-4"
-              :class="
-                canEditProgramSession()
-                  ? 'cursor-pointer transition hover:border-slate-600 hover:bg-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500/70'
-                  : ''
-              "
-              :role="canEditProgramSession() ? 'button' : undefined"
-              :tabindex="canEditProgramSession() ? 0 : undefined"
-              @click="openProgramSessionEditor(week, day)"
-              @keydown.enter.prevent="openProgramSessionEditor(week, day)"
-              @keydown.space.prevent="openProgramSessionEditor(week, day)"
-            >
-              <h4 class="text-sm font-semibold text-white">
-                {{ sessionCardTitle(day, weekDaysWithSessions(week)) }}
-              </h4>
-              <p v-if="sessionDateLabel(day, week.week_number, activeProgram.date_start)" class="mt-1 text-xs text-slate-500">
-                {{ sessionDateLabel(day, week.week_number, activeProgram.date_start) }}
-              </p>
-              <ul class="mt-3 flex-1 space-y-2 border-t border-slate-800/80 pt-3">
-                <li
-                  v-for="line in sortedExercisesForDay(day)"
-                  :key="line.id"
-                  class="text-sm leading-snug"
-                >
-                  <span class="font-medium" :class="sectionTextClass(line.section)">
-                    {{ SECTION_LABELS[line.section] ?? line.section }}
-                  </span>
-                  <span class="text-slate-300"> — {{ exerciseLineText(line) }}</span>
-                </li>
-              </ul>
-              <p
-                v-if="!sortedExercisesForDay(day).length"
-                class="mt-3 text-sm text-slate-500"
-              >
-                Aucun exercice renseigné.
-              </p>
-            </article>
-          </div>
-          <p v-else class="mt-3 text-sm text-slate-500">
-            Aucune séance programmée cette semaine.
-          </p>
-          </div>
-        </div>
+        <h2 class="text-sm font-semibold text-white">Historique des blocs</h2>
+        <p class="mt-1 text-xs text-slate-500">Sélectionnez deux blocs pour les comparer.</p>
 
-        <ProgramSessionEditorModal
-          :open="programSessionModalOpen"
-          :program-block="programBlock"
-          :selected-cell="selectedProgramCell"
-          @close="closeProgramSessionModal"
-          @saved="onProgramSessionSaved"
-          @cleared="onProgramSessionSaved"
-        />
-      </section>
+        <ul class="mt-4 space-y-2">
+          <li
+            v-for="block in programHistory"
+            :key="block.id"
+            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2"
+          >
+            <div>
+              <p class="font-medium text-white">{{ block.name }}</p>
+              <p class="text-xs text-slate-500">
+                {{ block.date_start }} → {{ block.date_end }}
+                · Adhérence {{ block.adherence_percentage ?? '—' }}%
+                · Volume {{ block.volume_sets_reps }}
+              </p>
+            </div>
+            <label class="flex items-center gap-2 text-xs text-slate-300">
+              <input
+                type="checkbox"
+                :checked="compareIds.includes(block.id)"
+                @change="toggleCompareId(block.id)"
+              />
+              Comparer
+            </label>
+          </li>
+        </ul>
 
-      <section
-        v-else
-        class="mt-5 rounded-2xl border border-dashed border-slate-700 bg-slate-900/30 p-5 lg:p-6"
-      >
-        <h2 class="text-sm font-semibold text-white">Programme en cours</h2>
-        <p class="mt-3 text-slate-500 ">
-          Aucun programme actif assigné pour le moment.
-        </p>
+        <div v-if="comparisonBlocks.length === 2" class="mt-4 overflow-x-auto">
+          <table class="min-w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400">
+                <th class="px-2 py-2">Métrique</th>
+                <th v-for="block in comparisonBlocks" :key="block.id" class="px-2 py-2">{{ block.name }}</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-200">
+              <tr class="border-b border-slate-900">
+                <td class="px-2 py-2 text-slate-400">Période</td>
+                <td v-for="block in comparisonBlocks" :key="`p-${block.id}`" class="px-2 py-2">
+                  {{ block.date_start }} → {{ block.date_end }}
+                </td>
+              </tr>
+              <tr class="border-b border-slate-900">
+                <td class="px-2 py-2 text-slate-400">Adhérence</td>
+                <td v-for="block in comparisonBlocks" :key="`a-${block.id}`" class="px-2 py-2">
+                  {{ block.adherence_percentage ?? '—' }} %
+                </td>
+              </tr>
+              <tr class="border-b border-slate-900">
+                <td class="px-2 py-2 text-slate-400">Volume (séries×reps)</td>
+                <td v-for="block in comparisonBlocks" :key="`v-${block.id}`" class="px-2 py-2">
+                  {{ block.volume_sets_reps }}
+                </td>
+              </tr>
+              <tr>
+                <td class="px-2 py-2 text-slate-400">Total SBD (1RM)</td>
+                <td v-for="block in comparisonBlocks" :key="`t-${block.id}`" class="px-2 py-2">
+                  {{ block.sbd_total }} kg
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
-
-    <section class="mt-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-sm font-semibold text-white">Historique des séances</h2>
-        <button
-          v-if="canManageSessions"
-          type="button"
-          class="rounded-xl border border-blue-500/50 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/10"
-          @click="openAddSessionForm"
-        >
-          Ajouter une séance
-        </button>
-      </div>
-
-      <TrainingSessionsCalendar
-        v-model:selected-day="selectedSessionDay"
-        :sessions="trainingSessions"
-        :reference-lifts="referenceLifts"
-        :can-edit="canManageSessions"
-        class="mt-4"
-        @edit-session="openEditSession"
-      />
-
-      <TrainingSessionEditorModal
-        :open="sessionModalOpen"
-        :athlete-id="athlete.id"
-        :session="editingSession"
-        :default-date="selectedSessionDay || today"
-        @close="closeSessionModal"
-        @saved="onSessionSaved"
-      />
-    </section>
 
     <Teleport to="body">
       <div

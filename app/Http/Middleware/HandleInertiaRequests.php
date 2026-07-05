@@ -51,11 +51,13 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'first_login_url' => fn () => $request->session()->get('first_login_url'),
             ],
-            'messagingInbox' => fn () => $request->user()?->role === 'athlete'
-                ? MessagingInboxSupport::athleteInboxSummary($request->user())
-                : null,
+            'messagingInbox' => fn () => match ($request->user()?->role) {
+                'athlete' => MessagingInboxSupport::athleteInboxSummary($request->user()),
+                'coach' => MessagingInboxSupport::coachInboxSummary($request->user()),
+                default => null,
+            },
             'exerciseLibrary' => fn () => $request->user()?->role === 'coach'
-                ? Exercise::query()->with('variants')->orderBy('name')->get()
+                ? Exercise::query()->forCoach($request->user())->with('variants')->orderBy('name')->get()
                 : [],
         ]);
     }

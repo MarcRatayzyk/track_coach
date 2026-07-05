@@ -20,6 +20,8 @@ class MessagingAndDashboardTest extends TestCase
             'email' => 'coach@msg.dev',
             'password' => bcrypt('password'),
             'role' => 'coach',
+            'initial_setup_completed_at' => now(),
+            'email_verified_at' => now(),
         ]);
 
         $athlete = User::query()->create([

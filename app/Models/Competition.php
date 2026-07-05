@@ -15,11 +15,17 @@ class Competition extends Model
         'location',
         'match_plan',
         'match_plan_data',
+        'live_state',
+        'live_started_at',
+        'live_ended_at',
     ];
 
     protected $casts = [
         'competition_date' => 'date',
         'match_plan_data' => 'array',
+        'live_state' => 'array',
+        'live_started_at' => 'datetime',
+        'live_ended_at' => 'datetime',
     ];
 
     public function athlete()

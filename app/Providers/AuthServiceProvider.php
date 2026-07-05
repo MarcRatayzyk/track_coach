@@ -3,14 +3,18 @@
 namespace App\Providers;
 
 use App\Models\AthleteProgramAssignment;
+use App\Models\Competition;
 use App\Models\DashboardTask;
+use App\Models\Exercise;
 use App\Models\MessageThread;
 use App\Models\ProgramTemplate;
 use App\Models\SessionFeedback;
 use App\Models\User;
 use App\Policies\AthletePolicy;
 use App\Policies\AthleteProgramAssignmentPolicy;
+use App\Policies\CompetitionPolicy;
 use App\Policies\DashboardTaskPolicy;
+use App\Policies\ExercisePolicy;
 use App\Policies\MessageThreadPolicy;
 use App\Policies\ProgramTemplatePolicy;
 use App\Policies\SessionFeedbackPolicy;
@@ -25,6 +29,8 @@ class AuthServiceProvider extends ServiceProvider
         MessageThread::class => MessageThreadPolicy::class,
         DashboardTask::class => DashboardTaskPolicy::class,
         SessionFeedback::class => SessionFeedbackPolicy::class,
+        Competition::class => CompetitionPolicy::class,
+        Exercise::class => ExercisePolicy::class,
     ];
 
     public function boot(): void

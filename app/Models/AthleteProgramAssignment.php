@@ -13,11 +13,13 @@ class AthleteProgramAssignment extends Model
         'date_start',
         'date_end',
         'status',
+        'archived_at',
     ];
 
     protected $casts = [
         'date_start' => 'date',
         'date_end' => 'date',
+        'archived_at' => 'datetime',
     ];
 
     public function athlete(): BelongsTo

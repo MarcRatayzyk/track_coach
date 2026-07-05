@@ -24,6 +24,18 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['email' => 'Identifiants invalides.']);
         }
 
+        if ($user->initial_setup_completed_at === null) {
+            throw ValidationException::withMessages([
+                'email' => 'Active ton compte avec le lien d’invitation avant de te connecter.',
+            ]);
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            throw ValidationException::withMessages([
+                'email' => 'Confirme ton adresse e-mail avant de te connecter.',
+            ]);
+        }
+
         $token = $user->createToken('api')->plainTextToken;
 
         return response()->json(['token' => $token, 'user' => $user]);

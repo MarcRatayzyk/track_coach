@@ -7,7 +7,7 @@ use App\Models\AthleteProfile;
 use App\Models\AthleteProgramAssignment;
 use App\Models\DashboardTask;
 use App\Models\SessionFeedback;
-use App\Models\SessionFeedbackReply;
+use App\Support\FeedbackReplySupport;
 use App\Models\User;
 use App\Support\ProgramSchedule;
 use Carbon\Carbon;
@@ -102,11 +102,10 @@ class SeedCurrentPeriodFeedbacksSeeder extends Seeder
                 ]);
 
                 if ($withReply) {
-                    SessionFeedbackReply::query()->create([
-                        'session_feedback_id' => $feedback->id,
-                        'coach_id' => $coach->id,
-                        'body' => 'Bien reçu. On garde cette trajectoire, envoie la vidéo du top set si ce n’est pas déjà fait.',
-                    ]);
+                    FeedbackReplySupport::createCoachReply(
+                        $feedback,
+                        'Bien reçu. On garde cette trajectoire, envoie la vidéo du top set si ce n’est pas déjà fait.',
+                    );
                 }
             }
 
@@ -199,11 +198,10 @@ class SeedCurrentPeriodFeedbacksSeeder extends Seeder
             ]);
 
             if ($withReply) {
-                SessionFeedbackReply::query()->create([
-                    'session_feedback_id' => $feedback->id,
-                    'coach_id' => $coach->id,
-                    'body' => 'Bon point hebdo. On conserve le plan actuel et on réévalue les charges lundi.',
-                ]);
+                FeedbackReplySupport::createCoachReply(
+                    $feedback,
+                    'Bon point hebdo. On conserve le plan actuel et on réévalue les charges lundi.',
+                );
             }
 
             $task->update(['session_feedback_id' => $feedback->id]);

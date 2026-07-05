@@ -36,7 +36,7 @@ class CoachAthleteRosterService
                     ->with('template:id,name'),
             ])
             ->orderBy('users.name')
-            ->get(['users.id', 'users.name', 'users.email']);
+            ->get(['users.id', 'users.name', 'users.email', 'users.initial_setup_completed_at']);
 
         if ($athletes->isEmpty()) {
             return [];
@@ -96,6 +96,7 @@ class CoachAthleteRosterService
                     'id' => $athlete->id,
                     'name' => $athlete->name,
                     'email' => $athlete->email,
+                    'is_pending_activation' => $athlete->initial_setup_completed_at === null,
                     'weight_class' => $athlete->profile?->weight_class,
                     'total_kg' => $total > 0 ? $total : null,
                     'gl_points' => $glPoints,

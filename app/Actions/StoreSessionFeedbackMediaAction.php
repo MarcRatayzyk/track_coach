@@ -4,7 +4,6 @@ namespace App\Actions;
 
 use App\Models\SessionFeedback;
 use App\Models\SessionFeedbackMedia;
-use App\Models\SessionFeedbackReply;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -22,22 +21,6 @@ class StoreSessionFeedbackMediaAction
             $files,
             SessionFeedbackMedia::KIND_VIDEO,
             'videos',
-            null,
-        );
-    }
-
-    /**
-     * @param  list<UploadedFile>  $files
-     * @return list<SessionFeedbackMedia>
-     */
-    public function storeAudioForReply(SessionFeedbackReply $reply, array $files): array
-    {
-        return $this->storeFiles(
-            $reply->feedback,
-            $files,
-            SessionFeedbackMedia::KIND_AUDIO,
-            'audio',
-            $reply->id,
         );
     }
 
@@ -50,7 +33,6 @@ class StoreSessionFeedbackMediaAction
         array $files,
         string $kind,
         string $subdir,
-        ?int $replyId,
     ): array {
         $disk = 'public';
         $stored = [];
@@ -66,7 +48,6 @@ class StoreSessionFeedbackMediaAction
 
             $stored[] = SessionFeedbackMedia::query()->create([
                 'session_feedback_id' => $feedback->id,
-                'session_feedback_reply_id' => $replyId,
                 'kind' => $kind,
                 'disk' => $disk,
                 'path' => $path,

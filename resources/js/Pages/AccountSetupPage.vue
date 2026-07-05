@@ -6,10 +6,15 @@ export default {
 
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const props = defineProps({
     user: {
         type: Object,
+        required: true,
+    },
+    role: {
+        type: String,
         required: true,
     },
     submitUrl: {
@@ -17,6 +22,8 @@ const props = defineProps({
         required: true,
     },
 });
+
+const isCoach = computed(() => props.role === 'coach');
 
 const form = useForm({
     password: '',
@@ -34,12 +41,19 @@ function submit() {
 
 <template>
     <div class="min-h-screen bg-slate-950 px-4 py-12 text-slate-100">
-        <Head title="Activer mon compte" />
+        <Head :title="isCoach ? 'Activer mon compte coach' : 'Activer mon compte'" />
         <div class="mx-auto w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-xl">
-            <h1 class="text-2xl font-bold text-white">Activer ton compte</h1>
+            <h1 class="text-2xl font-bold text-white">
+                {{ isCoach ? 'Active ton compte coach' : 'Active ton compte' }}
+            </h1>
             <p class="mt-2 text-slate-400">
-                Bonjour <span class="font-medium text-slate-200">{{ user.name }}</span>, choisis un mot de passe et
-                complète les informations utiles pour ton coach.
+                Bonjour <span class="font-medium text-slate-200">{{ user.name }}</span>,
+                <template v-if="isCoach">
+                    choisis un mot de passe pour accéder à ton espace coach.
+                </template>
+                <template v-else>
+                    choisis un mot de passe et complète les informations utiles pour ton coach.
+                </template>
             </p>
             <p class="mt-3 text-sm text-slate-500">E-mail de connexion : {{ user.email }}</p>
 
@@ -65,24 +79,26 @@ function submit() {
                         class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
                     />
                 </label>
-                <label class="block text-sm font-medium text-slate-400">
-                    Catégorie de poids (optionnel)
-                    <input
-                        v-model="form.weight_class"
-                        type="text"
-                        class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-                        placeholder="Ex. 83 kg"
-                    />
-                </label>
-                <label class="block text-sm font-medium text-slate-400">
-                    Bio / objectifs (optionnel)
-                    <textarea
-                        v-model="form.bio"
-                        rows="3"
-                        class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-                        placeholder="Quelques lignes pour ton coach…"
-                    />
-                </label>
+                <template v-if="!isCoach">
+                    <label class="block text-sm font-medium text-slate-400">
+                        Catégorie de poids (optionnel)
+                        <input
+                            v-model="form.weight_class"
+                            type="text"
+                            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+                            placeholder="Ex. 83 kg"
+                        />
+                    </label>
+                    <label class="block text-sm font-medium text-slate-400">
+                        Bio / objectifs (optionnel)
+                        <textarea
+                            v-model="form.bio"
+                            rows="3"
+                            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+                            placeholder="Quelques lignes pour ton coach…"
+                        />
+                    </label>
+                </template>
                 <p v-if="Object.keys(form.errors).length" class="text-sm text-red-400">
                     {{ Object.values(form.errors).flat().join(' ') }}
                 </p>

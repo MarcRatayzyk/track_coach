@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Exercise extends Model
@@ -20,6 +22,8 @@ class Exercise extends Model
     public const CATEGORY_ACCESSORY = 'accessory';
 
     protected $fillable = [
+        'coach_id',
+        'is_custom',
         'name',
         'slug',
         'lift',
@@ -28,8 +32,25 @@ class Exercise extends Model
         'movement_pattern',
     ];
 
+    protected $casts = [
+        'is_custom' => 'boolean',
+    ];
+
+    public function coach(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'coach_id');
+    }
+
     public function variants(): HasMany
     {
         return $this->hasMany(ExerciseVariant::class);
+    }
+
+    public function scopeForCoach(Builder $query, User $coach): Builder
+    {
+        return $query->where(function (Builder $builder) use ($coach): void {
+            $builder->whereNull('coach_id')
+                ->orWhere('coach_id', $coach->id);
+        });
     }
 }

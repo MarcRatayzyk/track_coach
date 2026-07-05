@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\AthleteProgramAssignment;
 use App\Models\TrainingSession;
 use App\Support\AthleteAdherenceCalculator;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 
 class AthleteSessionCoverageService
 {
@@ -28,8 +30,15 @@ class AthleteSessionCoverageService
         AthleteProgramAssignment $assignment,
         CarbonInterface $start,
         CarbonInterface $end,
+        ?Collection $preloadedSessions = null,
     ): array {
-        $metrics = $this->adherenceCalculator->between($athleteId, $assignment, $start, $end);
+        $metrics = $this->adherenceCalculator->between(
+            $athleteId,
+            $assignment,
+            $start,
+            $end,
+            $preloadedSessions,
+        );
 
         return [
             'planned' => $metrics['planned_sessions'],
@@ -41,14 +50,17 @@ class AthleteSessionCoverageService
         ];
     }
 
-    public function latestSessionDate(int $athleteId): ?string
+    public function latestSessionDates(Collection $athleteIds): Collection
     {
-        $date = TrainingSession::query()
-            ->where('athlete_id', $athleteId)
-            ->orderByDesc('session_date')
-            ->orderByDesc('id')
-            ->value('session_date');
+        if ($athleteIds->isEmpty()) {
+            return collect();
+        }
 
-        return $date?->toDateString();
+        return TrainingSession::query()
+            ->selectRaw('athlete_id, MAX(session_date) as latest_session_date')
+            ->whereIn('athlete_id', $athleteIds)
+            ->groupBy('athlete_id')
+            ->pluck('latest_session_date', 'athlete_id')
+            ->map(fn ($date) => $date !== null ? Carbon::parse($date)->toDateString() : null);
     }
 }

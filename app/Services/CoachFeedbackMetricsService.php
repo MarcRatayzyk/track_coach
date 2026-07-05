@@ -14,6 +14,11 @@ use Illuminate\Support\Collection;
 
 class CoachFeedbackMetricsService
 {
+    /** @var array<string, Collection<int, AthleteProgramAssignment>> */
+    private array $activeAssignmentsCache = [];
+
+    private bool $expectationsSynced = false;
+
     public function __construct(
         private readonly SyncCoachFeedbackExpectations $syncExpectations,
     ) {}
@@ -29,9 +34,13 @@ class CoachFeedbackMetricsService
      */
     public function forCoach(User $coach): array
     {
-        $this->syncExpectations->execute($coach);
-
         $today = now()->copy()->startOfDay();
+
+        if (! $this->expectationsSynced) {
+            $this->syncExpectations->execute($coach, $today);
+            $this->expectationsSynced = true;
+        }
+
         $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
         $weekEnd = $today->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
 
@@ -42,14 +51,17 @@ class CoachFeedbackMetricsService
             ->wherePivot('status', 'active')
             ->pluck('users.id');
 
-        $dailyExpectedSlots = $this->countDailyExpectedSlots($coach, $athleteIds, $today);
-        $weeklyExpectedSlots = $this->countWeeklyExpectedSlots($coach, $athleteIds, $weekStart, $weekEnd);
+        $dailyExpectedSlots = $this->countDailyExpectedSlots($athleteIds, $today);
+        $weeklyExpectedSlots = $this->countWeeklyExpectedSlots($athleteIds, $weekStart, $weekEnd);
+
+        $dailyAthleteIds = $this->dailyAthleteIds($athleteIds, $today);
 
         $dailyTasksQuery = DashboardTask::query()
             ->where('coach_id', $coach->id)
             ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
             ->whereNotNull('session_date')
-            ->whereNull('period_week_start');
+            ->whereNull('period_week_start')
+            ->whereIn('athlete_id', $dailyAthleteIds);
 
         $overdue = (clone $dailyTasksQuery)
             ->where('status', 'pending')
@@ -63,13 +75,15 @@ class CoachFeedbackMetricsService
 
         $dailyReceived = SessionFeedback::query()
             ->where('coach_id', $coach->id)
+            ->whereIn('athlete_id', $dailyAthleteIds)
             ->whereDate('session_date', $today->toDateString())
             ->count();
 
         $dailyProcessedToday = SessionFeedback::query()
             ->where('coach_id', $coach->id)
+            ->whereIn('athlete_id', $dailyAthleteIds)
             ->where('status', SessionFeedback::STATUS_COACH_REPLIED)
-            ->whereHas('reply', fn ($q) => $q->whereDate('created_at', $today->toDateString()))
+            ->whereDate('updated_at', $today->toDateString())
             ->count();
 
         $dailyPendingTasks = DashboardTask::query()
@@ -126,7 +140,7 @@ class CoachFeedbackMetricsService
                 'received_today' => $dailyReceived,
                 'processed_today' => $dailyProcessedToday,
                 'pending_tasks' => $dailyPendingTasks,
-                'breakdown' => $this->buildDailyBreakdown($coach, $today),
+                'breakdown' => $this->buildDailyBreakdown($coach, $today, $athleteIds),
             ],
             'weekly' => [
                 'expected_week' => $weeklyExpectedSlots,
@@ -141,7 +155,7 @@ class CoachFeedbackMetricsService
         ];
     }
 
-    private function countDailyExpectedSlots(User $coach, Collection $athleteIds, Carbon $today): int
+    private function countDailyExpectedSlots(Collection $athleteIds, Carbon $today): int
     {
         if ($athleteIds->isEmpty()) {
             return 0;
@@ -151,6 +165,13 @@ class CoachFeedbackMetricsService
         $assignments = $this->activeAssignments($athleteIds, $today);
 
         foreach ($assignments as $assignment) {
+            $frequency = $assignment->athlete?->profile?->feedback_frequency
+                ?? AthleteProfile::FREQUENCY_WEEKLY;
+
+            if ($frequency !== AthleteProfile::FREQUENCY_DAILY) {
+                continue;
+            }
+
             if (ProgramSchedule::hasSessionOnDate($assignment, $today)) {
                 $count++;
             }
@@ -159,7 +180,7 @@ class CoachFeedbackMetricsService
         return $count;
     }
 
-    private function countWeeklyExpectedSlots(User $coach, Collection $athleteIds, Carbon $weekStart, Carbon $weekEnd): int
+    private function countWeeklyExpectedSlots(Collection $athleteIds, Carbon $weekStart, Carbon $weekEnd): int
     {
         if ($athleteIds->isEmpty()) {
             return 0;
@@ -189,7 +210,17 @@ class CoachFeedbackMetricsService
      */
     private function activeAssignments(Collection $athleteIds, Carbon $today): Collection
     {
-        return AthleteProgramAssignment::query()
+        $cacheKey = $today->toDateString().':'.$athleteIds->sort()->implode(',');
+
+        if (isset($this->activeAssignmentsCache[$cacheKey])) {
+            return $this->activeAssignmentsCache[$cacheKey];
+        }
+
+        if ($athleteIds->isEmpty()) {
+            return $this->activeAssignmentsCache[$cacheKey] = collect();
+        }
+
+        return $this->activeAssignmentsCache[$cacheKey] = AthleteProgramAssignment::query()
             ->whereIn('athlete_id', $athleteIds)
             ->where('status', 'active')
             ->whereDate('date_start', '<=', $today->toDateString())
@@ -199,6 +230,29 @@ class CoachFeedbackMetricsService
             })
             ->with(['template.weeks.trainingDays', 'athlete.profile'])
             ->get();
+    }
+
+    /**
+     * @param  Collection<int, int|string>  $athleteIds
+     * @return list<int>
+     */
+    private function dailyAthleteIds(Collection $athleteIds, Carbon $today): array
+    {
+        if ($athleteIds->isEmpty()) {
+            return [];
+        }
+
+        return $this->activeAssignments($athleteIds, $today)
+            ->filter(function (AthleteProgramAssignment $assignment): bool {
+                $frequency = $assignment->athlete?->profile?->feedback_frequency
+                    ?? AthleteProfile::FREQUENCY_WEEKLY;
+
+                return $frequency === AthleteProfile::FREQUENCY_DAILY;
+            })
+            ->pluck('athlete_id')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function activeAssignmentConstraint($query, Carbon $today): void
@@ -214,14 +268,9 @@ class CoachFeedbackMetricsService
     /**
      * @return array{pending: list<array<string, mixed>>, submitted: list<array<string, mixed>>}
      */
-    private function buildDailyBreakdown(User $coach, Carbon $today): array
+    private function buildDailyBreakdown(User $coach, Carbon $today, Collection $athleteIds): array
     {
         $todayString = $today->toDateString();
-
-        $athleteIds = $coach->athletes()
-            ->where('users.role', 'athlete')
-            ->wherePivot('status', 'active')
-            ->pluck('users.id');
 
         $assignments = $this->activeAssignments($athleteIds, $today);
 
@@ -236,6 +285,13 @@ class CoachFeedbackMetricsService
         $submitted = [];
 
         foreach ($assignments as $assignment) {
+            $frequency = $assignment->athlete?->profile?->feedback_frequency
+                ?? AthleteProfile::FREQUENCY_WEEKLY;
+
+            if ($frequency !== AthleteProfile::FREQUENCY_DAILY) {
+                continue;
+            }
+
             if (! ProgramSchedule::hasSessionOnDate($assignment, $today)) {
                 continue;
             }

@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
+use App\Support\MessagePresenter;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -32,20 +33,8 @@ class MessageSent implements ShouldBroadcastNow
      */
     public function broadcastWith(): array
     {
-        $this->message->loadMissing('sender:id,name');
-
         return [
-            'message' => [
-                'id' => $this->message->id,
-                'thread_id' => $this->message->thread_id,
-                'sender_id' => $this->message->sender_id,
-                'content' => $this->message->content,
-                'created_at' => $this->message->created_at?->toIso8601String(),
-                'sender' => [
-                    'id' => $this->message->sender?->id,
-                    'name' => $this->message->sender?->name,
-                ],
-            ],
+            'message' => MessagePresenter::message($this->message),
         ];
     }
 }

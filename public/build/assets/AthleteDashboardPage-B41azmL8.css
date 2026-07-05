@@ -1,0 +1,1 @@
+.glow-card[data-v-bc17a42e]:hover{filter:brightness(1.04)}.glow-card--pulse[data-v-bc17a42e]{animation:glow-pulse-bc17a42e 3.5s ease-in-out infinite}@keyframes glow-pulse-bc17a42e{0%,to{filter:brightness(1)}50%{filter:brightness(1.08)}}

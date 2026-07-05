@@ -2,56 +2,82 @@
 
 namespace Tests\Feature;
 
-use App\Models\AthleteProfile;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Support\AccountSetupUrlGenerator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class AccountSetupTest extends TestCase
 {
-    use RefreshDatabase;
-
-    public function test_athlete_can_complete_setup_via_signed_urls(): void
+    public function test_athlete_can_activate_account_via_signed_url(): void
     {
         $athlete = User::query()->create([
-            'name' => 'Jean Test',
-            'email' => 'jean@example.com',
-            'password' => Hash::make('unused-random'),
+            'name' => 'Léa Martin',
+            'email' => 'lea@example.com',
+            'password' => 'temporary',
             'role' => 'athlete',
             'initial_setup_completed_at' => null,
         ]);
 
-        AthleteProfile::query()->create(['user_id' => $athlete->id]);
+        $url = AccountSetupUrlGenerator::signedUpdateUrl($athlete);
 
-        $showUrl = URL::temporarySignedRoute(
-            'account.setup.show',
-            now()->addDay(),
-            ['user' => $athlete->id],
-        );
-
-        $this->get($showUrl)->assertOk();
-
-        $postUrl = URL::temporarySignedRoute(
-            'account.setup.update',
-            now()->addDay(),
-            ['user' => $athlete->id],
-        );
-
-        $this->post($postUrl, [
-            'password' => 'motdepasse12',
-            'password_confirmation' => 'motdepasse12',
-            'weight_class' => '83 kg',
-            'bio' => 'Objectif total 600',
+        $this->post($url, [
+            'password' => 'secret-password',
+            'password_confirmation' => 'secret-password',
+            'weight_class' => '63 kg',
+            'bio' => 'Objectif nationals',
         ])->assertRedirect(route('login'));
 
         $athlete->refresh();
-        $this->assertNotNull($athlete->initial_setup_completed_at);
-        $this->assertTrue(Hash::check('motdepasse12', $athlete->password));
 
-        $profile = AthleteProfile::query()->where('user_id', $athlete->id)->first();
-        $this->assertSame('83 kg', $profile->weight_class);
-        $this->assertSame('Objectif total 600', $profile->bio);
+        $this->assertNotNull($athlete->initial_setup_completed_at);
+        $this->assertTrue(Hash::check('secret-password', $athlete->password));
+        $this->assertSame('63 kg', $athlete->profile?->weight_class);
+    }
+
+    public function test_coach_can_activate_account_via_signed_url(): void
+    {
+        $coach = User::query()->create([
+            'name' => 'Coach Dupont',
+            'email' => 'coach@example.com',
+            'password' => 'temporary',
+            'role' => 'coach',
+            'initial_setup_completed_at' => null,
+        ]);
+
+        $url = AccountSetupUrlGenerator::signedUpdateUrl($coach);
+
+        $this->post($url, [
+            'password' => 'coach-secret',
+            'password_confirmation' => 'coach-secret',
+        ])->assertRedirect(route('login'));
+
+        $coach->refresh();
+
+        $this->assertNotNull($coach->initial_setup_completed_at);
+        $this->assertTrue(Hash::check('coach-secret', $coach->password));
+    }
+
+    public function test_expired_signed_url_is_rejected(): void
+    {
+        $athlete = User::query()->create([
+            'name' => 'Test Athlete',
+            'email' => 'pending@example.com',
+            'password' => 'temporary',
+            'role' => 'athlete',
+            'initial_setup_completed_at' => null,
+        ]);
+
+        $url = URL::temporarySignedRoute(
+            'account.setup.update',
+            now()->subMinute(),
+            ['user' => $athlete->id],
+        );
+
+        $this->post($url, [
+            'password' => 'secret-password',
+            'password_confirmation' => 'secret-password',
+        ])->assertForbidden();
     }
 }

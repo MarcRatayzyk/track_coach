@@ -6,6 +6,7 @@ export default {
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import InstallAppBanner from '../Components/InstallAppBanner.vue';
 import UiIcon from '../Components/UiIcon.vue';
 
 const props = defineProps({
@@ -156,6 +157,11 @@ function submit() {
                         <p v-if="form.errors.password" class="mt-2 text-sm text-red-400">
                             {{ form.errors.password }}
                         </p>
+                        <div class="mt-2 flex justify-end">
+                            <Link href="/forgot-password" class="text-sm text-blue-400 hover:text-blue-300">
+                                Mot de passe oublié ?
+                            </Link>
+                        </div>
                     </div>
 
                     <label class="flex cursor-pointer items-center gap-3">
@@ -180,10 +186,15 @@ function submit() {
                 </form>
 
                 <p class="mt-8 text-center text-sm text-slate-500">
-                    Compte athlète ? Utilise le lien d’invitation envoyé par ton coach pour activer ton
-                    accès.
+                    Coach ?
+                    <Link href="/register" class="font-medium text-blue-400 hover:text-blue-300">
+                        Créer un compte
+                    </Link>
+                    — Athlète ? Utilise le lien d’invitation envoyé par ton coach.
                 </p>
             </div>
         </div>
+
+        <InstallAppBanner />
     </div>
 </template>

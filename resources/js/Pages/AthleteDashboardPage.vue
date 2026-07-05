@@ -24,6 +24,7 @@ defineProps({
   oneRm: { type: Object, default: () => ({ squat: 0, bench: 0, deadlift: 0 }) },
   latestPr: { type: Object, default: null },
   feedbackDueToday: { type: Boolean, default: false },
+  feedbackFrequency: { type: String, default: 'weekly' },
 });
 </script>
 
@@ -37,6 +38,7 @@ defineProps({
       :latest-pr="latestPr"
       :readiness-recent="readinessRecent"
       :feedback-due-today="feedbackDueToday"
+      :feedback-frequency="feedbackFrequency"
     />
 
     <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)]">

@@ -6,17 +6,39 @@ use App\Models\AthleteProgramAssignment;
 use App\Models\ProgramTrainingDay;
 use App\Models\ProgramWeek;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 
 class ProgramSchedule
 {
-    public static function currentWeekForAssignment(AthleteProgramAssignment $assignment): ?ProgramWeek
+    /** @var array<int, Collection<int, ProgramWeek>> */
+    private static array $sortedWeeksCache = [];
+
+    /**
+     * @return Collection<int, ProgramWeek>
+     */
+    private static function sortedWeeksForTemplate(?object $template): Collection
     {
-        $template = $assignment->template;
         if ($template === null) {
-            return null;
+            return collect();
         }
 
-        $weeks = $template->weeks->sortBy('week_number')->values();
+        if (! $template->relationLoaded('weeks')) {
+            $template->load('weeks');
+        }
+
+        $templateId = (int) $template->id;
+
+        if (! isset(self::$sortedWeeksCache[$templateId])) {
+            self::$sortedWeeksCache[$templateId] = $template->weeks
+                ->sortBy('week_number')
+                ->values();
+        }
+
+        return self::$sortedWeeksCache[$templateId];
+    }
+    public static function currentWeekForAssignment(AthleteProgramAssignment $assignment): ?ProgramWeek
+    {
+        $weeks = self::sortedWeeksForTemplate($assignment->template);
         if ($weeks->isEmpty()) {
             return null;
         }
@@ -48,11 +70,28 @@ class ProgramSchedule
     ): bool {
         $cursor = $start->copy()->startOfDay();
         $last = $end->copy()->startOfDay();
+        $cachedWeekIndex = null;
+        $cachedTrainingDays = null;
 
         while ($cursor->lte($last)) {
-            if (self::hasSessionOnDate($assignment, $cursor)) {
+            if (! self::isDateWithinAssignment($assignment, $cursor)) {
+                $cursor = $cursor->copy()->addDay();
+
+                continue;
+            }
+
+            $week = self::weekForAssignmentOnDate($assignment, $cursor);
+            $weekIndex = $week?->week_number;
+
+            if ($weekIndex !== $cachedWeekIndex) {
+                $cachedWeekIndex = $weekIndex;
+                $cachedTrainingDays = $week?->trainingDays?->keyBy('day_number');
+            }
+
+            if ($cachedTrainingDays?->has($cursor->isoWeekday()) === true) {
                 return true;
             }
+
             $cursor = $cursor->copy()->addDay();
         }
 
@@ -79,12 +118,7 @@ class ProgramSchedule
         AthleteProgramAssignment $assignment,
         CarbonInterface $date,
     ): ?ProgramWeek {
-        $template = $assignment->template;
-        if ($template === null) {
-            return null;
-        }
-
-        $weeks = $template->weeks->sortBy('week_number')->values();
+        $weeks = self::sortedWeeksForTemplate($assignment->template);
         if ($weeks->isEmpty()) {
             return null;
         }
@@ -95,5 +129,20 @@ class ProgramSchedule
         $week = $weeks->firstWhere('week_number', $weekIndex);
 
         return $week ?? $weeks->last();
+    }
+
+    private static function isDateWithinAssignment(
+        AthleteProgramAssignment $assignment,
+        CarbonInterface $date,
+    ): bool {
+        if ($date->lt($assignment->date_start->copy()->startOfDay())) {
+            return false;
+        }
+
+        if ($assignment->date_end !== null && $date->gt($assignment->date_end->copy()->startOfDay())) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -4,6 +4,7 @@ import { filterEntriesByRange } from '../utils/athleteOverviewStats';
 import BodyWeightTrendChart from './charts/BodyWeightTrendChart.vue';
 import PrProgressionCharts from './charts/PrProgressionCharts.vue';
 import ReadinessTrendChart from './charts/ReadinessTrendChart.vue';
+import SbdTonnageDonutChart from './charts/SbdTonnageDonutChart.vue';
 
 const props = defineProps({
   stats: {
@@ -50,6 +51,8 @@ const wellnessTimeRangeOptions = [
 
 const showPrChart = computed(() => props.prRecords !== null);
 
+const adherence = computed(() => props.stats?.adherence ?? null);
+
 const filteredReadiness = computed(() =>
   filterEntriesByRange(props.readinessRecent, 'entry_date', wellnessTimeRange.value),
 );
@@ -57,55 +60,31 @@ const filteredReadiness = computed(() =>
 const filteredBodyWeight = computed(() =>
   filterEntriesByRange(props.bodyWeightRecent, 'entry_date', wellnessTimeRange.value),
 );
-
-const kpis = computed(() => [
-  {
-    label: 'Tonnage moyen',
-    value: props.stats?.tonnageAverages?.averageSessionTonnage,
-    suffix: ' kg',
-    hint: 'Moyenne par séance sur les 30 derniers jours.',
-  },
-  {
-    label: 'Tonnage moyen par série',
-    value: props.stats?.tonnageAverages?.averageSetTonnage,
-    suffix: ' kg',
-    hint: 'Volume moyen par série sur les 30 derniers jours.',
-  },
-]);
-
-function formatMetric(value, suffix = '') {
-  if (value == null) {
-    return '—';
-  }
-
-  return `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value)}${suffix}`;
-}
 </script>
 
 <template>
-  <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h2 class="text-sm font-semibold text-white">Overview statistiques</h2>
-        <p class="mt-1 text-xs text-slate-500">
-          Activité, forme et suivi du corps.
-        </p>
-      </div>
-    </div>
+  <section class="rounded-xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg">
+    <h2 class="text-sm font-semibold text-white">Statistiques</h2>
 
-    <div class="mt-4 grid gap-3 sm:grid-cols-2">
-      <article
-        v-for="kpi in kpis"
-        :key="kpi.label"
-        class="rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3"
-      >
-        <p class="text-[11px] uppercase tracking-wide text-slate-500">{{ kpi.label }}</p>
-        <p class="mt-1 text-xl font-semibold text-white">{{ formatMetric(kpi.value, kpi.suffix) }}</p>
-        <p class="mt-1 text-xs text-slate-500">{{ kpi.hint }}</p>
-      </article>
-    </div>
+    <article class="mt-3 rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2.5">
+      <p class="text-[10px] uppercase tracking-wide text-slate-500">Adhérence</p>
+      <p v-if="adherence?.percentage != null" class="mt-0.5 text-lg font-bold text-white">
+        {{ adherence.percentage }}%
+      </p>
+      <p v-else class="mt-0.5 text-sm text-slate-500">
+        {{ hasActiveProgram ? '—' : 'Aucun programme actif' }}
+      </p>
+      <p v-if="adherence" class="mt-1 text-xs text-slate-500">
+        {{ adherence.completedSessions }}/{{ adherence.plannedSessions }} séances au bon jour
+        <span v-if="adherence.exactLineCoverage != null" class="text-slate-600">
+          · {{ adherence.exactLineCoverage }}% lignes exactes
+        </span>
+      </p>
+    </article>
 
-    <div class="mt-4 flex flex-wrap gap-2">
+    <SbdTonnageDonutChart class="mt-3" :flat-items="stats?.flatItems ?? []" />
+
+    <div class="mt-3 flex flex-wrap gap-2">
       <button
         v-for="option in wellnessTimeRangeOptions"
         :key="option.value"
@@ -122,11 +101,9 @@ function formatMetric(value, suffix = '') {
       </button>
     </div>
 
-    <div class="mt-4 grid gap-4 lg:grid-cols-2">
+    <div class="mt-3 grid gap-4 lg:grid-cols-2">
       <article class="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-        <div class="mb-3">
-          <h3 class="text-sm font-semibold text-white">Readiness</h3>
-        </div>
+        <h3 class="mb-3 text-sm font-semibold text-white">Readiness</h3>
         <ReadinessTrendChart v-if="filteredReadiness.length" :entries="filteredReadiness" embedded />
         <p v-else class="text-sm text-slate-500">Aucune saisie readiness sur cette période.</p>
       </article>
@@ -140,11 +117,8 @@ function formatMetric(value, suffix = '') {
       v-if="showPrChart"
       class="mt-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4"
     >
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 class="text-sm font-semibold text-white">Progression des PR</h3>
-          <p class="mt-1 text-xs text-slate-500">Squat, bench, terre et total officiel</p>
-        </div>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h3 class="text-sm font-semibold text-white">Progression des PR</h3>
         <div v-if="timeRangeOptions.length" class="flex flex-wrap gap-2">
           <button
             v-for="option in timeRangeOptions"

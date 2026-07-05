@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Web\Coach;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCoachAthleteRequest;
+use App\Mail\AthleteInvitationMail;
 use App\Models\AthleteProfile;
 use App\Models\User;
+use App\Support\AccountSetupUrlGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class CoachAthleteRosterController extends Controller
@@ -38,16 +40,37 @@ class CoachAthleteRosterController extends Controller
 
         $coach->athletes()->attach($athlete->id, ['status' => 'active']);
 
-        $setupUrl = URL::temporarySignedRoute(
-            'account.setup.show',
-            now()->addDays(14),
-            ['user' => $athlete->id],
-        );
+        $setupUrl = AccountSetupUrlGenerator::signedSetupUrl($athlete);
+
+        Mail::to($athlete)->send(new AthleteInvitationMail($athlete, $coach, $setupUrl));
 
         return redirect()
             ->route('athletes.index')
-            ->with('success', 'Athlète ajouté. Envoie le lien d’activation à ton athlète : il choisira son mot de passe et complétera son profil à la première visite.')
-            ->with('first_login_url', $setupUrl);
+            ->with('success', "Invitation envoyée par e-mail à {$athlete->email}. L’athlète pourra choisir son mot de passe et compléter son profil à la première visite.")
+            ->with('first_login_url', $setupUrl)
+            ->with('invited_athlete_id', $athlete->id);
+    }
+
+    public function resendInvitation(Request $request, User $athlete): RedirectResponse
+    {
+        $this->authorize('detachFromRoster', $athlete);
+
+        if ($athlete->initial_setup_completed_at !== null) {
+            return redirect()
+                ->route('athletes.index')
+                ->with('error', 'Ce compte est déjà activé.');
+        }
+
+        $coach = $request->user();
+        $setupUrl = AccountSetupUrlGenerator::signedSetupUrl($athlete);
+
+        Mail::to($athlete)->send(new AthleteInvitationMail($athlete, $coach, $setupUrl));
+
+        return redirect()
+            ->route('athletes.index')
+            ->with('success', "Invitation renvoyée à {$athlete->email}.")
+            ->with('first_login_url', $setupUrl)
+            ->with('invited_athlete_id', $athlete->id);
     }
 
     public function destroy(Request $request, User $athlete): RedirectResponse

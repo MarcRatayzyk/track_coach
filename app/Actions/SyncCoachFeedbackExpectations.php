@@ -3,7 +3,6 @@
 namespace App\Actions;
 
 use App\Models\AthleteProfile;
-use App\Models\AthleteProgramAssignment;
 use App\Models\DashboardTask;
 use App\Models\User;
 use App\Support\ProgramSchedule;
@@ -16,6 +15,8 @@ class SyncCoachFeedbackExpectations
         $today = ($referenceDate ?? now())->copy()->startOfDay();
         $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+        $sessionDate = $today->toDateString();
+        $weekStartDate = $weekStart->toDateString();
 
         $athletes = $coach->athletes()
             ->where('users.role', 'athlete')
@@ -24,14 +25,30 @@ class SyncCoachFeedbackExpectations
                 'profile',
                 'programAssignments' => fn ($query) => $query
                     ->where('status', 'active')
-                    ->whereDate('date_start', '<=', $today->toDateString())
-                    ->where(function ($query) use ($today): void {
+                    ->whereDate('date_start', '<=', $sessionDate)
+                    ->where(function ($query) use ($sessionDate): void {
                         $query->whereNull('date_end')
-                            ->orWhereDate('date_end', '>=', $today->toDateString());
+                            ->orWhereDate('date_end', '>=', $sessionDate);
                     })
                     ->with('template.weeks.trainingDays'),
             ])
             ->get();
+
+        $existingDailyAthleteIds = DashboardTask::query()
+            ->where('coach_id', $coach->id)
+            ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
+            ->whereDate('session_date', $sessionDate)
+            ->whereNull('period_week_start')
+            ->pluck('athlete_id');
+
+        $existingWeeklyAthleteIds = DashboardTask::query()
+            ->where('coach_id', $coach->id)
+            ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
+            ->whereDate('period_week_start', $weekStartDate)
+            ->pluck('athlete_id');
+
+        $dailyTasksToCreate = [];
+        $weeklyTasksToCreate = [];
 
         foreach ($athletes as $athlete) {
             $assignment = $athlete->programAssignments->first();
@@ -42,72 +59,49 @@ class SyncCoachFeedbackExpectations
             $frequency = $athlete->profile?->feedback_frequency
                 ?? AthleteProfile::FREQUENCY_WEEKLY;
 
-            if (ProgramSchedule::hasSessionOnDate($assignment, $today)) {
-                $this->syncSessionDayExpectation($coach, $athlete, $today);
+            if (
+                $frequency === AthleteProfile::FREQUENCY_DAILY
+                && ! $existingDailyAthleteIds->contains($athlete->id)
+                && ProgramSchedule::hasSessionOnDate($assignment, $today)
+            ) {
+                $dailyTasksToCreate[] = [
+                    'coach_id' => $coach->id,
+                    'athlete_id' => $athlete->id,
+                    'type' => DashboardTask::TYPE_FEEDBACK_SESSION,
+                    'session_date' => $sessionDate,
+                    'period_week_start' => null,
+                    'due_at' => $today->copy()->endOfDay(),
+                    'status' => 'pending',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
 
             if (
                 $frequency === AthleteProfile::FREQUENCY_WEEKLY
+                && ! $existingWeeklyAthleteIds->contains($athlete->id)
                 && ProgramSchedule::hasAnySessionBetween($assignment, $weekStart, $weekEnd)
             ) {
-                $this->syncWeeklyExpectation($coach, $athlete, $weekStart, $weekEnd);
+                $weeklyTasksToCreate[] = [
+                    'coach_id' => $coach->id,
+                    'athlete_id' => $athlete->id,
+                    'type' => DashboardTask::TYPE_FEEDBACK_SESSION,
+                    'session_date' => null,
+                    'period_week_start' => $weekStartDate,
+                    'due_at' => $weekEnd,
+                    'status' => 'pending',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
         }
-    }
 
-    private function syncSessionDayExpectation(User $coach, User $athlete, Carbon $today): void
-    {
-        $sessionDate = $today->toDateString();
-
-        $existing = DashboardTask::query()
-            ->where('coach_id', $coach->id)
-            ->where('athlete_id', $athlete->id)
-            ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
-            ->whereDate('session_date', $sessionDate)
-            ->first();
-
-        if ($existing !== null) {
-            return;
+        if ($dailyTasksToCreate !== []) {
+            DashboardTask::query()->insert($dailyTasksToCreate);
         }
 
-        DashboardTask::query()->create([
-            'coach_id' => $coach->id,
-            'athlete_id' => $athlete->id,
-            'type' => DashboardTask::TYPE_FEEDBACK_SESSION,
-            'session_date' => $sessionDate,
-            'period_week_start' => null,
-            'due_at' => $today->copy()->endOfDay(),
-            'status' => 'pending',
-        ]);
-    }
-
-    private function syncWeeklyExpectation(
-        User $coach,
-        User $athlete,
-        Carbon $weekStart,
-        Carbon $weekEnd,
-    ): void {
-        $weekStartDate = $weekStart->toDateString();
-
-        $existing = DashboardTask::query()
-            ->where('coach_id', $coach->id)
-            ->where('athlete_id', $athlete->id)
-            ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
-            ->whereDate('period_week_start', $weekStartDate)
-            ->first();
-
-        if ($existing !== null) {
-            return;
+        if ($weeklyTasksToCreate !== []) {
+            DashboardTask::query()->insert($weeklyTasksToCreate);
         }
-
-        DashboardTask::query()->create([
-            'coach_id' => $coach->id,
-            'athlete_id' => $athlete->id,
-            'type' => DashboardTask::TYPE_FEEDBACK_SESSION,
-            'session_date' => null,
-            'period_week_start' => $weekStartDate,
-            'due_at' => $weekEnd,
-            'status' => 'pending',
-        ]);
     }
 }

@@ -18,6 +18,8 @@ class AuthAndAthleteTest extends TestCase
             'email' => 'coach@test.dev',
             'password' => Hash::make('password'),
             'role' => 'coach',
+            'initial_setup_completed_at' => now(),
+            'email_verified_at' => now(),
         ]);
 
         $login = $this->postJson('/api/v1/auth/login', [

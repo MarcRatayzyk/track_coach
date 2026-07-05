@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Events\ThreadUpdated;
 use App\Models\MessageThread;
 use App\Models\User;
 
@@ -35,6 +36,53 @@ class MessagingInboxSupport
             ->whereNull('read_at')
             ->where('sender_id', '!=', $user->id)
             ->count();
+    }
+
+    public static function totalUnreadFor(User $user): int
+    {
+        return (int) MessageThread::query()
+            ->where(function ($query) use ($user): void {
+                $query->where('coach_id', $user->id)
+                    ->orWhere('athlete_id', $user->id);
+            })
+            ->get()
+            ->sum(fn (MessageThread $thread) => self::unreadCountFor($user, $thread));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function coachInboxSummary(User $coach): array
+    {
+        $threads = MessageThread::query()
+            ->where('coach_id', $coach->id)
+            ->withUnreadCountFor($coach)
+            ->get();
+
+        return [
+            'total_unread' => (int) $threads->sum('unread_messages_count'),
+            'thread_ids' => $threads->pluck('id')->all(),
+        ];
+    }
+
+    public static function dispatchThreadUpdated(MessageThread $thread): void
+    {
+        $thread->loadMissing(['coach', 'athlete']);
+
+        foreach ([$thread->coach, $thread->athlete] as $participant) {
+            if ($participant === null) {
+                continue;
+            }
+
+            $totalUnread = self::totalUnreadFor($participant);
+
+            ThreadUpdated::dispatch(
+                $thread,
+                $participant,
+                self::unreadCountFor($participant, $thread),
+                $totalUnread,
+            );
+        }
     }
 
     /**

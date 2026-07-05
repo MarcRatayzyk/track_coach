@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAccountSetupRequest;
+use App\Http\Requests\StoreCoachAccountSetupRequest;
 use App\Models\User;
+use App\Support\AccountSetupUrlGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,7 +20,7 @@ class AccountSetupController extends Controller
             abort(403, 'Lien invalide ou expiré.');
         }
 
-        if ($user->role !== 'athlete') {
+        if (! in_array($user->role, ['coach', 'athlete'], true)) {
             abort(404);
         }
 
@@ -35,21 +36,18 @@ class AccountSetupController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
             ],
-            'submitUrl' => URL::temporarySignedRoute(
-                'account.setup.update',
-                now()->addDays(14),
-                ['user' => $user->id],
-            ),
+            'role' => $user->role,
+            'submitUrl' => AccountSetupUrlGenerator::signedUpdateUrl($user),
         ]);
     }
 
-    public function update(StoreAccountSetupRequest $request, User $user): RedirectResponse
+    public function update(Request $request, User $user): RedirectResponse
     {
         if (! $request->hasValidSignature()) {
             abort(403, 'Lien invalide ou expiré.');
         }
 
-        if ($user->role !== 'athlete') {
+        if (! in_array($user->role, ['coach', 'athlete'], true)) {
             abort(404);
         }
 
@@ -59,21 +57,38 @@ class AccountSetupController extends Controller
                 ->with('success', 'Ce compte est déjà activé. Connecte-toi avec ton e-mail et ton mot de passe.');
         }
 
+        $validated = $user->role === 'coach'
+            ? $request->validate((new StoreCoachAccountSetupRequest)->rules())
+            : $request->validate((new StoreAccountSetupRequest)->rules());
+
         $user->forceFill([
-            'password' => $request->validated('password'),
+            'password' => $validated['password'],
             'initial_setup_completed_at' => now(),
         ])->save();
 
-        $user->profile()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'weight_class' => $request->validated('weight_class') ?: null,
-                'bio' => $request->validated('bio') ?: null,
-            ],
-        );
+        if ($user->role === 'athlete') {
+            $user->forceFill(['email_verified_at' => now()])->save();
+            $user->profile()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'weight_class' => $validated['weight_class'] ?? null ?: null,
+                    'bio' => $validated['bio'] ?? null ?: null,
+                ],
+            );
+        }
+
+        if ($user->role === 'coach') {
+            $user->sendEmailVerificationNotification();
+
+            return redirect()
+                ->route('login')
+                ->with('success', 'Compte activé. Connecte-toi puis confirme ton e-mail pour accéder au dashboard.');
+        }
+
+        $message = 'Compte activé. Tu peux maintenant te connecter avec ton e-mail et ton mot de passe.';
 
         return redirect()
             ->route('login')
-            ->with('success', 'Compte activé. Tu peux maintenant te connecter avec ton e-mail et ton mot de passe.');
+            ->with('success', $message);
     }
 }

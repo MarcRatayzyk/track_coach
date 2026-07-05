@@ -43,6 +43,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  feedbackFrequency: {
+    type: String,
+    default: 'weekly',
+  },
 });
 
 const todayLabel = formatCalendarFr(new Date().toISOString().slice(0, 10), 'long');
@@ -210,7 +214,11 @@ const readinessGlowStyle = computed(() => {
       href="/feedbacks"
       class="flex items-center justify-between gap-3 rounded-xl border border-blue-500/40 bg-blue-600/15 px-4 py-2.5 text-sm transition hover:bg-blue-600/25"
     >
-      <span class="font-medium text-blue-200">Retour vidéo attendu pour ta séance du jour</span>
+      <span class="font-medium text-blue-200">
+        {{ feedbackFrequency === 'weekly'
+          ? 'Retour hebdomadaire attendu'
+          : 'Retour vidéo attendu pour ta séance du jour' }}
+      </span>
       <span class="shrink-0 text-xs font-semibold text-blue-300">Envoyer →</span>
     </Link>
   </div>

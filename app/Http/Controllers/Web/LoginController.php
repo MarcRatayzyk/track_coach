@@ -34,17 +34,25 @@ class LoginController extends Controller
 
         $user = Auth::user();
 
-        if ($user->role === 'athlete' && $user->initial_setup_completed_at === null) {
+        if ($user->initial_setup_completed_at === null) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
+            $message = $user->role === 'coach'
+                ? 'Active ton compte avec le lien d’invitation reçu par e-mail avant de te connecter.'
+                : 'Active ton compte avec le lien d’invitation envoyé par ton coach avant de te connecter.';
+
             throw ValidationException::withMessages([
-                'email' => 'Active ton compte avec le lien d’invitation envoyé par ton coach avant de te connecter.',
+                'email' => $message,
             ]);
         }
 
         $request->session()->regenerate();
+
+        if (! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
 
         if ($user->role === 'coach') {
             return redirect()->intended(route('dashboard'));

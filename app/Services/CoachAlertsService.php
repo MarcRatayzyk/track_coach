@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AthleteProgramAssignment;
 use App\Models\Competition;
 use App\Models\MessageThread;
+use App\Models\TrainingSession;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -44,12 +45,31 @@ class CoachAlertsService
             ->with([
                 'programAssignments' => fn ($query) => $query
                     ->where('status', 'active')
-                    ->with('template:id,name'),
+                    ->with([
+                        'template.weeks.trainingDays.exercises',
+                        'athlete.latestPr',
+                    ]),
             ])
             ->orderBy('users.name')
             ->get(['users.id', 'users.name']);
 
         $athleteIds = $athletes->pluck('id');
+
+        $recentEnd = $today->copy();
+        $recentStart = $today->copy()->subDays(6);
+        $previousEnd = $recentStart->copy()->subDay();
+        $previousStart = $previousEnd->copy()->subDays(6);
+
+        $sessionsByAthlete = TrainingSession::query()
+            ->whereIn('athlete_id', $athleteIds)
+            ->whereDate('session_date', '>=', $previousStart->toDateString())
+            ->whereDate('session_date', '<=', $recentEnd->toDateString())
+            ->orderBy('session_date')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('athlete_id');
+
+        $latestSessionDates = $this->sessionCoverage->latestSessionDates($athleteIds);
 
         $alerts = collect();
 
@@ -72,14 +92,30 @@ class CoachAlertsService
                 continue;
             }
 
+            $athleteSessions = $sessionsByAthlete->get($athlete->id, collect());
+
             $alerts = $alerts->merge(
                 $this->blockEndingAlerts($athlete, $activeAssignment, $today),
             );
             $alerts = $alerts->merge(
-                $this->adherenceAlerts($athlete, $activeAssignment, $today),
+                $this->adherenceAlerts(
+                    $athlete,
+                    $activeAssignment,
+                    $today,
+                    $recentStart,
+                    $recentEnd,
+                    $previousStart,
+                    $previousEnd,
+                    $athleteSessions,
+                ),
             );
             $alerts = $alerts->merge(
-                $this->inactivityAlerts($athlete, $activeAssignment, $today),
+                $this->inactivityAlerts(
+                    $athlete,
+                    $activeAssignment,
+                    $today,
+                    $latestSessionDates->get($athlete->id),
+                ),
             );
         }
 
@@ -178,23 +214,25 @@ class CoachAlertsService
         User $athlete,
         AthleteProgramAssignment $assignment,
         Carbon $today,
+        Carbon $recentStart,
+        Carbon $recentEnd,
+        Carbon $previousStart,
+        Carbon $previousEnd,
+        Collection $athleteSessions,
     ): Collection {
-        $recentEnd = $today->copy();
-        $recentStart = $today->copy()->subDays(6);
-        $previousEnd = $recentStart->copy()->subDay();
-        $previousStart = $previousEnd->copy()->subDays(6);
-
         $recent = $this->sessionCoverage->coverageBetween(
             $athlete->id,
             $assignment,
             $recentStart,
             $recentEnd,
+            $athleteSessions,
         );
         $previous = $this->sessionCoverage->coverageBetween(
             $athlete->id,
             $assignment,
             $previousStart,
             $previousEnd,
+            $athleteSessions,
         );
 
         $alerts = collect();
@@ -247,9 +285,8 @@ class CoachAlertsService
         User $athlete,
         AthleteProgramAssignment $assignment,
         Carbon $today,
+        ?string $latestSessionDate,
     ): Collection {
-        $latestSessionDate = $this->sessionCoverage->latestSessionDate($athlete->id);
-
         if ($latestSessionDate === null) {
             return collect();
         }

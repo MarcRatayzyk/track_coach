@@ -2,6 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
+import InstallAppBanner from '../Components/InstallAppBanner.vue';
 import UiIcon from '../Components/UiIcon.vue';
 import { useTheme } from '../composables/useTheme';
 import { echo } from '../echo';
@@ -15,14 +16,76 @@ const { isLight, toggleTheme } = useTheme();
 const isCoach = computed(() => user.value?.role === 'coach');
 const messagingInbox = computed(() => page.props.messagingInbox ?? null);
 let messagingPollTimer = null;
-let layoutEchoChannel = null;
+const subscribedThreadChannels = [];
+let userEchoChannel = null;
+
+function reloadMessagingInbox() {
+    router.reload({
+        only: ['messagingInbox'],
+        preserveScroll: true,
+        preserveState: true,
+    });
+}
+
+function leaveMessagingChannels() {
+    if (messagingPollTimer) {
+        window.clearInterval(messagingPollTimer);
+        messagingPollTimer = null;
+    }
+
+    if (echo) {
+        subscribedThreadChannels.forEach((threadId) => {
+            echo.leave(`private-threads.${threadId}`);
+        });
+        subscribedThreadChannels.length = 0;
+
+        if (userEchoChannel) {
+            echo.leave(`private-users.${userEchoChannel}`);
+            userEchoChannel = null;
+        }
+    }
+}
+
+function setupMessagingRealtime() {
+    if (typeof window === 'undefined' || !user.value) {
+        return;
+    }
+
+    leaveMessagingChannels();
+
+    const threadIds = isCoach.value
+        ? (messagingInbox.value?.thread_ids ?? [])
+        : messagingInbox.value?.thread_id
+            ? [messagingInbox.value.thread_id]
+            : [];
+
+    if (echo && user.value.id) {
+        userEchoChannel = user.value.id;
+        echo.private(`users.${user.value.id}`).listen('.thread.updated', reloadMessagingInbox);
+
+        threadIds.forEach((threadId) => {
+            subscribedThreadChannels.push(threadId);
+            echo.private(`threads.${threadId}`).listen('.message.sent', reloadMessagingInbox);
+        });
+
+        return;
+    }
+
+    messagingPollTimer = window.setInterval(reloadMessagingInbox, 60000);
+}
 
 const coachNav = [
     { label: 'Dashboard', href: '/dashboard', pattern: '/dashboard', icon: 'dashboard' },
     { label: 'Athlètes', href: '/athletes', pattern: '/athletes', icon: 'users' },
     { label: 'Programmes', href: '/program-builder', pattern: '/program-builder', icon: 'clipboard' },
     { label: 'Retours', href: '/feedbacks', pattern: '/feedbacks', icon: 'video' },
-    { label: 'Messagerie', href: '/messaging', pattern: '/messaging', icon: 'chat' },
+    {
+        label: 'Messagerie',
+        href: '/messaging',
+        pattern: '/messaging',
+        icon: 'chat',
+        unreadCount: 0,
+    },
 ];
 
 const navItems = computed(() => {
@@ -66,7 +129,16 @@ const navItems = computed(() => {
             },
         ];
     }
-    return coachNav;
+    return coachNav.map((item) => {
+        if (item.pattern !== '/messaging') {
+            return item;
+        }
+
+        return {
+            ...item,
+            unreadCount: messagingInbox.value?.total_unread ?? 0,
+        };
+    });
 });
 
 function navActive(pattern) {
@@ -111,32 +183,7 @@ function toggleSidebar() {
 }
 
 function setupAthleteMessagingRealtime() {
-    if (isCoach.value || typeof window === 'undefined') {
-        return;
-    }
-
-    const threadId = messagingInbox.value?.thread_id;
-
-    if (echo && threadId) {
-        layoutEchoChannel = threadId;
-        echo.private(`threads.${threadId}`).listen('.message.sent', () => {
-            router.reload({
-                only: ['messagingInbox'],
-                preserveScroll: true,
-                preserveState: true,
-            });
-        });
-
-        return;
-    }
-
-    messagingPollTimer = window.setInterval(() => {
-        router.reload({
-            only: ['messagingInbox'],
-            preserveScroll: true,
-            preserveState: true,
-        });
-    }, 60000);
+    setupMessagingRealtime();
 }
 
 onMounted(() => {
@@ -145,18 +192,16 @@ onMounted(() => {
     }
 
     isSidebarCollapsed.value = window.localStorage.getItem('tc-sidebar-collapsed') === 'true';
-    setupAthleteMessagingRealtime();
+    setupMessagingRealtime();
 });
 
 onUnmounted(() => {
-    if (messagingPollTimer) {
-        window.clearInterval(messagingPollTimer);
-    }
-
-    if (echo && layoutEchoChannel) {
-        echo.leave(`private-threads.${layoutEchoChannel}`);
-    }
+    leaveMessagingChannels();
 });
+
+watch(messagingInbox, () => {
+    setupMessagingRealtime();
+}, { deep: true });
 
 watch(isSidebarCollapsed, (value) => {
     if (typeof window === 'undefined') {
@@ -309,5 +354,7 @@ watch(isSidebarCollapsed, (value) => {
                 </div>
             </main>
         </div>
+
+        <InstallAppBanner />
     </div>
 </template>

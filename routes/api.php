@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::prefix('auth')->group(function (): void {
-        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
         Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
     });
 
@@ -27,9 +27,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/program-templates/{template}/assign', [ProgramTemplateController::class, 'assign']);
 
         Route::get('/threads', [ThreadController::class, 'index']);
+        Route::get('/threads/inbox-summary', [ThreadController::class, 'inboxSummary']);
         Route::post('/threads', [ThreadController::class, 'store']);
         Route::get('/threads/{thread}/messages', [ThreadController::class, 'messages']);
-        Route::post('/threads/{thread}/messages', [ThreadController::class, 'storeMessage']);
+        Route::patch('/threads/{thread}/read', [ThreadController::class, 'markRead']);
+        Route::post('/threads/{thread}/messages', [ThreadController::class, 'storeMessage'])
+            ->middleware('throttle:messages');
 
         Route::get('/dashboard/coach', [DashboardController::class, 'coach']);
     });

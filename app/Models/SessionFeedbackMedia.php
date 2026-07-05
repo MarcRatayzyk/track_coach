@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class SessionFeedbackMedia extends Model
@@ -14,7 +15,6 @@ class SessionFeedbackMedia extends Model
 
     protected $fillable = [
         'session_feedback_id',
-        'session_feedback_reply_id',
         'kind',
         'disk',
         'path',
@@ -29,9 +29,10 @@ class SessionFeedbackMedia extends Model
         return $this->belongsTo(SessionFeedback::class, 'session_feedback_id');
     }
 
-    public function reply(): BelongsTo
+    public function annotations(): HasMany
     {
-        return $this->belongsTo(SessionFeedbackReply::class, 'session_feedback_reply_id');
+        return $this->hasMany(SessionFeedbackAnnotation::class, 'session_feedback_media_id')
+            ->orderBy('timestamp_ms');
     }
 
     public function url(): string

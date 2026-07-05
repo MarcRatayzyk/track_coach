@@ -9,8 +9,8 @@ export default {
 <script setup>
 import { Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
-import SessionFeedbackVoiceRecorder from '../Components/SessionFeedbackVoiceRecorder.vue';
 import { formatCalendarFr } from '../utils/formatDates';
+import VideoAnnotator from '../Components/VideoAnnotator.vue';
 
 const props = defineProps({
   role: { type: String, default: 'athlete' },
@@ -18,12 +18,12 @@ const props = defineProps({
   feedbacks: { type: Array, default: () => [] },
   activeFeedback: { type: Object, default: null },
   eligibleSessions: { type: Array, default: () => [] },
+  feedbackFrequency: { type: String, default: 'weekly' },
 });
 
 const isCoach = computed(() => props.role === 'coach');
+const isWeekly = computed(() => props.feedbackFrequency === 'weekly');
 const showSubmitForm = ref(false);
-const voiceRecorderRef = ref(null);
-const recordedAudioFiles = ref([]);
 
 const submitForm = useForm({
   session_date: props.eligibleSessions[0]?.session_date ?? '',
@@ -31,15 +31,17 @@ const submitForm = useForm({
   videos: [],
 });
 
-const replyForm = useForm({
-  body: '',
-  audio_files: [],
-});
-
 const filterOptions = [
   { value: 'pending', label: 'En attente' },
   { value: 'all', label: 'Tous' },
 ];
+
+const athleteDescription = computed(() => {
+  if (isWeekly.value) {
+    return 'Envoyez une vidéo et un message pour votre retour hebdomadaire.';
+  }
+  return 'Envoyez une vidéo et un message pour chaque séance programme réalisée.';
+});
 
 function feedbackUrl(id) {
   return `/feedbacks?feedback=${id}${isCoach.value && props.filter === 'pending' ? '&filter=pending' : ''}`;
@@ -54,25 +56,20 @@ function filterUrl(value) {
   return `/feedbacks?${params.toString()}`;
 }
 
+function messagingReplyUrl(feedback) {
+  const threadId = feedback.coach_thread_id;
+  if (threadId) {
+    return `/messaging?thread=${threadId}&feedback=${feedback.id}`;
+  }
+  return `/messaging?athlete=${feedback.athlete_id}&feedback=${feedback.id}`;
+}
+
 function selectFeedback(id) {
   router.get(feedbackUrl(id), {}, { preserveState: true, preserveScroll: true });
 }
 
 function onVideoChange(event) {
   submitForm.videos = Array.from(event.target.files ?? []);
-}
-
-function onAudioImport(event) {
-  const files = Array.from(event.target.files ?? []);
-  recordedAudioFiles.value = [...recordedAudioFiles.value, ...files];
-}
-
-function onVoiceRecorded(file) {
-  recordedAudioFiles.value = [...recordedAudioFiles.value, file];
-}
-
-function removeAudioFile(index) {
-  recordedAudioFiles.value = recordedAudioFiles.value.filter((_, i) => i !== index);
 }
 
 function submitFeedback() {
@@ -84,26 +81,6 @@ function submitFeedback() {
       showSubmitForm.value = false;
     },
   });
-}
-
-function submitReply() {
-  if (!props.activeFeedback) {
-    return;
-  }
-  replyForm
-    .transform((data) => ({
-      ...data,
-      audio_files: recordedAudioFiles.value,
-    }))
-    .post(`/feedbacks/${props.activeFeedback.id}/reply`, {
-      forceFormData: true,
-      preserveScroll: true,
-      onSuccess: () => {
-        replyForm.reset();
-        recordedAudioFiles.value = [];
-        voiceRecorderRef.value?.clear?.();
-      },
-    });
 }
 
 function formatSubmitted(iso) {
@@ -140,10 +117,10 @@ watch(
         <h1 class="text-2xl font-bold text-white">Retours de séance</h1>
         <p class="mt-2 max-w-2xl text-slate-400">
           <template v-if="isCoach">
-            Consultez les vidéos et commentaires des athlètes, puis répondez par texte et messages vocaux.
+            Consultez les vidéos et commentaires des athlètes, puis répondez via la messagerie.
           </template>
           <template v-else>
-            Envoyez une vidéo et un commentaire sur la séance programme que vous venez de réaliser.
+            {{ athleteDescription }}
           </template>
         </p>
       </div>
@@ -169,7 +146,7 @@ watch(
         class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
         @click="showSubmitForm = !showSubmitForm"
       >
-        {{ showSubmitForm ? 'Annuler' : 'Nouveau retour' }}
+        {{ showSubmitForm ? 'Annuler' : isWeekly ? 'Nouveau retour hebdo' : 'Nouveau retour' }}
       </button>
     </div>
 
@@ -177,10 +154,14 @@ watch(
       v-if="!isCoach && showSubmitForm"
       class="mt-6 rounded-2xl border border-blue-500/30 bg-slate-900/60 p-6 shadow-xl"
     >
-      <h2 class="text-base font-semibold text-white">Envoyer un retour</h2>
+      <h2 class="text-base font-semibold text-white">
+        {{ isWeekly ? 'Envoyer votre retour hebdomadaire' : 'Envoyer un retour' }}
+      </h2>
       <form class="mt-4 space-y-4" @submit.prevent="submitFeedback">
         <div>
-          <label class="block text-sm font-medium text-slate-300">Séance</label>
+          <label class="block text-sm font-medium text-slate-300">
+            {{ isWeekly ? 'Semaine / séance' : 'Séance' }}
+          </label>
           <select
             v-model="submitForm.session_date"
             required
@@ -192,7 +173,7 @@ watch(
               :key="s.session_date"
               :value="s.session_date"
             >
-              {{ formatCalendarFr(s.session_date) }} — {{ s.session_label }}
+              {{ isWeekly ? s.session_label : `${formatCalendarFr(s.session_date)} — ${s.session_label}` }}
             </option>
           </select>
           <p v-if="submitForm.errors.session_date" class="mt-1 text-sm text-red-400">
@@ -201,7 +182,7 @@ watch(
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300">Commentaire</label>
+          <label class="block text-sm font-medium text-slate-300">Message</label>
           <textarea
             v-model="submitForm.athlete_notes"
             rows="4"
@@ -296,7 +277,7 @@ watch(
           </div>
 
           <div v-if="activeFeedback.athlete_notes" class="mt-4">
-            <h3 class="text-sm font-medium text-slate-400">Commentaire athlète</h3>
+            <h3 class="text-sm font-medium text-slate-400">Message athlète</h3>
             <p class="mt-2 whitespace-pre-wrap rounded-lg bg-slate-950/60 p-3 text-slate-200">
               {{ activeFeedback.athlete_notes }}
             </p>
@@ -304,12 +285,11 @@ watch(
 
           <div v-if="activeFeedback.videos?.length" class="mt-6 space-y-4">
             <h3 class="text-sm font-medium text-slate-400">Vidéos</h3>
-            <video
+            <VideoAnnotator
               v-for="video in activeFeedback.videos"
               :key="video.id"
-              :src="video.url"
-              controls
-              class="w-full rounded-xl border border-slate-800 bg-black"
+              :video="video"
+              :readonly="!isCoach"
             />
           </div>
 
@@ -335,61 +315,17 @@ watch(
             </p>
           </div>
 
-          <form
-            v-else-if="isCoach"
+          <div
+            v-else-if="isCoach && activeFeedback.status === 'submitted'"
             class="mt-8 border-t border-slate-800 pt-6"
-            @submit.prevent="submitReply"
           >
-            <h3 class="text-sm font-semibold text-white">Votre réponse</h3>
-            <textarea
-              v-model="replyForm.body"
-              rows="4"
-              placeholder="Commentaire pour l’athlète…"
-              class="mt-3 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-            />
-            <SessionFeedbackVoiceRecorder
-              ref="voiceRecorderRef"
-              class="mt-4"
-              @recorded="onVoiceRecorded"
-              @removed="() => {}"
-            />
-            <div class="mt-4">
-              <label class="block text-sm text-slate-400">Importer des fichiers audio</label>
-              <input
-                type="file"
-                accept="audio/*"
-                multiple
-                class="mt-1 w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-white"
-                @change="onAudioImport"
-              />
-            </div>
-            <ul v-if="recordedAudioFiles.length" class="mt-3 space-y-1 text-sm text-slate-400">
-              <li
-                v-for="(file, index) in recordedAudioFiles"
-                :key="`${file.name}-${index}`"
-                class="flex items-center justify-between gap-2"
-              >
-                <span class="truncate">{{ file.name }}</span>
-                <button
-                  type="button"
-                  class="text-red-400 hover:text-red-300"
-                  @click="removeAudioFile(index)"
-                >
-                  Retirer
-                </button>
-              </li>
-            </ul>
-            <p v-if="replyForm.errors.body" class="mt-2 text-sm text-red-400">
-              {{ replyForm.errors.body }}
-            </p>
-            <button
-              type="submit"
-              :disabled="replyForm.processing"
-              class="mt-4 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+            <Link
+              :href="messagingReplyUrl(activeFeedback)"
+              class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500"
             >
-              Envoyer la réponse
-            </button>
-          </form>
+              Répondre dans la messagerie →
+            </Link>
+          </div>
         </template>
         <div v-else class="flex h-full min-h-[20rem] items-center justify-center text-slate-500">
           Sélectionnez un retour dans la liste.

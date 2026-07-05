@@ -2,8 +2,12 @@
 
 namespace App\Support;
 
+use App\Models\Message;
+use App\Models\MessageMedia;
+use App\Models\MessageThread;
 use App\Models\ProgramTrainingDay;
 use App\Models\SessionFeedback;
+use App\Models\SessionFeedbackAnnotation;
 use App\Models\SessionFeedbackMedia;
 use Illuminate\Support\Collection;
 
@@ -17,9 +21,13 @@ class SessionFeedbackPresenter
         $feedback->loadMissing([
             'athlete:id,name',
             'programTrainingDay',
-            'athleteVideos',
-            'reply.audioFiles',
+            'athleteVideos.annotations',
         ]);
+
+        $replyMessage = $feedback->replyMessages()
+            ->with(['audioFiles', 'sender:id,name'])
+            ->latest()
+            ->first();
 
         $day = $feedback->programTrainingDay;
 
@@ -33,28 +41,47 @@ class SessionFeedbackPresenter
             'status' => $feedback->status,
             'submitted_at' => $feedback->submitted_at?->toIso8601String(),
             'videos' => $feedback->athleteVideos->map(fn (SessionFeedbackMedia $m) => self::media($m))->values()->all(),
-            'reply' => $feedback->reply ? self::reply($feedback) : null,
+            'reply' => $replyMessage ? self::replyFromMessage($replyMessage) : null,
+            'coach_thread_id' => MessageThread::query()
+                ->where('coach_id', $feedback->coach_id)
+                ->where('athlete_id', $feedback->athlete_id)
+                ->value('id'),
         ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    public static function reply(SessionFeedback $feedback): array
+    public static function replyFromMessage(Message $message): array
     {
-        $reply = $feedback->reply;
-        if ($reply === null) {
-            return [];
-        }
-
-        $reply->loadMissing('audioFiles');
+        $message->loadMissing('audioFiles');
 
         return [
-            'id' => $reply->id,
-            'body' => $reply->body,
-            'created_at' => $reply->created_at?->toIso8601String(),
-            'audio_files' => $reply->audioFiles->map(fn (SessionFeedbackMedia $m) => self::media($m))->values()->all(),
+            'id' => $message->id,
+            'body' => self::messageReplyBody($message),
+            'created_at' => $message->created_at?->toIso8601String(),
+            'audio_files' => $message->audioFiles
+                ->map(fn (MessageMedia $m) => MessagePresenter::media($m))
+                ->values()
+                ->all(),
         ];
+    }
+
+    public static function messageReplyBody(Message $message): ?string
+    {
+        $content = trim($message->content ?? '');
+
+        if ($content === '') {
+            return null;
+        }
+
+        if (str_starts_with($content, 'Réponse à ton retour du ')) {
+            $parts = explode("\n\n", $content, 2);
+
+            return isset($parts[1]) ? trim($parts[1]) : null;
+        }
+
+        return $content;
     }
 
     /**
@@ -62,12 +89,32 @@ class SessionFeedbackPresenter
      */
     public static function media(SessionFeedbackMedia $media): array
     {
+        $media->loadMissing('annotations');
+
         return [
             'id' => $media->id,
             'kind' => $media->kind,
             'url' => $media->url(),
             'original_name' => $media->original_name,
             'mime_type' => $media->mime_type,
+            'annotations' => $media->annotations
+                ->map(fn (SessionFeedbackAnnotation $annotation) => self::annotation($annotation))
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function annotation(SessionFeedbackAnnotation $annotation): array
+    {
+        return [
+            'id' => $annotation->id,
+            'timestamp_ms' => $annotation->timestamp_ms,
+            'body' => $annotation->body,
+            'shapes' => $annotation->shapes ?? [],
+            'created_at' => $annotation->created_at?->toIso8601String(),
         ];
     }
 

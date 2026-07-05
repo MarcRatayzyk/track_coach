@@ -12,3 +12,7 @@ Broadcast::channel('threads.{threadId}', function ($user, int $threadId) {
 
     return $user->can('view', $thread);
 });
+
+Broadcast::channel('users.{userId}', function ($user, int $userId) {
+    return (int) $user->id === $userId;
+});

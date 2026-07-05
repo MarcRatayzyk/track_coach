@@ -54,7 +54,6 @@ class SessionFeedback extends Model
     public function athleteVideos(): HasMany
     {
         return $this->hasMany(SessionFeedbackMedia::class)
-            ->whereNull('session_feedback_reply_id')
             ->where('kind', SessionFeedbackMedia::KIND_VIDEO)
             ->orderBy('sort_order');
     }
@@ -64,9 +63,14 @@ class SessionFeedback extends Model
         return $this->hasMany(SessionFeedbackMedia::class)->orderBy('sort_order');
     }
 
-    public function reply(): HasOne
+    public function replyMessages(): HasMany
     {
-        return $this->hasOne(SessionFeedbackReply::class);
+        return $this->hasMany(Message::class, 'session_feedback_id');
+    }
+
+    public function latestReplyMessage(): HasOne
+    {
+        return $this->hasOne(Message::class, 'session_feedback_id')->latestOfMany();
     }
 
     public function dashboardTask(): HasOne

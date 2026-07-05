@@ -14,7 +14,7 @@ use App\Models\ProgramTemplate;
 use App\Models\ProgramTrainingDay;
 use App\Models\ProgramWeek;
 use App\Models\SessionFeedback;
-use App\Models\SessionFeedbackReply;
+use App\Support\FeedbackReplySupport;
 use App\Models\TrainingSession;
 use App\Models\User;
 use App\Support\MatchPlanData;
@@ -853,11 +853,7 @@ class DatabaseSeeder extends Seeder
             ]);
 
             if ($config['reply'] !== null) {
-                SessionFeedbackReply::query()->create([
-                    'session_feedback_id' => $feedback->id,
-                    'coach_id' => $coach->id,
-                    'body' => $config['reply'],
-                ]);
+                FeedbackReplySupport::createCoachReply($feedback, $config['reply']);
             }
         }
     }

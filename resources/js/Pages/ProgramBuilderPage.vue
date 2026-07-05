@@ -31,6 +31,7 @@ import ProgramPasteIncrementModal from '../Components/ProgramPasteIncrementModal
 import ProgramBlockStatsTab from '../Components/ProgramBlockStatsTab.vue';
 import SessionEditorPanel from '../Components/SessionEditorPanel.vue';
 import DayTableLayoutModal from '../Components/DayTableLayoutModal.vue';
+import CustomExercisesModal from '../Components/CustomExercisesModal.vue';
 
 import { cellKey, weekdayShortLabel } from '../utils/programBuilder';
 
@@ -134,6 +135,7 @@ const assigning = ref(false);
 const pasting = ref(false);
 
 const pasteMode = ref(false);
+const customExercisesOpen = ref(false);
 const activeTab = ref(
   ['calendar', 'table', 'table_v2', 'stats'].includes(initialTab) ? initialTab : 'calendar',
 );
@@ -821,6 +823,22 @@ function clearClipboard() {
 
       </div>
 
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="rounded-xl border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-800/60"
+          @click="customExercisesOpen = true"
+        >
+          Mes exercices
+        </button>
+        <a
+          v-if="activeBlock?.id"
+          :href="`/coach/program-blocks/${activeBlock.id}/export-pdf`"
+          class="rounded-xl border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-800/60"
+        >
+          Exporter PDF
+        </a>
+
       <button
 
         v-if="showCalendar"
@@ -836,6 +854,7 @@ function clearClipboard() {
         ← Nouveau bloc
 
       </button>
+      </div>
 
     </div>
 
@@ -1147,6 +1166,8 @@ function clearClipboard() {
       @confirm="confirmIncrementModal"
       @cancel="closeIncrementModal"
     />
+
+    <CustomExercisesModal v-model:open="customExercisesOpen" />
 
   </div>
 

@@ -6,6 +6,8 @@ use App\Models\AthleteProfile;
 use App\Models\DashboardTask;
 use App\Models\SessionFeedback;
 use App\Models\User;
+use App\Notifications\NewSessionFeedbackNotification;
+use App\Support\FeedbackFrequencySupport;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +45,15 @@ class StoreSessionFeedbackAction
             ]);
         }
 
+        if (
+            FeedbackFrequencySupport::isWeekly($athlete)
+            && FeedbackFrequencySupport::hasFeedbackForWeek($athlete, $date)
+        ) {
+            throw ValidationException::withMessages([
+                'session_date' => 'Un retour existe déjà pour cette semaine.',
+            ]);
+        }
+
         return DB::transaction(function () use ($athlete, $date, $athleteNotes, $videos, $resolved): SessionFeedback {
             $feedback = SessionFeedback::query()->create([
                 'coach_id' => $resolved['coach']->id,
@@ -58,7 +69,10 @@ class StoreSessionFeedbackAction
             $this->storeMedia->storeVideos($feedback, $videos);
             $this->linkDashboardTask($feedback, $athlete, $date);
 
-            return $feedback->load(['athleteVideos', 'programTrainingDay', 'athlete:id,name']);
+            $feedback->load(['athleteVideos', 'programTrainingDay', 'athlete:id,name', 'coach:id,name']);
+            $feedback->coach?->notify(new NewSessionFeedbackNotification($feedback));
+
+            return $feedback;
         });
     }
 
