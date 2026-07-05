@@ -58,6 +58,8 @@ const props = defineProps({
   },
 });
 
+const today = new Date().toISOString().slice(0, 10);
+
 const page = usePage();
 const isCoach = computed(() => page.props.auth?.user?.role === 'coach');
 const canManageSessions = computed(

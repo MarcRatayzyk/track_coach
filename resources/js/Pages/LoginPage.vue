@@ -6,7 +6,6 @@ export default {
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import InstallAppBanner from '../Components/InstallAppBanner.vue';
 import UiIcon from '../Components/UiIcon.vue';
 
 const props = defineProps({
@@ -194,7 +193,5 @@ function submit() {
                 </p>
             </div>
         </div>
-
-        <InstallAppBanner />
     </div>
 </template>

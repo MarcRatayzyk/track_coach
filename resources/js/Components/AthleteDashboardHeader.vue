@@ -12,7 +12,6 @@ import {
   READINESS_COLORS,
 } from '../utils/chartTheme';
 import { theme } from '../composables/useTheme';
-import InstallAppButton from './InstallAppButton.vue';
 import UiIcon from './UiIcon.vue';
 
 const props = defineProps({
@@ -141,7 +140,6 @@ const readinessGlowStyle = computed(() => {
           Bonjour, {{ athleteName }}
         </h1>
       </div>
-      <InstallAppButton variant="compact" />
     </div>
 
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">

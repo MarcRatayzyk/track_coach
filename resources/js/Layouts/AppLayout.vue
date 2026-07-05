@@ -1,7 +1,6 @@
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import InstallAppBanner from '../Components/InstallAppBanner.vue';
 import InstallAppButton from '../Components/InstallAppButton.vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import UiIcon from '../Components/UiIcon.vue';
@@ -400,6 +399,11 @@ watch(() => page.url, () => {
             </nav>
 
             <div class="mt-auto space-y-2 border-t border-slate-800 pt-4">
+                <InstallAppButton
+                    variant="sidebar"
+                    :collapsed="isSidebarCollapsed"
+                />
+
                 <button
                     type="button"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
@@ -480,7 +484,5 @@ watch(() => page.url, () => {
                 </div>
             </main>
         </div>
-
-        <InstallAppBanner />
     </div>
 </template>

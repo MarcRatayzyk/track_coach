@@ -6,6 +6,5 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('fetch', (event) => {
-    event.respondWith(fetch(event.request));
-});
+// Pas d'interception fetch : évite les erreurs "Failed to fetch" en pass-through.
+// Le SW reste enregistré pour l'installation PWA sans gêner le réseau.
