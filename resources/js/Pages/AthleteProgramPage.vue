@@ -99,11 +99,11 @@ onMounted(() => {
 
 <template>
   <div class="space-y-4">
-    <div v-if="hasProgram" class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 class="text-xl font-bold text-white">{{ programBlock.name }}</h1>
-          <p class="mt-1 text-xs text-slate-500">
+    <div v-if="hasProgram" class="rounded-2xl border border-slate-800 bg-slate-900/50 p-3 sm:p-4">
+      <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-3">
+        <div class="min-w-0">
+          <h1 class="text-lg font-bold text-white sm:text-xl">{{ programBlock.name }}</h1>
+          <p class="mt-1 text-xs leading-relaxed text-slate-500">
             Du {{ formatCalendarFr(programBlock.date_start, 'medium') }}
             <template v-if="programBlock.date_end">
               au {{ formatCalendarFr(programBlock.date_end, 'medium') }}
@@ -141,10 +141,10 @@ onMounted(() => {
     </div>
 
     <template v-if="hasProgram">
-      <div class="flex flex-wrap items-center gap-2 border-b border-slate-800">
+      <div class="-mx-3 flex overflow-x-auto border-b border-slate-800 px-3 sm:mx-0 sm:px-0">
         <button
           type="button"
-          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          class="shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition sm:px-4"
           :class="
             activeTab === 'calendar'
               ? 'border-blue-500 text-blue-300'
@@ -156,7 +156,7 @@ onMounted(() => {
         </button>
         <button
           type="button"
-          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          class="shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition sm:px-4"
           :class="
             activeTab === 'table'
               ? 'border-blue-500 text-blue-300'
@@ -168,7 +168,7 @@ onMounted(() => {
         </button>
         <button
           type="button"
-          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          class="shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition sm:px-4"
           :class="
             activeTab === 'stats'
               ? 'border-blue-500 text-blue-300'
@@ -197,8 +197,8 @@ onMounted(() => {
         :program-block="programBlock"
       />
 
-      <div v-else class="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-        <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+      <div v-else class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
+        <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-3 sm:p-4">
           <p class="mb-3 text-xs text-slate-500">
             Clique sur un jour vert pour voir la séance programmée.
           </p>

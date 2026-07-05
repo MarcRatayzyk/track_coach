@@ -1,8 +1,9 @@
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import InstallAppBanner from '../Components/InstallAppBanner.vue';
+import InstallAppButton from '../Components/InstallAppButton.vue';
+import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import UiIcon from '../Components/UiIcon.vue';
 import { useTheme } from '../composables/useTheme';
 import { echo } from '../echo';
@@ -11,6 +12,7 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
 const flash = computed(() => page.props.flash ?? {});
 const isSidebarCollapsed = ref(false);
+const isMobileMenuOpen = ref(false);
 const { isLight, toggleTheme } = useTheme();
 
 const isCoach = computed(() => user.value?.role === 'coach');
@@ -75,12 +77,13 @@ function setupMessagingRealtime() {
 }
 
 const coachNav = [
-    { label: 'Dashboard', href: '/dashboard', pattern: '/dashboard', icon: 'dashboard' },
-    { label: 'Athlètes', href: '/athletes', pattern: '/athletes', icon: 'users' },
-    { label: 'Programmes', href: '/program-builder', pattern: '/program-builder', icon: 'clipboard' },
-    { label: 'Retours', href: '/feedbacks', pattern: '/feedbacks', icon: 'video' },
+    { label: 'Dashboard', shortLabel: 'Accueil', href: '/dashboard', pattern: '/dashboard', icon: 'dashboard' },
+    { label: 'Athlètes', shortLabel: 'Athlètes', href: '/athletes', pattern: '/athletes', icon: 'users' },
+    { label: 'Programmes', shortLabel: 'Prog.', href: '/program-builder', pattern: '/program-builder', icon: 'clipboard' },
+    { label: 'Retours', shortLabel: 'Retours', href: '/feedbacks', pattern: '/feedbacks', icon: 'video' },
     {
         label: 'Messagerie',
+        shortLabel: 'Messages',
         href: '/messaging',
         pattern: '/messaging',
         icon: 'chat',
@@ -96,30 +99,35 @@ const navItems = computed(() => {
         return [
             {
                 label: 'Accueil',
+                shortLabel: 'Accueil',
                 href: '/athlete/dashboard',
                 pattern: '/athlete/dashboard',
                 icon: 'dashboard',
             },
             {
                 label: 'Programme',
+                shortLabel: 'Prog.',
                 href: '/athlete/program',
                 pattern: '/athlete/program',
                 icon: 'clipboard',
             },
             {
                 label: 'Mon profil',
+                shortLabel: 'Profil',
                 href: `/athletes/${user.value.id}`,
                 pattern: '/athletes',
                 icon: 'user-circle',
             },
             {
                 label: 'Retours',
+                shortLabel: 'Retours',
                 href: '/feedbacks',
                 pattern: '/feedbacks',
                 icon: 'video',
             },
             {
                 label: 'Messagerie',
+                shortLabel: 'Messages',
                 href: messagingInbox.value?.thread_id
                     ? `/messaging?thread=${messagingInbox.value.thread_id}`
                     : '/messaging',
@@ -158,9 +166,15 @@ const sidebarClasses = computed(() =>
         : 'w-56 px-3 lg:w-64 lg:px-4',
 );
 
-const contentPaddingClasses = computed(() =>
-    isSidebarCollapsed.value ? 'pl-20 lg:pl-20' : 'pl-56 lg:pl-64',
-);
+const contentPaddingClasses = computed(() => {
+    const mobile = 'pl-0 pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pt-0 lg:pb-0';
+
+    if (isSidebarCollapsed.value) {
+        return `${mobile} lg:pl-20`;
+    }
+
+    return `${mobile} lg:pl-56 xl:pl-64`;
+});
 
 const contentWidthClasses = computed(() => {
     const url = page.url.split('?')[0];
@@ -182,8 +196,12 @@ function toggleSidebar() {
     isSidebarCollapsed.value = !isSidebarCollapsed.value;
 }
 
-function setupAthleteMessagingRealtime() {
-    setupMessagingRealtime();
+function toggleMobileMenu() {
+    isMobileMenuOpen.value = !isMobileMenuOpen.value;
+}
+
+function closeMobileMenu() {
+    isMobileMenuOpen.value = false;
 }
 
 onMounted(() => {
@@ -210,12 +228,87 @@ watch(isSidebarCollapsed, (value) => {
 
     window.localStorage.setItem('tc-sidebar-collapsed', value ? 'true' : 'false');
 });
+
+watch(() => page.url, () => {
+    closeMobileMenu();
+});
 </script>
 
 <template>
     <div class="h-screen overflow-hidden bg-slate-950 text-slate-200">
+        <header
+            class="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800/90 bg-slate-900/95 px-4 py-3 backdrop-blur-sm lg:hidden"
+        >
+            <Link
+                :href="isCoach ? '/dashboard' : '/athlete/dashboard'"
+                class="flex min-w-0 items-center gap-2"
+            >
+                <span
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600/25 text-blue-300"
+                >
+                    <UiIcon name="bolt" class="h-4 w-4" />
+                </span>
+                <span class="truncate text-sm font-bold text-white">Track Coach</span>
+            </Link>
+
+            <div class="flex min-w-0 items-center gap-2">
+                <p v-if="user" class="max-w-[7rem] truncate text-xs text-slate-400 sm:max-w-[10rem]">
+                    {{ user.name }}
+                </p>
+                <button
+                    type="button"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-300 transition hover:bg-slate-800/70 hover:text-white"
+                    aria-label="Plus d'options"
+                    @click="toggleMobileMenu"
+                >
+                    <UiIcon name="ellipsis-vertical" class="h-4 w-4" />
+                </button>
+            </div>
+        </header>
+
+        <div
+            v-if="isMobileMenuOpen"
+            class="fixed inset-0 z-50 bg-slate-950/60 lg:hidden"
+            @click="closeMobileMenu"
+        />
+
+        <div
+            class="fixed inset-x-0 top-14 z-50 mx-3 rounded-2xl border border-slate-700 bg-slate-900 p-2 shadow-2xl transition lg:hidden"
+            :class="isMobileMenuOpen ? 'visible opacity-100' : 'pointer-events-none invisible opacity-0'"
+        >
+            <div
+                v-if="user"
+                class="mb-1 rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2.5"
+            >
+                <p class="truncate text-sm font-semibold text-white">{{ user.name }}</p>
+                <p class="truncate text-xs text-slate-400">{{ user.email }}</p>
+            </div>
+
+            <InstallAppButton variant="menu" @interacted="closeMobileMenu" />
+
+            <button
+                type="button"
+                class="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition hover:bg-slate-800/60"
+                @click="toggleTheme(); closeMobileMenu()"
+            >
+                <UiIcon :name="isLight ? 'moon' : 'sun'" class="h-4 w-4 text-blue-400" />
+                <span>{{ isLight ? 'Thème sombre' : 'Thème clair' }}</span>
+            </button>
+
+            <Link
+                href="/logout"
+                method="post"
+                as="button"
+                class="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition hover:bg-slate-800/60"
+                @click="closeMobileMenu"
+            >
+                <UiIcon name="logout" class="h-4 w-4 text-blue-400" />
+                <span>Déconnexion</span>
+            </Link>
+        </div>
+
         <aside
-            class="fixed inset-y-0 left-0 z-40 flex flex-col border-r border-slate-800/90 bg-slate-900/95 py-5 transition-all duration-200"
+            class="fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-slate-800/90 bg-slate-900/95 py-5 transition-all duration-200 lg:flex"
             :class="sidebarClasses"
         >
             <div class="flex items-center gap-2">
@@ -332,6 +425,39 @@ watch(isSidebarCollapsed, (value) => {
             </div>
         </aside>
 
+        <nav
+            class="mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-slate-800/90 bg-slate-900/95 backdrop-blur-sm lg:hidden"
+            style="padding-bottom: env(safe-area-inset-bottom)"
+        >
+            <div class="flex items-stretch justify-around px-1 pt-1">
+                <Link
+                    v-for="item in navItems"
+                    :key="`mobile-${item.href}`"
+                    :href="item.href"
+                    class="relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-2 transition"
+                    :class="
+                        navActive(item.pattern)
+                            ? 'text-blue-300'
+                            : 'text-slate-400 hover:text-slate-200'
+                    "
+                >
+                    <span
+                        class="relative flex h-7 w-7 items-center justify-center rounded-lg"
+                        :class="navActive(item.pattern) ? 'bg-blue-600/25' : ''"
+                    >
+                        <UiIcon :name="item.icon" class="h-4 w-4" />
+                        <MessageThreadUnreadBadge
+                            v-if="item.unreadCount > 0"
+                            :count="item.unreadCount"
+                        />
+                    </span>
+                    <span class="max-w-full truncate text-[10px] font-medium leading-tight">
+                        {{ item.shortLabel ?? item.label }}
+                    </span>
+                </Link>
+            </div>
+        </nav>
+
         <div class="flex h-full min-h-0 min-w-0 flex-col transition-all duration-200" :class="contentPaddingClasses">
             <div
                 v-if="flash.success"
@@ -347,7 +473,7 @@ watch(isSidebarCollapsed, (value) => {
             </div>
 
             <main
-                class="app-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-b from-slate-950 to-slate-900/80 px-4 py-6 text-sm leading-relaxed text-slate-200 lg:px-8 lg:py-8"
+                class="app-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-b from-slate-950 to-slate-900/80 px-3 py-4 text-sm leading-relaxed text-slate-200 sm:px-4 sm:py-6 lg:px-8 lg:py-8"
             >
                 <div class="mx-auto" :class="contentWidthClasses">
                     <slot />

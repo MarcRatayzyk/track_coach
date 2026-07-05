@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { WEEKDAY_LABELS, buildCalendarRows } from '../utils/programBuilder';
 
 const props = defineProps({
@@ -47,6 +47,31 @@ const props = defineProps({
 
 const emit = defineEmits(['select', 'copy-week', 'paste-week']);
 
+const isNarrowViewport = ref(false);
+let narrowMediaQuery = null;
+
+onMounted(() => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    narrowMediaQuery = window.matchMedia('(max-width: 1023px)');
+    isNarrowViewport.value = narrowMediaQuery.matches;
+    narrowMediaQuery.addEventListener('change', onViewportChange);
+});
+
+onUnmounted(() => {
+    if (narrowMediaQuery) {
+        narrowMediaQuery.removeEventListener('change', onViewportChange);
+    }
+});
+
+function onViewportChange(event) {
+    isNarrowViewport.value = event.matches;
+}
+
+const isCompactLayout = computed(() => props.compact || isNarrowViewport.value);
+
 const rows = computed(() => buildCalendarRows(props.weekCount, props.dateStart, props.sessions));
 
 function isSelected(cell) {
@@ -77,7 +102,7 @@ function weekHasSessions(weekNumber) {
 
 <template>
   <div class="overflow-x-auto">
-    <table class="w-full min-w-[32rem] border-collapse text-sm">
+    <table class="w-full min-w-[28rem] border-collapse text-sm sm:min-w-[32rem]">
       <thead>
         <tr>
           <th class="w-24 pb-2 text-left text-xs font-medium text-slate-500">Sem.</th>
@@ -138,7 +163,7 @@ function weekHasSessions(weekNumber) {
                 pasteMode && hasSessionClipboard
                   ? 'ring-1 ring-blue-500/40 ring-offset-1 ring-offset-slate-950'
                   : '',
-                compact ? 'min-h-[3.25rem]' : 'min-h-[4rem]',
+                isCompactLayout ? 'min-h-[3rem] py-1.5' : 'min-h-[4rem]',
               ]"
               @click="selectCell(cell)"
             >

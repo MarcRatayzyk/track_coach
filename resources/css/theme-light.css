@@ -795,3 +795,29 @@
 [data-theme='light'] .hover\:text-amber-100:hover {
     color: #78350f;
 }
+
+/* Navigation mobile */
+[data-theme='light'] .mobile-bottom-nav {
+    background-color: rgb(255 255 255 / 0.96);
+    border-color: #e2e8f0;
+}
+
+[data-theme='light'] .mobile-bottom-nav .text-slate-400 {
+    color: #64748b;
+}
+
+[data-theme='light'] .mobile-bottom-nav .text-blue-300 {
+    color: #2563eb;
+}
+
+[data-theme='light'] .mobile-bottom-nav .bg-blue-600\/25 {
+    background-color: rgb(219 234 254 / 0.9);
+}
+
+[data-theme='light'] .border-blue-500\/40 {
+    border-color: rgb(59 130 246 / 0.35);
+}
+
+[data-theme='light'] .text-blue-300 {
+    color: #2563eb;
+}

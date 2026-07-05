@@ -8,7 +8,7 @@ const { showBanner, platform, install, dismiss } = usePwaInstall();
 <template>
     <div
         v-if="showBanner"
-        class="fixed inset-x-0 bottom-0 z-50 border-t border-blue-500/30 bg-slate-900/95 px-4 py-3 shadow-2xl shadow-blue-950/40 backdrop-blur-sm"
+        class="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 border-t border-blue-500/30 bg-slate-900/95 px-4 py-3 shadow-2xl shadow-blue-950/40 backdrop-blur-sm lg:bottom-0"
     >
         <div class="mx-auto flex max-w-lg items-start gap-3">
             <span

@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 export const PWA_INSTALL_DISMISSED_KEY = 'tc-pwa-install-dismissed';
 
@@ -10,6 +10,9 @@ const isDismissed = ref(false);
 const isMobile = ref(false);
 const isIos = ref(false);
 const listenersBound = ref(false);
+const showIosGuide = ref(false);
+
+let mobileMediaQuery = null;
 
 /**
  * @typedef {Event & {
@@ -74,6 +77,7 @@ function bindInstallListeners() {
     window.addEventListener('appinstalled', () => {
         isInstalled.value = true;
         deferredPrompt.value = null;
+        showIosGuide.value = false;
     });
 }
 
@@ -88,6 +92,17 @@ function refreshEnvironment() {
 export function usePwaInstall() {
     onMounted(() => {
         refreshEnvironment();
+
+        if (typeof window !== 'undefined') {
+            mobileMediaQuery = window.matchMedia('(max-width: 1023px)');
+            mobileMediaQuery.addEventListener('change', refreshEnvironment);
+        }
+    });
+
+    onUnmounted(() => {
+        if (mobileMediaQuery) {
+            mobileMediaQuery.removeEventListener('change', refreshEnvironment);
+        }
     });
 
     const platform = computed(() => {
@@ -105,6 +120,16 @@ export function usePwaInstall() {
 
         return null;
     });
+
+    const canPromptInstall = computed(
+        () => !isInstalled.value && isMobile.value && deferredPrompt.value !== null,
+    );
+
+    const isIosGuide = computed(() => !isInstalled.value && isMobile.value && isIos.value);
+
+    const showInstallAction = computed(
+        () => !isInstalled.value && (canPromptInstall.value || isIosGuide.value),
+    );
 
     const showBanner = computed(() => {
         if (!isMobile.value || isInstalled.value || isDismissed.value) {
@@ -124,6 +149,21 @@ export function usePwaInstall() {
         deferredPrompt.value = null;
     }
 
+    async function installOrGuide() {
+        if (deferredPrompt.value) {
+            await install();
+            return;
+        }
+
+        if (isIos.value && isMobile.value) {
+            showIosGuide.value = true;
+        }
+    }
+
+    function closeIosGuide() {
+        showIosGuide.value = false;
+    }
+
     function dismiss() {
         isDismissed.value = true;
 
@@ -134,8 +174,15 @@ export function usePwaInstall() {
 
     return {
         showBanner,
+        showInstallAction,
+        canPromptInstall,
+        isIosGuide,
+        isInstalled,
         platform,
+        showIosGuide,
         install,
+        installOrGuide,
+        closeIosGuide,
         dismiss,
     };
 }

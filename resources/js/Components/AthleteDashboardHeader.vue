@@ -12,6 +12,7 @@ import {
   READINESS_COLORS,
 } from '../utils/chartTheme';
 import { theme } from '../composables/useTheme';
+import InstallAppButton from './InstallAppButton.vue';
 import UiIcon from './UiIcon.vue';
 
 const props = defineProps({
@@ -133,11 +134,14 @@ const readinessGlowStyle = computed(() => {
 
 <template>
   <div class="space-y-4">
-    <div>
-      <p class="text-xs text-slate-500">{{ todayLabel }}</p>
-      <h1 class="mt-1 text-xl font-bold text-white sm:text-2xl">
-        Bonjour, {{ athleteName }}
-      </h1>
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <p class="text-xs text-slate-500">{{ todayLabel }}</p>
+        <h1 class="mt-1 text-xl font-bold text-white sm:text-2xl">
+          Bonjour, {{ athleteName }}
+        </h1>
+      </div>
+      <InstallAppButton variant="compact" />
     </div>
 
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -157,7 +161,7 @@ const readinessGlowStyle = computed(() => {
       >
         <p class="text-[10px] uppercase tracking-wide text-slate-500">Total PR</p>
         <template v-if="prValues">
-          <p class="mt-0.5 text-lg font-bold tabular-nums text-white">
+          <p class="mt-0.5 text-base font-bold tabular-nums text-white sm:text-lg">
             <span>S {{ prValues.squat }}</span>
             <span class="mx-1 text-slate-600">·</span>
             <span>B {{ prValues.bench }}</span>
