@@ -72,6 +72,14 @@ function onViewportChange(event) {
 
 const isCompactLayout = computed(() => props.compact || isNarrowViewport.value);
 
+const weekColumnWidth = computed(() => {
+  if (props.readOnly) {
+    return 'w-9';
+  }
+
+  return isCompactLayout.value ? 'w-14' : 'w-20';
+});
+
 const rows = computed(() => buildCalendarRows(props.weekCount, props.dateStart, props.sessions));
 
 function isSelected(cell) {
@@ -102,14 +110,23 @@ function weekHasSessions(weekNumber) {
 
 <template>
   <div class="overflow-x-auto">
-    <table class="w-full min-w-[28rem] border-collapse text-sm sm:min-w-[32rem]">
+    <table
+      class="w-full border-collapse text-sm"
+      :class="isCompactLayout ? 'table-fixed' : 'min-w-[32rem]'"
+    >
       <thead>
         <tr>
-          <th class="w-24 pb-2 text-left text-xs font-medium text-slate-500">Sem.</th>
+          <th
+            class="pb-2 text-left text-xs font-medium text-slate-500"
+            :class="weekColumnWidth"
+          >
+            Sem.
+          </th>
           <th
             v-for="label in WEEKDAY_LABELS"
             :key="label"
             class="pb-2 text-center text-xs font-medium text-slate-500"
+            :class="isCompactLayout ? 'w-[calc((100%-3.5rem)/7)]' : ''"
           >
             {{ label }}
           </th>
@@ -117,7 +134,7 @@ function weekHasSessions(weekNumber) {
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="row.weekNumber" class="border-t border-slate-800/80">
-          <td class="py-2 pr-1 align-top">
+          <td class="py-2 pr-0.5 align-top" :class="weekColumnWidth">
             <div class="flex flex-col gap-1">
               <span class="text-xs font-semibold text-slate-400">S{{ row.weekNumber }}</span>
               <div v-if="!readOnly" class="flex flex-wrap gap-0.5">
@@ -151,7 +168,7 @@ function weekHasSessions(weekNumber) {
           <td v-for="cell in row.cells" :key="cell.key" class="p-0.5">
             <button
               type="button"
-              class="flex w-full flex-col items-center rounded-lg border px-1 py-2 transition"
+              class="flex w-full flex-col items-center rounded-lg border px-0.5 py-2"
               :class="[
                 cell.hasSession
                   ? isSelected(cell)

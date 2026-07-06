@@ -4,9 +4,7 @@ namespace App\Support;
 
 use App\Models\AthleteProgramAssignment;
 use App\Models\Competition;
-use App\Models\MessageThread;
 use App\Models\PersonalRecord;
-use App\Models\SessionFeedback;
 use App\Models\TrainingSession;
 use App\Models\User;
 use App\Support\FeedbackFrequencySupport;
@@ -22,7 +20,7 @@ class AthleteDashboardPresenter
     {
         $date = ($date ?? now())->copy()->startOfDay();
 
-        $activeAssignment = self::activeAssignment($athlete, $date);
+        $activeAssignment = ActiveProgramAssignmentSupport::forAthleteOnDate($athlete, $date);
 
         return [
             'programBlock' => ProgramBlockPresenter::forAssignment($activeAssignment),
@@ -38,52 +36,16 @@ class AthleteDashboardPresenter
 
         $athlete->loadMissing(['latestPr', 'upcomingCompetition']);
 
-        $activeAssignment = self::activeAssignment($athlete, $date);
+        $activeAssignment = ActiveProgramAssignmentSupport::forAthleteOnDate($athlete, $date);
         $programBlock = ProgramBlockPresenter::forAssignment($activeAssignment);
         $readiness = AthleteReadinessPresenter::forAthlete($athlete);
         $bodyWeight = AthleteBodyWeightPresenter::forAthlete($athlete);
-
-        $trainingSessions = $athlete->trainingSessions()
-            ->orderByDesc('session_date')
-            ->orderByDesc('id')
-            ->limit(60)
-            ->get()
-            ->map(fn ($session) => TrainingSessionSupport::toPayload($session))
-            ->values()
-            ->all();
 
         $latestPr = $athlete->latestPr;
         $blockProgress = self::blockProgress($activeAssignment, $date);
         $oneRm = self::oneRmPayload($programBlock, $latestPr);
         $todayLoggedSession = self::todayLoggedSession($athlete, $todayString);
         $feedbackDueToday = self::feedbackDueToday($athlete, $activeAssignment, $date);
-
-        $recentFeedbacks = SessionFeedback::query()
-            ->where('athlete_id', $athlete->id)
-            ->with(['programTrainingDay', 'athleteVideos', 'latestReplyMessage'])
-            ->orderByDesc('session_date')
-            ->orderByDesc('id')
-            ->limit(3)
-            ->get();
-
-        $pendingReplyCount = SessionFeedback::query()
-            ->where('athlete_id', $athlete->id)
-            ->where('status', SessionFeedback::STATUS_SUBMITTED)
-            ->count();
-
-        $personalRecords = $athlete->personalRecords()
-            ->orderByDesc('reference_date')
-            ->orderByDesc('id')
-            ->limit(10)
-            ->get()
-            ->map(fn (PersonalRecord $record) => [
-                'squat' => (int) $record->squat,
-                'bench' => (int) $record->bench,
-                'deadlift' => (int) $record->deadlift,
-                'reference_date' => $record->reference_date?->toDateString(),
-            ])
-            ->values()
-            ->all();
 
         return [
             'athleteName' => $athlete->name,
@@ -93,12 +55,8 @@ class AthleteDashboardPresenter
             'todayReadiness' => $readiness['todayReadiness'],
             'readinessRecent' => $readiness['readinessRecent'],
             'todayBodyWeight' => $bodyWeight['todayBodyWeight'],
-            'bodyWeightRecent' => $bodyWeight['bodyWeightRecent'],
             'nextCompetition' => self::nextCompetitionPayload($athlete->upcomingCompetition, $date),
-            'programBlock' => $programBlock,
-            'activeProgram' => self::activeProgramPayload($activeAssignment),
             'blockProgress' => $blockProgress,
-            'trainingSessions' => $trainingSessions,
             'oneRm' => $oneRm,
             'latestPr' => $latestPr ? [
                 'squat' => (int) $latestPr->squat,
@@ -107,30 +65,9 @@ class AthleteDashboardPresenter
                 'reference_date' => $latestPr->reference_date?->toDateString(),
                 'gain_kg' => self::prGainSinceCoaching($athlete, $latestPr),
             ] : null,
-            'personalRecords' => $personalRecords,
-            'recentFeedbacks' => SessionFeedbackPresenter::list($recentFeedbacks),
-            'feedbackSummary' => [
-                'pending_reply' => $pendingReplyCount,
-                'due_today' => $feedbackDueToday,
-            ],
             'feedbackFrequency' => FeedbackFrequencySupport::frequencyFor($athlete),
-            'coachThread' => self::coachThreadPayload($athlete),
             'feedbackDueToday' => $feedbackDueToday,
         ];
-    }
-
-    private static function activeAssignment(User $athlete, CarbonInterface $date): ?AthleteProgramAssignment
-    {
-        return $athlete->programAssignments()
-            ->where('status', 'active')
-            ->whereDate('date_start', '<=', $date->toDateString())
-            ->where(function ($query) use ($date): void {
-                $query->whereNull('date_end')
-                    ->orWhereDate('date_end', '>=', $date->toDateString());
-            })
-            ->with(['template.weeks.trainingDays.exercises'])
-            ->latest('date_start')
-            ->first();
     }
 
     /**
@@ -300,51 +237,6 @@ class AthleteDashboardPresenter
             ->first();
 
         return $session ? TrainingSessionSupport::toPayload($session) : null;
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private static function coachThreadPayload(User $athlete): ?array
-    {
-        $coach = $athlete->coaches()
-            ->wherePivot('status', 'active')
-            ->orderBy('coach_athlete.created_at')
-            ->first();
-
-        if ($coach === null) {
-            return null;
-        }
-
-        $thread = MessageThread::query()->firstOrCreate([
-            'coach_id' => $coach->id,
-            'athlete_id' => $athlete->id,
-        ]);
-
-        $thread->loadMissing('coach:id,name');
-        $thread->loadCount([
-            'messages as unread_messages_count' => fn ($query) => $query
-                ->whereNull('read_at')
-                ->where('sender_id', '!=', $athlete->id),
-        ]);
-
-        $lastMessage = $thread->messages()
-            ->with('sender:id,name')
-            ->orderByDesc('created_at')
-            ->first();
-
-        return [
-            'id' => $thread->id,
-            'coach_id' => $coach->id,
-            'coach_name' => $coach->name,
-            'unread_count' => (int) ($thread->unread_messages_count ?? 0),
-            'last_message' => $lastMessage ? [
-                'content' => $lastMessage->content,
-                'sender_name' => $lastMessage->sender?->name,
-                'created_at' => $lastMessage->created_at?->toIso8601String(),
-                'is_mine' => $lastMessage->sender_id === $athlete->id,
-            ] : null,
-        ];
     }
 
     private static function feedbackDueToday(

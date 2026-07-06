@@ -90,6 +90,14 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         ->name('athletes.competitions.live.update');
     Route::post('/athletes/{athlete}/prs', [AthleteDataWebController::class, 'storePr'])
         ->name('athletes.prs.store');
+    Route::patch('/athletes/{athlete}/profile', [AthleteDataWebController::class, 'updateOwnProfile'])
+        ->name('athletes.profile.update');
+    Route::post('/athletes/{athlete}/competitions', [AthleteDataWebController::class, 'storeCompetition'])
+        ->name('athletes.competitions.store');
+    Route::patch('/athletes/{athlete}/competitions/{competition}', [AthleteDataWebController::class, 'updateCompetition'])
+        ->name('athletes.competitions.update');
+    Route::delete('/athletes/{athlete}/competitions/{competition}', [AthleteDataWebController::class, 'destroyCompetition'])
+        ->name('athletes.competitions.destroy');
 
     Route::get('/messaging', [AppPageController::class, 'messaging'])->name('messaging');
     Route::post('/coach/threads/{thread}/messages', [MessageWebController::class, 'storeMessage'])

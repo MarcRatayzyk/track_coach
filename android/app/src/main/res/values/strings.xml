@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Track Coach</string>
+    <string name="title_activity_main">Track Coach</string>
+    <string name="package_name">com.trackcoach.athlete</string>
+    <string name="custom_url_scheme">com.trackcoach.athlete</string>
+</resources>

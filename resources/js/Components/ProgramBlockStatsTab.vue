@@ -6,12 +6,6 @@ import CoachChartTemplatesPanel from './CoachChartTemplatesPanel.vue';
 import CustomChartCard from './CustomChartCard.vue';
 import DefaultBuiltinChart from './DefaultBuiltinChart.vue';
 import { BUILTIN_CHART_KEYS } from '../config/chartBuilderOptions';
-import {
-  countExcludedRpeLines,
-  flattenBlockItems,
-  hasPercentWithoutRm,
-} from '../utils/trainingVolume';
-
 const ATHLETE_DEFAULT_KEYS = [
   BUILTIN_CHART_KEYS.VOLUME_WEEKLY,
   BUILTIN_CHART_KEYS.TOPSET_E1RM,
@@ -57,19 +51,6 @@ const props = defineProps({
 const builderOpen = ref(false);
 const templatesPanelOpen = ref(false);
 const editingTemplate = ref(null);
-
-const oneRm = computed(() => ({
-  squat: Number(props.athleteOneRm?.squat ?? 0),
-  bench: Number(props.athleteOneRm?.bench ?? 0),
-  deadlift: Number(props.athleteOneRm?.deadlift ?? 0),
-}));
-
-const flatItems = computed(() => flattenBlockItems(props.sessions, props.dateStart));
-const excludedRpeCount = computed(() => countExcludedRpeLines(flatItems.value));
-const missingRmForPercent = computed(() => hasPercentWithoutRm(flatItems.value, oneRm.value));
-const hasAnyRm = computed(
-  () => oneRm.value.squat > 0 || oneRm.value.bench > 0 || oneRm.value.deadlift > 0,
-);
 
 const dashboardItems = computed(() => {
   if (!props.coachMode) {
@@ -150,31 +131,6 @@ function moveDashboardItem(item, direction) {
           Ajouter un graphique
         </button>
       </div>
-    </div>
-
-    <div
-      class="rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-xs leading-relaxed text-slate-400"
-    >
-      <p>
-        Volume programmé = charge (kg) × reps × séries. Les lignes en
-        <span class="text-slate-300">RPE</span> sont exclues.
-        <span v-if="hasAnyRm">
-          Les charges en <span class="text-slate-300">% du 1RM</span> sont converties avec le
-          dernier PR de l’athlète (S {{ oneRm.squat }} · B {{ oneRm.bench }} · T
-          {{ oneRm.deadlift }} kg).
-        </span>
-        <span v-else class="text-amber-300/90">
-          Aucun PR enregistré : les lignes en % du 1RM ne sont pas comptées dans le volume.
-        </span>
-      </p>
-      <p v-if="excludedRpeCount > 0" class="mt-1 text-slate-500">
-        {{ excludedRpeCount }} ligne{{ excludedRpeCount > 1 ? 's' : '' }} en RPE ignorée{{
-          excludedRpeCount > 1 ? 's' : ''
-        }}.
-      </p>
-      <p v-if="missingRmForPercent && hasAnyRm" class="mt-1 text-amber-300/80">
-        Certaines lignes en % ne peuvent pas être converties (PR manquant pour ce lift).
-      </p>
     </div>
 
     <p

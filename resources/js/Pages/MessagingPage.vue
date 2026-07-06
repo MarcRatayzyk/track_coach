@@ -103,7 +103,11 @@ function submitMessage() {
       ...data,
       audio_files: recordedAudioFiles.value,
     }))
-    .post(`/coach/threads/${props.activeThread.id}/messages`, {
+    .post(
+      isCoach.value
+        ? `/coach/threads/${props.activeThread.id}/messages`
+        : `/messaging/threads/${props.activeThread.id}/messages`,
+      {
       forceFormData: true,
       preserveScroll: true,
       onSuccess: () => {
@@ -328,7 +332,9 @@ onUnmounted(() => {
               v-model="messageForm.content"
               rows="4"
               :required="!isFeedbackReply && recordedAudioFiles.length === 0"
-              :placeholder="isFeedbackReply ? 'Commentaire pour l’athlète…' : 'Écrire un message…'"
+              :placeholder="isFeedbackReply
+                ? (isCoach ? 'Commentaire pour l’athlète…' : 'Répondre au coach…')
+                : 'Écrire un message…'"
               class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-4 text-lg text-white placeholder:text-slate-600"
             />
 

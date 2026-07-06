@@ -93,6 +93,24 @@ onMounted(() => {
       onSelectCell(cell);
       activeTab.value = 'calendar';
     }
+    return;
+  }
+
+  if (
+    typeof window !== 'undefined'
+    && window.matchMedia('(max-width: 1023px)').matches
+    && props.programBlock?.date_start
+    && props.programBlock?.week_count
+  ) {
+    const today = new Date().toISOString().slice(0, 10);
+    const cell = findCalendarCellByDate(
+      props.programBlock.week_count,
+      props.programBlock.date_start,
+      today,
+    );
+    if (cell) {
+      onSelectCell(cell);
+    }
   }
 });
 </script>
@@ -197,11 +215,8 @@ onMounted(() => {
         :program-block="programBlock"
       />
 
-      <div v-else class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-        <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-3 sm:p-4">
-          <p class="mb-3 text-xs text-slate-500">
-            Clique sur un jour vert pour voir la séance programmée.
-          </p>
+      <div v-else class="grid gap-4" :class="selectedCell ? 'lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]' : ''">
+        <section class="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/50 p-3 sm:p-4">
           <ProgramBlockCalendar
             read-only
             :week-count="programBlock.week_count"
@@ -213,6 +228,7 @@ onMounted(() => {
         </section>
 
         <AthleteProgramSessionPanel
+          v-if="selectedCell"
           :program-block="programBlock"
           :selected-cell="selectedCell"
           :session="selectedSession"

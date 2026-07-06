@@ -1,5 +1,6 @@
 <script setup>
 import UiIcon from './UiIcon.vue';
+import { useNativeApp } from '../composables/useNativeApp';
 import { usePwaInstall } from '../composables/usePwaInstall';
 
 const props = defineProps({
@@ -17,6 +18,7 @@ const props = defineProps({
 const emit = defineEmits(['interacted']);
 
 const { isInstalled, installOrGuide } = usePwaInstall();
+const { isNative } = useNativeApp();
 
 async function handleClick() {
     await installOrGuide();
@@ -36,7 +38,7 @@ const buttonClasses = {
 
 <template>
     <button
-        v-if="!isInstalled"
+        v-if="!isInstalled && !isNative"
         type="button"
         :class="[buttonClasses[props.variant], props.variant === 'sidebar' && props.collapsed ? 'px-2' : '']"
         :title="props.variant === 'sidebar' && props.collapsed ? 'Installer l\'app' : undefined"

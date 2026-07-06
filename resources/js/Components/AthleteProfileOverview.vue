@@ -44,6 +44,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  canManageCompetitions: {
+    type: Boolean,
+    default: false,
+  },
   feedbackFrequencyLabel: {
     type: String,
     default: 'Hebdomadaire',
@@ -160,7 +164,10 @@ function openNextCompetition() {
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+    <div
+      class="grid gap-1.5 sm:grid-cols-4"
+      :class="isCoach ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'"
+    >
       <PrEvolutionMiniCard
         v-for="card in prCards"
         :key="card.key"
@@ -255,7 +262,7 @@ function openNextCompetition() {
                 Voir
               </button>
               <button
-                v-else-if="isCoach"
+                v-else-if="canManageCompetitions"
                 type="button"
                 class="shrink-0 rounded-lg border border-blue-500/40 px-2.5 py-1 text-xs font-semibold text-blue-300 hover:bg-blue-500/10"
                 @click="emit('add-competition')"

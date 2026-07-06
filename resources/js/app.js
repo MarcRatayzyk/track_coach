@@ -6,10 +6,17 @@ import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { initTheme } from './composables/useTheme';
+import { isNativeApp } from './composables/useNativeApp';
+import { initNativeApp } from './pwa/initNativeApp';
 import { registerServiceWorker } from './pwa/registerServiceWorker';
 
 initTheme();
-registerServiceWorker();
+
+if (!isNativeApp) {
+    registerServiceWorker();
+}
+
+initNativeApp();
 
 createInertiaApp({
     title: (title) => (title ? `${title} — Track Coach` : 'Track Coach'),

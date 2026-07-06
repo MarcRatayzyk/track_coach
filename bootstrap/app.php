@@ -5,6 +5,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,6 +24,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'coach' => EnsureUserIsCoach::class,
         ]);
+
+        $middleware->redirectGuestsTo('/login');
+
+        $middleware->redirectUsersTo(function (Request $request): string {
+            if ($request->user()?->role === 'athlete') {
+                return route('athlete.dashboard');
+            }
+
+            return route('dashboard');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

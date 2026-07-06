@@ -5,6 +5,7 @@ import InstallAppButton from '../Components/InstallAppButton.vue';
 import InstallAppGuideModal from '../Components/InstallAppGuideModal.vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import UiIcon from '../Components/UiIcon.vue';
+import { useNativeApp } from '../composables/useNativeApp';
 import { usePwaInstall } from '../composables/usePwaInstall';
 import { useTheme } from '../composables/useTheme';
 import { echo } from '../echo';
@@ -16,6 +17,7 @@ const isSidebarCollapsed = ref(false);
 const isMobileMenuOpen = ref(false);
 const { isLight, toggleTheme } = useTheme();
 const { showInstallGuide, installGuideType, closeInstallGuide } = usePwaInstall();
+const { isNative } = useNativeApp();
 
 const isCoach = computed(() => user.value?.role === 'coach');
 const messagingInbox = computed(() => page.props.messagingInbox ?? null);
@@ -169,7 +171,7 @@ const sidebarClasses = computed(() =>
 );
 
 const contentPaddingClasses = computed(() => {
-    const mobile = 'pl-0 pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pt-0 lg:pb-0';
+    const mobile = 'pl-0 tc-app-content lg:pb-0';
 
     if (isSidebarCollapsed.value) {
         return `${mobile} lg:pl-20`;
@@ -239,7 +241,7 @@ watch(() => page.url, () => {
 <template>
     <div class="h-screen overflow-hidden bg-slate-950 text-slate-200">
         <header
-            class="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800/90 bg-slate-900/95 px-4 py-3 backdrop-blur-sm lg:hidden"
+            class="tc-app-mobile-header fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800/90 bg-slate-900/95 px-4 py-3 backdrop-blur-sm lg:hidden"
         >
             <Link
                 :href="isCoach ? '/dashboard' : '/athlete/dashboard'"
@@ -275,7 +277,7 @@ watch(() => page.url, () => {
         />
 
         <div
-            class="fixed inset-x-0 top-14 z-50 mx-3 rounded-2xl border border-slate-700 bg-slate-900 p-2 shadow-2xl transition lg:hidden"
+            class="tc-mobile-overlay-menu fixed inset-x-0 z-50 mx-3 rounded-2xl border border-slate-700 bg-slate-900 p-2 shadow-2xl transition lg:hidden"
             :class="isMobileMenuOpen ? 'visible opacity-100' : 'pointer-events-none invisible opacity-0'"
         >
             <div
@@ -434,7 +436,6 @@ watch(() => page.url, () => {
 
         <nav
             class="mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-slate-800/90 bg-slate-900/95 backdrop-blur-sm lg:hidden"
-            style="padding-bottom: env(safe-area-inset-bottom)"
         >
             <div class="flex items-stretch justify-around px-1 pt-1">
                 <Link
@@ -489,6 +490,7 @@ watch(() => page.url, () => {
         </div>
 
         <InstallAppGuideModal
+            v-if="!isNative"
             :open="showInstallGuide"
             :guide-type="installGuideType"
             @close="closeInstallGuide"

@@ -100,16 +100,16 @@ watch(selectedWeek, () => {
 </script>
 
 <template>
-  <div class="flex items-start gap-4">
-  <section class="min-w-0 flex-1 space-y-6 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
+  <div class="flex flex-col items-start gap-4 lg:flex-row">
+  <section class="min-w-0 flex-1 space-y-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg sm:p-4 lg:space-y-6 lg:p-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h2 class="text-lg font-semibold text-white">Builder tableur V2</h2>
-        <p class="mt-2 text-sm text-slate-400">
+      <div class="min-w-0">
+        <h2 class="text-base font-semibold text-white sm:text-lg">Builder tableur V2</h2>
+        <p class="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">
           Une semaine à la fois, jours empilés du lundi au dimanche pour des séances en pleine largeur.
         </p>
       </div>
-      <div class="rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-slate-400">
+      <div class="shrink-0 rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-xs text-slate-400 sm:px-4 sm:py-3 sm:text-sm">
         Jusqu'à
         <span class="font-medium text-white">{{ maxSessionsPerWeek }}</span>
         séance{{ maxSessionsPerWeek > 1 ? 's' : '' }} par semaine
@@ -118,18 +118,18 @@ watch(selectedWeek, () => {
 
     <div
       v-if="clipboardStatus"
-      class="rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-sm text-slate-400"
+      class="rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2 text-xs text-slate-400 sm:px-4 sm:py-3 sm:text-sm"
     >
       <span class="font-medium text-white">{{ clipboardStatus }}</span>
       <span class="ml-2 text-slate-500">Le collage demandera des incréments (kg, %, RPE).</span>
     </div>
 
-    <div class="flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+    <div class="tc-scrollbar -mx-1 flex gap-2 overflow-x-auto border-b border-slate-800 px-1 pb-3">
       <button
         v-for="weekNumber in weekNumbers"
         :key="`tab-${weekNumber}`"
         type="button"
-        class="rounded-lg border px-4 py-2 text-sm font-medium transition"
+        class="shrink-0 rounded-lg border px-3 py-1.5 text-sm font-medium transition sm:px-4 sm:py-2"
         :class="
           selectedWeek === weekNumber
             ? 'border-blue-500 bg-blue-950/40 text-blue-300'

@@ -5,7 +5,7 @@ import ChartCard from './charts/ChartCard.vue';
 import DoughnutChart from './charts/DoughnutChart.vue';
 import LineChart from './charts/LineChart.vue';
 import { buildChartFromConfig } from '../utils/chartBuilderEngine';
-import { GROUP_BY_OPTIONS, METRIC_OPTIONS, metricLabel } from '../config/chartBuilderOptions';
+import { metricLabel } from '../config/chartBuilderOptions';
 
 const props = defineProps({
   name: {
@@ -34,17 +34,11 @@ const built = computed(() =>
   buildChartFromConfig(props.config, props.sessions, props.dateStart, props.athleteOneRm),
 );
 
-const subtitle = computed(() => {
-  const metric = METRIC_OPTIONS.find((option) => option.value === props.config.metric)?.label ?? '';
-  const group = GROUP_BY_OPTIONS.find((option) => option.value === props.config.groupBy)?.label ?? '';
-  return [metric, group].filter(Boolean).join(' · ');
-});
 </script>
 
 <template>
   <ChartCard
     :title="name"
-    :subtitle="subtitle"
     :has-data="built.hasData"
     :empty-message="`Aucune donnée pour « ${metricLabel(config.metric)} » avec les filtres choisis.`"
     chart-height="h-72"

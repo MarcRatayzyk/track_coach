@@ -68,25 +68,25 @@ const steps = [
         <header
             class="fixed inset-x-0 top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl"
         >
-            <div class="mx-auto flex w-full max-w-[1600px] items-center justify-between px-6 py-4 sm:px-10 lg:px-14 xl:px-20">
-                <a href="/" class="flex items-center gap-3">
+            <div class="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-10 sm:py-4 lg:px-14 xl:px-20">
+                <a href="/" class="flex min-w-0 items-center gap-2 sm:gap-3">
                     <span
-                        class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600/25 text-blue-400"
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600/25 text-blue-400 sm:h-11 sm:w-11"
                     >
-                        <UiIcon name="bolt" class="h-6 w-6" />
+                        <UiIcon name="bolt" class="h-5 w-5 sm:h-6 sm:w-6" />
                     </span>
-                    <span class="text-xl font-bold tracking-tight text-white">Track Coach</span>
+                    <span class="truncate text-base font-bold tracking-tight text-white sm:text-xl">Track Coach</span>
                 </a>
-                <div class="flex items-center gap-3">
+                <div class="flex shrink-0 items-center gap-2 sm:gap-3">
                     <a
                         href="/login"
-                        class="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800/50"
+                        class="rounded-xl border border-slate-600 px-3 py-2 text-xs font-semibold text-slate-200 sm:px-5 sm:py-2.5 sm:text-sm"
                     >
                         Se connecter
                     </a>
                     <a
                         href="/register"
-                        class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500"
+                        class="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-900/40 sm:px-5 sm:py-2.5 sm:text-sm"
                     >
                         Créer un compte
                     </a>

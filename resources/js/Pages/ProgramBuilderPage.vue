@@ -24,7 +24,7 @@ import BlockSetupCard from '../Components/BlockSetupCard.vue';
 import BlockSetupTableCard from '../Components/BlockSetupTableCard.vue';
 
 import ProgramBlockCalendar from '../Components/ProgramBlockCalendar.vue';
-import ProgramBlockTableBuilder from '../Components/ProgramBlockTableBuilder.vue';
+import AthleteProgramTableView from '../Components/AthleteProgramTableView.vue';
 import ProgramBlockTableBuilderV2 from '../Components/ProgramBlockTableBuilderV2.vue';
 import ProgramPasteIncrementModal from '../Components/ProgramPasteIncrementModal.vue';
 
@@ -860,11 +860,11 @@ function clearClipboard() {
 
 
 
-    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
-      <div class="flex gap-2">
+    <div class="flex flex-col gap-3 border-b border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+      <div class="-mx-3 flex overflow-x-auto px-3 sm:mx-0 sm:px-0">
         <button
           type="button"
-          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          class="shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition sm:px-4"
           :class="
             activeTab === 'calendar'
               ? 'border-blue-500 text-blue-300'
@@ -876,7 +876,7 @@ function clearClipboard() {
         </button>
         <button
           type="button"
-          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          class="shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition sm:px-4"
           :class="
             activeTab === 'table'
               ? 'border-blue-500 text-blue-300'
@@ -889,7 +889,7 @@ function clearClipboard() {
         <button
           v-if="showCalendar"
           type="button"
-          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          class="shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition sm:px-4"
           :class="
             activeTab === 'table_v2'
               ? 'border-blue-500 text-blue-300'
@@ -902,7 +902,7 @@ function clearClipboard() {
         <button
           v-if="showCalendar"
           type="button"
-          class="border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          class="shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition sm:px-4"
           :class="
             activeTab === 'stats'
               ? 'border-blue-500 text-blue-300'
@@ -915,9 +915,9 @@ function clearClipboard() {
       </div>
 
       <button
-        v-if="!showCalendar || activeTab === 'table' || activeTab === 'table_v2'"
+        v-if="showCalendar && activeTab === 'table_v2'"
         type="button"
-        class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+        class="shrink-0 self-start rounded-xl border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 sm:self-auto"
         @click="layoutModalOpen = true"
       >
         Mon tableau jour
@@ -955,9 +955,9 @@ function clearClipboard() {
         />
       </section>
 
-      <ProgramBlockTableBuilder
+      <AthleteProgramTableView
         v-else-if="activeTab === 'table'"
-        :active-block="activeBlock"
+        :program-block="activeBlock"
       />
 
       <ProgramBlockTableBuilderV2
@@ -965,10 +965,12 @@ function clearClipboard() {
         :active-block="activeBlock"
       />
 
-      <section
+      <div
         v-else
-        class="space-y-6 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6"
+        class="grid gap-4"
+        :class="selectedCell && !pasteMode ? 'lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]' : ''"
       >
+      <section class="min-w-0 space-y-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg sm:p-4 lg:p-5">
 
         <div class="flex flex-wrap items-end justify-between gap-3">
 
@@ -1100,6 +1102,8 @@ function clearClipboard() {
 
         <ProgramBlockCalendar
 
+          compact
+
           :week-count="activeBlock.week_count"
 
           :date-start="activeBlock.date_start"
@@ -1124,7 +1128,7 @@ function clearClipboard() {
 
         />
 
-
+      </section>
 
         <SessionEditorPanel
 
@@ -1143,8 +1147,7 @@ function clearClipboard() {
           @cleared="onSessionCleared"
 
         />
-
-      </section>
+      </div>
 
     </template>
 

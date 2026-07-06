@@ -63,7 +63,7 @@ const filteredBodyWeight = computed(() =>
 </script>
 
 <template>
-  <section class="rounded-xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg">
+  <section class="tc-athlete-stats-panel rounded-xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg">
     <h2 class="text-sm font-semibold text-white">Statistiques</h2>
 
     <article class="mt-3 rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2.5">
@@ -101,21 +101,25 @@ const filteredBodyWeight = computed(() =>
       </button>
     </div>
 
-    <div class="mt-3 grid gap-4 lg:grid-cols-2">
-      <article class="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+    <div class="mt-3 grid min-w-0 gap-4 lg:grid-cols-2">
+      <article class="min-w-0 overflow-hidden">
         <h3 class="mb-3 text-sm font-semibold text-white">Readiness</h3>
-        <ReadinessTrendChart v-if="filteredReadiness.length" :entries="filteredReadiness" embedded />
+        <div v-if="filteredReadiness.length" class="min-w-0 overflow-x-auto">
+          <ReadinessTrendChart :entries="filteredReadiness" embedded />
+        </div>
         <p v-else class="text-sm text-slate-500">Aucune saisie readiness sur cette période.</p>
       </article>
 
-      <article class="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-        <BodyWeightTrendChart :entries="filteredBodyWeight" embedded />
+      <article class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+        <div class="min-w-0 overflow-x-auto">
+          <BodyWeightTrendChart :entries="filteredBodyWeight" embedded />
+        </div>
       </article>
     </div>
 
     <article
       v-if="showPrChart"
-      class="mt-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4"
+      class="mt-4 min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4"
     >
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h3 class="text-sm font-semibold text-white">Progression des PR</h3>
@@ -137,7 +141,7 @@ const filteredBodyWeight = computed(() =>
         </div>
       </div>
 
-      <div class="mt-4">
+      <div class="mt-4 min-w-0 overflow-x-auto">
         <PrProgressionCharts :records="prRecords" embedded />
       </div>
     </article>

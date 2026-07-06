@@ -12,6 +12,7 @@ use App\Services\CoachAthleteRosterService;
 use App\Services\CoachFeedbackMetricsService;
 use App\Models\ProgramTemplate;
 use App\Models\User;
+use App\Support\ActiveProgramAssignmentSupport;
 use App\Support\AthleteDashboardPresenter;
 use App\Support\AthleteBodyWeightPresenter;
 use App\Support\AthleteReadinessPresenter;
@@ -136,11 +137,7 @@ class AppPageController extends Controller
             $bodyWeightRecent = $bodyWeight['bodyWeightRecent'];
         }
 
-        $activeProgram = $athlete->programAssignments()
-            ->with('template.weeks.trainingDays.exercises')
-            ->where('status', 'active')
-            ->latest('date_start')
-            ->first();
+        $activeProgram = ActiveProgramAssignmentSupport::forAthleteOnDate($athlete);
 
         $followUpStartedAt = $athlete->coaches()
             ->wherePivot('status', 'active')

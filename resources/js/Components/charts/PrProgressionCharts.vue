@@ -126,7 +126,6 @@ const chartOptions = {
   <ChartCard
     v-if="!embedded"
     title="Évolution des PR"
-    subtitle="Squat, bench, terre et total officiel"
     :has-data="hasData"
     empty-message="Aucun PR enregistré sur cette période."
     :chart-height="chartHeight"

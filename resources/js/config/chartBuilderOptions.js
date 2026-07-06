@@ -47,19 +47,15 @@ export const BUILTIN_CHART_KEYS = {
 export const BUILTIN_CHART_META = {
   [BUILTIN_CHART_KEYS.VOLUME_WEEKLY]: {
     title: 'Évolution du volume par semaine',
-    subtitle: 'Répartition squat / bench / terre',
   },
   [BUILTIN_CHART_KEYS.TOPSET_E1RM]: {
     title: 'Évolution du topset (e1RM Epley)',
-    subtitle: 'Meilleur topset par semaine · charge × (1 + reps / 30)',
   },
   [BUILTIN_CHART_KEYS.VOLUME_DISTRIBUTION]: {
     title: 'Répartition du volume',
-    subtitle: 'Filtres sur tout le bloc',
   },
   [BUILTIN_CHART_KEYS.AVG_LOAD_WEEKLY]: {
     title: 'Charge moyenne par semaine',
-    subtitle: 'Moyenne des charges en kg (hors RPE)',
   },
 };
 

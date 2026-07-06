@@ -7,6 +7,9 @@ export default {
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import UiIcon from '../Components/UiIcon.vue';
+import { useNativeApp } from '../composables/useNativeApp';
+
+const { isMobileApp } = useNativeApp();
 
 const props = defineProps({
     email: {
@@ -18,10 +21,14 @@ const props = defineProps({
 const form = useForm({
     email: props.email,
     password: '',
-    remember: false,
+    remember: isMobileApp,
 });
 
 function submit() {
+    if (isMobileApp) {
+        form.remember = true;
+    }
+
     form.post('/login', {
         preserveScroll: true,
     });
@@ -31,7 +38,7 @@ function submit() {
 <template>
     <Head title="Connexion" />
 
-    <div class="min-h-screen bg-slate-950 text-slate-200 lg:grid lg:grid-cols-2">
+    <div class="min-h-screen bg-slate-950 text-slate-200 lg:grid lg:grid-cols-2 tc-native-safe-top">
         <!-- Panneau branding -->
         <div
             class="relative hidden overflow-hidden border-r border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-950 lg:flex lg:flex-col lg:justify-between lg:px-12 lg:py-12 xl:px-16 xl:py-14"
@@ -88,17 +95,18 @@ function submit() {
         <div class="flex min-h-screen flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 xl:px-20">
             <div class="mx-auto w-full max-w-lg">
                 <div class="mb-8 flex items-center justify-between lg:hidden">
-                    <Link href="/" class="inline-flex items-center gap-2">
+                    <div class="inline-flex items-center gap-2">
                         <span
                             class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/25 text-blue-400"
                         >
                             <UiIcon name="bolt" class="h-5 w-5" />
                         </span>
                         <span class="text-lg font-bold text-white">Track Coach</span>
-                    </Link>
+                    </div>
                 </div>
 
                 <Link
+                    v-if="!isMobileApp"
                     href="/"
                     class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-300"
                 >
@@ -106,10 +114,22 @@ function submit() {
                     Retour à l’accueil
                 </Link>
 
-                <h2 class="mt-6 text-3xl font-bold tracking-tight text-white">Connexion</h2>
+                <h2 :class="isMobileApp ? 'text-3xl font-bold tracking-tight text-white' : 'mt-6 text-3xl font-bold tracking-tight text-white'">
+                    Connexion
+                </h2>
+                <p v-if="isMobileApp" class="mt-2 text-base text-blue-300/90">
+                    Application mobile
+                </p>
                 <p class="mt-2 text-base text-slate-400">
                     Accède à ton espace coach ou athlète avec ton e-mail et ton mot de passe.
                 </p>
+
+                <div
+                    v-if="$page.props.flash?.error"
+                    class="mt-6 rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-200"
+                >
+                    {{ $page.props.flash.error }}
+                </div>
 
                 <div
                     v-if="$page.props.flash?.success"
@@ -163,7 +183,7 @@ function submit() {
                         </div>
                     </div>
 
-                    <label class="flex cursor-pointer items-center gap-3">
+                    <label v-if="!isMobileApp" class="flex cursor-pointer items-center gap-3">
                         <input
                             v-model="form.remember"
                             type="checkbox"
@@ -184,12 +204,15 @@ function submit() {
                     </button>
                 </form>
 
-                <p class="mt-8 text-center text-sm text-slate-500">
+                <p v-if="!isMobileApp" class="mt-8 text-center text-sm text-slate-500">
                     Coach ?
                     <Link href="/register" class="font-medium text-blue-400 hover:text-blue-300">
                         Créer un compte
                     </Link>
                     — Athlète ? Utilise le lien d’invitation envoyé par ton coach.
+                </p>
+                <p v-else class="mt-8 text-center text-sm text-slate-500">
+                    Athlète ? Utilise le lien d’invitation envoyé par ton coach si tu n’as pas encore activé ton compte.
                 </p>
             </div>
         </div>

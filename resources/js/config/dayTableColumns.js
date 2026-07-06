@@ -148,6 +148,45 @@ export function spacedColumnPercent(columnId, visibleColumns) {
   return `${((weight / totalWeight) * 100).toFixed(2)}%`;
 }
 
+const ATHLETE_COLUMN_WEIGHTS = {
+  exercise: 2.4,
+  main_lift: 0.95,
+  variant: 1.7,
+  section: 1.2,
+  sets: 1.15,
+  reps: 0.95,
+  load: 2.1,
+  rest: 0.85,
+  muscles: 0.9,
+};
+
+const ATHLETE_COLUMN_HEADER_SHORT = {
+  exercise: 'Exo.',
+  main_lift: 'Lift',
+  variant: 'Var.',
+  section: 'Typ.',
+  sets: 'Sér.',
+  reps: 'R.',
+  load: 'Ch.',
+  rest: 'Repos',
+  muscles: 'Mus.',
+};
+
+export function athleteSpacedColumnPercent(columnId, visibleColumns) {
+  const columns = Array.isArray(visibleColumns) ? visibleColumns : [];
+  const totalWeight = columns.reduce(
+    (sum, column) => sum + (ATHLETE_COLUMN_WEIGHTS[column.id] ?? 1),
+    0,
+  );
+  const weight = ATHLETE_COLUMN_WEIGHTS[columnId] ?? 1;
+
+  return `${((weight / totalWeight) * 100).toFixed(2)}%`;
+}
+
+export function athleteColumnHeaderLabel(columnId, fallbackLabel = '') {
+  return ATHLETE_COLUMN_HEADER_SHORT[columnId] ?? fallbackLabel;
+}
+
 export function layoutHasPrescriptionColumn(layout) {
   const normalized = normalizeTableLayout(layout);
 

@@ -26,10 +26,6 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const headerTitle = computed(() => {
-  if (!props.selectedCell) {
-    return 'Sélectionne un jour';
-  }
-
   const week = props.selectedCell.weekNumber;
   const dayNum = sessionDayOrdinalInWeek(
     props.programBlock.sessions,
@@ -101,12 +97,8 @@ function sectionTextClass(section) {
       </ul>
     </template>
 
-    <p v-else-if="selectedCell" class="mt-4 border-t border-slate-800 pt-4 text-sm text-slate-500">
+    <p v-else class="mt-4 border-t border-slate-800 pt-4 text-sm text-slate-500">
       Aucune séance programmée pour ce jour.
-    </p>
-
-    <p v-else class="mt-4 text-sm text-slate-500">
-      Clique sur une case du calendrier pour voir le détail de la séance.
     </p>
   </section>
 </template>

@@ -10,6 +10,7 @@ export default {
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import AthleteMonthCalendar from '../Components/AthleteMonthCalendar.vue';
+import AthletePrForm from '../Components/AthletePrForm.vue';
 import AthleteProfileOverview from '../Components/AthleteProfileOverview.vue';
 import AthleteStatsOverview from '../Components/AthleteStatsOverview.vue';
 import CompetitionDetailPanel from '../Components/CompetitionDetailPanel.vue';
@@ -62,12 +63,20 @@ const today = new Date().toISOString().slice(0, 10);
 
 const page = usePage();
 const isCoach = computed(() => page.props.auth?.user?.role === 'coach');
+const isOwnProfile = computed(() => page.props.auth?.user?.id === props.athlete.id);
+const canManageCompetitions = computed(() => isCoach.value || isOwnProfile.value);
 const canManageSessions = computed(
-  () => isCoach.value || page.props.auth?.user?.id === props.athlete.id,
+  () => isCoach.value || isOwnProfile.value,
 );
 const canProposeMatchPlan = computed(
-  () => !isCoach.value && page.props.auth?.user?.id === props.athlete.id,
+  () => !isCoach.value && isOwnProfile.value,
 );
+
+function competitionBasePath() {
+  return isCoach.value
+    ? `/coach/athletes/${props.athlete.id}/competitions`
+    : `/athletes/${props.athlete.id}/competitions`;
+}
 const readinessRecent = computed(() => props.readinessRecent ?? []);
 const bodyWeightRecent = computed(() => props.bodyWeightRecent ?? []);
 const compareIds = ref([]);
@@ -229,7 +238,7 @@ function maybeOpenCompetitionFromQuery() {
 
   openCompetition(targetCompetition);
 
-  if (searchParams.get('edit') === '1' && isCoach.value) {
+  if (searchParams.get('edit') === '1' && canManageCompetitions.value) {
     startEditCompetition();
   }
 }
@@ -291,7 +300,7 @@ function submitEditCompetition() {
     return;
   }
   editCompForm.patch(
-    `/coach/athletes/${props.athlete.id}/competitions/${selectedCompetition.value.id}`,
+    `${competitionBasePath()}/${selectedCompetition.value.id}`,
     {
       preserveScroll: true,
       onSuccess: () => closeCompModal(),
@@ -313,7 +322,7 @@ function deleteSelectedCompetition() {
   }
 
   editCompForm.delete(
-    `/coach/athletes/${props.athlete.id}/competitions/${selectedCompetition.value.id}`,
+    `${competitionBasePath()}/${selectedCompetition.value.id}`,
     {
       preserveScroll: true,
       onSuccess: () => closeCompModal(),
@@ -323,6 +332,11 @@ function deleteSelectedCompetition() {
 
 const profileForm = useForm({
   feedback_frequency: props.athlete.profile?.feedback_frequency ?? 'weekly',
+});
+
+const ownProfileForm = useForm({
+  weight_class: props.athlete.profile?.weight_class ?? '',
+  bio: props.athlete.profile?.bio ?? '',
 });
 
 const feedbackLabels = {
@@ -517,7 +531,7 @@ const overviewStats = computed(() =>
 );
 
 function submitComp() {
-  compForm.post(`/coach/athletes/${props.athlete.id}/competitions`, {
+  compForm.post(competitionBasePath(), {
     preserveScroll: true,
     onSuccess: () => {
       compForm.reset();
@@ -526,11 +540,6 @@ function submitComp() {
       closeCompModal();
     },
   });
-}
-
-function openAddSessionForm() {
-  editingSession.value = null;
-  sessionModalOpen.value = true;
 }
 
 function openEditSession(session) {
@@ -548,6 +557,12 @@ function onSessionSaved({ sessionDate } = {}) {
     selectedSessionDay.value = String(sessionDate).slice(0, 10);
   }
   closeSessionModal();
+}
+
+function submitOwnProfile() {
+  ownProfileForm.patch(`/athletes/${props.athlete.id}/profile`, {
+    preserveScroll: true,
+  });
 }
 
 function submitProfile() {
@@ -588,6 +603,7 @@ onMounted(() => {
         :next-competition="nextCompetition"
         :athlete-id="athlete.id"
         :is-coach="isCoach"
+        :can-manage-competitions="canManageCompetitions"
         :feedback-frequency-label="feedbackLabels[currentFeedbackFrequency]"
         :next-feedback-button-label="isCoach ? nextFeedbackButtonLabel : ''"
         :program-url="programBlock ? `/program-builder?assignment=${programBlock.id}` : null"
@@ -597,21 +613,51 @@ onMounted(() => {
         @toggle-feedback-frequency="toggleFeedbackFrequency"
       />
 
-      <section class="mt-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg lg:p-5">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-sm font-semibold text-white">Calendrier</h2>
+      <section
+        v-if="isOwnProfile"
+        class="mt-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg lg:p-5"
+      >
+        <h2 class="text-sm font-semibold text-white">Mon profil</h2>
+        <form class="mt-3 space-y-3" @submit.prevent="submitOwnProfile">
+          <label class="block text-xs text-slate-400">
+            Catégorie de poids
+            <input
+              v-model="ownProfileForm.weight_class"
+              type="text"
+              class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              placeholder="ex. -83 kg"
+            />
+            <p v-if="ownProfileForm.errors.weight_class" class="mt-1 text-xs text-red-400">
+              {{ ownProfileForm.errors.weight_class }}
+            </p>
+          </label>
+          <label class="block text-xs text-slate-400">
+            Bio
+            <textarea
+              v-model="ownProfileForm.bio"
+              rows="3"
+              class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              placeholder="Quelques mots sur ton parcours…"
+            />
+            <p v-if="ownProfileForm.errors.bio" class="mt-1 text-xs text-red-400">
+              {{ ownProfileForm.errors.bio }}
+            </p>
+          </label>
           <button
-            v-if="canManageSessions"
-            type="button"
-            class="rounded-xl border border-blue-500/50 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/10"
-            @click="openAddSessionForm"
+            type="submit"
+            :disabled="ownProfileForm.processing"
+            class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           >
-            Ajouter une séance
+            Enregistrer le profil
           </button>
-        </div>
+        </form>
+      </section>
+
+      <section class="mt-3 min-w-0 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 pt-4 pb-2 shadow-lg lg:p-5 lg:pb-5">
+        <h2 class="text-sm font-semibold text-white">Calendrier</h2>
 
         <AthleteMonthCalendar
-          class="mt-3"
+          class="mt-2"
           :program-block="programBlock"
           :training-sessions="trainingSessions"
           :competitions="athlete.competitions ?? []"
@@ -639,6 +685,13 @@ onMounted(() => {
           :time-range="timeRange"
           :time-range-options="timeRangeOptions"
           @update:time-range="timeRange = $event"
+        />
+      </div>
+
+      <div v-if="isOwnProfile" class="mt-3">
+        <AthletePrForm
+          :athlete-id="athlete.id"
+          :latest-pr="athlete.latest_pr"
         />
       </div>
 
@@ -740,7 +793,7 @@ onMounted(() => {
           </div>
 
           <form
-            v-if="addingCompetition && isCoach"
+            v-if="addingCompetition && canManageCompetitions"
             class="mt-4 space-y-4"
             @submit.prevent="submitComp"
           >
@@ -804,7 +857,7 @@ onMounted(() => {
           </form>
 
           <form
-            v-else-if="editingComp && isCoach"
+            v-else-if="editingComp && canManageCompetitions"
             class="mt-4 space-y-4"
             @submit.prevent="submitEditCompetition"
           >
@@ -916,7 +969,7 @@ onMounted(() => {
               {{ competitionHasMatchPlan(selectedCompetition) ? 'Mettre à jour mon plan' : 'Proposer mon plan de match' }}
             </button>
             <button
-              v-if="isCoach"
+              v-if="canManageCompetitions"
               type="button"
               class="mt-6 rounded-xl border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
               @click="startEditCompetition"
@@ -924,7 +977,7 @@ onMounted(() => {
               Modifier
             </button>
             <button
-              v-if="isCoach"
+              v-if="canManageCompetitions"
               type="button"
               class="mt-3 rounded-xl border border-red-500/50 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-500/10"
               @click="deleteSelectedCompetition"

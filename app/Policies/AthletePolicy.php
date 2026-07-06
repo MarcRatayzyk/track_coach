@@ -42,4 +42,9 @@ class AthletePolicy
     {
         return $user->id === $athlete->id && $athlete->role === 'athlete';
     }
+
+    public function manageOwnCompetitions(User $user, User $athlete): bool
+    {
+        return $user->id === $athlete->id && $athlete->role === 'athlete';
+    }
 }

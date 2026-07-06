@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Support\MobileApp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,8 +14,12 @@ use Inertia\Response;
 
 class LoginController extends Controller
 {
-    public function create(): Response
+    public function create(Request $request): Response|RedirectResponse
     {
+        if (Auth::check()) {
+            return $this->redirectAuthenticatedUser($request->user());
+        }
+
         return Inertia::render('LoginPage', [
             'email' => old('email', ''),
         ]);
@@ -26,7 +32,9 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        $remember = $request->boolean('remember') || MobileApp::isRequest($request);
+
+        if (! Auth::attempt($credentials, $remember)) {
             throw ValidationException::withMessages([
                 'email' => 'Identifiants invalides.',
             ]);
@@ -68,6 +76,21 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('home');
+        return redirect()->route(
+            MobileApp::isRequest($request) ? 'login' : 'home',
+        );
+    }
+
+    private function redirectAuthenticatedUser(User $user): RedirectResponse
+    {
+        if ($user->role === 'coach' && ! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        if ($user->role === 'coach') {
+            return redirect()->route('dashboard');
+        }
+
+        return redirect()->route('athlete.dashboard');
     }
 }

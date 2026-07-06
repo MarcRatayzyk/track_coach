@@ -93,8 +93,7 @@ const hasData = computed(() => sortedEntries.value.length > 0);
 <template>
   <div
     v-if="hasData"
-    class="rounded-xl border border-slate-800 bg-slate-950/40 p-3"
-    :class="embedded ? 'h-64 p-4' : 'h-36'"
+    :class="embedded ? 'h-64' : 'h-36 rounded-xl border border-slate-800 bg-slate-950/40 p-3'"
   >
     <p
       v-if="!embedded"
@@ -102,7 +101,7 @@ const hasData = computed(() => sortedEntries.value.length > 0);
     >
       Tendance 7 jours
     </p>
-    <div :class="embedded ? 'h-52' : 'h-24'">
+    <div :class="embedded ? 'h-full' : 'h-24'">
       <LineChart :chart-data="chartData" :options="chartOptions" />
     </div>
   </div>

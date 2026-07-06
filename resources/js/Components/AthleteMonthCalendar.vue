@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
   buildTrainingYearGridFromProgramBlock,
@@ -32,6 +32,9 @@ const emit = defineEmits(['edit-session']);
 
 const today = new Date().toISOString().slice(0, 10);
 const selectedDate = ref(null);
+const scrollContainerRef = ref(null);
+
+const currentMonthKey = `${new Date().getFullYear()}-${new Date().getMonth()}`;
 
 const grid = computed(() => buildTrainingYearGridFromProgramBlock());
 
@@ -162,11 +165,39 @@ function onCellClick(date) {
 function editTrainingSession(session) {
   emit('edit-session', session);
 }
+
+function scrollToCurrentMonth() {
+  nextTick(() => {
+    const container = scrollContainerRef.value;
+    if (!container) {
+      return;
+    }
+
+    const stickyWidth = 0;
+    const monthHeader = container.querySelector(`[data-month-key="${currentMonthKey}"]`);
+    const todayCell = container.querySelector(`[data-date="${today}"]`);
+    const target = monthHeader ?? todayCell;
+
+    if (!target) {
+      return;
+    }
+
+    const targetLeft = target.offsetLeft;
+    const centered =
+      targetLeft - stickyWidth - Math.max(0, (container.clientWidth - stickyWidth) / 2 - target.offsetWidth / 2);
+
+    container.scrollLeft = Math.max(0, centered);
+  });
+}
+
+onMounted(() => {
+  scrollToCurrentMonth();
+});
 </script>
 
 <template>
   <div class="w-full">
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="mb-2 flex flex-wrap items-center justify-between gap-3">
       <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
         <span class="inline-flex items-center gap-1.5">
           <span class="h-2 w-2 rounded-full bg-emerald-400" />
@@ -188,56 +219,68 @@ function editTrainingSession(session) {
       <span class="text-[11px] text-slate-500">{{ grid.rangeLabel }}</span>
     </div>
 
-    <div class="w-full overflow-x-auto">
-      <table class="w-full min-w-full table-fixed border-collapse text-[11px]">
-        <thead>
-          <tr>
-            <th class="sticky left-0 z-20 w-10 bg-slate-900/95" />
-            <th
-              v-for="(header, index) in grid.monthHeaders"
-              :key="`${header.year}-${header.month}-${index}`"
-              :colspan="header.colSpan"
-              class="border-b border-slate-700/80 px-1 pb-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400"
-              :class="monthBandClass(header.monthIndex)"
-            >
-              {{ header.label }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in grid.rows" :key="row.weekday">
-            <th
-              class="sticky left-0 z-10 w-10 border-r border-slate-800 bg-slate-900/95 py-0.5 pr-2 text-right text-[10px] font-medium text-slate-500"
-            >
-              {{ row.label }}
-            </th>
-            <td
-              v-for="(cell, columnIndex) in row.cells"
-              :key="`${row.weekday}-${columnIndex}`"
-              class="border border-slate-800/60 p-0"
-              :class="cell.inRange && cell.date ? monthBandClass(cell.monthIndex) : ''"
-            >
-              <button
-                v-if="cell.inRange && cell.date"
-                type="button"
-                class="flex h-8 w-full flex-col items-center justify-center px-0.5 transition"
-                :class="cellClass(cell.date)"
-                @click="onCellClick(cell.date)"
+    <div class="flex w-full overflow-hidden rounded-lg border border-slate-800/80">
+      <div class="w-9 min-w-[2.25rem] shrink-0 border-r border-slate-800 bg-slate-900">
+        <div
+          class="flex h-[1.625rem] items-end border-b border-slate-700/80 px-1 pb-2 sm:h-[1.75rem]"
+          aria-hidden="true"
+        />
+        <div
+          v-for="row in grid.rows"
+          :key="`label-${row.weekday}`"
+          class="flex h-10 items-center justify-end border-b border-slate-800/60 px-1 pr-2 text-[10px] font-medium leading-none text-slate-500 last:border-b-0 lg:h-8"
+        >
+          {{ row.label }}
+        </div>
+      </div>
+
+      <div ref="scrollContainerRef" class="tc-scrollbar min-w-0 flex-1 overflow-x-auto">
+        <table class="w-max border-collapse text-[11px]">
+          <thead>
+            <tr>
+              <th
+                v-for="(header, index) in grid.monthHeaders"
+                :key="`${header.year}-${header.month}-${index}`"
+                :data-month-key="`${header.year}-${header.month}`"
+                :colspan="header.colSpan"
+                class="min-w-[1.75rem] border-b border-slate-700/80 px-1 pb-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+                :class="monthBandClass(header.monthIndex)"
               >
-                <span>{{ formatDay(cell.dayNumber) }}</span>
-                <span
-                  v-if="hasProgram(cell.date) || hasTraining(cell.date) || isCompetition(cell.date)"
-                  class="flex gap-px"
+                {{ header.label }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in grid.rows" :key="row.weekday">
+              <td
+                v-for="(cell, columnIndex) in row.cells"
+                :key="`${row.weekday}-${columnIndex}`"
+                class="w-7 min-w-[1.75rem] border border-slate-800/60 p-0"
+                :class="cell.inRange && cell.date ? monthBandClass(cell.monthIndex) : ''"
+              >
+                <button
+                  v-if="cell.inRange && cell.date"
+                  type="button"
+                  :data-date="cell.date"
+                  class="flex h-10 w-full min-w-[1.75rem] flex-col items-center justify-center px-0.5 lg:h-8"
+                  :class="cellClass(cell.date)"
+                  @click="onCellClick(cell.date)"
                 >
-                  <span v-if="hasProgram(cell.date)" class="h-1 w-1 rounded-full bg-emerald-400" />
-                  <span v-if="hasTraining(cell.date)" class="h-1 w-1 rounded-full bg-violet-300" />
-                  <span v-if="isCompetition(cell.date)" class="h-1 w-1 rounded-full bg-rose-400" />
-                </span>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                  <span>{{ formatDay(cell.dayNumber) }}</span>
+                  <span
+                    v-if="hasProgram(cell.date) || hasTraining(cell.date) || isCompetition(cell.date)"
+                    class="flex gap-px"
+                  >
+                    <span v-if="hasProgram(cell.date)" class="h-1 w-1 rounded-full bg-emerald-400" />
+                    <span v-if="hasTraining(cell.date)" class="h-1 w-1 rounded-full bg-violet-300" />
+                    <span v-if="isCompetition(cell.date)" class="h-1 w-1 rounded-full bg-rose-400" />
+                  </span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <article

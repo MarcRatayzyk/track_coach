@@ -1,18 +1,16 @@
 <script setup>
-import { Link, router, useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
   BLOCK_TYPES,
   createSessionItem,
   dayToSessionPayload,
-  formatLineRecapWithKg,
   hydrateExerciseLine,
   itemSectionTitle,
   sessionToDay,
 } from '../utils/programBuilder';
 import TodaySessionSetBlock from './TodaySessionSetBlock.vue';
-import TrainingSessionEditorModal from './TrainingSessionEditorModal.vue';
 
 const props = defineProps({
   todaySession: {
@@ -33,13 +31,10 @@ const props = defineProps({
   },
 });
 
-const sessionModalOpen = ref(false);
-const editingSession = ref(null);
 const workItems = ref([]);
 const expandedItemKey = ref(null);
 const validatedItemKeys = ref(new Set());
 const validatedSetCounts = ref({});
-const plannedRecaps = ref({});
 
 function itemKey(item) {
   return `${item.section}-${item.line?.exercise_name ?? ''}`;
@@ -106,21 +101,8 @@ const allSeriesValidated = computed(() => {
   return sortedWorkItems.value.every((item) => isBlockFullyValidated(item));
 });
 
-function buildPlannedRecaps(items = []) {
-  const recaps = {};
-  for (const row of items) {
-    const key = `${row.section}-${row.exercise_name ?? ''}`;
-    recaps[key] =
-      formatLineRecapWithKg(row, props.oneRm, mainLift.value) ??
-      row.exercise_name ??
-      '';
-  }
-  return recaps;
-}
-
 function initializeWorkItems() {
   const plannedItems = session.value?.items ?? [];
-  plannedRecaps.value = buildPlannedRecaps(plannedItems);
 
   if (hasLoggedToday.value) {
     const day = sessionToDay(props.todayLoggedSession);
@@ -175,11 +157,6 @@ watch(
   },
   { deep: true },
 );
-
-function plannedRecapFor(item) {
-  const key = `${item.section}-${item.line?.exercise_name ?? ''}`;
-  return plannedRecaps.value[key] ?? '';
-}
 
 function toggleItem(key) {
   expandedItemKey.value = expandedItemKey.value === key ? null : key;
@@ -249,40 +226,6 @@ function validateItem(key) {
   saveSession();
 }
 
-function plannedSessionSeed() {
-  if (!session.value) {
-    return null;
-  }
-
-  return {
-    session_date: props.todaySession.date,
-    session_label: session.value.session_label ?? sessionTitle.value,
-    main_lift: session.value.main_lift ?? mainLift.value,
-    items: workItems.value.map((item) => ({
-      section: item.section,
-      ...item.line,
-    })),
-    notes: null,
-  };
-}
-
-function openLogSession() {
-  if (hasLoggedToday.value) {
-    editingSession.value = props.todayLoggedSession;
-  } else {
-    editingSession.value = plannedSessionSeed();
-  }
-  sessionModalOpen.value = true;
-}
-
-function closeSessionModal() {
-  sessionModalOpen.value = false;
-  editingSession.value = null;
-}
-
-function onSessionSaved() {
-  router.reload({ only: ['todayLoggedSession', 'trainingSessions', 'latestPr'] });
-}
 </script>
 
 <template>
@@ -292,16 +235,15 @@ function onSessionSaved() {
         <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400/80">
           Séance du jour
         </p>
-        <h2 class="mt-0.5 text-lg font-bold text-white">
-          <template v-if="status === 'session'">{{ sessionTitle }}</template>
-          <template v-else-if="status === 'rest'">Jour de repos</template>
-          <template v-else>Aucun programme actif</template>
-        </h2>
         <p v-if="todaySession.program_name" class="mt-1 text-xs text-slate-400">
-          {{ todaySession.program_name }}
-          <template v-if="status === 'session' && todaySession.week_number">
-            · S{{ todaySession.week_number }}
-            <span v-if="blockTypeLabel">— {{ blockTypeLabel }}</span>
+          <template v-if="status === 'rest'">Jour de repos</template>
+          <template v-else-if="status === 'no_program'">Aucun programme actif</template>
+          <template v-else>
+            {{ todaySession.program_name }}
+            <template v-if="todaySession.week_number">
+              · S{{ todaySession.week_number }}
+              <span v-if="blockTypeLabel">— {{ blockTypeLabel }}</span>
+            </template>
           </template>
         </p>
       </div>
@@ -331,7 +273,6 @@ function onSessionSaved() {
           :expanded="expandedItemKey === itemKey(item)"
           :validated-sets-count="getValidatedSetCount(itemKey(item))"
           :saving="form.processing"
-          :planned-recap="plannedRecapFor(item)"
           @toggle="toggleItem(itemKey(item))"
           @validate="validateItem(itemKey(item))"
         />
@@ -340,26 +281,13 @@ function onSessionSaved() {
         Séance prévue, exercices non renseignés.
       </p>
 
-      <div class="mt-3 flex flex-wrap gap-2 border-t border-slate-800 pt-3">
+      <div class="mt-3 border-t border-slate-800 pt-3">
         <Link
           href="/feedbacks"
-          class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 hover:border-slate-500"
+          class="flex w-full items-center justify-center rounded-lg border border-slate-700 px-3 py-2.5 text-sm font-semibold text-slate-200 hover:border-slate-500"
         >
           Envoyer un retour
         </Link>
-        <Link
-          :href="programCalendarHref"
-          class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 hover:border-slate-500"
-        >
-          Voir dans le programme
-        </Link>
-        <button
-          type="button"
-          class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-400 hover:border-slate-500 hover:text-slate-200"
-          @click="openLogSession"
-        >
-          Édition avancée
-        </button>
       </div>
     </template>
 
@@ -391,14 +319,5 @@ function onSessionSaved() {
         Aucun programme actif. Contacte ton coach.
       </p>
     </template>
-
-    <TrainingSessionEditorModal
-      :open="sessionModalOpen"
-      :athlete-id="athleteId"
-      :session="editingSession"
-      :default-date="todaySession.date"
-      @close="closeSessionModal"
-      @saved="onSessionSaved"
-    />
   </section>
 </template>

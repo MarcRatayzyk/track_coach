@@ -9,6 +9,7 @@ use App\Http\Requests\UpsertTrainingSessionRequest;
 use App\Support\TrainingSessionSupport;
 use App\Http\Requests\UpdateAthleteProfileRequest;
 use App\Http\Requests\UpdateCompetitionRequest;
+use App\Http\Requests\UpdateOwnAthleteProfileRequest;
 use App\Models\Competition;
 use App\Models\PersonalRecord;
 use App\Models\TrainingSession;
@@ -28,6 +29,21 @@ class AthleteDataWebController extends Controller
         return redirect()
             ->route('athletes.show', $athlete)
             ->with('success', 'Mode de suivi des retours mis à jour.');
+    }
+
+    public function updateOwnProfile(UpdateOwnAthleteProfileRequest $request, User $athlete): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        $athlete->profile()->updateOrCreate(
+            ['user_id' => $athlete->id],
+            [
+                'weight_class' => $validated['weight_class'] ?? null ?: null,
+                'bio' => $validated['bio'] ?? null ?: null,
+            ],
+        );
+
+        return back()->with('success', 'Profil mis à jour.');
     }
 
     public function storePr(StorePersonalRecordRequest $request, User $athlete): RedirectResponse
@@ -54,14 +70,15 @@ class AthleteDataWebController extends Controller
 
     public function storeCompetition(StoreCompetitionRequest $request, User $athlete): RedirectResponse
     {
-        $this->authorize('updateAthleteData', $athlete);
+        $this->authorizeCompetitionMutation($request->user(), $athlete);
 
         Competition::create([
             'athlete_id' => $athlete->id,
             ...$request->competitionPayload(),
         ]);
 
-        return redirect()->route('athletes.show', $athlete)->with('success', 'Compétition ajoutée.');
+        return $this->competitionRedirect($request->user(), $athlete)
+            ->with('success', 'Compétition ajoutée.');
     }
 
     public function updateCompetition(
@@ -69,7 +86,7 @@ class AthleteDataWebController extends Controller
         User $athlete,
         Competition $competition,
     ): RedirectResponse {
-        $this->authorize('updateAthleteData', $athlete);
+        $this->authorizeCompetitionMutation($request->user(), $athlete);
 
         if ($competition->athlete_id !== $athlete->id) {
             abort(404);
@@ -77,12 +94,14 @@ class AthleteDataWebController extends Controller
 
         $competition->update($request->competitionPayload());
 
-        return redirect()->route('athletes.show', $athlete)->with('success', 'Compétition mise à jour.');
+        return $this->competitionRedirect($request->user(), $athlete)
+            ->with('success', 'Compétition mise à jour.');
     }
 
     public function destroyCompetition(User $athlete, Competition $competition): RedirectResponse
     {
-        $this->authorize('updateAthleteData', $athlete);
+        $user = auth()->user();
+        $this->authorizeCompetitionMutation($user, $athlete);
 
         if ($competition->athlete_id !== $athlete->id) {
             abort(404);
@@ -90,7 +109,8 @@ class AthleteDataWebController extends Controller
 
         $competition->delete();
 
-        return redirect()->route('athletes.show', $athlete)->with('success', 'Compétition supprimée.');
+        return $this->competitionRedirect($user, $athlete)
+            ->with('success', 'Compétition supprimée.');
     }
 
     public function storeTrainingSession(UpsertTrainingSessionRequest $request, User $athlete): RedirectResponse
@@ -163,5 +183,23 @@ class AthleteDataWebController extends Controller
         } elseif ($user->id !== $athlete->id) {
             abort(403);
         }
+    }
+
+    private function authorizeCompetitionMutation(User $user, User $athlete): void
+    {
+        if ($user->role === 'coach') {
+            $this->authorize('updateAthleteData', $athlete);
+        } else {
+            $this->authorize('manageOwnCompetitions', $athlete);
+        }
+    }
+
+    private function competitionRedirect(User $user, User $athlete): RedirectResponse
+    {
+        if ($user->id === $athlete->id) {
+            return back();
+        }
+
+        return redirect()->route('athletes.show', $athlete);
     }
 }

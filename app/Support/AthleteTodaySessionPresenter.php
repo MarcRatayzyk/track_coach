@@ -16,7 +16,11 @@ class AthleteTodaySessionPresenter
         $date = ($date ?? now())->copy()->startOfDay();
         $dateString = $date->toDateString();
 
-        $assignment = self::activeAssignment($athlete, $date);
+        $assignment = ActiveProgramAssignmentSupport::forAthleteOnDate(
+            $athlete,
+            $date,
+            ['template.weeks'],
+        );
 
         if ($assignment === null) {
             return [
@@ -57,20 +61,6 @@ class AthleteTodaySessionPresenter
             'session' => null,
             'next_session_date' => self::nextSessionDate($assignment, $date),
         ];
-    }
-
-    private static function activeAssignment(User $athlete, CarbonInterface $date): ?AthleteProgramAssignment
-    {
-        return $athlete->programAssignments()
-            ->where('status', 'active')
-            ->whereDate('date_start', '<=', $date->toDateString())
-            ->where(function ($query) use ($date): void {
-                $query->whereNull('date_end')
-                    ->orWhereDate('date_end', '>=', $date->toDateString());
-            })
-            ->with('template.weeks')
-            ->latest('date_start')
-            ->first();
     }
 
     private static function nextSessionDate(

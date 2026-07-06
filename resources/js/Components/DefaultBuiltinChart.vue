@@ -39,7 +39,7 @@ const props = defineProps({
   },
 });
 
-const meta = computed(() => BUILTIN_CHART_META[props.builtinKey] ?? { title: '', subtitle: '' });
+const meta = computed(() => BUILTIN_CHART_META[props.builtinKey] ?? { title: '' });
 
 const oneRm = computed(() => ({
   squat: Number(props.athleteOneRm?.squat ?? 0),
@@ -277,7 +277,6 @@ const chartHeight = computed(() =>
 <template>
   <ChartCard
     :title="meta.title"
-    :subtitle="meta.subtitle"
     :has-data="hasData"
     :empty-message="emptyMessage"
     :chart-height="chartHeight"

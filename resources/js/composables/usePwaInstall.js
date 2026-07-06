@@ -1,4 +1,5 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { isNativeApp } from './useNativeApp';
 
 export const PWA_INSTALL_DISMISSED_KEY = 'tc-pwa-install-dismissed';
 
@@ -118,6 +119,21 @@ function resolveGuideType() {
 }
 
 export function usePwaInstall() {
+    if (isNativeApp) {
+        return {
+            showBanner: computed(() => false),
+            canPromptInstall: computed(() => false),
+            isInstalled: computed(() => true),
+            platform: computed(() => null),
+            showInstallGuide: ref(false),
+            installGuideType: ref('desktop'),
+            install: async () => {},
+            installOrGuide: async () => {},
+            closeInstallGuide: () => {},
+            dismiss: () => {},
+        };
+    }
+
     onMounted(() => {
         refreshEnvironment();
 
