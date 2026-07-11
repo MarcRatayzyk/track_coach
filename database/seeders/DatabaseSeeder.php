@@ -22,7 +22,6 @@ use App\Support\TrainingSessionSupport;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -294,7 +293,7 @@ class DatabaseSeeder extends Seeder
             ['email' => $attributes['email']],
             [
                 'name' => $attributes['name'],
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => $attributes['role'],
                 'initial_setup_completed_at' => now(),
                 'email_verified_at' => now(),
@@ -972,10 +971,16 @@ class DatabaseSeeder extends Seeder
                 continue;
             }
 
-            $thread = MessageThread::query()->create([
+            $thread = MessageThread::query()->firstOrCreate([
                 'coach_id' => $coach->id,
                 'athlete_id' => $athletes[$key]->id,
             ]);
+
+            if ($thread->messages()->exists()) {
+                $thread->touch();
+
+                continue;
+            }
 
             foreach ($threadMessages as $entry) {
                 Message::query()->create([

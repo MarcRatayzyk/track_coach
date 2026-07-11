@@ -17,7 +17,7 @@ export async function initNativeApp() {
             await StatusBar.setOverlaysWebView({ overlay: false });
         }
 
-        await StatusBar.setBackgroundColor({ color: '#2563eb' });
+        await StatusBar.setBackgroundColor({ color: '#020617' });
         await StatusBar.setStyle({ style: Style.Dark });
     } catch {
         // Status bar API may be unavailable on some devices.

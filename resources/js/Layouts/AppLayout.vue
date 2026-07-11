@@ -241,7 +241,7 @@ watch(() => page.url, () => {
 <template>
     <div class="h-screen overflow-hidden bg-slate-950 text-slate-200">
         <header
-            class="tc-app-mobile-header fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800/90 bg-slate-900/95 px-4 py-3 backdrop-blur-sm lg:hidden"
+            class="tc-app-mobile-header fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800/90 bg-slate-900/95 px-4 py-2 backdrop-blur-sm lg:hidden"
         >
             <Link
                 :href="isCoach ? '/dashboard' : '/athlete/dashboard'"

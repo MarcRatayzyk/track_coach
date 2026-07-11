@@ -152,7 +152,7 @@ watch(
 
     <div
       v-if="!isCoach && showSubmitForm"
-      class="mt-6 rounded-2xl border border-blue-500/30 bg-slate-900/60 p-6 shadow-xl"
+      class="mt-3 rounded-2xl border border-blue-500/30 bg-slate-900/60 p-4 shadow-xl lg:mt-4 lg:p-6"
     >
       <h2 class="text-base font-semibold text-white">
         {{ isWeekly ? 'Envoyer votre retour hebdomadaire' : 'Envoyer un retour' }}
@@ -216,7 +216,7 @@ watch(
       </form>
     </div>
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-12">
+    <div class="mt-3 grid gap-4 lg:mt-6 lg:grid-cols-12 lg:gap-6">
       <aside class="lg:col-span-4">
         <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl">
           <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -262,7 +262,7 @@ watch(
       </aside>
 
       <section
-        class="min-h-[24rem] rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl lg:col-span-8"
+        class="min-h-[20rem] rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:col-span-8 lg:min-h-[24rem] lg:p-6"
       >
         <template v-if="activeFeedback">
           <div class="border-b border-slate-800 pb-4">

@@ -25,7 +25,7 @@ const config: CapacitorConfig = {
             launchAutoHide: true,
         },
         StatusBar: {
-            backgroundColor: '#2563eb',
+            backgroundColor: '#020617',
             style: 'DARK',
         },
     },

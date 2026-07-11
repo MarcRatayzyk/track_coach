@@ -16,13 +16,13 @@ body {
 
 @media (max-width: 1023px) {
     :root {
-        --tc-mobile-safe-top: max(1.5rem, env(safe-area-inset-top, 0px));
-        --tc-mobile-safe-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+        --tc-mobile-safe-top: max(0.5rem, env(safe-area-inset-top, 0px));
+        --tc-mobile-safe-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
     }
 
     html.tc-native-app {
-        --tc-mobile-safe-top: max(2rem, env(safe-area-inset-top, 0px));
-        --tc-mobile-safe-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+        --tc-mobile-safe-top: max(0.75rem, env(safe-area-inset-top, 0px));
+        --tc-mobile-safe-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
     }
 
     .tc-app-mobile-header {
@@ -30,8 +30,8 @@ body {
     }
 
     .tc-app-content {
-        padding-top: calc(3.5rem + var(--tc-mobile-safe-top));
-        padding-bottom: calc(4.5rem + var(--tc-mobile-safe-bottom));
+        padding-top: calc(3rem + var(--tc-mobile-safe-top));
+        padding-bottom: calc(3.75rem + var(--tc-mobile-safe-bottom));
     }
 
     .mobile-bottom-nav {
@@ -39,7 +39,7 @@ body {
     }
 
     .tc-mobile-overlay-menu {
-        top: calc(3.5rem + var(--tc-mobile-safe-top));
+        top: calc(3rem + var(--tc-mobile-safe-top));
     }
 }
 
@@ -51,7 +51,7 @@ body {
 }
 
 html.tc-native-app .tc-native-safe-top {
-    padding-top: max(2rem, env(safe-area-inset-top, 0px));
+    padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
 }
 
 .tc-scrollbar {

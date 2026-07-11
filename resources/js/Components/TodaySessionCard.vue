@@ -29,7 +29,12 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  adherenceSharePayload: {
+    type: Object,
+    default: null,
+  },
 });
+const emit = defineEmits(['share-adherence']);
 
 const workItems = ref([]);
 const expandedItemKey = ref(null);
@@ -226,6 +231,14 @@ function validateItem(key) {
   saveSession();
 }
 
+function shareAdherenceCard() {
+  if (!props.adherenceSharePayload) {
+    return;
+  }
+
+  emit('share-adherence', props.adherenceSharePayload);
+}
+
 </script>
 
 <template>
@@ -288,6 +301,14 @@ function validateItem(key) {
         >
           Envoyer un retour
         </Link>
+        <button
+          v-if="allSeriesValidated && adherenceSharePayload"
+          type="button"
+          class="mt-2 flex w-full items-center justify-center rounded-lg border border-blue-500/40 bg-blue-600/20 px-3 py-2.5 text-sm font-semibold text-blue-100 hover:bg-blue-600/30"
+          @click="shareAdherenceCard"
+        >
+          Partager ma séance
+        </button>
       </div>
     </template>
 

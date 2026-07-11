@@ -46,6 +46,8 @@ class AthleteDashboardPresenter
         $oneRm = self::oneRmPayload($programBlock, $latestPr);
         $todayLoggedSession = self::todayLoggedSession($athlete, $todayString);
         $feedbackDueToday = self::feedbackDueToday($athlete, $activeAssignment, $date);
+        $shareHighlights = self::shareHighlights($athlete, $activeAssignment, $latestPr, $date);
+        $wrapped = self::wrappedPayload($athlete, $activeAssignment, $date);
 
         return [
             'athleteName' => $athlete->name,
@@ -67,6 +69,8 @@ class AthleteDashboardPresenter
             ] : null,
             'feedbackFrequency' => FeedbackFrequencySupport::frequencyFor($athlete),
             'feedbackDueToday' => $feedbackDueToday,
+            'shareHighlights' => $shareHighlights,
+            'wrapped' => $wrapped,
         ];
     }
 
@@ -263,5 +267,165 @@ class AthleteDashboardPresenter
         }
 
         return ! FeedbackFrequencySupport::hasFeedbackForSessionDay($athlete, $date);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function shareHighlights(
+        User $athlete,
+        ?AthleteProgramAssignment $assignment,
+        ?PersonalRecord $latestPr,
+        CarbonInterface $date,
+    ): array {
+        $today = $date->toDateString();
+        $prPayload = null;
+
+        if ($latestPr !== null && $latestPr->reference_date?->toDateString() === $today) {
+            $total = (int) $latestPr->squat + (int) $latestPr->bench + (int) $latestPr->deadlift;
+            $prPayload = [
+                'variant' => 'pr_celebration',
+                'athlete_name' => $athlete->name,
+                'date' => $today,
+                'headline' => "Nouveau total {$total} kg",
+                'subline' => "S {$latestPr->squat} · B {$latestPr->bench} · T {$latestPr->deadlift}",
+                'social_text' => "{$athlete->name} vient de poser un nouveau total sur Track Coach",
+                'share_url' => '/athlete/dashboard',
+            ];
+        }
+
+        $adherencePayload = null;
+
+        if ($assignment !== null) {
+            $adherence = (new AthleteAdherenceCalculator())->between(
+                $athlete->id,
+                $assignment,
+                $date->copy()->subDays(6),
+                $date,
+            );
+
+            if (
+                ($adherence['planned_sessions'] ?? 0) >= 2
+                && ($adherence['percentage'] ?? null) !== null
+                && $adherence['percentage'] >= 85
+            ) {
+                $adherencePayload = [
+                    'variant' => 'adherence_high',
+                    'athlete_name' => $athlete->name,
+                    'date' => $today,
+                    'headline' => "Adhérence {$adherence['percentage']} %",
+                    'subline' => "7 jours · {$adherence['completed_sessions']}/{$adherence['planned_sessions']} séances",
+                    'social_text' => "{$athlete->name} reste régulier sur son bloc avec Track Coach",
+                    'share_url' => '/athlete/dashboard',
+                ];
+            }
+        }
+
+        return [
+            'pr_card' => $prPayload,
+            'adherence_card' => $adherencePayload,
+            'templates' => [
+                ['id' => 'block_recap', 'label' => 'Fin de bloc'],
+                ['id' => 'weekly_recap', 'label' => 'Récap hebdomadaire'],
+                ['id' => 'meet_day', 'label' => 'Compétition'],
+                ['id' => 'checkin_streak', 'label' => 'Streak check-in'],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function wrappedPayload(
+        User $athlete,
+        ?AthleteProgramAssignment $assignment,
+        CarbonInterface $date,
+    ): array {
+        return [
+            'weekly' => self::singleWrappedPayload($athlete, $assignment, $date, 7, 'Weekly Wrapped'),
+            'monthly' => self::singleWrappedPayload($athlete, $assignment, $date, 30, 'Monthly Wrapped'),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function singleWrappedPayload(
+        User $athlete,
+        ?AthleteProgramAssignment $assignment,
+        CarbonInterface $date,
+        int $windowDays,
+        string $label,
+    ): array {
+        $start = $date->copy()->subDays($windowDays - 1)->startOfDay();
+        $end = $date->copy()->endOfDay();
+
+        $sessions = TrainingSession::query()
+            ->where('athlete_id', $athlete->id)
+            ->whereDate('session_date', '>=', $start->toDateString())
+            ->whereDate('session_date', '<=', $end->toDateString())
+            ->orderBy('session_date')
+            ->get();
+
+        $totalSets = 0;
+        $totalReps = 0;
+        $totalTonnage = 0.0;
+
+        foreach ($sessions as $session) {
+            foreach (($session->items ?? []) as $item) {
+                $sets = (int) ($item['sets'] ?? 0);
+                $reps = (int) ($item['reps'] ?? 0);
+                $load = (float) ($item['load'] ?? 0);
+
+                if ($sets <= 0 || $reps <= 0) {
+                    continue;
+                }
+
+                $totalSets += $sets;
+                $totalReps += ($sets * $reps);
+
+                if ($load > 0) {
+                    $totalTonnage += ($sets * $reps * $load);
+                }
+            }
+        }
+
+        $adherence = null;
+
+        if ($assignment !== null) {
+            $adherenceMetrics = (new AthleteAdherenceCalculator())->between(
+                $athlete->id,
+                $assignment,
+                $start,
+                $date,
+                $sessions,
+            );
+            $adherence = $adherenceMetrics['percentage'];
+        }
+
+        $shareText = "{$athlete->name} · {$label} : {$totalReps} reps, {$totalSets} séries, "
+            .(int) round($totalTonnage)." kg de tonnage"
+            .($adherence !== null ? ", adhérence {$adherence}%" : '');
+
+        return [
+            'label' => $label,
+            'window_days' => $windowDays,
+            'period_start' => $start->toDateString(),
+            'period_end' => $date->toDateString(),
+            'session_count' => $sessions->count(),
+            'total_sets' => $totalSets,
+            'total_reps' => $totalReps,
+            'total_tonnage' => (int) round($totalTonnage),
+            'adherence_percent' => $adherence,
+            'share_payload' => [
+                'variant' => $windowDays === 7 ? 'weekly_wrapped' : 'monthly_wrapped',
+                'athlete_name' => $athlete->name,
+                'date' => $date->toDateString(),
+                'headline' => $label,
+                'subline' => "{$totalReps} reps · {$totalSets} séries · ".(int) round($totalTonnage)." kg",
+                'social_text' => $shareText,
+                'share_url' => '/athlete/dashboard',
+            ],
+        ];
     }
 }

@@ -10,7 +10,7 @@ class ResetPasswordNotification extends BaseResetPassword
     /**
      * @return array<string, mixed>
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail($notifiable): MailMessage
     {
         $url = url(route('password.reset', [
             'token' => $this->token,

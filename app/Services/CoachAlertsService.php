@@ -24,6 +24,8 @@ class CoachAlertsService
 
     private const ADHERENCE_LOW_PERCENT = 55;
 
+    private const ADHERENCE_HIGH_PERCENT = 85;
+
     private const INACTIVE_DAYS = 10;
 
     private const MAX_ALERTS_PER_TYPE = 2;
@@ -108,6 +110,19 @@ class CoachAlertsService
                     $previousEnd,
                     $athleteSessions,
                 ),
+            );
+            $alerts = $alerts->merge(
+                $this->adherenceCelebrationAlerts(
+                    $athlete,
+                    $activeAssignment,
+                    $today,
+                    $recentStart,
+                    $recentEnd,
+                    $athleteSessions,
+                ),
+            );
+            $alerts = $alerts->merge(
+                $this->prCelebrationAlerts($athlete, $today),
             );
             $alerts = $alerts->merge(
                 $this->inactivityAlerts(
@@ -281,6 +296,109 @@ class CoachAlertsService
     /**
      * @return Collection<int, array<string, mixed>>
      */
+    private function adherenceCelebrationAlerts(
+        User $athlete,
+        AthleteProgramAssignment $assignment,
+        Carbon $today,
+        Carbon $recentStart,
+        Carbon $recentEnd,
+        Collection $athleteSessions,
+    ): Collection {
+        $recent = $this->sessionCoverage->coverageBetween(
+            $athlete->id,
+            $assignment,
+            $recentStart,
+            $recentEnd,
+            $athleteSessions,
+        );
+
+        if (
+            $recent['planned'] < 2
+            || $recent['percentage'] === null
+            || $recent['percentage'] < self::ADHERENCE_HIGH_PERCENT
+        ) {
+            return collect();
+        }
+
+        return collect([
+            $this->makeAlert(
+                key: "adherence-high-{$athlete->id}-{$today->toDateString()}",
+                type: 'adherence_high',
+                severity: 'info',
+                title: 'Adhérence élevée',
+                body: "{$athlete->name} maintient {$recent['percentage']} % d'adhérence sur 7 jours "
+                    ."({$recent['completed']}/{$recent['planned']} séances).",
+                href: "/athletes/{$athlete->id}",
+                athleteId: $athlete->id,
+                athleteName: $athlete->name,
+                sortDate: $today->toDateString(),
+                sharePayload: $this->buildSharePayload(
+                    variant: 'adherence_high',
+                    athleteName: $athlete->name,
+                    date: $today->toDateString(),
+                    headline: "Adhérence {$recent['percentage']} %",
+                    subline: "7 derniers jours · {$recent['completed']}/{$recent['planned']} séances",
+                    metrics: [
+                        'adherence_percent' => $recent['percentage'],
+                        'completed_sessions' => $recent['completed'],
+                        'planned_sessions' => $recent['planned'],
+                        'period_days' => 7,
+                    ],
+                ),
+            ),
+        ]);
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function prCelebrationAlerts(User $athlete, Carbon $today): Collection
+    {
+        $athlete->loadMissing('latestPr');
+        $latestPr = $athlete->latestPr;
+
+        if ($latestPr === null || $latestPr->reference_date === null) {
+            return collect();
+        }
+
+        if ($latestPr->reference_date->toDateString() !== $today->toDateString()) {
+            return collect();
+        }
+
+        $total = (int) $latestPr->squat + (int) $latestPr->bench + (int) $latestPr->deadlift;
+
+        return collect([
+            $this->makeAlert(
+                key: "pr-celebration-{$athlete->id}-{$latestPr->reference_date->toDateString()}",
+                type: 'pr_celebration',
+                severity: 'info',
+                title: 'Nouveau PR enregistré',
+                body: "{$athlete->name} a mis à jour ses records : "
+                    ."S {$latestPr->squat} · B {$latestPr->bench} · T {$latestPr->deadlift} (total {$total}).",
+                href: "/athletes/{$athlete->id}",
+                athleteId: $athlete->id,
+                athleteName: $athlete->name,
+                sortDate: $latestPr->reference_date->toDateString(),
+                sharePayload: $this->buildSharePayload(
+                    variant: 'pr_celebration',
+                    athleteName: $athlete->name,
+                    date: $latestPr->reference_date->toDateString(),
+                    headline: "Nouveau total {$total} kg",
+                    subline: "S {$latestPr->squat} · B {$latestPr->bench} · T {$latestPr->deadlift}",
+                    metrics: [
+                        'squat' => (int) $latestPr->squat,
+                        'bench' => (int) $latestPr->bench,
+                        'deadlift' => (int) $latestPr->deadlift,
+                        'total' => $total,
+                    ],
+                ),
+            ),
+        ]);
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
     private function inactivityAlerts(
         User $athlete,
         AthleteProgramAssignment $assignment,
@@ -390,6 +508,7 @@ class CoachAlertsService
         ?int $athleteId,
         ?string $athleteName,
         string $sortDate,
+        ?array $sharePayload = null,
     ): array {
         return [
             'key' => $key,
@@ -401,6 +520,37 @@ class CoachAlertsService
             'athlete_id' => $athleteId,
             'athlete_name' => $athleteName,
             'sort_date' => $sortDate,
+            'share_payload' => $sharePayload,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $metrics
+     * @return array<string, mixed>
+     */
+    private function buildSharePayload(
+        string $variant,
+        string $athleteName,
+        string $date,
+        string $headline,
+        string $subline,
+        array $metrics,
+    ): array {
+        return [
+            'variant' => $variant,
+            'athlete_name' => $athleteName,
+            'date' => $date,
+            'headline' => $headline,
+            'subline' => $subline,
+            'metrics' => $metrics,
+            'social_text' => "{$athleteName} · {$headline} sur Track Coach",
+            'share_url' => '/dashboard',
+            'templates' => [
+                ['id' => 'block_recap', 'label' => 'Fin de bloc'],
+                ['id' => 'weekly_recap', 'label' => 'Récap hebdomadaire'],
+                ['id' => 'meet_day', 'label' => 'Compétition'],
+                ['id' => 'checkin_streak', 'label' => 'Streak check-in'],
+            ],
         ];
     }
 }

@@ -28,9 +28,22 @@ const props = defineProps({
   latestPr: { type: Object, default: null },
   feedbackDueToday: { type: Boolean, default: false },
   feedbackFrequency: { type: String, default: 'weekly' },
+  shareHighlights: {
+    type: Object,
+    default: () => ({ pr_card: null, adherence_card: null, templates: [] }),
+  },
+  wrapped: {
+    type: Object,
+    default: () => ({ weekly: null, monthly: null }),
+  },
 });
 
 const checkInModalOpen = ref(false);
+const shareMessage = ref('');
+const wrappedCards = computed(() => [
+  props.wrapped?.weekly ?? null,
+  props.wrapped?.monthly ?? null,
+].filter(Boolean));
 
 const todaySessionTitle = computed(() => {
   if (props.todaySession?.status !== 'session') {
@@ -71,6 +84,32 @@ function skipCheckInForLater() {
   closeCheckInModal();
 }
 
+async function sharePayload(payload) {
+  if (!payload || typeof window === 'undefined') {
+    return;
+  }
+
+  const text = `${payload.social_text}\n${window.location.origin}${payload.share_url}`;
+  const shareData = {
+    title: payload.headline ?? 'Track Coach',
+    text,
+    url: `${window.location.origin}${payload.share_url}`,
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      shareMessage.value = 'Partage envoyé.';
+      return;
+    }
+
+    await navigator.clipboard.writeText(text);
+    shareMessage.value = 'Texte copié dans le presse-papiers.';
+  } catch (_error) {
+    shareMessage.value = 'Partage non disponible sur cet appareil.';
+  }
+}
+
 onMounted(() => {
   if (shouldPromptCheckIn()) {
     openCheckInModal();
@@ -95,7 +134,102 @@ onMounted(() => {
       :athlete-id="athleteId"
       :one-rm="oneRm"
       :today-logged-session="todayLoggedSession"
+      :adherence-share-payload="shareHighlights.adherence_card"
+      @share-adherence="sharePayload"
     />
+
+    <section
+      v-if="shareHighlights.pr_card || (shareHighlights.templates?.length ?? 0) > 0"
+      class="rounded-2xl border border-blue-500/30 bg-blue-950/15 p-4 shadow-lg"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-300/90">Partage</p>
+          <p class="mt-1 text-sm font-semibold text-white">Mets en avant ta progression</p>
+        </div>
+        <button
+          v-if="shareHighlights.pr_card"
+          type="button"
+          class="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-500"
+          @click="sharePayload(shareHighlights.pr_card)"
+        >
+          Partager mon PR
+        </button>
+      </div>
+      <p
+        v-if="shareHighlights.pr_card"
+        class="mt-3 rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-xs text-slate-300"
+      >
+        {{ shareHighlights.pr_card.headline }} · {{ shareHighlights.pr_card.subline }}
+      </p>
+      <div v-if="shareHighlights.templates?.length" class="mt-3 flex flex-wrap gap-2">
+        <span
+          v-for="template in shareHighlights.templates"
+          :key="template.id"
+          class="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-[10px] font-medium text-slate-300"
+        >
+          {{ template.label }}
+        </span>
+      </div>
+      <p v-if="shareMessage" class="mt-2 text-xs text-emerald-300">{{ shareMessage }}</p>
+    </section>
+
+    <section
+      v-if="wrappedCards.length"
+      class="rounded-2xl border border-violet-500/30 bg-violet-950/15 p-4 shadow-lg"
+    >
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-widest text-violet-300/90">Wrapped</p>
+          <p class="mt-1 text-sm font-semibold text-white">Ton récap hebdo & mensuel</p>
+        </div>
+      </div>
+
+      <div class="mt-3 grid gap-3 md:grid-cols-2">
+        <article
+          v-for="card in wrappedCards"
+          :key="card.label"
+          class="rounded-xl border border-slate-700 bg-slate-900/70 p-3"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold text-white">{{ card.label }}</p>
+              <p class="mt-0.5 text-[11px] text-slate-400">
+                {{ card.period_start }} → {{ card.period_end }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="rounded-lg border border-violet-500/40 bg-violet-600/20 px-2.5 py-1 text-[11px] font-semibold text-violet-100 hover:bg-violet-600/30"
+              @click="sharePayload(card.share_payload)"
+            >
+              Partager
+            </button>
+          </div>
+
+          <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+            <div class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-2">
+              <p class="text-slate-400">Séries</p>
+              <p class="mt-0.5 font-semibold text-white">{{ card.total_sets }}</p>
+            </div>
+            <div class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-2">
+              <p class="text-slate-400">Reps</p>
+              <p class="mt-0.5 font-semibold text-white">{{ card.total_reps }}</p>
+            </div>
+            <div class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-2">
+              <p class="text-slate-400">Tonnage</p>
+              <p class="mt-0.5 font-semibold text-white">{{ card.total_tonnage }} kg</p>
+            </div>
+            <div class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-2">
+              <p class="text-slate-400">Adhérence</p>
+              <p class="mt-0.5 font-semibold text-white">
+                {{ card.adherence_percent !== null ? `${card.adherence_percent}%` : '—' }}
+              </p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
 
     <Link
       v-if="feedbackDueToday"

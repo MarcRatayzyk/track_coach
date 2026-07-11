@@ -43,6 +43,8 @@ const typeIcons = {
   inactive_athlete: 'users',
   feedback_pending_reply: 'video',
   unread_message: 'chat',
+  adherence_high: 'trophy',
+  pr_celebration: 'trophy',
 };
 
 const severityLabels = {
@@ -53,6 +55,7 @@ const severityLabels = {
 
 const items = computed(() => props.alerts ?? []);
 const selectedAlert = ref(null);
+const shareFeedback = ref('');
 
 const modalOpen = computed(() => selectedAlert.value !== null);
 
@@ -70,10 +73,54 @@ function openAlert(alert) {
 
 function closeModal() {
   selectedAlert.value = null;
+  shareFeedback.value = '';
 }
 
 function athleteLabel(alert) {
   return alert.athlete_name?.trim() || '—';
+}
+
+const canShare = computed(() => Boolean(selectedAlert.value?.share_payload));
+
+const sharePreview = computed(() => {
+  const payload = selectedAlert.value?.share_payload;
+  if (!payload) {
+    return null;
+  }
+  return {
+    headline: payload.headline ?? selectedAlert.value?.title ?? '',
+    subline: payload.subline ?? selectedAlert.value?.body ?? '',
+    athleteName: payload.athlete_name ?? selectedAlert.value?.athlete_name ?? '',
+    socialText: payload.social_text ?? '',
+    shareUrl: payload.share_url ?? selectedAlert.value?.href ?? '/dashboard',
+    templates: Array.isArray(payload.templates) ? payload.templates : [],
+  };
+});
+
+async function shareAlert() {
+  if (!sharePreview.value) {
+    return;
+  }
+
+  const shareText = `${sharePreview.value.socialText}\n${window.location.origin}${sharePreview.value.shareUrl}`;
+  const shareData = {
+    title: selectedAlert.value?.title ?? 'Track Coach',
+    text: shareText,
+    url: `${window.location.origin}${sharePreview.value.shareUrl}`,
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      shareFeedback.value = 'Partagé avec succès.';
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareText);
+    shareFeedback.value = 'Texte copié. Tu peux le coller où tu veux.';
+  } catch (_error) {
+    shareFeedback.value = 'Partage annulé ou impossible sur cet appareil.';
+  }
 }
 </script>
 
@@ -173,6 +220,30 @@ function athleteLabel(alert) {
 
           <p class="mt-4 text-sm leading-relaxed text-slate-300">{{ selectedAlert.body }}</p>
 
+          <div
+            v-if="canShare && sharePreview"
+            class="mt-5 rounded-xl border border-blue-500/30 bg-slate-950/70 p-4"
+          >
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-300/90">
+              Aperçu partage
+            </p>
+            <div class="mt-2 rounded-xl border border-slate-700 bg-slate-900 p-3">
+              <p class="animate-pulse text-sm font-semibold text-white">{{ sharePreview.headline }}</p>
+              <p class="mt-1 text-xs text-slate-400">{{ sharePreview.subline }}</p>
+              <p class="mt-2 text-xs font-medium text-blue-300">{{ sharePreview.athleteName }}</p>
+            </div>
+            <div v-if="sharePreview.templates.length" class="mt-3 flex flex-wrap gap-2">
+              <span
+                v-for="template in sharePreview.templates"
+                :key="template.id"
+                class="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-[10px] font-medium text-slate-300"
+              >
+                {{ template.label }}
+              </span>
+            </div>
+            <p v-if="shareFeedback" class="mt-3 text-xs text-emerald-300">{{ shareFeedback }}</p>
+          </div>
+
           <div class="mt-6 flex flex-wrap justify-end gap-3">
             <button
               type="button"
@@ -180,6 +251,14 @@ function athleteLabel(alert) {
               @click="closeModal"
             >
               Fermer
+            </button>
+            <button
+              v-if="canShare"
+              type="button"
+              class="rounded-xl border border-blue-500/40 bg-blue-600/20 px-4 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-600/30"
+              @click="shareAlert"
+            >
+              Partager
             </button>
             <Link
               :href="selectedAlert.href"

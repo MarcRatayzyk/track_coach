@@ -31,8 +31,20 @@ if (!env.JAVA_HOME) {
 
 console.log(`Using JAVA_HOME=${env.JAVA_HOME}`);
 
-const stop = spawnSync(gradlew, ['--stop'], { cwd: androidDir, env, shell: false });
-const build = spawnSync(gradlew, ['assembleDebug'], { cwd: androidDir, env, stdio: 'inherit', shell: false });
+function runGradle(args) {
+    if (process.platform === 'win32') {
+        return spawnSync('cmd.exe', ['/d', '/s', '/c', gradlew, ...args], {
+            cwd: androidDir,
+            env,
+            stdio: 'inherit',
+        });
+    }
+
+    return spawnSync(gradlew, args, { cwd: androidDir, env, stdio: 'inherit' });
+}
+
+const stop = runGradle(['--stop']);
+const build = runGradle(['assembleDebug']);
 
 if (build.status !== 0) {
     process.exit(build.status ?? 1);
