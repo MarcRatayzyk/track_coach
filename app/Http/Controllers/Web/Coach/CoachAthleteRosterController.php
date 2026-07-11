@@ -8,6 +8,7 @@ use App\Mail\AthleteInvitationMail;
 use App\Models\AthleteProfile;
 use App\Models\User;
 use App\Support\AccountSetupUrlGenerator;
+use App\Support\MailSendSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -42,11 +43,18 @@ class CoachAthleteRosterController extends Controller
 
         $setupUrl = AccountSetupUrlGenerator::signedSetupUrl($athlete);
 
-        Mail::to($athlete)->send(new AthleteInvitationMail($athlete, $coach, $setupUrl));
+        $sent = MailSendSupport::attempt(
+            fn () => Mail::to($athlete)->send(new AthleteInvitationMail($athlete, $coach, $setupUrl)),
+        );
 
         return redirect()
             ->route('athletes.index')
-            ->with('success', "Invitation envoyée par e-mail à {$athlete->email}. L’athlète pourra choisir son mot de passe et compléter son profil à la première visite.")
+            ->with(
+                'success',
+                $sent
+                    ? "Invitation envoyée par e-mail à {$athlete->email}. L’athlète pourra choisir son mot de passe et compléter son profil à la première visite."
+                    : "Athlète ajouté, mais l’e-mail d’invitation n’a pas pu être envoyé. Utilise « Renvoyer l’invitation » ou partage le lien d’activation ci-dessous.",
+            )
             ->with('first_login_url', $setupUrl)
             ->with('invited_athlete_id', $athlete->id);
     }
@@ -64,11 +72,18 @@ class CoachAthleteRosterController extends Controller
         $coach = $request->user();
         $setupUrl = AccountSetupUrlGenerator::signedSetupUrl($athlete);
 
-        Mail::to($athlete)->send(new AthleteInvitationMail($athlete, $coach, $setupUrl));
+        $sent = MailSendSupport::attempt(
+            fn () => Mail::to($athlete)->send(new AthleteInvitationMail($athlete, $coach, $setupUrl)),
+        );
 
         return redirect()
             ->route('athletes.index')
-            ->with('success', "Invitation renvoyée à {$athlete->email}.")
+            ->with(
+                'success',
+                $sent
+                    ? "Invitation renvoyée à {$athlete->email}."
+                    : "Impossible de renvoyer l’e-mail. Partage le lien d’activation ci-dessous.",
+            )
             ->with('first_login_url', $setupUrl)
             ->with('invited_athlete_id', $athlete->id);
     }

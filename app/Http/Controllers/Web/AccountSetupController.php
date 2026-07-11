@@ -10,6 +10,7 @@ use App\Support\AccountSetupUrlGenerator;
 use App\Support\MailSendSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,6 +31,8 @@ class AccountSetupController extends Controller
                 ->route('login')
                 ->with('success', 'Ce compte est déjà activé. Tu peux te connecter avec ton e-mail et ton mot de passe.');
         }
+
+        $this->clearAuthenticatedSession($request);
 
         return Inertia::render('AccountSetupPage', [
             'user' => [
@@ -83,6 +86,8 @@ class AccountSetupController extends Controller
                 fn () => $user->sendEmailVerificationNotification(),
             );
 
+            $this->clearAuthenticatedSession($request);
+
             return redirect()
                 ->route('login')
                 ->with(
@@ -95,8 +100,21 @@ class AccountSetupController extends Controller
 
         $message = 'Compte activé. Tu peux maintenant te connecter avec ton e-mail et ton mot de passe.';
 
+        $this->clearAuthenticatedSession($request);
+
         return redirect()
             ->route('login')
             ->with('success', $message);
+    }
+
+    private function clearAuthenticatedSession(Request $request): void
+    {
+        if (! Auth::check()) {
+            return;
+        }
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
     }
 }
