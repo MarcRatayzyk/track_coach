@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Support\MailSendSupport;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class EmailVerificationController extends Controller
 
         return Inertia::render('VerifyEmailPage', [
             'status' => $request->session()->get('status'),
+            'mailError' => $request->session()->get('error'),
         ]);
     }
 
@@ -42,7 +44,13 @@ class EmailVerificationController extends Controller
             return redirect()->intended($this->homeFor($request->user()));
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        $sent = MailSendSupport::attempt(
+            fn () => $request->user()->sendEmailVerificationNotification(),
+        );
+
+        if (! $sent) {
+            return back()->with('error', MailSendSupport::DELIVERY_FAILED_MESSAGE);
+        }
 
         return back()->with('status', 'verification-link-sent');
     }

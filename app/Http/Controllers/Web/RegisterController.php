@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCoachRegistrationRequest;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
+use App\Support\MailSendSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -30,11 +30,14 @@ class RegisterController extends Controller
             'initial_setup_completed_at' => now(),
         ]);
 
-        event(new Registered($coach));
-
         Auth::login($coach);
         $request->session()->regenerate();
 
-        return redirect()->route('verification.notice');
+        $sent = MailSendSupport::attempt(
+            fn () => $coach->sendEmailVerificationNotification(),
+        );
+
+        return redirect()->route('verification.notice')
+            ->with($sent ? [] : ['error' => MailSendSupport::DELIVERY_FAILED_MESSAGE]);
     }
 }

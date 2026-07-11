@@ -7,6 +7,7 @@ use App\Http\Requests\StoreAccountSetupRequest;
 use App\Http\Requests\StoreCoachAccountSetupRequest;
 use App\Models\User;
 use App\Support\AccountSetupUrlGenerator;
+use App\Support\MailSendSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -78,11 +79,18 @@ class AccountSetupController extends Controller
         }
 
         if ($user->role === 'coach') {
-            $user->sendEmailVerificationNotification();
+            $sent = MailSendSupport::attempt(
+                fn () => $user->sendEmailVerificationNotification(),
+            );
 
             return redirect()
                 ->route('login')
-                ->with('success', 'Compte activé. Connecte-toi puis confirme ton e-mail pour accéder au dashboard.');
+                ->with(
+                    'success',
+                    $sent
+                        ? 'Compte activé. Connecte-toi puis confirme ton e-mail pour accéder au dashboard.'
+                        : 'Compte activé. Connecte-toi — si tu ne reçois pas l\'e-mail de confirmation, utilise « Renvoyer » sur la page de vérification.',
+                );
         }
 
         $message = 'Compte activé. Tu peux maintenant te connecter avec ton e-mail et ton mot de passe.';

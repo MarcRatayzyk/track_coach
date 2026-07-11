@@ -12,6 +12,10 @@ defineProps({
     type: String,
     default: null,
   },
+  mailError: {
+    type: String,
+    default: null,
+  },
 });
 
 const form = useForm({});
@@ -35,6 +39,13 @@ function resend() {
         class="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200"
       >
         Un nouveau lien de confirmation a été envoyé.
+      </p>
+
+      <p
+        v-if="mailError"
+        class="mt-4 rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200"
+      >
+        {{ mailError }}
       </p>
 
       <button

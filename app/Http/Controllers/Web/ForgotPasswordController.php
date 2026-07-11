@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Support\MailSendSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -24,7 +25,13 @@ class ForgotPasswordController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        Password::sendResetLink($request->only('email'));
+        $sent = MailSendSupport::attempt(
+            fn () => Password::sendResetLink($request->only('email')),
+        );
+
+        if (! $sent) {
+            return back()->with('error', MailSendSupport::DELIVERY_FAILED_MESSAGE);
+        }
 
         return back()->with('success', 'Si un compte existe avec cet e-mail, tu recevras un lien de réinitialisation.');
     }
