@@ -1,79 +1,79 @@
 {
-  "_AppLayout-xnYsFQou.js": {
-    "file": "assets/AppLayout-xnYsFQou.js",
+  "_AppLayout-Bk03triR.js": {
+    "file": "assets/AppLayout-Bk03triR.js",
     "name": "AppLayout",
     "imports": [
       "resources/js/app.js",
-      "_UiIcon-P3ussN1H.js"
+      "_UiIcon-D8HLg2Rq.js"
     ]
   },
-  "_CoachAddAthleteModal-BCrf1woF.js": {
-    "file": "assets/CoachAddAthleteModal-BCrf1woF.js",
+  "_CoachAddAthleteModal-B9ls-T-Q.js": {
+    "file": "assets/CoachAddAthleteModal-B9ls-T-Q.js",
     "name": "CoachAddAthleteModal",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_CompetitionDetailPanel-jCXt-84I.js": {
-    "file": "assets/CompetitionDetailPanel-jCXt-84I.js",
+  "_CompetitionDetailPanel-Dnc7lF_L.js": {
+    "file": "assets/CompetitionDetailPanel-Dnc7lF_L.js",
     "name": "CompetitionDetailPanel",
     "imports": [
       "resources/js/app.js",
       "_formatDates-De6hwxEW.js"
     ]
   },
-  "_DoughnutChart-OlRSQ95_.js": {
-    "file": "assets/DoughnutChart-OlRSQ95_.js",
+  "_DoughnutChart-cTjOiab_.js": {
+    "file": "assets/DoughnutChart-cTjOiab_.js",
     "name": "DoughnutChart",
     "imports": [
       "resources/js/app.js",
-      "_LineChart-XLtNZk-u.js"
+      "_LineChart-DfDy0DEc.js"
     ]
   },
-  "_LineChart-XLtNZk-u.js": {
-    "file": "assets/LineChart-XLtNZk-u.js",
+  "_LineChart-DfDy0DEc.js": {
+    "file": "assets/LineChart-DfDy0DEc.js",
     "name": "LineChart",
     "imports": [
       "_formatDates-De6hwxEW.js",
       "resources/js/app.js"
     ]
   },
-  "_OptionButtonGroup-C3HsKn04.js": {
-    "file": "assets/OptionButtonGroup-C3HsKn04.js",
+  "_OptionButtonGroup-04Q57xam.js": {
+    "file": "assets/OptionButtonGroup-04Q57xam.js",
     "name": "OptionButtonGroup",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_ProgramBlockStatsTab-e6fYmjwG.js": {
-    "file": "assets/ProgramBlockStatsTab-e6fYmjwG.js",
+  "_ProgramBlockStatsTab-B4M6VrZS.js": {
+    "file": "assets/ProgramBlockStatsTab-B4M6VrZS.js",
     "name": "ProgramBlockStatsTab",
     "imports": [
       "resources/js/app.js",
-      "_LineChart-XLtNZk-u.js",
-      "_DoughnutChart-OlRSQ95_.js"
+      "_LineChart-DfDy0DEc.js",
+      "_DoughnutChart-cTjOiab_.js"
     ]
   },
-  "_ReadinessTrendChart-DmTnm_ge.js": {
-    "file": "assets/ReadinessTrendChart-DmTnm_ge.js",
+  "_ReadinessTrendChart-BU_KoNp5.js": {
+    "file": "assets/ReadinessTrendChart-BU_KoNp5.js",
     "name": "ReadinessTrendChart",
     "imports": [
-      "_LineChart-XLtNZk-u.js",
+      "_LineChart-DfDy0DEc.js",
       "_formatDates-De6hwxEW.js",
       "resources/js/app.js"
     ]
   },
-  "_SessionDayEditorPanel-DWLjfzNW.js": {
-    "file": "assets/SessionDayEditorPanel-DWLjfzNW.js",
+  "_SessionDayEditorPanel-DLluyqSm.js": {
+    "file": "assets/SessionDayEditorPanel-DLluyqSm.js",
     "name": "SessionDayEditorPanel",
     "imports": [
       "resources/js/app.js",
-      "_OptionButtonGroup-C3HsKn04.js",
-      "_LineChart-XLtNZk-u.js"
+      "_OptionButtonGroup-04Q57xam.js",
+      "_LineChart-DfDy0DEc.js"
     ]
   },
-  "_UiIcon-P3ussN1H.js": {
-    "file": "assets/UiIcon-P3ussN1H.js",
+  "_UiIcon-D8HLg2Rq.js": {
+    "file": "assets/UiIcon-D8HLg2Rq.js",
     "name": "UiIcon",
     "imports": [
       "resources/js/app.js"
@@ -87,7 +87,7 @@
     "name": "formatDates"
   },
   "node_modules/@capacitor/splash-screen/dist/esm/index.js": {
-    "file": "assets/index-VxE3BL3a.js",
+    "file": "assets/index-D8sUN2IZ.js",
     "name": "index",
     "src": "node_modules/@capacitor/splash-screen/dist/esm/index.js",
     "isDynamicEntry": true,
@@ -99,7 +99,7 @@
     ]
   },
   "node_modules/@capacitor/splash-screen/dist/esm/web.js": {
-    "file": "assets/web-1yrEi4IW.js",
+    "file": "assets/web-CnJ8Sihi.js",
     "name": "web",
     "src": "node_modules/@capacitor/splash-screen/dist/esm/web.js",
     "isDynamicEntry": true,
@@ -108,7 +108,7 @@
     ]
   },
   "node_modules/@capacitor/status-bar/dist/esm/index.js": {
-    "file": "assets/index-Cc6dXw4d.js",
+    "file": "assets/index-_GzcW_uc.js",
     "name": "index",
     "src": "node_modules/@capacitor/status-bar/dist/esm/index.js",
     "isDynamicEntry": true,
@@ -126,7 +126,7 @@
     "src": "resources/images/sms.png"
   },
   "resources/js/Pages/AccountSetupPage.vue": {
-    "file": "assets/AccountSetupPage-Bwfv223G.js",
+    "file": "assets/AccountSetupPage-vf78O1kK.js",
     "name": "AccountSetupPage",
     "src": "resources/js/Pages/AccountSetupPage.vue",
     "isDynamicEntry": true,
@@ -135,96 +135,96 @@
     ]
   },
   "resources/js/Pages/AthleteDashboardPage.vue": {
-    "file": "assets/AthleteDashboardPage-Cxogfn5r.js",
+    "file": "assets/AthleteDashboardPage-B1GUzjvU.js",
     "name": "AthleteDashboardPage",
     "src": "resources/js/Pages/AthleteDashboardPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "_formatDates-De6hwxEW.js",
-      "_ReadinessTrendChart-DmTnm_ge.js",
-      "_LineChart-XLtNZk-u.js",
-      "_OptionButtonGroup-C3HsKn04.js",
-      "_AppLayout-xnYsFQou.js",
-      "_UiIcon-P3ussN1H.js"
+      "_ReadinessTrendChart-BU_KoNp5.js",
+      "_LineChart-DfDy0DEc.js",
+      "_OptionButtonGroup-04Q57xam.js",
+      "_AppLayout-Bk03triR.js",
+      "_UiIcon-D8HLg2Rq.js"
     ]
   },
   "resources/js/Pages/AthleteDetailPage.vue": {
-    "file": "assets/AthleteDetailPage-DozTqXpo.js",
+    "file": "assets/AthleteDetailPage-D5og9g_6.js",
     "name": "AthleteDetailPage",
     "src": "resources/js/Pages/AthleteDetailPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "_formatDates-De6hwxEW.js",
-      "_LineChart-XLtNZk-u.js",
-      "_UiIcon-P3ussN1H.js",
-      "_ReadinessTrendChart-DmTnm_ge.js",
-      "_DoughnutChart-OlRSQ95_.js",
-      "_CompetitionDetailPanel-jCXt-84I.js",
-      "_SessionDayEditorPanel-DWLjfzNW.js",
-      "_AppLayout-xnYsFQou.js",
-      "_OptionButtonGroup-C3HsKn04.js"
+      "_LineChart-DfDy0DEc.js",
+      "_UiIcon-D8HLg2Rq.js",
+      "_ReadinessTrendChart-BU_KoNp5.js",
+      "_DoughnutChart-cTjOiab_.js",
+      "_CompetitionDetailPanel-Dnc7lF_L.js",
+      "_SessionDayEditorPanel-DLluyqSm.js",
+      "_AppLayout-Bk03triR.js",
+      "_OptionButtonGroup-04Q57xam.js"
     ],
     "css": [
       "assets/AthleteDetailPage-DQXwx52Z.css"
     ]
   },
   "resources/js/Pages/AthleteProgramPage.vue": {
-    "file": "assets/AthleteProgramPage-uCKxM5r3.js",
+    "file": "assets/AthleteProgramPage-kx5wLRJM.js",
     "name": "AthleteProgramPage",
     "src": "resources/js/Pages/AthleteProgramPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "_formatDates-De6hwxEW.js",
-      "_LineChart-XLtNZk-u.js",
+      "_LineChart-DfDy0DEc.js",
       "resources/js/app.js",
-      "_ProgramBlockStatsTab-e6fYmjwG.js",
-      "_AppLayout-xnYsFQou.js",
-      "_DoughnutChart-OlRSQ95_.js",
-      "_UiIcon-P3ussN1H.js"
+      "_ProgramBlockStatsTab-B4M6VrZS.js",
+      "_AppLayout-Bk03triR.js",
+      "_DoughnutChart-cTjOiab_.js",
+      "_UiIcon-D8HLg2Rq.js"
     ]
   },
   "resources/js/Pages/AthletesListPage.vue": {
-    "file": "assets/AthletesListPage-Bgbi5uYZ.js",
+    "file": "assets/AthletesListPage-BkpY9A2m.js",
     "name": "AthletesListPage",
     "src": "resources/js/Pages/AthletesListPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_CoachAddAthleteModal-BCrf1woF.js",
-      "_UiIcon-P3ussN1H.js",
-      "_AppLayout-xnYsFQou.js"
+      "_CoachAddAthleteModal-B9ls-T-Q.js",
+      "_UiIcon-D8HLg2Rq.js",
+      "_AppLayout-Bk03triR.js"
     ]
   },
   "resources/js/Pages/CompetitionLivePage.vue": {
-    "file": "assets/CompetitionLivePage-CxZgxYfx.js",
+    "file": "assets/CompetitionLivePage-7TEFQy9J.js",
     "name": "CompetitionLivePage",
     "src": "resources/js/Pages/CompetitionLivePage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "_formatDates-De6hwxEW.js",
-      "_AppLayout-xnYsFQou.js",
-      "_UiIcon-P3ussN1H.js"
+      "_AppLayout-Bk03triR.js",
+      "_UiIcon-D8HLg2Rq.js"
     ]
   },
   "resources/js/Pages/DashboardPage.vue": {
-    "file": "assets/DashboardPage-BJwpJa2V.js",
+    "file": "assets/DashboardPage-DaU_Kywb.js",
     "name": "DashboardPage",
     "src": "resources/js/Pages/DashboardPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_CoachAddAthleteModal-BCrf1woF.js",
-      "_UiIcon-P3ussN1H.js",
-      "_CompetitionDetailPanel-jCXt-84I.js",
+      "_CoachAddAthleteModal-B9ls-T-Q.js",
+      "_UiIcon-D8HLg2Rq.js",
+      "_CompetitionDetailPanel-Dnc7lF_L.js",
       "_formatDates-De6hwxEW.js",
-      "_AppLayout-xnYsFQou.js"
+      "_AppLayout-Bk03triR.js"
     ]
   },
   "resources/js/Pages/ForgotPasswordPage.vue": {
-    "file": "assets/ForgotPasswordPage-BxY4IW4o.js",
+    "file": "assets/ForgotPasswordPage-39xIeVxn.js",
     "name": "ForgotPasswordPage",
     "src": "resources/js/Pages/ForgotPasswordPage.vue",
     "isDynamicEntry": true,
@@ -233,69 +233,69 @@
     ]
   },
   "resources/js/Pages/LandingPage.vue": {
-    "file": "assets/LandingPage-ICTza1cp.js",
+    "file": "assets/LandingPage-BwAxMUFz.js",
     "name": "LandingPage",
     "src": "resources/js/Pages/LandingPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_UiIcon-P3ussN1H.js"
+      "_UiIcon-D8HLg2Rq.js"
     ]
   },
   "resources/js/Pages/LoginPage.vue": {
-    "file": "assets/LoginPage-DlspW2Ez.js",
+    "file": "assets/LoginPage-DgvHhXNN.js",
     "name": "LoginPage",
     "src": "resources/js/Pages/LoginPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_UiIcon-P3ussN1H.js"
+      "_UiIcon-D8HLg2Rq.js"
     ]
   },
   "resources/js/Pages/MessagingPage.vue": {
-    "file": "assets/MessagingPage-D21sg4f-.js",
+    "file": "assets/MessagingPage-CcvdrICd.js",
     "name": "MessagingPage",
     "src": "resources/js/Pages/MessagingPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AppLayout-xnYsFQou.js",
+      "_AppLayout-Bk03triR.js",
       "_formatDates-De6hwxEW.js",
-      "_UiIcon-P3ussN1H.js"
+      "_UiIcon-D8HLg2Rq.js"
     ]
   },
   "resources/js/Pages/ProgramBuilderPage.vue": {
-    "file": "assets/ProgramBuilderPage-CiA6HIwG.js",
+    "file": "assets/ProgramBuilderPage-Mr88-VId.js",
     "name": "ProgramBuilderPage",
     "src": "resources/js/Pages/ProgramBuilderPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ProgramBlockStatsTab-e6fYmjwG.js",
-      "_LineChart-XLtNZk-u.js",
-      "_SessionDayEditorPanel-DWLjfzNW.js",
-      "_OptionButtonGroup-C3HsKn04.js",
-      "_AppLayout-xnYsFQou.js",
-      "_DoughnutChart-OlRSQ95_.js",
+      "_ProgramBlockStatsTab-B4M6VrZS.js",
+      "_LineChart-DfDy0DEc.js",
+      "_SessionDayEditorPanel-DLluyqSm.js",
+      "_OptionButtonGroup-04Q57xam.js",
+      "_AppLayout-Bk03triR.js",
+      "_DoughnutChart-cTjOiab_.js",
       "_formatDates-De6hwxEW.js",
-      "_UiIcon-P3ussN1H.js"
+      "_UiIcon-D8HLg2Rq.js"
     ],
     "css": [
       "assets/ProgramBuilderPage-D3E6etZ9.css"
     ]
   },
   "resources/js/Pages/RegisterPage.vue": {
-    "file": "assets/RegisterPage-KrsnsmOl.js",
+    "file": "assets/RegisterPage-BKyjJ190.js",
     "name": "RegisterPage",
     "src": "resources/js/Pages/RegisterPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_UiIcon-P3ussN1H.js"
+      "_UiIcon-D8HLg2Rq.js"
     ]
   },
   "resources/js/Pages/ResetPasswordPage.vue": {
-    "file": "assets/ResetPasswordPage-B-a1EDvx.js",
+    "file": "assets/ResetPasswordPage-BAcwxxPw.js",
     "name": "ResetPasswordPage",
     "src": "resources/js/Pages/ResetPasswordPage.vue",
     "isDynamicEntry": true,
@@ -304,19 +304,19 @@
     ]
   },
   "resources/js/Pages/SessionFeedbacksPage.vue": {
-    "file": "assets/SessionFeedbacksPage-B4HyO4BS.js",
+    "file": "assets/SessionFeedbacksPage-D2aA6fLf.js",
     "name": "SessionFeedbacksPage",
     "src": "resources/js/Pages/SessionFeedbacksPage.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "_formatDates-De6hwxEW.js",
-      "_AppLayout-xnYsFQou.js",
-      "_UiIcon-P3ussN1H.js"
+      "_AppLayout-Bk03triR.js",
+      "_UiIcon-D8HLg2Rq.js"
     ]
   },
   "resources/js/Pages/VerifyEmailPage.vue": {
-    "file": "assets/VerifyEmailPage-BKKK6o4w.js",
+    "file": "assets/VerifyEmailPage-6f0bvEvf.js",
     "name": "VerifyEmailPage",
     "src": "resources/js/Pages/VerifyEmailPage.vue",
     "isDynamicEntry": true,
@@ -325,7 +325,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-ByF5ETBi.js",
+    "file": "assets/app-DH7LlYZY.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

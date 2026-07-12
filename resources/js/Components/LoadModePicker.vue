@@ -65,17 +65,17 @@ watch(
 
 <template>
   <div :class="compact ? '' : 'mt-4'">
-    <p class="font-medium text-slate-400" :class="compact ? 'text-[10px]' : 'text-xs'">Charge</p>
-    <div class="flex flex-wrap gap-1.5" :class="compact ? 'mt-1' : 'mt-2 gap-2'">
+    <p class="font-medium text-slate-400" :class="compact ? 'text-xs' : 'text-sm'">Charge</p>
+    <div class="flex flex-wrap" :class="compact ? 'mt-1.5 gap-2' : 'mt-2 gap-2'">
       <button
         v-for="mode in modes"
         :key="mode.id"
         type="button"
-        class="font-medium transition"
+        class="font-semibold transition"
         :class="[
           compact
-            ? 'rounded px-2 py-1 text-[10px]'
-            : 'rounded-lg px-3 py-1.5 text-xs',
+            ? 'rounded-lg px-3.5 py-2 text-xs'
+            : 'rounded-lg px-4 py-2.5 text-sm',
           activeMode === mode.id
             ? 'bg-blue-600 text-white'
             : 'border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-white',
@@ -98,8 +98,8 @@ watch(
 
     <label
       v-else-if="activeMode === 'percent'"
-      class="block max-w-xs text-slate-500"
-      :class="compact ? 'mt-1.5 text-[10px]' : 'mt-3 text-xs'"
+      class="block text-slate-500"
+      :class="compact ? 'mt-2 text-xs' : 'mt-3 text-sm'"
     >
       % du 1RM
       <input
@@ -109,16 +109,16 @@ watch(
         max="100"
         step="0.5"
         placeholder="Ex. 82.5"
-        class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 text-white"
-        :class="compact ? 'px-2 py-1.5 text-xs' : 'px-2.5 py-2 text-sm'"
+        class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 text-white"
+        :class="compact ? 'px-3 py-3 text-lg font-semibold' : 'px-3 py-3 text-xl font-semibold'"
         @input="updateField('load_percent', $event.target.value)"
       />
     </label>
 
     <label
       v-else-if="activeMode === 'kg'"
-      class="block max-w-xs text-slate-500"
-      :class="compact ? 'mt-1.5 text-[10px]' : 'mt-3 text-xs'"
+      class="block text-slate-500"
+      :class="compact ? 'mt-2 text-xs' : 'mt-3 text-sm'"
     >
       Charge (kg)
       <input
@@ -128,8 +128,8 @@ watch(
         max="999"
         step="0.5"
         placeholder="Ex. 140"
-        class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 text-white"
-        :class="compact ? 'px-2 py-1.5 text-xs' : 'px-2.5 py-2 text-sm'"
+        class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 text-white"
+        :class="compact ? 'px-3 py-3 text-lg font-semibold' : 'px-3 py-3 text-xl font-semibold'"
         @input="updateField('load', $event.target.value)"
       />
     </label>
