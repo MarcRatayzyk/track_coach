@@ -7,6 +7,7 @@ use App\Models\Message;
 use App\Models\MessageThread;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
+use App\Support\MailSendSupport;
 use App\Support\MessagingInboxSupport;
 use Illuminate\Support\Facades\DB;
 
@@ -60,7 +61,7 @@ class SendMessageAction
                 ? $thread->athlete
                 : $thread->coach;
 
-            $recipient?->notify(new NewMessageNotification($message));
+            MailSendSupport::notifySafely($recipient, new NewMessageNotification($message));
 
             return $message;
         });

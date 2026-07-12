@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Notifications\Notification;
 use Throwable;
 
 class MailSendSupport
@@ -19,5 +20,14 @@ class MailSendSupport
 
             return false;
         }
+    }
+
+    public static function notifySafely(?object $notifiable, Notification $notification): void
+    {
+        if ($notifiable === null) {
+            return;
+        }
+
+        self::attempt(fn () => $notifiable->notify($notification));
     }
 }

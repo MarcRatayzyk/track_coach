@@ -9,6 +9,7 @@ use App\Models\MessageThread;
 use App\Models\SessionFeedback;
 use App\Models\User;
 use App\Notifications\FeedbackRepliedNotification;
+use App\Support\MailSendSupport;
 use App\Support\MessagingInboxSupport;
 use App\Support\SessionFeedbackPresenter;
 use Illuminate\Support\Facades\DB;
@@ -85,7 +86,7 @@ class SendFeedbackReplyMessageAction
             MessageSent::dispatch($message);
             MessagingInboxSupport::dispatchThreadUpdated($thread);
 
-            $feedback->athlete?->notify(new FeedbackRepliedNotification($message));
+            MailSendSupport::notifySafely($feedback->athlete, new FeedbackRepliedNotification($message));
 
             return $message;
         });

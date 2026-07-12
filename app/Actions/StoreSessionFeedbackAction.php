@@ -8,6 +8,7 @@ use App\Models\SessionFeedback;
 use App\Models\User;
 use App\Notifications\NewSessionFeedbackNotification;
 use App\Support\FeedbackFrequencySupport;
+use App\Support\MailSendSupport;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -70,7 +71,7 @@ class StoreSessionFeedbackAction
             $this->linkDashboardTask($feedback, $athlete, $date);
 
             $feedback->load(['athleteVideos', 'programTrainingDay', 'athlete:id,name', 'coach:id,name']);
-            $feedback->coach?->notify(new NewSessionFeedbackNotification($feedback));
+            MailSendSupport::notifySafely($feedback->coach, new NewSessionFeedbackNotification($feedback));
 
             return $feedback;
         });
