@@ -92,6 +92,27 @@ function submitMessage() {
     return;
   }
 
+  const content = messageForm.content;
+  const hasAudio = recordedAudioFiles.value.length > 0;
+  const optimisticId = `pending-${Date.now()}`;
+  let addedOptimistic = false;
+
+  if (!hasAudio && content.trim() !== '') {
+    localMessages.value.push({
+      id: optimisticId,
+      sender_id: myId.value,
+      content,
+      created_at: new Date().toISOString(),
+      sender: {
+        id: myId.value,
+        name: page.props.auth?.user?.name ?? 'Moi',
+      },
+      audio_files: [],
+      session_feedback: isFeedbackReply.value ? { id: messageForm.session_feedback_id } : null,
+    });
+    addedOptimistic = true;
+  }
+
   messageForm
     .transform((data) => ({
       ...data,
@@ -104,10 +125,17 @@ function submitMessage() {
       {
       forceFormData: true,
       preserveScroll: true,
+      preserveState: true,
+      only: ['messages', 'threads'],
       onSuccess: () => {
         messageForm.reset('content');
         messageForm.session_feedback_id = null;
         recordedAudioFiles.value = [];
+      },
+      onError: () => {
+        if (addedOptimistic) {
+          localMessages.value = localMessages.value.filter((message) => message.id !== optimisticId);
+        }
       },
     });
 }

@@ -12,6 +12,7 @@ use App\Notifications\FeedbackRepliedNotification;
 use App\Support\MailSendSupport;
 use App\Support\MessagingInboxSupport;
 use App\Support\SessionFeedbackPresenter;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -52,14 +53,14 @@ class SendFeedbackReplyMessageAction
             ]);
         }
 
-        return DB::transaction(function () use ($sender, $thread, $feedback, $body, $audioFiles): Message {
-            $feedback->loadMissing('programTrainingDay');
-            $sessionLabel = SessionFeedbackPresenter::sessionLabel($feedback->programTrainingDay);
-            $sessionDate = $feedback->session_date?->locale('fr')->isoFormat('D MMMM YYYY') ?? '';
+        $feedback->loadMissing('programTrainingDay');
+        $sessionLabel = SessionFeedbackPresenter::sessionLabel($feedback->programTrainingDay);
+        $sessionDate = $feedback->session_date?->locale('fr')->isoFormat('D MMMM YYYY') ?? '';
 
-            $prefix = "Réponse à ton retour du {$sessionDate} — {$sessionLabel}";
-            $messageContent = $body !== '' ? "{$prefix}\n\n{$body}" : $prefix;
+        $prefix = "Réponse à ton retour du {$sessionDate} — {$sessionLabel}";
+        $messageContent = $body !== '' ? "{$prefix}\n\n{$body}" : $prefix;
 
+        $message = DB::transaction(function () use ($sender, $thread, $feedback, $messageContent, $audioFiles): Message {
             $message = Message::query()->create([
                 'thread_id' => $thread->id,
                 'sender_id' => $sender->id,
@@ -82,13 +83,19 @@ class SendFeedbackReplyMessageAction
 
             $thread->touch();
 
-            $message->load(['sender:id,name', 'audioFiles', 'sessionFeedback.programTrainingDay']);
-            MessageSent::dispatch($message);
-            MessagingInboxSupport::dispatchThreadUpdated($thread);
-
-            MailSendSupport::notifySafely($feedback->athlete, new FeedbackRepliedNotification($message));
-
             return $message;
         });
+
+        $message->load(['sender:id,name', 'audioFiles', 'sessionFeedback.programTrainingDay']);
+        $feedback->loadMissing('athlete');
+        $athlete = $feedback->athlete;
+
+        Bus::dispatchAfterResponse(function () use ($message, $thread, $athlete): void {
+            MessageSent::dispatch($message);
+            MessagingInboxSupport::dispatchThreadUpdated($thread);
+            MailSendSupport::notifySafely($athlete, new FeedbackRepliedNotification($message));
+        });
+
+        return $message;
     }
 }

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\NewMessageNotification;
 use App\Support\MailSendSupport;
 use App\Support\MessagingInboxSupport;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 
 class SendMessageAction
@@ -38,9 +39,9 @@ class SendMessageAction
             );
         }
 
-        return DB::transaction(function () use ($sender, $thread, $content, $audioFiles): Message {
-            $thread->loadMissing(['coach', 'athlete']);
+        $thread->loadMissing(['coach', 'athlete']);
 
+        $message = DB::transaction(function () use ($sender, $thread, $content, $audioFiles): Message {
             $message = Message::query()->create([
                 'thread_id' => $thread->id,
                 'sender_id' => $sender->id,
@@ -53,17 +54,21 @@ class SendMessageAction
 
             $thread->touch();
 
-            $message->load(['sender:id,name', 'audioFiles']);
-            MessageSent::dispatch($message);
-            MessagingInboxSupport::dispatchThreadUpdated($thread);
-
-            $recipient = $thread->coach_id === $sender->id
-                ? $thread->athlete
-                : $thread->coach;
-
-            MailSendSupport::notifySafely($recipient, new NewMessageNotification($message));
-
             return $message;
         });
+
+        $message->load(['sender:id,name', 'audioFiles']);
+
+        $recipient = $thread->coach_id === $sender->id
+            ? $thread->athlete
+            : $thread->coach;
+
+        Bus::dispatchAfterResponse(function () use ($message, $thread, $recipient): void {
+            MessageSent::dispatch($message);
+            MessagingInboxSupport::dispatchThreadUpdated($thread);
+            MailSendSupport::notifySafely($recipient, new NewMessageNotification($message));
+        });
+
+        return $message;
     }
 }
