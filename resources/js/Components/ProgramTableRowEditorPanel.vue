@@ -4,8 +4,15 @@ import ExerciseVariantStrip from './ExerciseVariantStrip.vue';
 import LoadModePicker from './LoadModePicker.vue';
 import OptionButtonGroup from './OptionButtonGroup.vue';
 import { PROGRAM_TABLE_SECTIONS } from '../config/programTableSections';
-import { SET_OPTIONS, REP_OPTIONS, formatLineRecap } from '../utils/programBuilder';
+import { SET_OPTIONS, REP_OPTIONS, formatEditorLineRecapParts } from '../utils/programBuilder';
 import { useTableRowEditor } from '../composables/useTableRowEditor';
+
+const props = defineProps({
+  athleteOneRm: {
+    type: Object,
+    default: () => ({ squat: 0, bench: 0, deadlift: 0 }),
+  },
+});
 
 const editor = useTableRowEditor();
 
@@ -13,7 +20,31 @@ const row = computed(() => editor?.state.row ?? null);
 const sessionHeading = computed(() => editor?.state.sessionHeading ?? '');
 const defaultLift = computed(() => editor?.state.defaultLift ?? 'squat');
 const rowNumber = computed(() => (editor?.state.rowIndex ?? 0) + 1);
-const recap = computed(() => (row.value ? formatLineRecap(row.value) : null));
+const recapParts = computed(() => {
+  if (!row.value) {
+    return null;
+  }
+
+  return formatEditorLineRecapParts(row.value, {
+    oneRm: props.athleteOneRm,
+    defaultLift: defaultLift.value,
+    section: row.value.section,
+  });
+});
+
+const recapSectionClass = computed(() => {
+  const section = row.value?.section;
+  if (section === 'topset') {
+    return 'text-amber-300';
+  }
+  if (section === 'backoff') {
+    return 'text-blue-300';
+  }
+  if (section === 'accessory') {
+    return 'text-emerald-300';
+  }
+  return 'text-slate-300';
+});
 
 function patchRow(patch) {
   if (!row.value || !editor?.state.onUpdate) {
@@ -120,8 +151,9 @@ function goToNextRow() {
 
       <div>
         <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Exercice</p>
-        <div class="mt-1.5 [&_.tc-scrollbar]:mt-1.5 [&_.tc-scrollbar]:pb-1 [&_p:last-child]:hidden">
+        <div class="mt-1.5">
           <ExerciseVariantStrip
+            accessory-panel
             :default-lift="row.lift ?? defaultLift"
             :exercise-variant-id="row.exercise_variant_id"
             :exercise-name="row.exercise_name ?? ''"
@@ -167,9 +199,14 @@ function goToNextRow() {
         </label>
         <div class="min-w-0 flex-[2] rounded-lg border border-blue-500/20 bg-blue-950/25 px-2.5 py-2">
           <p class="text-[10px] font-medium uppercase tracking-wide text-blue-300/80">Récap</p>
-          <p class="truncate text-sm font-medium" :class="recap ? 'text-white' : 'text-slate-500'">
-            {{ recap ?? '—' }}
+          <p v-if="recapParts" class="mt-0.5 text-sm leading-snug text-white">
+            <span class="font-semibold" :class="recapSectionClass">{{ recapParts.section }}</span>
+            <span> · {{ recapParts.main }}</span>
+            <span v-if="recapParts.e1rm" class="text-[11px] font-normal text-slate-500">
+              · e1RM {{ recapParts.e1rm }} kg
+            </span>
           </p>
+          <p v-else class="mt-0.5 text-sm font-medium text-slate-500">—</p>
         </div>
       </div>
     </div>

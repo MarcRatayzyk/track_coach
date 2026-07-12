@@ -182,7 +182,7 @@ watch(selectedWeek, () => {
   </section>
 
   <div class="sticky top-4 hidden shrink-0 self-start lg:block">
-    <ProgramTableRowEditorPanel />
+    <ProgramTableRowEditorPanel :athlete-one-rm="activeBlock.athlete_one_rm ?? {}" />
   </div>
   </div>
 </template>

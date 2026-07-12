@@ -1,4 +1,4 @@
-import { resolveLoadKg } from './trainingVolume';
+import { epleyE1rm, resolveLoadKg } from './trainingVolume';
 
 export const BLOCK_TYPES = [
   { value: 'volume', label: 'Volume' },
@@ -148,6 +148,36 @@ export function formatLineRecapWithKg(line, oneRm = {}, mainLift = 'squat') {
   }
 
   return base;
+}
+
+const EDITOR_SECTION_LABELS = {
+  topset: 'Topset',
+  backoff: 'Back-off',
+  accessory: 'Accessoires',
+};
+
+/**
+ * @param {object} line
+ * @param {{ oneRm?: object, defaultLift?: string, section?: string|null }} [options]
+ * @returns {{ section: string|null, main: string, e1rm: number|null }|null}
+ */
+export function formatEditorLineRecapParts(line, { oneRm = {}, defaultLift = 'squat', section = null } = {}) {
+  const main = formatLineRecap(line);
+  if (!main) {
+    return null;
+  }
+
+  const sectionKey = section ?? line?.section ?? null;
+  const sectionLabel = sectionKey ? (EDITOR_SECTION_LABELS[sectionKey] ?? null) : null;
+  const lift = line?.lift ?? defaultLift;
+  const loadKg = resolveLoadKg(line, oneRm, lift);
+  const estimated = epleyE1rm(loadKg, line?.reps);
+
+  return {
+    section: sectionLabel,
+    main,
+    e1rm: estimated != null ? Math.round(estimated) : null,
+  };
 }
 
 export function findCalendarCellByDate(weekCount, dateStart, targetDate) {
