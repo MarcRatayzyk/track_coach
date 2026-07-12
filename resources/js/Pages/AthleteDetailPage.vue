@@ -57,10 +57,6 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  funStats: {
-    type: Object,
-    default: null,
-  },
 });
 
 const today = new Date().toISOString().slice(0, 10);
@@ -748,7 +744,6 @@ onMounted(() => {
           :readiness-recent="readinessRecent"
           :body-weight-recent="bodyWeightRecent"
           :training-sessions="trainingSessions"
-          :fun-stats="funStats"
           :time-range="timeRange"
           :time-range-options="timeRangeOptions"
           @update:time-range="timeRange = $event"

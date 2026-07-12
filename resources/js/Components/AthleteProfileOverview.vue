@@ -117,6 +117,13 @@ const emit = defineEmits([
 ]);
 
 const showProfileModal = ref(false);
+const showEditForm = ref(false);
+
+watch(showProfileModal, (open) => {
+  if (!open) {
+    showEditForm.value = false;
+  }
+});
 
 const categoryOptions = computed(() => {
   const sex = props.editableProfile?.sex ?? null;
@@ -246,7 +253,7 @@ function openNextCompetition() {
         @click.self="showProfileModal = false"
       >
         <div
-          class="tc-scrollbar max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl"
+          class="tc-scrollbar max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl"
           @click.stop
         >
           <div class="flex items-start justify-between gap-4">
@@ -320,12 +327,21 @@ function openNextCompetition() {
             <p class="mt-1 whitespace-pre-wrap">{{ bio }}</p>
           </div>
 
+          <button
+            v-if="canEditProfile && editableProfile && !showEditForm"
+            type="button"
+            class="mt-4 w-full rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-2.5 text-sm font-semibold text-blue-300 transition hover:bg-blue-500/20"
+            @click="showEditForm = true"
+          >
+            Modifier le profil
+          </button>
+
           <form
-            v-if="canEditProfile && editableProfile"
+            v-if="canEditProfile && editableProfile && showEditForm"
             class="mt-4 space-y-3 rounded-lg border border-slate-800 bg-slate-950/50 p-3"
             @submit.prevent="emit('save-profile')"
           >
-            <p class="text-xs font-semibold text-white">{{ canEditProfile ? 'Modifier le profil' : 'Modifier mon profil' }}</p>
+            <p class="text-xs font-semibold text-white">Modifier le profil</p>
             <label class="block text-xs text-slate-400">
               Date de naissance
               <input

@@ -1,14 +1,18 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
-import { formatCalendarFr } from '../utils/formatDates';
+import AthleteMonthCalendar from './AthleteMonthCalendar.vue';
 
 const props = defineProps({
   reminders: {
     type: Array,
     default: () => [],
   },
-  upcomingCompetitions: {
+  competitions: {
+    type: Array,
+    default: () => [],
+  },
+  blockEvents: {
     type: Array,
     default: () => [],
   },
@@ -26,30 +30,6 @@ const form = useForm({
   event_date: new Date().toISOString().slice(0, 10),
   notes: '',
   athlete_id: '',
-});
-
-const upcomingItems = computed(() => {
-  const reminderItems = (props.reminders ?? []).map((reminder) => ({
-    id: `reminder-${reminder.id}`,
-    kind: 'reminder',
-    date: reminder.event_date,
-    title: reminder.title,
-    subtitle: reminder.athlete_name ?? reminder.notes ?? 'Rappel personnel',
-    raw: reminder,
-  }));
-
-  const competitionItems = (props.upcomingCompetitions ?? []).map((competition) => ({
-    id: `competition-${competition.id}`,
-    kind: 'competition',
-    date: competition.competition_date,
-    title: competition.name,
-    subtitle: competition.athlete?.name ?? 'Compétition roster',
-    raw: competition,
-  }));
-
-  return [...reminderItems, ...competitionItems]
-    .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-    .slice(0, 12);
 });
 
 function openCreateForm() {
@@ -111,8 +91,8 @@ function deleteReminder(reminder) {
   <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="text-sm font-semibold text-white">Calendrier coach</h2>
-        <p class="mt-0.5 text-xs text-slate-500">Rappels perso + compétitions roster</p>
+        <h2 class="text-sm font-semibold text-white">Calendrier</h2>
+        <p class="mt-0.5 text-xs text-slate-500">Blocs roster · compétitions · rappels perso</p>
       </div>
       <button
         type="button"
@@ -169,13 +149,21 @@ function deleteReminder(reminder) {
           class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
         />
       </label>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button
           type="submit"
           class="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500"
           :disabled="form.processing"
         >
           Enregistrer
+        </button>
+        <button
+          v-if="editingReminder"
+          type="button"
+          class="rounded-lg border border-red-500/30 px-3 py-2 text-xs text-red-300 hover:bg-red-500/10"
+          @click="deleteReminder(editingReminder)"
+        >
+          Supprimer
         </button>
         <button
           type="button"
@@ -187,40 +175,12 @@ function deleteReminder(reminder) {
       </div>
     </form>
 
-    <ul class="mt-4 space-y-2">
-      <li
-        v-for="item in upcomingItems"
-        :key="item.id"
-        class="flex items-start justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5"
-      >
-        <div class="min-w-0">
-          <p class="text-[10px] uppercase tracking-wide text-slate-500">
-            {{ formatCalendarFr(item.date, 'medium') }}
-            · {{ item.kind === 'competition' ? 'Compétition' : 'Rappel' }}
-          </p>
-          <p class="mt-0.5 truncate text-sm font-semibold text-white">{{ item.title }}</p>
-          <p class="truncate text-xs text-slate-400">{{ item.subtitle }}</p>
-        </div>
-        <div v-if="item.kind === 'reminder'" class="flex shrink-0 gap-1">
-          <button
-            type="button"
-            class="rounded-lg border border-slate-700 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800"
-            @click="openEditForm(item.raw)"
-          >
-            Éditer
-          </button>
-          <button
-            type="button"
-            class="rounded-lg border border-red-500/30 px-2 py-1 text-[10px] text-red-300 hover:bg-red-500/10"
-            @click="deleteReminder(item.raw)"
-          >
-            Suppr.
-          </button>
-        </div>
-      </li>
-      <li v-if="!upcomingItems.length" class="text-sm text-slate-500">
-        Aucun rappel ni compétition à venir.
-      </li>
-    </ul>
+    <AthleteMonthCalendar
+      class="mt-4"
+      mode="overview"
+      :block-events="blockEvents"
+      :competitions="competitions"
+      :reminders="reminders"
+    />
   </section>
 </template>

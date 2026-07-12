@@ -84,6 +84,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  calendarCompetitions: {
+    type: Array,
+    default: () => [],
+  },
+  calendarBlockEvents: {
+    type: Array,
+    default: () => [],
+  },
   rosterAthletes: {
     type: Array,
     default: () => [],
@@ -464,7 +472,8 @@ onMounted(() => {
     <CoachDashboardCalendar
       class="mt-4"
       :reminders="calendarReminders"
-      :upcoming-competitions="upcomingCompetitions"
+      :competitions="calendarCompetitions"
+      :block-events="calendarBlockEvents"
       :roster-athletes="rosterAthletes"
     />
 

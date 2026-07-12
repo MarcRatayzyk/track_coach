@@ -6,6 +6,8 @@ import {
   indexBlockBoundariesByDate,
   indexCompetitionsByDate,
   indexProgramSessionsByDate,
+  indexRemindersByDate,
+  indexRosterBlockBoundariesByDate,
   indexTrainingSessionsByDate,
 } from '../utils/monthCalendar';
 import { formatLineRecap, SECTION_LABELS } from '../utils/programBuilder';
@@ -20,6 +22,14 @@ const props = defineProps({
     default: () => [],
   },
   competitions: {
+    type: Array,
+    default: () => [],
+  },
+  blockEvents: {
+    type: Array,
+    default: () => [],
+  },
+  reminders: {
     type: Array,
     default: () => [],
   },
@@ -54,9 +64,16 @@ const trainingByDate = computed(() =>
   isOverview.value ? {} : indexTrainingSessionsByDate(props.trainingSessions),
 );
 
-const blockByDate = computed(() => indexBlockBoundariesByDate(props.programBlock));
+const blockByDate = computed(() => {
+  if (props.blockEvents?.length) {
+    return indexRosterBlockBoundariesByDate(props.blockEvents);
+  }
+  return indexBlockBoundariesByDate(props.programBlock);
+});
 
 const competitionByDate = computed(() => indexCompetitionsByDate(props.competitions));
+
+const remindersByDate = computed(() => indexRemindersByDate(props.reminders));
 
 const selectedDetail = computed(() => {
   if (!selectedDate.value) {
@@ -67,7 +84,8 @@ const selectedDetail = computed(() => {
   const program = programByDate.value[selectedDate.value] ?? null;
   const training = trainingByDate.value[selectedDate.value] ?? [];
 
-  const blockBoundary = blockByDate.value[selectedDate.value] ?? null;
+  const blockBoundaries = blockByDate.value[selectedDate.value] ?? [];
+  const dayReminders = remindersByDate.value[selectedDate.value] ?? [];
 
   return {
     date: selectedDate.value,
@@ -75,9 +93,10 @@ const selectedDetail = computed(() => {
     competition,
     program,
     training,
-    blockBoundary,
+    blockBoundaries,
+    reminders: dayReminders,
     isToday: selectedDate.value === today,
-    isEmpty: !competition && !program && !training.length && !blockBoundary,
+    isEmpty: !competition && !program && !training.length && !blockBoundaries.length && !dayReminders.length,
   };
 });
 
@@ -143,15 +162,19 @@ function formatDay(dayNumber) {
 }
 
 function hasBlockBoundary(date) {
-  return Boolean(date && blockByDate.value[date]);
+  return Boolean(date && blockByDate.value[date]?.length);
 }
 
 function isBlockStart(date) {
-  return blockByDate.value[date]?.type === 'block_start';
+  return (blockByDate.value[date] ?? []).some((entry) => entry.type === 'block_start');
 }
 
 function isBlockEnd(date) {
-  return blockByDate.value[date]?.type === 'block_end';
+  return (blockByDate.value[date] ?? []).some((entry) => entry.type === 'block_end');
+}
+
+function hasReminder(date) {
+  return Boolean(date && remindersByDate.value[date]?.length);
 }
 
 function cellClass(date) {
@@ -169,6 +192,13 @@ function cellClass(date) {
   if (isCompetition(date)) {
     classes.push(
       'bg-rose-500/20 font-semibold text-rose-100 ring-1 ring-inset ring-rose-400/45 hover:bg-rose-500/30',
+    );
+    return classes.join(' ');
+  }
+
+  if (hasReminder(date)) {
+    classes.push(
+      'bg-indigo-500/15 font-semibold text-indigo-100 ring-1 ring-inset ring-indigo-400/40 hover:bg-indigo-500/25',
     );
     return classes.join(' ');
   }
@@ -247,6 +277,10 @@ onMounted(() => {
           <span class="h-2 w-2 rounded-full bg-sky-400" />
           Bloc
         </span>
+        <span v-if="isOverview" class="inline-flex items-center gap-1.5">
+          <span class="h-2 w-2 rounded-full bg-indigo-400" />
+          Rappel
+        </span>
         <span class="inline-flex items-center gap-1.5">
           <span class="h-2.5 w-2.5 rounded bg-amber-500/80" />
           Aujourd'hui
@@ -310,6 +344,7 @@ onMounted(() => {
                   <span
                     v-if="
                       hasBlockBoundary(cell.date) ||
+                      hasReminder(cell.date) ||
                       (!isOverview && (hasProgram(cell.date) || hasTraining(cell.date))) ||
                       isCompetition(cell.date)
                     "
@@ -317,6 +352,7 @@ onMounted(() => {
                   >
                     <span v-if="isBlockStart(cell.date)" class="h-1 w-1 rounded-full bg-sky-300" />
                     <span v-if="isBlockEnd(cell.date)" class="h-1 w-1 rounded-full bg-sky-500" />
+                    <span v-if="hasReminder(cell.date)" class="h-1 w-1 rounded-full bg-indigo-300" />
                     <span v-if="!isOverview && hasProgram(cell.date)" class="h-1 w-1 rounded-full bg-emerald-400" />
                     <span v-if="!isOverview && hasTraining(cell.date)" class="h-1 w-1 rounded-full bg-violet-300" />
                     <span v-if="isCompetition(cell.date)" class="h-1 w-1 rounded-full bg-rose-400" />
@@ -353,11 +389,23 @@ onMounted(() => {
 
       <div v-else class="mt-3 space-y-3">
         <section
-          v-if="selectedDetail.blockBoundary"
+          v-for="(boundary, index) in selectedDetail.blockBoundaries"
+          :key="`block-${index}`"
           class="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2.5"
         >
           <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-300">Bloc</p>
-          <p class="mt-1 text-sm font-semibold text-white">{{ selectedDetail.blockBoundary.label }}</p>
+          <p class="mt-1 text-sm font-semibold text-white">{{ boundary.label }}</p>
+        </section>
+
+        <section
+          v-for="reminder in selectedDetail.reminders"
+          :key="`reminder-${reminder.id}`"
+          class="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-2.5"
+        >
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-indigo-300">Rappel</p>
+          <p class="mt-1 text-sm font-semibold text-white">{{ reminder.title }}</p>
+          <p v-if="reminder.athlete_name" class="mt-0.5 text-xs text-slate-400">{{ reminder.athlete_name }}</p>
+          <p v-if="reminder.notes" class="mt-0.5 text-xs text-slate-500">{{ reminder.notes }}</p>
         </section>
 
         <section
@@ -366,6 +414,9 @@ onMounted(() => {
         >
           <p class="text-[10px] font-semibold uppercase tracking-wide text-rose-300">Compétition</p>
           <p class="mt-1 text-sm font-semibold text-white">{{ selectedDetail.competition.name }}</p>
+          <p v-if="selectedDetail.competition.athlete_name" class="mt-0.5 text-xs text-slate-400">
+            {{ selectedDetail.competition.athlete_name }}
+          </p>
           <p v-if="selectedDetail.competition.goal" class="mt-0.5 text-xs text-slate-400">
             Objectif : {{ selectedDetail.competition.goal }}
           </p>

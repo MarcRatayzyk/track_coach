@@ -266,19 +266,68 @@ export function indexBlockBoundariesByDate(programBlock) {
   }
 
   const startKey = String(programBlock.date_start).slice(0, 10);
-  map[startKey] = {
+  map[startKey] = [{
     type: 'block_start',
     label: programBlock.name ? `Début — ${programBlock.name}` : 'Début de bloc',
     date: startKey,
-  };
+  }];
 
   if (programBlock.date_end) {
     const endKey = String(programBlock.date_end).slice(0, 10);
-    map[endKey] = {
+    map[endKey] = [{
       type: 'block_end',
       label: programBlock.name ? `Fin — ${programBlock.name}` : 'Fin de bloc',
       date: endKey,
-    };
+    }];
+  }
+
+  return map;
+}
+
+export function indexRosterBlockBoundariesByDate(blockEvents = []) {
+  const map = {};
+
+  for (const block of blockEvents) {
+    if (block?.date_start) {
+      const startKey = String(block.date_start).slice(0, 10);
+      if (!map[startKey]) {
+        map[startKey] = [];
+      }
+      map[startKey].push({
+        type: 'block_start',
+        label: `Début — ${block.athlete_name ?? 'Athlète'}${block.name ? ` · ${block.name}` : ''}`,
+        date: startKey,
+      });
+    }
+
+    if (block?.date_end) {
+      const endKey = String(block.date_end).slice(0, 10);
+      if (!map[endKey]) {
+        map[endKey] = [];
+      }
+      map[endKey].push({
+        type: 'block_end',
+        label: `Fin — ${block.athlete_name ?? 'Athlète'}${block.name ? ` · ${block.name}` : ''}`,
+        date: endKey,
+      });
+    }
+  }
+
+  return map;
+}
+
+export function indexRemindersByDate(reminders = []) {
+  const map = {};
+
+  for (const reminder of reminders) {
+    const key = String(reminder?.event_date ?? '').slice(0, 10);
+    if (!key) {
+      continue;
+    }
+    if (!map[key]) {
+      map[key] = [];
+    }
+    map[key].push(reminder);
   }
 
   return map;

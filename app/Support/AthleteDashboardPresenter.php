@@ -96,7 +96,6 @@ class AthleteDashboardPresenter
             'wrapped' => $wrapped,
             'programBlock' => $displayProgramBlock,
             'competitions' => $competitions,
-            'funStats' => AthleteFunStatsSupport::forAthlete($athlete, $followUpStartedAt),
         ];
     }
 

@@ -11,7 +11,6 @@ import { Link } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import AthleteDailyCheckInModal from '../Components/AthleteDailyCheckInModal.vue';
 import AthleteDashboardHeader from '../Components/AthleteDashboardHeader.vue';
-import AthleteFunStatsPanel from '../Components/AthleteFunStatsPanel.vue';
 import AthleteMonthCalendar from '../Components/AthleteMonthCalendar.vue';
 import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
 import TodaySessionCard from '../Components/TodaySessionCard.vue';
@@ -46,10 +45,6 @@ const props = defineProps({
   competitions: {
     type: Array,
     default: () => [],
-  },
-  funStats: {
-    type: Object,
-    default: null,
   },
 });
 
@@ -201,12 +196,6 @@ onMounted(() => {
       :today-logged-session="todayLoggedSession"
       :adherence-share-payload="shareHighlights.adherence_card"
       @share-adherence="sharePayload"
-    />
-
-    <AthleteFunStatsPanel
-      v-if="funStats"
-      compact
-      :stats="funStats"
     />
 
     <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">

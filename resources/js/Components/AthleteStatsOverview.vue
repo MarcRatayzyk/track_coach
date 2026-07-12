@@ -7,7 +7,6 @@ import PrProgressionCharts from './charts/PrProgressionCharts.vue';
 import ReadinessTrendChart from './charts/ReadinessTrendChart.vue';
 import RpeTrendChart from './charts/RpeTrendChart.vue';
 import SbdTonnageDonutChart from './charts/SbdTonnageDonutChart.vue';
-import AthleteFunStatsPanel from './AthleteFunStatsPanel.vue';
 
 const props = defineProps({
   stats: {
@@ -45,10 +44,6 @@ const props = defineProps({
   trainingSessions: {
     type: Array,
     default: () => [],
-  },
-  funStats: {
-    type: Object,
-    default: null,
   },
 });
 
@@ -107,8 +102,6 @@ const filteredBodyWeight = computed(() =>
     </article>
 
     <SbdTonnageDonutChart class="mt-3" :flat-items="stats?.flatItems ?? []" />
-
-    <AthleteFunStatsPanel v-if="funStats" class="mt-3" :stats="funStats" />
 
     <article class="mt-3 min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
