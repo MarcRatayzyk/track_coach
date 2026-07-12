@@ -283,5 +283,37 @@ const smsMaskStyle = {
             d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
         />
     </svg>
+    <!-- Microphone -->
+    <svg
+        v-else-if="name === 'mic'"
+        :class="props.class"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+    >
+        <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 18.75a3.75 3.75 0 0 0 3.75-3.75V7.5a3.75 3.75 0 1 0-7.5 0v7.5a3.75 3.75 0 0 0 3.75 3.75Z"
+        />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5v1.125a7.5 7.5 0 0 1-15 0V10.5" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-2.25" />
+    </svg>
+    <!-- Envoyer -->
+    <svg
+        v-else-if="name === 'paper-plane'"
+        :class="props.class"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+    >
+        <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
+        />
+    </svg>
     <span v-else :class="['inline-block rounded bg-slate-700/60', props.class]" />
 </template>

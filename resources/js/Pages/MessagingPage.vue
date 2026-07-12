@@ -9,8 +9,8 @@ export default {
 <script setup>
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onUnmounted, ref, watch } from 'vue';
+import MessageComposeBar from '../Components/MessageComposeBar.vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
-import SessionFeedbackVoiceRecorder from '../Components/SessionFeedbackVoiceRecorder.vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import { echo } from '../echo';
 
@@ -45,7 +45,6 @@ const page = usePage();
 const myId = computed(() => page.props.auth?.user?.id);
 const isCoach = computed(() => props.role === 'coach');
 const localMessages = ref([...props.messages]);
-const voiceRecorderRef = ref(null);
 const recordedAudioFiles = ref([]);
 let echoChannel = null;
 
@@ -80,11 +79,6 @@ function submitNewThread() {
   threadForm.post('/coach/threads', { preserveScroll: true });
 }
 
-function onAudioImport(event) {
-  const files = Array.from(event.target.files ?? []);
-  recordedAudioFiles.value = [...recordedAudioFiles.value, ...files];
-}
-
 function onVoiceRecorded(file) {
   recordedAudioFiles.value = [...recordedAudioFiles.value, file];
 }
@@ -114,7 +108,6 @@ function submitMessage() {
         messageForm.reset('content');
         messageForm.session_feedback_id = null;
         recordedAudioFiles.value = [];
-        voiceRecorderRef.value?.clear?.();
       },
     });
 }
@@ -326,63 +319,23 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <form class="border-t border-slate-800 p-3 p-4" @submit.prevent="submitMessage">
-            <label class="sr-only">Message</label>
-            <textarea
+          <form class="border-t border-slate-800 p-4" @submit.prevent="submitMessage">
+            <MessageComposeBar
               v-model="messageForm.content"
-              rows="4"
-              :required="!isFeedbackReply && recordedAudioFiles.length === 0"
               :placeholder="isFeedbackReply
                 ? (isCoach ? 'Commentaire pour l’athlète…' : 'Répondre au coach…')
                 : 'Écrire un message…'"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-4 text-lg text-white placeholder:text-slate-600"
-            />
-
-            <SessionFeedbackVoiceRecorder
-              v-if="isCoach"
-              ref="voiceRecorderRef"
-              class="mt-3"
+              :processing="messageForm.processing"
+              :audio-files="recordedAudioFiles"
+              :allow-voice="true"
+              @submit="submitMessage"
               @recorded="onVoiceRecorded"
+              @remove-audio="removeAudioFile"
             />
 
-            <div v-if="isCoach" class="mt-3">
-              <label class="block text-sm text-slate-400">Importer des fichiers audio</label>
-              <input
-                type="file"
-                accept="audio/*"
-                multiple
-                class="mt-1 w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-white"
-                @change="onAudioImport"
-              />
-            </div>
-
-            <ul v-if="recordedAudioFiles.length" class="mt-3 space-y-1 text-sm text-slate-400">
-              <li
-                v-for="(file, index) in recordedAudioFiles"
-                :key="`${file.name}-${index}`"
-                class="flex items-center justify-between gap-2"
-              >
-                <span class="truncate">{{ file.name }}</span>
-                <button
-                  type="button"
-                  class="text-red-400 hover:text-red-300"
-                  @click="removeAudioFile(index)"
-                >
-                  Retirer
-                </button>
-              </li>
-            </ul>
-
-            <p v-if="Object.keys(messageForm.errors).length" class="mt-2 text-base text-red-400">
+            <p v-if="Object.keys(messageForm.errors).length" class="mt-2 text-sm text-red-400">
               {{ Object.values(messageForm.errors).flat().join(' ') }}
             </p>
-            <button
-              type="submit"
-              :disabled="messageForm.processing"
-              class="mt-4 rounded-xl bg-blue-600 px-8 py-4 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 disabled:opacity-50"
-            >
-              {{ isFeedbackReply ? 'Envoyer la réponse' : 'Envoyer' }}
-            </button>
           </form>
         </template>
         <div
