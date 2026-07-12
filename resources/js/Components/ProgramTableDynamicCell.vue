@@ -3,6 +3,7 @@ import ProgramTableExerciseSelect from './ProgramTableExerciseSelect.vue';
 import ProgramTableLiftSelect from './ProgramTableLiftSelect.vue';
 import ProgramTableSectionSelect from './ProgramTableSectionSelect.vue';
 import ProgramTableLoadCell from './ProgramTableLoadCell.vue';
+import { PRESCRIPTION_VALUE_INPUT_CLASS } from '../config/dayTableColumns';
 
 const props = defineProps({
   columnId: {
@@ -107,7 +108,7 @@ function onLiftChange(lift) {
       min="1"
       max="10"
       :readonly="preview"
-      class="w-full border-0 bg-transparent px-1 py-1 text-center text-xs text-white outline-none"
+      :class="PRESCRIPTION_VALUE_INPUT_CLASS"
       @input="updateField('sets', parseInteger($event.target.value))"
     />
   </template>
@@ -119,7 +120,7 @@ function onLiftChange(lift) {
       min="1"
       max="20"
       :readonly="preview"
-      class="w-full border-0 bg-transparent px-1 py-1 text-center text-xs text-white outline-none"
+      :class="PRESCRIPTION_VALUE_INPUT_CLASS"
       @input="updateField('reps', parseInteger($event.target.value))"
     />
   </template>
@@ -142,7 +143,7 @@ function onLiftChange(lift) {
       step="15"
       placeholder="s"
       :readonly="preview"
-      class="w-full border-0 bg-transparent px-1 py-1 text-center text-xs text-white outline-none"
+      :class="PRESCRIPTION_VALUE_INPUT_CLASS"
       @input="updateField('rest_seconds', parseInteger($event.target.value))"
     />
   </template>

@@ -9,6 +9,13 @@ export const OPTIONAL_COLUMN_IDS = ['section', 'sets', 'reps', 'load', 'rest', '
 
 export const PRESCRIPTION_COLUMN_IDS = ['sets', 'reps', 'load'];
 
+/** Champs numériques du tableau séance : plus lisibles sans alourdir la ligne. */
+export const PRESCRIPTION_VALUE_INPUT_CLASS =
+  'w-full min-w-0 border-0 bg-transparent px-0.5 py-0 text-center text-sm font-semibold tabular-nums leading-none tracking-tight text-white outline-none sm:text-base';
+
+export const PRESCRIPTION_LOAD_INPUT_CLASS =
+  'w-full min-w-0 border-0 bg-transparent px-0.5 py-0 text-center text-sm font-bold tabular-nums leading-none tracking-tight text-white outline-none sm:text-base';
+
 export const DAY_TABLE_COLUMNS = {
   exercise: {
     id: 'exercise',

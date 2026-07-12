@@ -4,6 +4,7 @@ import {
   LOAD_MODE_KG,
   LOAD_MODE_PERCENT,
   LOAD_MODE_RPE,
+  PRESCRIPTION_LOAD_INPUT_CLASS,
 } from '../config/dayTableColumns';
 
 const props = defineProps({
@@ -114,7 +115,7 @@ const placeholder = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-1">
+  <div class="space-y-0">
     <div class="flex justify-center gap-0.5">
       <button
         v-for="mode in modes"
@@ -140,7 +141,7 @@ const placeholder = computed(() => {
       inputmode="decimal"
       :placeholder="placeholder"
       :readonly="preview"
-      class="w-full border-0 bg-transparent px-1 py-0.5 text-center text-xs text-white outline-none"
+      :class="PRESCRIPTION_LOAD_INPUT_CLASS"
       @input="updateField('load', parseNumber($event.target.value))"
     />
     <input
@@ -152,7 +153,7 @@ const placeholder = computed(() => {
       step="0.5"
       :placeholder="placeholder"
       :readonly="preview"
-      class="w-full border-0 bg-transparent px-1 py-0.5 text-center text-xs text-white outline-none"
+      :class="PRESCRIPTION_LOAD_INPUT_CLASS"
       @input="updateField('load_percent', parseNumber($event.target.value))"
     />
     <input
@@ -164,7 +165,7 @@ const placeholder = computed(() => {
       step="0.5"
       :placeholder="placeholder"
       :readonly="preview"
-      class="w-full border-0 bg-transparent px-1 py-0.5 text-center text-xs text-white outline-none"
+      :class="PRESCRIPTION_LOAD_INPUT_CLASS"
       @input="updateField('rpe', parseNumber($event.target.value))"
     />
   </div>

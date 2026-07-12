@@ -72,9 +72,10 @@ function onRowClick(event) {
     <td
       v-for="(column, index) in visibleColumns"
       :key="column.id"
-      class="border-b border-slate-800 px-1 py-1"
+      class="border-b border-slate-800 px-1"
       :class="[
         index < visibleColumns.length - 1 ? 'border-r' : '',
+        ['sets', 'reps', 'load', 'rest'].includes(column.id) ? 'py-0.5' : 'py-1',
         layoutVariant === 'spaced' && ['sets', 'reps', 'load', 'section'].includes(column.id)
           ? 'text-center'
           : '',
