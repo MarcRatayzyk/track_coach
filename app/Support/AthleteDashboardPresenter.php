@@ -47,7 +47,7 @@ class AthleteDashboardPresenter
         $todayLoggedSession = self::todayLoggedSession($athlete, $todayString);
         $feedbackDueToday = self::feedbackDueToday($athlete, $activeAssignment, $date);
         $shareHighlights = self::shareHighlights($athlete, $activeAssignment, $latestPr, $date);
-        $wrapped = self::wrappedPayload($athlete, $activeAssignment, $date);
+        $wrapped = app(AthleteWrappedPresenter::class)->forAthlete($athlete, $activeAssignment, $date);
 
         return [
             'athleteName' => $athlete->name,
@@ -329,102 +329,6 @@ class AthleteDashboardPresenter
                 ['id' => 'weekly_recap', 'label' => 'Récap hebdomadaire'],
                 ['id' => 'meet_day', 'label' => 'Compétition'],
                 ['id' => 'checkin_streak', 'label' => 'Streak check-in'],
-            ],
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function wrappedPayload(
-        User $athlete,
-        ?AthleteProgramAssignment $assignment,
-        CarbonInterface $date,
-    ): array {
-        return [
-            'weekly' => self::singleWrappedPayload($athlete, $assignment, $date, 7, 'Weekly Wrapped'),
-            'monthly' => self::singleWrappedPayload($athlete, $assignment, $date, 30, 'Monthly Wrapped'),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function singleWrappedPayload(
-        User $athlete,
-        ?AthleteProgramAssignment $assignment,
-        CarbonInterface $date,
-        int $windowDays,
-        string $label,
-    ): array {
-        $start = $date->copy()->subDays($windowDays - 1)->startOfDay();
-        $end = $date->copy()->endOfDay();
-
-        $sessions = TrainingSession::query()
-            ->where('athlete_id', $athlete->id)
-            ->whereDate('session_date', '>=', $start->toDateString())
-            ->whereDate('session_date', '<=', $end->toDateString())
-            ->orderBy('session_date')
-            ->get();
-
-        $totalSets = 0;
-        $totalReps = 0;
-        $totalTonnage = 0.0;
-
-        foreach ($sessions as $session) {
-            foreach (($session->items ?? []) as $item) {
-                $sets = (int) ($item['sets'] ?? 0);
-                $reps = (int) ($item['reps'] ?? 0);
-                $load = (float) ($item['load'] ?? 0);
-
-                if ($sets <= 0 || $reps <= 0) {
-                    continue;
-                }
-
-                $totalSets += $sets;
-                $totalReps += ($sets * $reps);
-
-                if ($load > 0) {
-                    $totalTonnage += ($sets * $reps * $load);
-                }
-            }
-        }
-
-        $adherence = null;
-
-        if ($assignment !== null) {
-            $adherenceMetrics = (new AthleteAdherenceCalculator())->between(
-                $athlete->id,
-                $assignment,
-                $start,
-                $date,
-                $sessions,
-            );
-            $adherence = $adherenceMetrics['percentage'];
-        }
-
-        $shareText = "{$athlete->name} · {$label} : {$totalReps} reps, {$totalSets} séries, "
-            .(int) round($totalTonnage)." kg de tonnage"
-            .($adherence !== null ? ", adhérence {$adherence}%" : '');
-
-        return [
-            'label' => $label,
-            'window_days' => $windowDays,
-            'period_start' => $start->toDateString(),
-            'period_end' => $date->toDateString(),
-            'session_count' => $sessions->count(),
-            'total_sets' => $totalSets,
-            'total_reps' => $totalReps,
-            'total_tonnage' => (int) round($totalTonnage),
-            'adherence_percent' => $adherence,
-            'share_payload' => [
-                'variant' => $windowDays === 7 ? 'weekly_wrapped' : 'monthly_wrapped',
-                'athlete_name' => $athlete->name,
-                'date' => $date->toDateString(),
-                'headline' => $label,
-                'subline' => "{$totalReps} reps · {$totalSets} séries · ".(int) round($totalTonnage)." kg",
-                'social_text' => $shareText,
-                'share_url' => '/athlete/dashboard',
             ],
         ];
     }

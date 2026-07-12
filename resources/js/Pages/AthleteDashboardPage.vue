@@ -13,6 +13,7 @@ import AthleteDailyCheckInModal from '../Components/AthleteDailyCheckInModal.vue
 import AthleteDashboardHeader from '../Components/AthleteDashboardHeader.vue';
 import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
 import TodaySessionCard from '../Components/TodaySessionCard.vue';
+import WrappedStoryModal from '../Components/WrappedStoryModal.vue';
 
 const props = defineProps({
   athleteName: { type: String, required: true },
@@ -40,10 +41,57 @@ const props = defineProps({
 
 const checkInModalOpen = ref(false);
 const shareMessage = ref('');
+const activeWrapped = ref(null);
+const wrappedModalOpen = ref(false);
+
 const wrappedCards = computed(() => [
   props.wrapped?.weekly ?? null,
   props.wrapped?.monthly ?? null,
 ].filter(Boolean));
+
+function wrappedStorageKey(wrapped) {
+  return `tc-wrapped-seen-${props.athleteId}-${wrapped.variant}-${wrapped.period_end}`;
+}
+
+function markWrappedSeen(wrapped) {
+  if (typeof window === 'undefined' || !wrapped) {
+    return;
+  }
+  window.localStorage.setItem(wrappedStorageKey(wrapped), '1');
+}
+
+function hasSeenWrapped(wrapped) {
+  if (typeof window === 'undefined' || !wrapped) {
+    return true;
+  }
+  return window.localStorage.getItem(wrappedStorageKey(wrapped)) === '1';
+}
+
+function openWrappedStory(wrapped) {
+  activeWrapped.value = wrapped;
+  wrappedModalOpen.value = true;
+}
+
+function closeWrappedStory() {
+  if (activeWrapped.value) {
+    markWrappedSeen(activeWrapped.value);
+  }
+  wrappedModalOpen.value = false;
+}
+
+function maybeAutoOpenWrapped() {
+  const weekly = props.wrapped?.weekly;
+  const monthly = props.wrapped?.monthly;
+
+  if (weekly && !hasSeenWrapped(weekly)) {
+    openWrappedStory(weekly);
+    return;
+  }
+
+  if (monthly && !hasSeenWrapped(monthly)) {
+    openWrappedStory(monthly);
+  }
+}
 
 const todaySessionTitle = computed(() => {
   if (props.todaySession?.status !== 'session') {
@@ -113,7 +161,10 @@ async function sharePayload(payload) {
 onMounted(() => {
   if (shouldPromptCheckIn()) {
     openCheckInModal();
+    return;
   }
+
+  maybeAutoOpenWrapped();
 });
 </script>
 
@@ -198,34 +249,27 @@ onMounted(() => {
                 {{ card.period_start }} → {{ card.period_end }}
               </p>
             </div>
+          </div>
+
+          <p class="mt-3 text-xs text-slate-300">
+            Ton récap est prêt : volume, adhérence et stats Squat / Bench / Terre.
+          </p>
+
+          <div class="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
-              class="rounded-lg border border-violet-500/40 bg-violet-600/20 px-2.5 py-1 text-[11px] font-semibold text-violet-100 hover:bg-violet-600/30"
+              class="rounded-lg bg-violet-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-violet-500"
+              @click="openWrappedStory(card)"
+            >
+              Voir mon recap
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-violet-500/40 bg-violet-600/20 px-2.5 py-1.5 text-[11px] font-semibold text-violet-100 hover:bg-violet-600/30"
               @click="sharePayload(card.share_payload)"
             >
               Partager
             </button>
-          </div>
-
-          <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <div class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-2">
-              <p class="text-slate-400">Séries</p>
-              <p class="mt-0.5 font-semibold text-white">{{ card.total_sets }}</p>
-            </div>
-            <div class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-2">
-              <p class="text-slate-400">Reps</p>
-              <p class="mt-0.5 font-semibold text-white">{{ card.total_reps }}</p>
-            </div>
-            <div class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-2">
-              <p class="text-slate-400">Tonnage</p>
-              <p class="mt-0.5 font-semibold text-white">{{ card.total_tonnage }} kg</p>
-            </div>
-            <div class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-2">
-              <p class="text-slate-400">Adhérence</p>
-              <p class="mt-0.5 font-semibold text-white">
-                {{ card.adherence_percent !== null ? `${card.adherence_percent}%` : '—' }}
-              </p>
-            </div>
           </div>
         </article>
       </div>
@@ -261,6 +305,13 @@ onMounted(() => {
       :today-body-weight="todayBodyWeight"
       @close="closeCheckInModal"
       @skipped="skipCheckInForLater"
+    />
+
+    <WrappedStoryModal
+      :open="wrappedModalOpen"
+      :wrapped="activeWrapped"
+      @close="closeWrappedStory"
+      @share="sharePayload"
     />
   </div>
 </template>
