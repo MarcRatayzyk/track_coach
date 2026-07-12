@@ -15,6 +15,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  programUpcomingLabel: {
+    type: String,
+    default: null,
+  },
   prRecords: {
     type: Array,
     default: null,
@@ -72,7 +76,7 @@ const filteredBodyWeight = computed(() =>
         {{ adherence.percentage }}%
       </p>
       <p v-else class="mt-0.5 text-sm text-slate-500">
-        {{ hasActiveProgram ? '—' : 'Aucun programme actif' }}
+        {{ programUpcomingLabel ?? (hasActiveProgram ? '—' : 'Aucun programme actif') }}
       </p>
       <p v-if="adherence" class="mt-1 text-xs text-slate-500">
         {{ adherence.completedSessions }}/{{ adherence.plannedSessions }} séances au bon jour

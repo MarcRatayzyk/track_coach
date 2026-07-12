@@ -38,8 +38,11 @@ class AthleteDataWebController extends Controller
         $athlete->profile()->updateOrCreate(
             ['user_id' => $athlete->id],
             [
+                'birth_date' => $validated['birth_date'] ?? null,
                 'weight_class' => $validated['weight_class'] ?? null ?: null,
                 'bio' => $validated['bio'] ?? null ?: null,
+                'profession' => $validated['profession'] ?? null ?: null,
+                'years_training' => $validated['years_training'] ?? null,
             ],
         );
 

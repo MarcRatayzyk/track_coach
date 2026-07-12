@@ -24,6 +24,26 @@ const props = defineProps({
     type: String,
     default: '—',
   },
+  profession: {
+    type: String,
+    default: '—',
+  },
+  ageLabel: {
+    type: String,
+    default: '—',
+  },
+  bio: {
+    type: String,
+    default: '',
+  },
+  canEditProfile: {
+    type: Boolean,
+    default: false,
+  },
+  editableProfile: {
+    type: Object,
+    default: null,
+  },
   latestCompetitionDateLabel: {
     type: String,
     default: '—',
@@ -74,6 +94,7 @@ const emit = defineEmits([
   'open-competition',
   'add-competition',
   'toggle-feedback-frequency',
+  'save-profile',
 ]);
 
 const showProfileModal = ref(false);
@@ -212,6 +233,14 @@ function openNextCompetition() {
               <dd class="font-semibold text-white">{{ practiceDurationLabel || '—' }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
+              <dt class="text-slate-500">Âge</dt>
+              <dd class="font-semibold text-white">{{ ageLabel || '—' }}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
+              <dt class="text-slate-500">Profession</dt>
+              <dd class="font-semibold text-white">{{ profession || '—' }}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
               <dt class="text-slate-500">Catégorie</dt>
               <dd class="font-semibold text-white">{{ weightClass || '—' }}</dd>
             </div>
@@ -230,6 +259,60 @@ function openNextCompetition() {
               </dd>
             </div>
           </dl>
+
+          <div
+            v-if="bio && !canEditProfile"
+            class="mt-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5 text-sm text-slate-300"
+          >
+            <p class="text-xs font-semibold text-slate-500">Objectifs</p>
+            <p class="mt-1 whitespace-pre-wrap">{{ bio }}</p>
+          </div>
+
+          <form
+            v-if="canEditProfile && editableProfile"
+            class="mt-4 space-y-3 rounded-lg border border-slate-800 bg-slate-950/50 p-3"
+            @submit.prevent="emit('save-profile')"
+          >
+            <p class="text-xs font-semibold text-white">Modifier mon profil</p>
+            <label class="block text-xs text-slate-400">
+              Date de naissance
+              <input
+                v-model="editableProfile.birth_date"
+                type="date"
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              />
+            </label>
+            <label class="block text-xs text-slate-400">
+              Profession
+              <input
+                v-model="editableProfile.profession"
+                type="text"
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              />
+            </label>
+            <label class="block text-xs text-slate-400">
+              Catégorie de poids
+              <input
+                v-model="editableProfile.weight_class"
+                type="text"
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              />
+            </label>
+            <label class="block text-xs text-slate-400">
+              Objectifs
+              <textarea
+                v-model="editableProfile.bio"
+                rows="3"
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              />
+            </label>
+            <button
+              type="submit"
+              class="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500"
+            >
+              Enregistrer
+            </button>
+          </form>
 
           <div class="mt-4 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5">
             <div class="flex items-start justify-between gap-3">

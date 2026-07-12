@@ -137,7 +137,7 @@ class AppPageController extends Controller
             $bodyWeightRecent = $bodyWeight['bodyWeightRecent'];
         }
 
-        $activeProgram = ActiveProgramAssignmentSupport::forAthleteOnDate($athlete);
+        $activeProgram = ActiveProgramAssignmentSupport::forAthleteDisplay($athlete);
 
         $followUpStartedAt = $athlete->coaches()
             ->wherePivot('status', 'active')

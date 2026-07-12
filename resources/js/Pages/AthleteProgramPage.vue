@@ -34,6 +34,21 @@ const selectedCell = ref(null);
 
 const hasProgram = computed(() => Boolean(props.programBlock));
 
+const programUpcomingLabel = computed(() => {
+  if (!props.programBlock?.starts_in_future || !props.programBlock?.date_start) {
+    return null;
+  }
+
+  const days = Number(props.programBlock.days_until_start ?? 0);
+  const dateLabel = formatCalendarFr(props.programBlock.date_start, 'medium');
+
+  if (days <= 1) {
+    return `Démarre demain (${dateLabel})`;
+  }
+
+  return `Démarre le ${dateLabel}`;
+});
+
 const blockTypeLabel = computed(() => {
   const value = props.blockProgress?.block_type;
   return BLOCK_TYPES.find((item) => item.value === value)?.label ?? value ?? '—';
@@ -156,6 +171,14 @@ onMounted(() => {
       <p class="mt-2 text-sm text-slate-500">
         Aucun bloc actif pour le moment. Ton coach te l’assignera bientôt.
       </p>
+    </div>
+
+    <div
+      v-if="hasProgram && programBlock?.starts_in_future"
+      class="rounded-xl border border-blue-500/30 bg-blue-950/20 px-4 py-3 text-sm text-blue-200"
+    >
+      {{ programUpcomingLabel }}
+      <span class="text-blue-300/80"> — ton calendrier est déjà prêt.</span>
     </div>
 
     <template v-if="hasProgram">

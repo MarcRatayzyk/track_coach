@@ -10,7 +10,6 @@ export default {
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import AthleteMonthCalendar from '../Components/AthleteMonthCalendar.vue';
-import AthletePrForm from '../Components/AthletePrForm.vue';
 import AthleteProfileOverview from '../Components/AthleteProfileOverview.vue';
 import AthleteStatsOverview from '../Components/AthleteStatsOverview.vue';
 import CompetitionDetailPanel from '../Components/CompetitionDetailPanel.vue';
@@ -335,6 +334,8 @@ const profileForm = useForm({
 });
 
 const ownProfileForm = useForm({
+  birth_date: props.athlete.profile?.birth_date?.slice?.(0, 10) ?? props.athlete.profile?.birth_date ?? '',
+  profession: props.athlete.profile?.profession ?? '',
   weight_class: props.athlete.profile?.weight_class ?? '',
   bio: props.athlete.profile?.bio ?? '',
 });
@@ -443,6 +444,18 @@ const practiceStartDate = computed(() => {
 });
 
 const practiceDurationLabel = computed(() => {
+  const years = props.athlete.profile?.years_training;
+  if (years != null && years !== '') {
+    const value = Number(years);
+    if (value === 0) {
+      return "Moins d'1 an";
+    }
+    if (value === 1) {
+      return '1 an';
+    }
+    return `${value} ans`;
+  }
+
   if (!practiceStartDate.value) {
     return '—';
   }
@@ -452,15 +465,45 @@ const practiceDurationLabel = computed(() => {
   if (months < 0) {
     months = 0;
   }
-  const years = Math.floor(months / 12);
+  const yearsFromStart = Math.floor(months / 12);
   const remainingMonths = months % 12;
-  if (years === 0) {
+  if (yearsFromStart === 0) {
     return `${remainingMonths} mois`;
   }
   if (remainingMonths === 0) {
-    return `${years} an${years > 1 ? 's' : ''}`;
+    return `${yearsFromStart} an${yearsFromStart > 1 ? 's' : ''}`;
   }
-  return `${years} an${years > 1 ? 's' : ''} ${remainingMonths} mois`;
+  return `${yearsFromStart} an${yearsFromStart > 1 ? 's' : ''} ${remainingMonths} mois`;
+});
+
+const ageLabel = computed(() => {
+  const birthDate = props.athlete.profile?.birth_date;
+  if (!birthDate) {
+    return '—';
+  }
+  const birth = new Date(String(birthDate).slice(0, 10));
+  if (!Number.isFinite(birth.getTime())) {
+    return '—';
+  }
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const monthDiff = now.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+    age -= 1;
+  }
+  return age > 0 ? `${age} ans` : '—';
+});
+
+const programUpcomingLabel = computed(() => {
+  if (!props.programBlock?.starts_in_future || !props.programBlock?.date_start) {
+    return null;
+  }
+  const days = Number(props.programBlock.days_until_start ?? 0);
+  const dateLabel = formatCalendarFr(props.programBlock.date_start, 'medium');
+  if (days <= 1) {
+    return `Démarre demain (${dateLabel})`;
+  }
+  return `Démarre le ${dateLabel}`;
 });
 
 function subtractMonths(date, months) {
@@ -597,6 +640,11 @@ onMounted(() => {
         :email="athlete.email"
         :weight-class="athlete.profile?.weight_class ?? '—'"
         :practice-duration-label="practiceDurationLabel"
+        :profession="athlete.profile?.profession ?? '—'"
+        :age-label="ageLabel"
+        :bio="athlete.profile?.bio ?? ''"
+        :can-edit-profile="isOwnProfile"
+        :editable-profile="isOwnProfile ? ownProfileForm : null"
         :latest-competition-date-label="latestCompetitionDateLabel"
         :latest-competition-bars="latestCompetitionBars"
         :personal-records="personalRecords"
@@ -611,47 +659,8 @@ onMounted(() => {
         @open-competition="openCompetition"
         @add-competition="openAddCompetitionModal"
         @toggle-feedback-frequency="toggleFeedbackFrequency"
+        @save-profile="submitOwnProfile"
       />
-
-      <section
-        v-if="isOwnProfile"
-        class="mt-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg lg:p-5"
-      >
-        <h2 class="text-sm font-semibold text-white">Mon profil</h2>
-        <form class="mt-3 space-y-3" @submit.prevent="submitOwnProfile">
-          <label class="block text-xs text-slate-400">
-            Catégorie de poids
-            <input
-              v-model="ownProfileForm.weight_class"
-              type="text"
-              class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-              placeholder="ex. -83 kg"
-            />
-            <p v-if="ownProfileForm.errors.weight_class" class="mt-1 text-xs text-red-400">
-              {{ ownProfileForm.errors.weight_class }}
-            </p>
-          </label>
-          <label class="block text-xs text-slate-400">
-            Bio
-            <textarea
-              v-model="ownProfileForm.bio"
-              rows="3"
-              class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-              placeholder="Quelques mots sur ton parcours…"
-            />
-            <p v-if="ownProfileForm.errors.bio" class="mt-1 text-xs text-red-400">
-              {{ ownProfileForm.errors.bio }}
-            </p>
-          </label>
-          <button
-            type="submit"
-            :disabled="ownProfileForm.processing"
-            class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-          >
-            Enregistrer le profil
-          </button>
-        </form>
-      </section>
 
       <section class="mt-3 min-w-0 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 pt-4 pb-2 shadow-lg lg:p-5 lg:pb-5">
         <h2 class="text-sm font-semibold text-white">Calendrier</h2>
@@ -679,19 +688,13 @@ onMounted(() => {
         <AthleteStatsOverview
           :stats="overviewStats"
           :has-active-program="Boolean(programBlock)"
+          :program-upcoming-label="programUpcomingLabel"
           :pr-records="filteredPrRecords"
           :readiness-recent="readinessRecent"
           :body-weight-recent="bodyWeightRecent"
           :time-range="timeRange"
           :time-range-options="timeRangeOptions"
           @update:time-range="timeRange = $event"
-        />
-      </div>
-
-      <div v-if="isOwnProfile" class="mt-3">
-        <AthletePrForm
-          :athlete-id="athlete.id"
-          :latest-pr="athlete.latest_pr"
         />
       </div>
 

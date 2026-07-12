@@ -20,7 +20,7 @@ class AthleteDashboardPresenter
     {
         $date = ($date ?? now())->copy()->startOfDay();
 
-        $activeAssignment = ActiveProgramAssignmentSupport::forAthleteOnDate($athlete, $date);
+        $activeAssignment = ActiveProgramAssignmentSupport::forAthleteDisplay($athlete, $date);
 
         return [
             'programBlock' => ProgramBlockPresenter::forAssignment($activeAssignment),

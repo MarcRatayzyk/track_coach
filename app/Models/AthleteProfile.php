@@ -15,6 +15,8 @@ class AthleteProfile extends Model
         'birth_date',
         'weight_class',
         'bio',
+        'profession',
+        'years_training',
         'feedback_frequency',
     ];
 

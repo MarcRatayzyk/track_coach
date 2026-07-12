@@ -37,6 +37,9 @@ class ProgramBlockPresenter
         }
 
         $latestPr = $assignment->athlete?->latestPr;
+        $today = now()->startOfDay();
+        $startsInFuture = $assignment->date_start !== null
+            && $assignment->date_start->copy()->startOfDay()->gt($today);
 
         return [
             'id' => $assignment->id,
@@ -46,6 +49,10 @@ class ProgramBlockPresenter
             'status' => $assignment->status,
             'date_start' => $assignment->date_start?->toDateString(),
             'date_end' => $assignment->date_end?->toDateString(),
+            'starts_in_future' => $startsInFuture,
+            'days_until_start' => $startsInFuture
+                ? (int) $today->diffInDays($assignment->date_start->copy()->startOfDay())
+                : 0,
             'week_count' => $weeks->count(),
             'days_per_week' => $daysPerWeek,
             'table_layout' => DayTableLayoutSupport::resolveSnapshot($template?->table_layout),

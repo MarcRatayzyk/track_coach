@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAccountSetupRequest;
 use App\Http\Requests\StoreCoachAccountSetupRequest;
+use App\Models\PersonalRecord;
 use App\Models\User;
 use App\Support\AccountSetupUrlGenerator;
 use App\Support\ActivationDelivery;
@@ -75,10 +76,27 @@ class AccountSetupController extends Controller
             $user->profile()->updateOrCreate(
                 ['user_id' => $user->id],
                 [
+                    'birth_date' => $validated['birth_date'] ?? null,
                     'weight_class' => $validated['weight_class'] ?? null ?: null,
                     'bio' => $validated['bio'] ?? null ?: null,
+                    'profession' => $validated['profession'] ?? null ?: null,
+                    'years_training' => $validated['years_training'] ?? null,
                 ],
             );
+
+            $squat = (int) ($validated['squat'] ?? 0);
+            $bench = (int) ($validated['bench'] ?? 0);
+            $deadlift = (int) ($validated['deadlift'] ?? 0);
+
+            if ($squat > 0 || $bench > 0 || $deadlift > 0) {
+                PersonalRecord::create([
+                    'athlete_id' => $user->id,
+                    'squat' => $squat,
+                    'bench' => $bench,
+                    'deadlift' => $deadlift,
+                    'reference_date' => now()->toDateString(),
+                ]);
+            }
         }
 
         if ($user->role === 'coach') {
