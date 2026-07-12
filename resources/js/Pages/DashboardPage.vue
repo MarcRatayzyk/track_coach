@@ -10,6 +10,7 @@ export default {
 import { Link, router } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
+import CoachDashboardCalendar from '../Components/CoachDashboardCalendar.vue';
 import CoachOnboardingTour from '../Components/CoachOnboardingTour.vue';
 import CompetitionCalendarModal from '../Components/CompetitionCalendarModal.vue';
 import DashboardAlertsPanel from '../Components/DashboardAlertsPanel.vue';
@@ -76,6 +77,14 @@ const props = defineProps({
     }),
   },
   alerts: {
+    type: Array,
+    default: () => [],
+  },
+  calendarReminders: {
+    type: Array,
+    default: () => [],
+  },
+  rosterAthletes: {
     type: Array,
     default: () => [],
   },
@@ -451,6 +460,13 @@ onMounted(() => {
         </ul>
       </section>
     </div>
+
+    <CoachDashboardCalendar
+      class="mt-4"
+      :reminders="calendarReminders"
+      :upcoming-competitions="upcomingCompetitions"
+      :roster-athletes="rosterAthletes"
+    />
 
     <CompetitionCalendarModal
       :open="showCompetitionModal"

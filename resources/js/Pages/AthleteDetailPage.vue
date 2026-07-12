@@ -16,6 +16,7 @@ import CompetitionDetailPanel from '../Components/CompetitionDetailPanel.vue';
 import MatchPlanBuilder from '../Components/MatchPlanBuilder.vue';
 import TrainingSessionEditorModal from '../Components/TrainingSessionEditorModal.vue';
 import { buildAthleteOverviewStats } from '../utils/athleteOverviewStats';
+import { levelLabel as formatLevelLabel, weightCategoryLabel } from '../config/ipfWeightCategories';
 import { formatCalendarFr } from '../utils/formatDates';
 import { defaultStructuredPlan, matchPlanFromCompetition } from '../utils/matchPlan';
 
@@ -55,6 +56,10 @@ const props = defineProps({
   programHistory: {
     type: Array,
     default: () => [],
+  },
+  funStats: {
+    type: Object,
+    default: null,
   },
 });
 
@@ -335,10 +340,37 @@ const profileForm = useForm({
 
 const ownProfileForm = useForm({
   birth_date: props.athlete.profile?.birth_date?.slice?.(0, 10) ?? props.athlete.profile?.birth_date ?? '',
+  height_cm: props.athlete.profile?.height_cm ?? null,
+  sex: props.athlete.profile?.sex ?? '',
+  weight_category: props.athlete.profile?.weight_category ?? '',
+  level: props.athlete.profile?.level ?? '',
+  injuries_notes: props.athlete.profile?.injuries_notes ?? '',
   profession: props.athlete.profile?.profession ?? '',
-  weight_class: props.athlete.profile?.weight_class ?? '',
   bio: props.athlete.profile?.bio ?? '',
 });
+
+const coachProfileForm = useForm({
+  birth_date: props.athlete.profile?.birth_date?.slice?.(0, 10) ?? props.athlete.profile?.birth_date ?? '',
+  height_cm: props.athlete.profile?.height_cm ?? null,
+  sex: props.athlete.profile?.sex ?? '',
+  weight_category: props.athlete.profile?.weight_category ?? '',
+  level: props.athlete.profile?.level ?? '',
+  injuries_notes: props.athlete.profile?.injuries_notes ?? '',
+  profession: props.athlete.profile?.profession ?? '',
+  bio: props.athlete.profile?.bio ?? '',
+});
+
+const editableProfileForm = computed(() => {
+  if (isOwnProfile.value) {
+    return ownProfileForm;
+  }
+  if (isCoach.value) {
+    return coachProfileForm;
+  }
+  return null;
+});
+
+const canEditProfile = computed(() => isOwnProfile.value || isCoach.value);
 
 const feedbackLabels = {
   daily: 'Journalier',
@@ -494,6 +526,19 @@ const ageLabel = computed(() => {
   return age > 0 ? `${age} ans` : '—';
 });
 
+const heightLabel = computed(() => {
+  const height = props.athlete.profile?.height_cm;
+  return height ? `${height} cm` : '—';
+});
+
+const athleteLevelLabel = computed(() =>
+  formatLevelLabel(props.athlete.profile?.level) ?? '—',
+);
+
+const athleteWeightCategoryLabel = computed(() =>
+  weightCategoryLabel(props.athlete.profile?.weight_category) ?? '—',
+);
+
 const programUpcomingLabel = computed(() => {
   if (!props.programBlock?.starts_in_future || !props.programBlock?.date_start) {
     return null;
@@ -603,6 +648,13 @@ function onSessionSaved({ sessionDate } = {}) {
 }
 
 function submitOwnProfile() {
+  if (isCoach.value) {
+    coachProfileForm.patch(`/coach/athletes/${props.athlete.id}/profile`, {
+      preserveScroll: true,
+    });
+    return;
+  }
+
   ownProfileForm.patch(`/athletes/${props.athlete.id}/profile`, {
     preserveScroll: true,
   });
@@ -638,13 +690,16 @@ onMounted(() => {
       <AthleteProfileOverview
         :name="athlete.name"
         :email="athlete.email"
-        :weight-class="athlete.profile?.weight_class ?? '—'"
+        :weight-class="athleteWeightCategoryLabel"
+        :height-label="heightLabel"
+        :level-label="athleteLevelLabel"
+        :injuries-notes="athlete.profile?.injuries_notes ?? ''"
         :practice-duration-label="practiceDurationLabel"
         :profession="athlete.profile?.profession ?? '—'"
         :age-label="ageLabel"
         :bio="athlete.profile?.bio ?? ''"
-        :can-edit-profile="isOwnProfile"
-        :editable-profile="isOwnProfile ? ownProfileForm : null"
+        :can-edit-profile="canEditProfile"
+        :editable-profile="editableProfileForm"
         :latest-competition-date-label="latestCompetitionDateLabel"
         :latest-competition-bars="latestCompetitionBars"
         :personal-records="personalRecords"
@@ -692,6 +747,8 @@ onMounted(() => {
           :pr-records="filteredPrRecords"
           :readiness-recent="readinessRecent"
           :body-weight-recent="bodyWeightRecent"
+          :training-sessions="trainingSessions"
+          :fun-stats="funStats"
           :time-range="timeRange"
           :time-range-options="timeRangeOptions"
           @update:time-range="timeRange = $event"

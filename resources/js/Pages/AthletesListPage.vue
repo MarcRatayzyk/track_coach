@@ -44,8 +44,8 @@ function parseWeightClassKg(value) {
 
 function sortValue(row, key) {
   switch (key) {
-    case 'weight_class':
-      return parseWeightClassKg(row.weight_class) ?? row.weight_class ?? '';
+    case 'weight_category':
+      return parseWeightClassKg(row.weight_category_label) ?? row.weight_category_label ?? '';
     case 'total_kg':
       return row.total_kg;
     case 'gl_points':
@@ -124,7 +124,7 @@ function toggleSort(key, direction = null) {
   }
 
   sortKey.value = key;
-  sortDirection.value = key === 'weight_class' ? 'asc' : key === 'next_competition_days' ? 'asc' : 'desc';
+  sortDirection.value = key === 'weight_category' ? 'asc' : key === 'next_competition_days' ? 'asc' : 'desc';
 }
 
 function sortArrowClass(key, direction) {
@@ -306,21 +306,21 @@ function confirmRemove(row) {
                 <button
                   type="button"
                   class="group inline-flex items-center gap-1.5 hover:text-slate-300"
-                  @click="toggleSort('weight_class')"
+                  @click="toggleSort('weight_category')"
                 >
                   <span>Caté. poids</span>
                   <span class="inline-flex flex-col leading-none" aria-hidden="true">
                     <span
                       class="cursor-pointer text-[10px] leading-3"
-                      :class="sortArrowClass('weight_class', 'desc')"
+                      :class="sortArrowClass('weight_category', 'desc')"
                       title="Tri décroissant"
-                      @click.stop="toggleSort('weight_class', 'desc')"
+                      @click.stop="toggleSort('weight_category', 'desc')"
                     >▲</span>
                     <span
                       class="cursor-pointer text-[10px] leading-3"
-                      :class="sortArrowClass('weight_class', 'asc')"
+                      :class="sortArrowClass('weight_category', 'asc')"
                       title="Tri croissant"
-                      @click.stop="toggleSort('weight_class', 'asc')"
+                      @click.stop="toggleSort('weight_category', 'asc')"
                     >▼</span>
                   </span>
                 </button>
@@ -518,7 +518,7 @@ function confirmRemove(row) {
               </td>
 
               <td class="px-3 py-4 text-slate-300">
-                {{ row.weight_class || '—' }}
+                {{ row.weight_category_label || '—' }}
               </td>
 
               <td class="px-3 py-4 text-right font-medium text-white">

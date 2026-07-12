@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCompetitionRequest;
 use App\Http\Requests\StorePersonalRecordRequest;
 use App\Http\Requests\UpsertTrainingSessionRequest;
+use App\Support\AthleteProfileSupport;
 use App\Support\TrainingSessionSupport;
 use App\Http\Requests\UpdateAthleteProfileRequest;
 use App\Http\Requests\UpdateCompetitionRequest;
@@ -22,13 +23,23 @@ class AthleteDataWebController extends Controller
     {
         $this->authorize('updateAthleteData', $athlete);
 
-        $athlete->profile?->update([
-            'feedback_frequency' => $request->validated('feedback_frequency'),
-        ]);
+        $validated = $request->validated();
+        $attributes = AthleteProfileSupport::attributesFromValidated($validated);
+
+        if ($attributes !== []) {
+            $athlete->profile()->updateOrCreate(['user_id' => $athlete->id], $attributes);
+        }
+
+        if ($request->filled('feedback_frequency')) {
+            $athlete->profile()->updateOrCreate(
+                ['user_id' => $athlete->id],
+                ['feedback_frequency' => $validated['feedback_frequency']],
+            );
+        }
 
         return redirect()
             ->route('athletes.show', $athlete)
-            ->with('success', 'Mode de suivi des retours mis à jour.');
+            ->with('success', 'Profil athlète mis à jour.');
     }
 
     public function updateOwnProfile(UpdateOwnAthleteProfileRequest $request, User $athlete): RedirectResponse
@@ -37,13 +48,7 @@ class AthleteDataWebController extends Controller
 
         $athlete->profile()->updateOrCreate(
             ['user_id' => $athlete->id],
-            [
-                'birth_date' => $validated['birth_date'] ?? null,
-                'weight_class' => $validated['weight_class'] ?? null ?: null,
-                'bio' => $validated['bio'] ?? null ?: null,
-                'profession' => $validated['profession'] ?? null ?: null,
-                'years_training' => $validated['years_training'] ?? null,
-            ],
+            AthleteProfileSupport::attributesFromValidated($validated),
         );
 
         return back()->with('success', 'Profil mis à jour.');

@@ -258,6 +258,32 @@ export function indexCompetitionsByDate(competitions = []) {
   return map;
 }
 
+export function indexBlockBoundariesByDate(programBlock) {
+  const map = {};
+
+  if (!programBlock?.date_start) {
+    return map;
+  }
+
+  const startKey = String(programBlock.date_start).slice(0, 10);
+  map[startKey] = {
+    type: 'block_start',
+    label: programBlock.name ? `Début — ${programBlock.name}` : 'Début de bloc',
+    date: startKey,
+  };
+
+  if (programBlock.date_end) {
+    const endKey = String(programBlock.date_end).slice(0, 10);
+    map[endKey] = {
+      type: 'block_end',
+      label: programBlock.name ? `Fin — ${programBlock.name}` : 'Fin de bloc',
+      date: endKey,
+    };
+  }
+
+  return map;
+}
+
 export function buildTrainingYearGridFromProgramBlock() {
   const { start, end } = defaultCalendarRange();
   return buildTrainingYearGrid(start, end);

@@ -1,10 +1,13 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { filterEntriesByRange } from '../utils/athleteOverviewStats';
+import { buildRpeTrendSeries, filterRpeTrendByRange, RPE_EXERCISE_FILTERS } from '../utils/rpeTrend';
 import BodyWeightTrendChart from './charts/BodyWeightTrendChart.vue';
 import PrProgressionCharts from './charts/PrProgressionCharts.vue';
 import ReadinessTrendChart from './charts/ReadinessTrendChart.vue';
+import RpeTrendChart from './charts/RpeTrendChart.vue';
 import SbdTonnageDonutChart from './charts/SbdTonnageDonutChart.vue';
+import AthleteFunStatsPanel from './AthleteFunStatsPanel.vue';
 
 const props = defineProps({
   stats: {
@@ -39,11 +42,28 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  trainingSessions: {
+    type: Array,
+    default: () => [],
+  },
+  funStats: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['update:timeRange']);
 
 const wellnessTimeRange = ref('1m');
+const rpeTimeRange = ref('3m');
+const rpeExerciseFilter = ref('all');
+
+const rpePoints = computed(() => {
+  const series = buildRpeTrendSeries(props.trainingSessions, {
+    exerciseFilter: rpeExerciseFilter.value,
+  });
+  return filterRpeTrendByRange(series, rpeTimeRange.value);
+});
 
 const wellnessTimeRangeOptions = [
   { value: '7d', label: '7 j' },
@@ -87,6 +107,49 @@ const filteredBodyWeight = computed(() =>
     </article>
 
     <SbdTonnageDonutChart class="mt-3" :flat-items="stats?.flatItems ?? []" />
+
+    <AthleteFunStatsPanel v-if="funStats" class="mt-3" :stats="funStats" />
+
+    <article class="mt-3 min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h3 class="text-sm font-semibold text-white">Évolution RPE (réalisé)</h3>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="option in wellnessTimeRangeOptions.filter((item) => ['7d', '1m', '3m', '6m'].includes(item.value))"
+            :key="`rpe-range-${option.value}`"
+            type="button"
+            class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
+            :class="
+              rpeTimeRange === option.value
+                ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
+                : 'border-slate-700 text-slate-400 hover:bg-slate-800'
+            "
+            @click="rpeTimeRange = option.value"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button
+          v-for="option in RPE_EXERCISE_FILTERS"
+          :key="option.value"
+          type="button"
+          class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
+          :class="
+            rpeExerciseFilter === option.value
+              ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
+              : 'border-slate-700 text-slate-400 hover:bg-slate-800'
+          "
+          @click="rpeExerciseFilter = option.value"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+      <div class="mt-3 min-w-0 overflow-x-auto">
+        <RpeTrendChart :points="rpePoints" embedded />
+      </div>
+    </article>
 
     <div class="mt-3 flex flex-wrap gap-2">
       <button

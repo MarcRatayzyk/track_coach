@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Exercise;
+use App\Support\AuthSidebarSupport;
 use App\Support\ActivationDelivery;
 use App\Support\MessagingInboxSupport;
 use Illuminate\Http\Request;
@@ -46,6 +47,12 @@ class HandleInertiaRequests extends Middleware
                     'email' => $request->user()->email,
                     'role' => $request->user()->role,
                 ] : null,
+                'sidebarProfile' => fn () => $request->user()
+                    ? AuthSidebarSupport::profileLinkForUser($request->user())
+                    : null,
+                'coach' => fn () => $request->user()?->role === 'athlete'
+                    ? AuthSidebarSupport::coachSummaryForAthlete($request->user())
+                    : null,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

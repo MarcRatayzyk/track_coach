@@ -35,10 +35,21 @@ class GlPointsCalculator
         return round(($totalKg * 100) / $denominator, 2);
     }
 
-    public static function bodyweightFromClass(?string $weightClass): ?float
+    public static function bodyweightFromClass(?string $weightClass, ?string $sex = null): ?float
     {
         if ($weightClass === null || $weightClass === '') {
             return null;
+        }
+
+        $categoryBodyweights = [
+            'm59' => 59.0, 'm66' => 66.0, 'm74' => 74.0, 'm83' => 83.0,
+            'm93' => 93.0, 'm105' => 105.0, 'm120' => 120.0, 'm120plus' => 125.0,
+            'f47' => 47.0, 'f52' => 52.0, 'f57' => 57.0, 'f63' => 63.0,
+            'f69' => 69.0, 'f76' => 76.0, 'f84' => 84.0, 'f84plus' => 90.0,
+        ];
+
+        if (isset($categoryBodyweights[$weightClass])) {
+            return $categoryBodyweights[$weightClass];
         }
 
         if (preg_match('/(\d+(?:[.,]\d+)?)/', $weightClass, $matches) !== 1) {
@@ -48,5 +59,14 @@ class GlPointsCalculator
         $value = (float) str_replace(',', '.', $matches[1]);
 
         return $value > 0 ? $value : null;
+    }
+
+    public static function sexFromCategory(?string $weightCategory): string
+    {
+        if ($weightCategory !== null && str_starts_with($weightCategory, 'f')) {
+            return 'female';
+        }
+
+        return 'male';
     }
 }

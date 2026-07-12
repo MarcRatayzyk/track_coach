@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
   buildTrainingYearGridFromProgramBlock,
+  indexBlockBoundariesByDate,
   indexCompetitionsByDate,
   indexProgramSessionsByDate,
   indexTrainingSessionsByDate,
@@ -26,6 +27,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  mode: {
+    type: String,
+    default: 'full',
+    validator: (value) => ['full', 'overview'].includes(value),
+  },
 });
 
 const emit = defineEmits(['edit-session']);
@@ -38,9 +44,17 @@ const currentMonthKey = `${new Date().getFullYear()}-${new Date().getMonth()}`;
 
 const grid = computed(() => buildTrainingYearGridFromProgramBlock());
 
-const programByDate = computed(() => indexProgramSessionsByDate(props.programBlock));
+const isOverview = computed(() => props.mode === 'overview');
 
-const trainingByDate = computed(() => indexTrainingSessionsByDate(props.trainingSessions));
+const programByDate = computed(() =>
+  isOverview.value ? {} : indexProgramSessionsByDate(props.programBlock),
+);
+
+const trainingByDate = computed(() =>
+  isOverview.value ? {} : indexTrainingSessionsByDate(props.trainingSessions),
+);
+
+const blockByDate = computed(() => indexBlockBoundariesByDate(props.programBlock));
 
 const competitionByDate = computed(() => indexCompetitionsByDate(props.competitions));
 
@@ -53,14 +67,17 @@ const selectedDetail = computed(() => {
   const program = programByDate.value[selectedDate.value] ?? null;
   const training = trainingByDate.value[selectedDate.value] ?? [];
 
+  const blockBoundary = blockByDate.value[selectedDate.value] ?? null;
+
   return {
     date: selectedDate.value,
     label: formatCalendarFr(selectedDate.value),
     competition,
     program,
     training,
+    blockBoundary,
     isToday: selectedDate.value === today,
-    isEmpty: !competition && !program && !training.length,
+    isEmpty: !competition && !program && !training.length && !blockBoundary,
   };
 });
 
@@ -125,6 +142,18 @@ function formatDay(dayNumber) {
   return String(dayNumber).padStart(2, '0');
 }
 
+function hasBlockBoundary(date) {
+  return Boolean(date && blockByDate.value[date]);
+}
+
+function isBlockStart(date) {
+  return blockByDate.value[date]?.type === 'block_start';
+}
+
+function isBlockEnd(date) {
+  return blockByDate.value[date]?.type === 'block_end';
+}
+
 function cellClass(date) {
   const classes = ['w-full'];
 
@@ -144,12 +173,17 @@ function cellClass(date) {
     return classes.join(' ');
   }
 
-  if (hasTraining(date)) {
+  if (isBlockStart(date) || isBlockEnd(date)) {
+    classes.push('bg-sky-500/15 font-semibold text-sky-100 ring-1 ring-inset ring-sky-400/40 hover:bg-sky-500/25');
+    return classes.join(' ');
+  }
+
+  if (!isOverview.value && hasTraining(date)) {
     classes.push('bg-violet-500/10 text-violet-200 hover:bg-violet-500/20');
     return classes.join(' ');
   }
 
-  if (hasProgram(date)) {
+  if (!isOverview.value && hasProgram(date)) {
     classes.push('bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20');
     return classes.join(' ');
   }
@@ -199,13 +233,19 @@ onMounted(() => {
   <div class="w-full">
     <div class="mb-2 flex flex-wrap items-center justify-between gap-3">
       <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
-        <span class="inline-flex items-center gap-1.5">
-          <span class="h-2 w-2 rounded-full bg-emerald-400" />
-          Programme
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="h-2 w-2 rounded-full bg-violet-400" />
-          Séance réalisée
+        <template v-if="!isOverview">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="h-2 w-2 rounded-full bg-emerald-400" />
+            Programme
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="h-2 w-2 rounded-full bg-violet-400" />
+            Séance réalisée
+          </span>
+        </template>
+        <span v-if="isOverview" class="inline-flex items-center gap-1.5">
+          <span class="h-2 w-2 rounded-full bg-sky-400" />
+          Bloc
         </span>
         <span class="inline-flex items-center gap-1.5">
           <span class="h-2.5 w-2.5 rounded bg-amber-500/80" />
@@ -268,11 +308,17 @@ onMounted(() => {
                 >
                   <span>{{ formatDay(cell.dayNumber) }}</span>
                   <span
-                    v-if="hasProgram(cell.date) || hasTraining(cell.date) || isCompetition(cell.date)"
+                    v-if="
+                      hasBlockBoundary(cell.date) ||
+                      (!isOverview && (hasProgram(cell.date) || hasTraining(cell.date))) ||
+                      isCompetition(cell.date)
+                    "
                     class="flex gap-px"
                   >
-                    <span v-if="hasProgram(cell.date)" class="h-1 w-1 rounded-full bg-emerald-400" />
-                    <span v-if="hasTraining(cell.date)" class="h-1 w-1 rounded-full bg-violet-300" />
+                    <span v-if="isBlockStart(cell.date)" class="h-1 w-1 rounded-full bg-sky-300" />
+                    <span v-if="isBlockEnd(cell.date)" class="h-1 w-1 rounded-full bg-sky-500" />
+                    <span v-if="!isOverview && hasProgram(cell.date)" class="h-1 w-1 rounded-full bg-emerald-400" />
+                    <span v-if="!isOverview && hasTraining(cell.date)" class="h-1 w-1 rounded-full bg-violet-300" />
                     <span v-if="isCompetition(cell.date)" class="h-1 w-1 rounded-full bg-rose-400" />
                   </span>
                 </button>
@@ -306,6 +352,14 @@ onMounted(() => {
       </p>
 
       <div v-else class="mt-3 space-y-3">
+        <section
+          v-if="selectedDetail.blockBoundary"
+          class="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2.5"
+        >
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-300">Bloc</p>
+          <p class="mt-1 text-sm font-semibold text-white">{{ selectedDetail.blockBoundary.label }}</p>
+        </section>
+
         <section
           v-if="selectedDetail.competition"
           class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2.5"

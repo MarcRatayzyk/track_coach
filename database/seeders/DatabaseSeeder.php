@@ -97,7 +97,8 @@ class DatabaseSeeder extends Seeder
             'daily' => [
                 'name' => 'Camille Bernard',
                 'email' => 'daily@trackcoach.dev',
-                'weight_class' => '63kg',
+                'weight_category' => 'f63',
+                'sex' => 'female',
                 'birth_date' => '1998-04-14',
                 'bio' => 'Athlete suivie au quotidien, bloc meet en cours avec video sur les topsets.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
@@ -111,7 +112,8 @@ class DatabaseSeeder extends Seeder
             'weekly' => [
                 'name' => 'Hugo Martin',
                 'email' => 'athlete@trackcoach.dev',
-                'weight_class' => '93kg',
+                'weight_category' => 'm93',
+                'sex' => 'male',
                 'birth_date' => '1994-09-02',
                 'bio' => 'Profil force confirmé, point hebdo et ajustements surtout sur le bench.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
@@ -126,7 +128,8 @@ class DatabaseSeeder extends Seeder
             'return' => [
                 'name' => 'Léa Petit',
                 'email' => 'return@trackcoach.dev',
-                'weight_class' => '72kg',
+                'weight_category' => 'f76',
+                'sex' => 'female',
                 'birth_date' => '1997-01-19',
                 'bio' => 'Retour progressif après coupure, priorité sur la régularité et la technique.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
@@ -140,7 +143,8 @@ class DatabaseSeeder extends Seeder
             'thomas' => [
                 'name' => 'Thomas Dubois',
                 'email' => 'thomas@trackcoach.dev',
-                'weight_class' => '83kg',
+                'weight_category' => 'm83',
+                'sex' => 'male',
                 'birth_date' => '1992-06-11',
                 'bio' => 'Force athlétique confirmée, travail sur la vitesse au squat et la stabilité au bench.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
@@ -155,7 +159,8 @@ class DatabaseSeeder extends Seeder
             'sarah' => [
                 'name' => 'Sarah Moreau',
                 'email' => 'sarah@trackcoach.dev',
-                'weight_class' => '57kg',
+                'weight_category' => 'f57',
+                'sex' => 'female',
                 'birth_date' => '2000-03-28',
                 'bio' => 'Jeune athlète prometteuse, suivi quotidien pour consolider la technique sur les trois lifts.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
@@ -169,7 +174,8 @@ class DatabaseSeeder extends Seeder
             'nicolas' => [
                 'name' => 'Nicolas Leroy',
                 'email' => 'nicolas@trackcoach.dev',
-                'weight_class' => '105kg',
+                'weight_category' => 'm105',
+                'sex' => 'male',
                 'birth_date' => '1989-11-05',
                 'bio' => 'Powerlifter expérimenté, focus sur le pic de deadlift et la gestion de la fatigue en fin de bloc.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
@@ -184,7 +190,8 @@ class DatabaseSeeder extends Seeder
             'emma' => [
                 'name' => 'Emma Rousseau',
                 'email' => 'emma@trackcoach.dev',
-                'weight_class' => '69kg',
+                'weight_category' => 'f69',
+                'sex' => 'female',
                 'birth_date' => '1996-08-17',
                 'bio' => 'Profil équilibré sur les trois mouvements, progression régulière depuis 18 mois.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
@@ -198,7 +205,8 @@ class DatabaseSeeder extends Seeder
             'antoine' => [
                 'name' => 'Antoine Girard',
                 'email' => 'antoine@trackcoach.dev',
-                'weight_class' => '120kg',
+                'weight_category' => 'm120',
+                'sex' => 'male',
                 'birth_date' => '1987-02-22',
                 'bio' => 'Catégorie lourde, priorité au volume contrôlé et à la mobilité hanche pour le squat.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
@@ -213,7 +221,8 @@ class DatabaseSeeder extends Seeder
             'julie' => [
                 'name' => 'Julie Lambert',
                 'email' => 'julie@trackcoach.dev',
-                'weight_class' => '47kg',
+                'weight_category' => 'f47',
+                'sex' => 'female',
                 'birth_date' => '2002-12-03',
                 'bio' => 'Catégorie plume, travail technique intensif avec vidéos sur chaque top set.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
@@ -227,7 +236,8 @@ class DatabaseSeeder extends Seeder
             'maxime' => [
                 'name' => 'Maxime Fontaine',
                 'email' => 'maxime@trackcoach.dev',
-                'weight_class' => '74kg',
+                'weight_category' => 'm74',
+                'sex' => 'male',
                 'birth_date' => '1995-07-09',
                 'bio' => 'Bon potentiel au bench, squat en progression. Bloc meet classique sur 6 semaines.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
@@ -241,7 +251,8 @@ class DatabaseSeeder extends Seeder
             'chloe' => [
                 'name' => 'Chloé Bertrand',
                 'email' => 'chloe@trackcoach.dev',
-                'weight_class' => '84kg',
+                'weight_category' => 'f84',
+                'sex' => 'female',
                 'birth_date' => '1993-04-25',
                 'bio' => 'Athlète polyvalente, retour de blessure au genou. Progression prudente sur le squat.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
@@ -256,7 +267,8 @@ class DatabaseSeeder extends Seeder
             'lucas' => [
                 'name' => 'Lucas Perrin',
                 'email' => 'lucas@trackcoach.dev',
-                'weight_class' => '59kg',
+                'weight_category' => 'm59',
+                'sex' => 'male',
                 'birth_date' => '1999-10-14',
                 'bio' => 'Catégorie légère, excellente technique au deadlift. Point hebdo sur les charges.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
@@ -270,7 +282,8 @@ class DatabaseSeeder extends Seeder
             'ines' => [
                 'name' => 'Inès Renault',
                 'email' => 'ines@trackcoach.dev',
-                'weight_class' => '76kg',
+                'weight_category' => 'f76',
+                'sex' => 'female',
                 'birth_date' => '1998-01-30',
                 'bio' => 'Suivi quotidien, focus sur la constance et la récupération entre les séances lourdes.',
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
@@ -361,7 +374,8 @@ class DatabaseSeeder extends Seeder
         AthleteProfile::query()->create([
             'user_id' => $athlete->id,
             'birth_date' => $definition['birth_date'],
-            'weight_class' => $definition['weight_class'],
+            'weight_category' => $definition['weight_category'],
+            'sex' => $definition['sex'] ?? null,
             'bio' => $definition['bio'],
             'feedback_frequency' => $definition['feedback_frequency'],
         ]);

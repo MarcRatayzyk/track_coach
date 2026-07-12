@@ -1,10 +1,17 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import PrEvolutionMiniCard from './charts/PrEvolutionMiniCard.vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import { buildPrEvolutionSeries, currentValueFromSeries } from '../utils/prEvolution';
 import { LIFT_LABELS } from '../utils/chartTheme';
+import {
+  LEVEL_OPTIONS,
+  SEX_OPTIONS,
+  levelLabel as formatLevelLabel,
+  weightCategoriesForSex,
+  weightCategoryLabel,
+} from '../config/ipfWeightCategories';
 import UiIcon from './UiIcon.vue';
 
 const props = defineProps({
@@ -19,6 +26,18 @@ const props = defineProps({
   weightClass: {
     type: String,
     default: '—',
+  },
+  heightLabel: {
+    type: String,
+    default: '—',
+  },
+  levelLabel: {
+    type: String,
+    default: '—',
+  },
+  injuriesNotes: {
+    type: String,
+    default: '',
   },
   practiceDurationLabel: {
     type: String,
@@ -98,6 +117,24 @@ const emit = defineEmits([
 ]);
 
 const showProfileModal = ref(false);
+
+const categoryOptions = computed(() => {
+  const sex = props.editableProfile?.sex ?? null;
+  return weightCategoriesForSex(sex);
+});
+
+watch(
+  () => props.editableProfile?.sex,
+  (sex, previousSex) => {
+    if (!props.editableProfile || sex === previousSex) {
+      return;
+    }
+    const options = weightCategoriesForSex(sex).map((item) => item.value);
+    if (props.editableProfile.weight_category && !options.includes(props.editableProfile.weight_category)) {
+      props.editableProfile.weight_category = '';
+    }
+  },
+);
 
 const lifts = [
   { key: 'squat', label: 'Squat' },
@@ -237,12 +274,27 @@ function openNextCompetition() {
               <dd class="font-semibold text-white">{{ ageLabel || '—' }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
+              <dt class="text-slate-500">Taille</dt>
+              <dd class="font-semibold text-white">{{ heightLabel || '—' }}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
               <dt class="text-slate-500">Profession</dt>
               <dd class="font-semibold text-white">{{ profession || '—' }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
               <dt class="text-slate-500">Catégorie</dt>
               <dd class="font-semibold text-white">{{ weightClass || '—' }}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
+              <dt class="text-slate-500">Niveau</dt>
+              <dd class="font-semibold text-white">{{ levelLabel || '—' }}</dd>
+            </div>
+            <div
+              v-if="injuriesNotes && !canEditProfile"
+              class="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2"
+            >
+              <dt class="text-slate-500">Blessures / gênes</dt>
+              <dd class="mt-1 whitespace-pre-wrap text-white">{{ injuriesNotes }}</dd>
             </div>
             <div class="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
               <dt class="text-slate-500">Retours vidéo</dt>
@@ -273,7 +325,7 @@ function openNextCompetition() {
             class="mt-4 space-y-3 rounded-lg border border-slate-800 bg-slate-950/50 p-3"
             @submit.prevent="emit('save-profile')"
           >
-            <p class="text-xs font-semibold text-white">Modifier mon profil</p>
+            <p class="text-xs font-semibold text-white">{{ canEditProfile ? 'Modifier le profil' : 'Modifier mon profil' }}</p>
             <label class="block text-xs text-slate-400">
               Date de naissance
               <input
@@ -281,6 +333,28 @@ function openNextCompetition() {
                 type="date"
                 class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
               />
+            </label>
+            <label class="block text-xs text-slate-400">
+              Taille (cm)
+              <input
+                v-model.number="editableProfile.height_cm"
+                type="number"
+                min="100"
+                max="250"
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              />
+            </label>
+            <label class="block text-xs text-slate-400">
+              Sexe (catégorie IPF)
+              <select
+                v-model="editableProfile.sex"
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              >
+                <option value="">—</option>
+                <option v-for="option in SEX_OPTIONS" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
             </label>
             <label class="block text-xs text-slate-400">
               Profession
@@ -291,11 +365,36 @@ function openNextCompetition() {
               />
             </label>
             <label class="block text-xs text-slate-400">
-              Catégorie de poids
-              <input
-                v-model="editableProfile.weight_class"
-                type="text"
+              Catégorie de poids IPF
+              <select
+                v-model="editableProfile.weight_category"
                 class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              >
+                <option value="">—</option>
+                <option v-for="option in categoryOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+            <label class="block text-xs text-slate-400">
+              Niveau
+              <select
+                v-model="editableProfile.level"
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              >
+                <option value="">—</option>
+                <option v-for="option in LEVEL_OPTIONS" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+            <label class="block text-xs text-slate-400">
+              Blessures / gênes récentes
+              <textarea
+                v-model="editableProfile.injuries_notes"
+                rows="2"
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+                placeholder="Douleur épaule droite, genou…"
               />
             </label>
             <label class="block text-xs text-slate-400">

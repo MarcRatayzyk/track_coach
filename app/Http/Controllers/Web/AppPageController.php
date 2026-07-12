@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\CoachCalendarReminder;
 use App\Models\AthleteProgramAssignment;
 use App\Models\Competition;
 use App\Models\MessageThread;
@@ -13,6 +14,7 @@ use App\Services\CoachFeedbackMetricsService;
 use App\Models\ProgramTemplate;
 use App\Models\User;
 use App\Support\ActiveProgramAssignmentSupport;
+use App\Support\AthleteFunStatsSupport;
 use App\Support\AthleteDashboardPresenter;
 use App\Support\AthleteBodyWeightPresenter;
 use App\Support\AthleteReadinessPresenter;
@@ -86,6 +88,36 @@ class AppPageController extends Controller
 
         $alerts = $alertsService->forCoach($coach);
 
+        $calendarReminders = CoachCalendarReminder::query()
+            ->where('coach_id', $coach->id)
+            ->whereDate('event_date', '>=', now()->toDateString())
+            ->with('athlete:id,name')
+            ->orderBy('event_date')
+            ->limit(30)
+            ->get()
+            ->map(fn (CoachCalendarReminder $reminder) => [
+                'id' => $reminder->id,
+                'title' => $reminder->title,
+                'event_date' => $reminder->event_date?->toDateString(),
+                'notes' => $reminder->notes,
+                'athlete_id' => $reminder->athlete_id,
+                'athlete_name' => $reminder->athlete?->name,
+            ])
+            ->values()
+            ->all();
+
+        $rosterAthletes = $coach->athletes()
+            ->where('users.role', 'athlete')
+            ->wherePivot('status', 'active')
+            ->orderBy('users.name')
+            ->get(['users.id', 'users.name'])
+            ->map(fn (User $athlete) => [
+                'id' => $athlete->id,
+                'name' => $athlete->name,
+            ])
+            ->values()
+            ->all();
+
         return Inertia::render('DashboardPage', [
             'athleteCount' => $athleteIds->count(),
             'feedback' => $feedback,
@@ -93,6 +125,8 @@ class AppPageController extends Controller
             'upcomingCompetitions' => $upcomingCompetitions,
             'recentThreads' => $recentThreads,
             'alerts' => $alerts,
+            'calendarReminders' => $calendarReminders,
+            'rosterAthletes' => $rosterAthletes,
             'stats' => [
                 'active_programs' => $activeProgramsCount,
                 'program_templates' => $templatesCount,
@@ -162,6 +196,7 @@ class AppPageController extends Controller
             'readinessRecent' => $readinessRecent,
             'todayBodyWeight' => $todayBodyWeight,
             'bodyWeightRecent' => $bodyWeightRecent,
+            'funStats' => AthleteFunStatsSupport::forAthlete($athlete, $followUpStartedAt),
             'programHistory' => $viewer?->role === 'coach'
                 ? $programHistory->historyForAthlete($athlete->id)
                 : [],

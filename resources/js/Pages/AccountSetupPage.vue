@@ -7,6 +7,11 @@ export default {
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import {
+  LEVEL_OPTIONS,
+  SEX_OPTIONS,
+  weightCategoriesForSex,
+} from '../config/ipfWeightCategories';
 
 const props = defineProps({
     user: {
@@ -52,10 +57,20 @@ const form = useForm({
     bench: '',
     deadlift: '',
     birth_date: '',
+    height_cm: null,
+    sex: '',
+    weight_category: '',
+    level: '',
+    injuries_notes: '',
     profession: '',
-    weight_class: '',
     bio: '',
+    specialties: [],
+    years_experience: null,
+    certifications: '',
+    club_gym: '',
 });
+
+const categoryOptions = computed(() => weightCategoriesForSex(form.sex));
 
 const currentStep = computed(() => athleteSteps[stepIndex.value] ?? athleteSteps[0]);
 const isFirstStep = computed(() => stepIndex.value <= 0);
@@ -123,6 +138,22 @@ const inputClass =
                                 autocomplete="new-password"
                                 :class="inputClass"
                             />
+                        </label>
+                        <label class="block text-sm font-medium text-slate-400">
+                            Bio
+                            <textarea v-model="form.bio" rows="3" :class="inputClass" placeholder="Présentation courte" />
+                        </label>
+                        <label class="block text-sm font-medium text-slate-400">
+                            Années d'expérience
+                            <input v-model.number="form.years_experience" type="number" min="0" max="60" :class="inputClass" />
+                        </label>
+                        <label class="block text-sm font-medium text-slate-400">
+                            Certifications
+                            <textarea v-model="form.certifications" rows="2" :class="inputClass" />
+                        </label>
+                        <label class="block text-sm font-medium text-slate-400">
+                            Club / salle
+                            <input v-model="form.club_gym" type="text" :class="inputClass" />
                         </label>
                         <p v-if="form.errors.password" class="text-sm text-red-400">{{ form.errors.password }}</p>
                         <button
@@ -227,6 +258,25 @@ const inputClass =
                                 <input v-model="form.birth_date" type="date" :class="inputClass" />
                             </label>
                             <label class="block text-sm font-medium text-slate-400">
+                                Taille (cm)
+                                <input
+                                    v-model.number="form.height_cm"
+                                    type="number"
+                                    min="100"
+                                    max="250"
+                                    :class="inputClass"
+                                />
+                            </label>
+                            <label class="block text-sm font-medium text-slate-400">
+                                Sexe
+                                <select v-model="form.sex" :class="inputClass">
+                                    <option value="">—</option>
+                                    <option v-for="option in SEX_OPTIONS" :key="option.value" :value="option.value">
+                                        {{ option.label }}
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="block text-sm font-medium text-slate-400">
                                 Profession
                                 <input
                                     v-model="form.profession"
@@ -236,12 +286,34 @@ const inputClass =
                                 />
                             </label>
                             <label class="block text-sm font-medium text-slate-400">
-                                Catégorie de poids
-                                <input
-                                    v-model="form.weight_class"
-                                    type="text"
+                                Catégorie de poids IPF
+                                <select v-model="form.weight_category" :class="inputClass">
+                                    <option value="">—</option>
+                                    <option
+                                        v-for="option in categoryOptions"
+                                        :key="option.value"
+                                        :value="option.value"
+                                    >
+                                        {{ option.label }}
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="block text-sm font-medium text-slate-400">
+                                Niveau
+                                <select v-model="form.level" :class="inputClass">
+                                    <option value="">—</option>
+                                    <option v-for="option in LEVEL_OPTIONS" :key="option.value" :value="option.value">
+                                        {{ option.label }}
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="block text-sm font-medium text-slate-400">
+                                Blessures / gênes récentes
+                                <textarea
+                                    v-model="form.injuries_notes"
+                                    rows="2"
                                     :class="inputClass"
-                                    placeholder="Ex. 83 kg"
+                                    placeholder="Optionnel"
                                 />
                             </label>
                         </template>

@@ -11,6 +11,8 @@ import { Link } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import AthleteDailyCheckInModal from '../Components/AthleteDailyCheckInModal.vue';
 import AthleteDashboardHeader from '../Components/AthleteDashboardHeader.vue';
+import AthleteFunStatsPanel from '../Components/AthleteFunStatsPanel.vue';
+import AthleteMonthCalendar from '../Components/AthleteMonthCalendar.vue';
 import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
 import TodaySessionCard from '../Components/TodaySessionCard.vue';
 import WrappedStoryModal from '../Components/WrappedStoryModal.vue';
@@ -36,6 +38,18 @@ const props = defineProps({
   wrapped: {
     type: Object,
     default: () => ({ weekly: null, monthly: null }),
+  },
+  programBlock: {
+    type: Object,
+    default: null,
+  },
+  competitions: {
+    type: Array,
+    default: () => [],
+  },
+  funStats: {
+    type: Object,
+    default: null,
   },
 });
 
@@ -188,6 +202,31 @@ onMounted(() => {
       :adherence-share-payload="shareHighlights.adherence_card"
       @share-adherence="sharePayload"
     />
+
+    <AthleteFunStatsPanel
+      v-if="funStats"
+      compact
+      :stats="funStats"
+    />
+
+    <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-sm font-semibold text-white">Calendrier</h2>
+        <Link
+          :href="`/athletes/${athleteId}`"
+          class="text-xs font-medium text-blue-400 hover:text-blue-300"
+        >
+          Voir mon profil →
+        </Link>
+      </div>
+      <AthleteMonthCalendar
+        class="mt-3"
+        mode="overview"
+        :program-block="programBlock"
+        :competitions="competitions"
+        :training-sessions="[]"
+      />
+    </section>
 
     <section
       v-if="shareHighlights.pr_card || (shareHighlights.templates?.length ?? 0) > 0"

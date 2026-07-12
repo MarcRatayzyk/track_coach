@@ -7,6 +7,7 @@ use App\Http\Requests\StoreAccountSetupRequest;
 use App\Http\Requests\StoreCoachAccountSetupRequest;
 use App\Models\PersonalRecord;
 use App\Models\User;
+use App\Support\AthleteProfileSupport;
 use App\Support\AccountSetupUrlGenerator;
 use App\Support\ActivationDelivery;
 use Illuminate\Http\RedirectResponse;
@@ -75,13 +76,7 @@ class AccountSetupController extends Controller
             $user->forceFill(['email_verified_at' => now()])->save();
             $user->profile()->updateOrCreate(
                 ['user_id' => $user->id],
-                [
-                    'birth_date' => $validated['birth_date'] ?? null,
-                    'weight_class' => $validated['weight_class'] ?? null ?: null,
-                    'bio' => $validated['bio'] ?? null ?: null,
-                    'profession' => $validated['profession'] ?? null ?: null,
-                    'years_training' => $validated['years_training'] ?? null,
-                ],
+                AthleteProfileSupport::attributesFromValidated($validated),
             );
 
             $squat = (int) ($validated['squat'] ?? 0);
@@ -100,6 +95,17 @@ class AccountSetupController extends Controller
         }
 
         if ($user->role === 'coach') {
+            $user->coachProfile()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'bio' => $validated['bio'] ?? null ?: null,
+                    'specialties' => $validated['specialties'] ?? [],
+                    'years_experience' => $validated['years_experience'] ?? null,
+                    'certifications' => $validated['certifications'] ?? null ?: null,
+                    'club_gym' => $validated['club_gym'] ?? null ?: null,
+                ],
+            );
+
             $emailSent = ActivationDelivery::sendCoachEmailVerification($user);
 
             $this->clearAuthenticatedSession($request);

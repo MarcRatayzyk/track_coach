@@ -12,6 +12,7 @@ import { echo } from '../echo';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
+const sidebarProfile = computed(() => page.props.auth?.sidebarProfile ?? null);
 const flash = computed(() => page.props.flash ?? {});
 const isSidebarCollapsed = ref(false);
 const isMobileMenuOpen = ref(false);
@@ -280,13 +281,15 @@ watch(() => page.url, () => {
             class="tc-mobile-overlay-menu fixed inset-x-0 z-50 mx-3 rounded-2xl border border-slate-700 bg-slate-900 p-2 shadow-2xl transition lg:hidden"
             :class="isMobileMenuOpen ? 'visible opacity-100' : 'pointer-events-none invisible opacity-0'"
         >
-            <div
-                v-if="user"
-                class="mb-1 rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2.5"
+            <Link
+                v-if="user && sidebarProfile"
+                :href="sidebarProfile.href"
+                class="mb-1 block rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2.5"
+                @click="closeMobileMenu"
             >
-                <p class="truncate text-sm font-semibold text-white">{{ user.name }}</p>
-                <p class="truncate text-xs text-slate-400">{{ user.email }}</p>
-            </div>
+                <p class="truncate text-sm font-semibold text-white">{{ sidebarProfile.label }}</p>
+                <p class="truncate text-xs text-slate-400">{{ sidebarProfile.subtitle }}</p>
+            </Link>
 
             <InstallAppButton variant="menu" @interacted="closeMobileMenu" />
 
@@ -342,26 +345,27 @@ watch(() => page.url, () => {
                 </button>
             </div>
 
-            <div
-                v-if="user"
-                class="mt-5 flex gap-2.5 rounded-xl border border-slate-700/80 bg-slate-950/50 p-3"
+            <Link
+                v-if="user && sidebarProfile"
+                :href="sidebarProfile.href"
+                class="mt-5 flex gap-2.5 rounded-xl border border-slate-700/80 bg-slate-950/50 p-3 transition hover:border-blue-500/40 hover:bg-slate-900/80"
                 :class="isSidebarCollapsed ? 'justify-center px-2 py-3' : ''"
             >
                 <span
                     class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-300"
                 >
-                    <UiIcon name="user-circle" class="h-5 w-5" />
+                    <UiIcon :name="isCoach ? 'user-circle' : 'users'" class="h-5 w-5" />
                 </span>
                 <div v-if="!isSidebarCollapsed" class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-semibold text-white">{{ user.name }}</p>
-                    <p class="truncate text-xs text-slate-400">{{ user.email }}</p>
+                    <p class="truncate text-sm font-semibold text-white">{{ sidebarProfile.label }}</p>
+                    <p class="truncate text-xs text-slate-400">{{ sidebarProfile.subtitle }}</p>
                     <p
                         class="mt-1.5 inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-300"
                     >
                         {{ user.role === 'coach' ? 'Coach' : 'Athlète' }}
                     </p>
                 </div>
-            </div>
+            </Link>
 
             <nav class="mt-6 flex flex-1 flex-col gap-1">
                 <p

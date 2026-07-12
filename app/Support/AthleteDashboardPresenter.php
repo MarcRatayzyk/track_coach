@@ -37,7 +37,9 @@ class AthleteDashboardPresenter
         $athlete->loadMissing(['latestPr', 'upcomingCompetition']);
 
         $activeAssignment = ActiveProgramAssignmentSupport::forAthleteOnDate($athlete, $date);
+        $displayAssignment = ActiveProgramAssignmentSupport::forAthleteDisplay($athlete, $date);
         $programBlock = ProgramBlockPresenter::forAssignment($activeAssignment);
+        $displayProgramBlock = ProgramBlockPresenter::forAssignment($displayAssignment);
         $readiness = AthleteReadinessPresenter::forAthlete($athlete);
         $bodyWeight = AthleteBodyWeightPresenter::forAthlete($athlete);
 
@@ -48,6 +50,27 @@ class AthleteDashboardPresenter
         $feedbackDueToday = self::feedbackDueToday($athlete, $activeAssignment, $date);
         $shareHighlights = self::shareHighlights($athlete, $activeAssignment, $latestPr, $date);
         $wrapped = app(AthleteWrappedPresenter::class)->forAthlete($athlete, $activeAssignment, $date);
+
+        $followUpStartedAt = $athlete->coaches()
+            ->wherePivot('status', 'active')
+            ->orderBy('coach_athlete.created_at')
+            ->first()
+            ?->pivot
+            ?->created_at
+            ?->toDateString();
+
+        $competitions = $athlete->competitions()
+            ->orderBy('competition_date')
+            ->get(['id', 'name', 'competition_date', 'goal', 'location'])
+            ->map(fn (Competition $competition) => [
+                'id' => $competition->id,
+                'name' => $competition->name,
+                'competition_date' => $competition->competition_date?->toDateString(),
+                'goal' => $competition->goal,
+                'location' => $competition->location,
+            ])
+            ->values()
+            ->all();
 
         return [
             'athleteName' => $athlete->name,
@@ -71,6 +94,9 @@ class AthleteDashboardPresenter
             'feedbackDueToday' => $feedbackDueToday,
             'shareHighlights' => $shareHighlights,
             'wrapped' => $wrapped,
+            'programBlock' => $displayProgramBlock,
+            'competitions' => $competitions,
+            'funStats' => AthleteFunStatsSupport::forAthlete($athlete, $followUpStartedAt),
         ];
     }
 

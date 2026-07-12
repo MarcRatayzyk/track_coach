@@ -2,10 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidatesAthleteProfileFields;
+use App\Models\AthleteProfile;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateOwnAthleteProfileRequest extends FormRequest
 {
+    use ValidatesAthleteProfileFields;
+
     public function authorize(): bool
     {
         $athlete = $this->route('athlete');
@@ -19,12 +24,6 @@ class UpdateOwnAthleteProfileRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'weight_class' => ['nullable', 'string', 'max:64'],
-            'bio' => ['nullable', 'string', 'max:5000'],
-            'birth_date' => ['nullable', 'date', 'before:today'],
-            'profession' => ['nullable', 'string', 'max:120'],
-            'years_training' => ['nullable', 'integer', 'min:0', 'max:50'],
-        ];
+        return $this->athleteProfileFieldRules();
     }
 }

@@ -7,6 +7,7 @@ use App\Models\AthleteReadinessEntry;
 use App\Models\MessageThread;
 use App\Models\User;
 use App\Support\GlPointsCalculator;
+use App\Support\IpfWeightCategorySupport;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -70,10 +71,10 @@ class CoachAthleteRosterService
                 $deadlift = (int) ($pr?->deadlift ?? 0);
                 $total = $squat + $bench + $deadlift;
 
-                $bodyweight = GlPointsCalculator::bodyweightFromClass(
-                    $athlete->profile?->weight_class,
-                );
-                $glPoints = GlPointsCalculator::calculate($total, $bodyweight);
+                $weightCategory = $athlete->profile?->weight_category;
+                $sex = $athlete->profile?->sex ?? GlPointsCalculator::sexFromCategory($weightCategory);
+                $bodyweight = GlPointsCalculator::bodyweightFromClass($weightCategory, $sex);
+                $glPoints = GlPointsCalculator::calculate($total, $bodyweight, $sex);
 
                 $entries = $readinessByAthlete->get($athlete->id, collect());
                 $readinessAverage = $entries->isEmpty()
@@ -97,7 +98,8 @@ class CoachAthleteRosterService
                     'name' => $athlete->name,
                     'email' => $athlete->email,
                     'is_pending_activation' => $athlete->initial_setup_completed_at === null,
-                    'weight_class' => $athlete->profile?->weight_class,
+                    'weight_category' => $weightCategory,
+                    'weight_category_label' => IpfWeightCategorySupport::labelForCategory($weightCategory),
                     'total_kg' => $total > 0 ? $total : null,
                     'gl_points' => $glPoints,
                     'readiness_average' => $readinessAverage,

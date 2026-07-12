@@ -14,7 +14,9 @@ use App\Http\Controllers\Web\Coach\AthleteProgramHistoryController;
 use App\Http\Controllers\Web\Coach\ProgramPdfExportController;
 use App\Http\Controllers\Web\Coach\SessionFeedbackAnnotationController;
 use App\Http\Controllers\Web\Coach\ExerciseLibraryController;
+use App\Http\Controllers\Web\Coach\CoachCalendarReminderController;
 use App\Http\Controllers\Web\Coach\CoachAthleteRosterController;
+use App\Http\Controllers\Web\Coach\CoachProfileController;
 use App\Http\Controllers\Web\Coach\DashboardTaskController;
 use App\Http\Controllers\Web\Coach\MessageWebController;
 use App\Http\Controllers\Web\Coach\CoachChartTemplateWebController;
@@ -66,6 +68,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         ->name('athlete.dashboard');
     Route::get('/athlete/program', [AppPageController::class, 'athleteProgram'])
         ->name('athlete.program');
+    Route::get('/coaches/{coach}', [CoachProfileController::class, 'show'])
+        ->name('coaches.show');
 
     Route::get('/feedbacks', [SessionFeedbackWebController::class, 'index'])->name('feedbacks.index');
     Route::get('/feedbacks/{feedback}', [SessionFeedbackWebController::class, 'show'])->name('feedbacks.show');
@@ -189,6 +193,14 @@ Route::middleware(['auth', 'verified', 'coach'])->group(function (): void {
         ->name('coach.threads.store');
 
     Route::get('/dashboard', [AppPageController::class, 'dashboard'])->name('dashboard');
+    Route::get('/coach/profile', [CoachProfileController::class, 'ownProfile'])->name('coach.profile');
+    Route::patch('/coach/profile', [CoachProfileController::class, 'update'])->name('coach.profile.update');
+    Route::post('/coach/calendar-reminders', [CoachCalendarReminderController::class, 'store'])
+        ->name('coach.calendar-reminders.store');
+    Route::patch('/coach/calendar-reminders/{reminder}', [CoachCalendarReminderController::class, 'update'])
+        ->name('coach.calendar-reminders.update');
+    Route::delete('/coach/calendar-reminders/{reminder}', [CoachCalendarReminderController::class, 'destroy'])
+        ->name('coach.calendar-reminders.destroy');
     Route::get('/athletes', [AppPageController::class, 'athletes'])->name('athletes.index');
     Route::get('/program-builder', [AppPageController::class, 'programBuilder'])->name('program.builder');
 });

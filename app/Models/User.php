@@ -61,6 +61,25 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->hasOne(AthleteProfile::class, 'user_id');
     }
 
+    public function coachProfile(): HasOne
+    {
+        return $this->hasOne(CoachProfile::class, 'user_id');
+    }
+
+    public function calendarReminders(): HasMany
+    {
+        return $this->hasMany(CoachCalendarReminder::class, 'coach_id');
+    }
+
+    public function primaryCoach(): ?User
+    {
+        return $this->coaches()
+            ->where('users.role', 'coach')
+            ->wherePivot('status', 'active')
+            ->orderBy('coach_athlete.created_at')
+            ->first();
+    }
+
     public function personalRecords(): HasMany
     {
         return $this->hasMany(PersonalRecord::class, 'athlete_id');
