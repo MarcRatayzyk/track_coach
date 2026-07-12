@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureEmailIsVerifiedUnlessManual;
 use App\Http\Middleware\EnsureUserIsCoach;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'coach' => EnsureUserIsCoach::class,
+            'verified' => EnsureEmailIsVerifiedUnlessManual::class,
         ]);
 
         $middleware->redirectGuestsTo('/login');

@@ -168,8 +168,8 @@ onMounted(() => {
         </span>
         <h1 class="mt-6 text-3xl font-bold text-white">Bienvenue sur ton dashboard</h1>
         <p class="mt-3 max-w-md text-slate-400">
-          Tu n’as pas encore d’athlète. Commence par en inviter un : il recevra un e-mail pour activer
-          son compte et accéder à son espace.
+          Tu n’as pas encore d’athlète. Commence par en inviter un et partage le lien d’activation pour
+          qu’il configure son compte.
         </p>
         <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
           <button

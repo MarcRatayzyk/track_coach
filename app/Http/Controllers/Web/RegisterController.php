@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCoachRegistrationRequest;
 use App\Models\User;
+use App\Support\ActivationDelivery;
 use App\Support\MailSendSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -33,11 +34,15 @@ class RegisterController extends Controller
         Auth::login($coach);
         $request->session()->regenerate();
 
-        $sent = MailSendSupport::attempt(
-            fn () => $coach->sendEmailVerificationNotification(),
-        );
+        $emailSent = ActivationDelivery::sendCoachEmailVerification($coach);
+
+        if (ActivationDelivery::usesManualLinks()) {
+            return redirect()
+                ->route('dashboard')
+                ->with('success', 'Compte créé. Invite tes athlètes et partage-leur le lien d’activation.');
+        }
 
         return redirect()->route('verification.notice')
-            ->with($sent ? [] : ['error' => MailSendSupport::DELIVERY_FAILED_MESSAGE]);
+            ->with($emailSent ? [] : ['error' => MailSendSupport::DELIVERY_FAILED_MESSAGE]);
     }
 }

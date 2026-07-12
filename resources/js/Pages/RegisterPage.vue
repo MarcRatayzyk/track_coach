@@ -45,8 +45,8 @@ function submit() {
                     Lance ton espace coach en quelques minutes.
                 </h1>
                 <p class="mt-5 max-w-md text-lg leading-relaxed text-slate-400">
-                    Crée ton compte, invite tes athlètes par e-mail, puis construis leurs programmes et
-                    suis leur progression au quotidien.
+                    Crée ton compte, invite tes athlètes et partage-leur le lien d’activation, puis construis
+                    leurs programmes et suis leur progression au quotidien.
                 </p>
             </div>
             <ol class="relative mt-12 space-y-4 text-slate-300">
@@ -56,7 +56,7 @@ function submit() {
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">2</span>
-                    <span>Invite tes athlètes — ils reçoivent un e-mail d’activation</span>
+                    <span>Invite tes athlètes — partage le lien d’activation</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">3</span>
@@ -150,7 +150,7 @@ function submit() {
                 </form>
 
                 <p class="mt-8 text-center text-sm text-slate-500">
-                    Tu es athlète ? Demande à ton coach de t’inviter — tu recevras un e-mail pour activer ton
+                    Tu es athlète ? Demande à ton coach de t’inviter — il te transmettra un lien pour activer ton
                     compte.
                 </p>
             </div>

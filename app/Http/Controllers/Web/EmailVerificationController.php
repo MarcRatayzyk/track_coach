@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Support\ActivationDelivery;
 use App\Support\MailSendSupport;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +15,12 @@ class EmailVerificationController extends Controller
 {
     public function notice(Request $request): Response|RedirectResponse
     {
+        if (ActivationDelivery::usesManualLinks()) {
+            ActivationDelivery::markCoachEmailVerified($request->user());
+
+            return redirect()->intended($this->homeFor($request->user()));
+        }
+
         if ($request->user()->hasVerifiedEmail()) {
             return redirect()->intended($this->homeFor($request->user()));
         }
@@ -44,9 +51,13 @@ class EmailVerificationController extends Controller
             return redirect()->intended($this->homeFor($request->user()));
         }
 
-        $sent = MailSendSupport::attempt(
-            fn () => $request->user()->sendEmailVerificationNotification(),
-        );
+        if (ActivationDelivery::usesManualLinks()) {
+            ActivationDelivery::markCoachEmailVerified($request->user());
+
+            return redirect()->intended($this->homeFor($request->user()));
+        }
+
+        $sent = ActivationDelivery::sendCoachEmailVerification($request->user());
 
         if (! $sent) {
             return back()->with('error', MailSendSupport::DELIVERY_FAILED_MESSAGE);

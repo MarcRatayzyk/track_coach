@@ -209,10 +209,10 @@ function submit() {
                     <Link href="/register" class="font-medium text-blue-400 hover:text-blue-300">
                         Créer un compte
                     </Link>
-                    — Athlète ? Utilise le lien d’invitation envoyé par ton coach.
+                    — Athlète ? Utilise le lien d’activation transmis par ton coach.
                 </p>
                 <p v-else class="mt-8 text-center text-sm text-slate-500">
-                    Athlète ? Utilise le lien d’invitation envoyé par ton coach si tu n’as pas encore activé ton compte.
+                    Athlète ? Utilise le lien d’activation transmis par ton coach si tu n’as pas encore activé ton compte.
                 </p>
             </div>
         </div>

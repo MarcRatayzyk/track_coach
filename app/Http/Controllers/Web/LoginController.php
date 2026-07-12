@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\ActivationDelivery;
 use App\Support\MobileApp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,8 +49,8 @@ class LoginController extends Controller
             $request->session()->regenerateToken();
 
             $message = $user->role === 'coach'
-                ? 'Active ton compte avec le lien d’invitation reçu par e-mail avant de te connecter.'
-                : 'Active ton compte avec le lien d’invitation envoyé par ton coach avant de te connecter.';
+                ? 'Active ton compte avec le lien d’activation transmis avant de te connecter.'
+                : 'Active ton compte avec le lien d’activation transmis par ton coach avant de te connecter.';
 
             throw ValidationException::withMessages([
                 'email' => $message,
@@ -58,7 +59,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        if ($user->role === 'coach' && ! $user->hasVerifiedEmail()) {
+        if ($user->role === 'coach' && ! $user->hasVerifiedEmail() && ! ActivationDelivery::usesManualLinks()) {
             return redirect()->route('verification.notice');
         }
 
@@ -83,7 +84,7 @@ class LoginController extends Controller
 
     private function redirectAuthenticatedUser(User $user): RedirectResponse
     {
-        if ($user->role === 'coach' && ! $user->hasVerifiedEmail()) {
+        if ($user->role === 'coach' && ! $user->hasVerifiedEmail() && ! ActivationDelivery::usesManualLinks()) {
             return redirect()->route('verification.notice');
         }
 

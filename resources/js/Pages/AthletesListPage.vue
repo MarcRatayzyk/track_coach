@@ -7,7 +7,7 @@ export default {
 </script>
 
 <script setup>
-import { Link, router, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
 import UiIcon from '../Components/UiIcon.vue';
@@ -20,6 +20,9 @@ const props = defineProps({
 });
 
 const showModal = ref(false);
+
+const page = usePage();
+const activationLink = computed(() => page.props.flash?.first_login_url ?? '');
 
 const resendForm = useForm({});
 
@@ -221,6 +224,17 @@ function resendInvitation(row) {
   });
 }
 
+async function copyActivationLink() {
+  if (!activationLink.value) {
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(activationLink.value);
+  } catch {
+    window.prompt('Copie ce lien :', activationLink.value);
+  }
+}
+
 onMounted(() => {
   const params = new URLSearchParams(window.location.search);
   if (params.get('add') === '1') {
@@ -254,6 +268,26 @@ function confirmRemove(row) {
         @click="openModal"
       >
         Nouvel athlète
+      </button>
+    </div>
+
+    <div
+      v-if="activationLink"
+      class="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 shadow-lg"
+    >
+      <p class="text-sm font-semibold text-emerald-200">Lien d’activation athlète</p>
+      <p class="mt-1 text-xs text-slate-400">
+        Copie ce lien et transmets-le à l’athlète (WhatsApp, SMS…). Valable 14 jours.
+      </p>
+      <p class="mt-3 break-all rounded-xl border border-slate-700 bg-slate-950 p-3 font-mono text-xs text-slate-300">
+        {{ activationLink }}
+      </p>
+      <button
+        type="button"
+        class="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+        @click="copyActivationLink"
+      >
+        Copier le lien
       </button>
     </div>
 
@@ -467,11 +501,11 @@ function confirmRemove(row) {
                     v-else
                     type="button"
                     class="rounded-lg px-2 py-1 text-xs font-medium text-amber-400 hover:bg-slate-800"
-                    title="Renvoyer l’invitation"
+                    title="Afficher le lien d’activation"
                     :disabled="resendForm.processing"
                     @click="resendInvitation(row)"
                   >
-                    Renvoyer
+                    Lien
                   </button>
                   <Link
                     :href="`/athletes/${row.id}`"

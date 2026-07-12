@@ -27,7 +27,7 @@ const steps = [
     icon: 'users',
     title: 'Ta roster d’athlètes',
     description:
-      'Ajoute tes athlètes par e-mail : ils reçoivent un lien pour activer leur compte et accéder à leur programme.',
+      'Ajoute tes athlètes : un lien d’activation est généré à partager (WhatsApp, SMS…).',
     accent: 'text-emerald-400',
     ring: 'border-emerald-500/30 bg-emerald-600/10',
   },

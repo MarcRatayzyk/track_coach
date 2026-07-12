@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Exercise;
+use App\Support\ActivationDelivery;
 use App\Support\MessagingInboxSupport;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -50,6 +51,9 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'first_login_url' => fn () => $request->session()->get('first_login_url'),
+            ],
+            'appConfig' => [
+                'manualActivationLinks' => fn () => ActivationDelivery::usesManualLinks(),
             ],
             'messagingInbox' => fn () => match ($request->user()?->role) {
                 'athlete' => MessagingInboxSupport::athleteInboxSummary($request->user()),

@@ -1,6 +1,9 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+
+const page = usePage();
+const manualActivationLinks = computed(() => page.props.appConfig?.manualActivationLinks ?? true);
 
 const props = defineProps({
   modelValue: {
@@ -78,7 +81,7 @@ async function copyInvitation() {
       >
         <div class="flex items-start justify-between gap-4">
           <h2 class="text-base font-semibold text-white">
-            {{ modalStep === 'invite' ? 'Invitation envoyée' : 'Nouvel athlète' }}
+            {{ modalStep === 'invite' ? (manualActivationLinks ? 'Lien d’activation' : 'Invitation envoyée') : 'Nouvel athlète' }}
           </h2>
           <button
             type="button"
@@ -92,8 +95,8 @@ async function copyInvitation() {
 
         <template v-if="modalStep === 'form'">
           <p class="mt-3 text-slate-400">
-            Renseigne le prénom, le nom et l’e-mail. Une invitation sera envoyée automatiquement par
-            e-mail pour que l’athlète choisisse son mot de passe et complète son profil.
+            Renseigne le prénom, le nom et l’e-mail. Un lien d’activation sera généré pour que
+            l’athlète choisisse son mot de passe et complète son profil.
           </p>
           <form class="mt-4 space-y-4" @submit.prevent="submitNewAthlete">
             <label class="block text-sm font-medium text-slate-400">
@@ -166,8 +169,14 @@ async function copyInvitation() {
 
         <template v-else>
           <p class="mt-3 text-slate-400">
-            L’invitation a été envoyée par e-mail. Tu peux aussi copier le lien ci-dessous en secours
-            (valable 14 jours).
+            <template v-if="manualActivationLinks">
+              Copie le lien ci-dessous et envoie-le à l’athlète (WhatsApp, SMS, etc.). Valable 14
+              jours.
+            </template>
+            <template v-else>
+              L’invitation a été envoyée par e-mail. Tu peux aussi copier le lien ci-dessous en
+              secours (valable 14 jours).
+            </template>
           </p>
           <div class="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-3">
             <p class="break-all font-mono text-xs text-slate-300">{{ invitationUrl }}</p>

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Mail\CoachInvitationMail;
 use App\Models\User;
 use App\Support\AccountSetupUrlGenerator;
+use App\Support\ActivationDelivery;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -48,10 +49,14 @@ class InviteCoachCommand extends Command
 
         $setupUrl = AccountSetupUrlGenerator::signedSetupUrl($coach);
 
-        Mail::to($coach)->send(new CoachInvitationMail($coach, $setupUrl));
+        if (! ActivationDelivery::usesManualLinks()) {
+            Mail::to($coach)->send(new CoachInvitationMail($coach, $setupUrl));
+            $this->info("Invitation envoyée à {$email}.");
+        } else {
+            $this->info("Coach créé (mode beta : pas d’e-mail).");
+        }
 
-        $this->info("Invitation envoyée à {$email}.");
-        $this->line("Lien d’activation (secours) : {$setupUrl}");
+        $this->line("Lien d’activation : {$setupUrl}");
 
         return self::SUCCESS;
     }
