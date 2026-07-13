@@ -110,18 +110,13 @@ function setChargeMode(mode) {
   line.value.load_mode = mode;
   if (mode === 'kg') {
     line.value.load_percent = null;
-    line.value.rpe = null;
   } else {
     line.value.load = null;
-    line.value.rpe = null;
   }
 }
 
 function updateRpe(value) {
   line.value.rpe = value;
-  if (value != null && value !== '') {
-    line.value.load_mode = 'rpe';
-  }
 }
 
 function validateLine() {
@@ -129,8 +124,7 @@ function validateLine() {
     return;
   }
 
-  const mode = line.value.rpe != null && line.value.rpe !== '' ? 'rpe' : activeChargeMode.value;
-  line.value.load_mode = mode;
+  line.value.load_mode = activeChargeMode.value;
   emit('validate');
 }
 
@@ -144,7 +138,7 @@ const hasCharge = computed(() => {
 
 const hasRpe = computed(() => line.value.rpe != null && line.value.rpe !== '');
 
-const canValidate = computed(() => hasCharge.value || hasRpe.value);
+const canValidate = computed(() => hasCharge.value && hasRpe.value);
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-white placeholder:text-slate-600';
@@ -277,7 +271,7 @@ const inputClass =
       </div>
 
       <p v-if="!canValidate" class="mt-3 text-xs text-slate-500">
-        Renseigne une charge ou un RPE pour valider la série.
+        Renseigne la charge et le RPE pour valider la série.
       </p>
 
       <button

@@ -54,23 +54,34 @@ function resolveLoadKgIgnoringRpe(line, oneRm, fallbackLift) {
 
 export function loadsMatch(plannedLine, actualLine, oneRm = {}, fallbackLift = 'squat') {
   const plannedLift = normalizeLift(plannedLine?.lift, fallbackLift);
-  const actualLift = normalizeLift(actualLine?.lift, fallbackLift);
-  const plannedKg = resolveLoadKgIgnoringRpe(plannedLine, oneRm, plannedLift);
-  const actualKg = resolveLoadKgIgnoringRpe(actualLine, oneRm, actualLift);
 
-  if (plannedKg != null && actualKg != null) {
-    return Math.abs(plannedKg - actualKg) < 0.25;
+  if (hasNumericValue(plannedLine?.load)) {
+    const plannedKg = Number(plannedLine.load);
+    const actualKg = resolveLoadKgIgnoringRpe(actualLine, oneRm, plannedLift);
+
+    if (actualKg != null) {
+      return Math.abs(plannedKg - actualKg) < 0.25;
+    }
+
+    return valuesMatch(plannedLine.load, actualLine.load);
   }
 
-  if (hasNumericValue(plannedLine?.rpe) || hasNumericValue(actualLine?.rpe)) {
-    return valuesMatch(plannedLine?.rpe, actualLine?.rpe);
+  if (hasNumericValue(plannedLine?.load_percent)) {
+    const plannedKg = resolveLoadKgIgnoringRpe(plannedLine, oneRm, plannedLift);
+    const actualKg = resolveLoadKgIgnoringRpe(actualLine, oneRm, plannedLift);
+
+    if (plannedKg != null && actualKg != null) {
+      return Math.abs(plannedKg - actualKg) < 0.25;
+    }
+
+    return valuesMatch(plannedLine.load_percent, actualLine.load_percent);
   }
 
-  if (hasNumericValue(plannedLine?.load_percent) || hasNumericValue(actualLine?.load_percent)) {
-    return valuesMatch(plannedLine?.load_percent, actualLine?.load_percent);
+  if (hasNumericValue(plannedLine?.rpe)) {
+    return valuesMatch(plannedLine.rpe, actualLine.rpe);
   }
 
-  return valuesMatch(plannedLine?.load, actualLine?.load);
+  return true;
 }
 
 function sectionsCompatible(plannedLine, actualLine) {

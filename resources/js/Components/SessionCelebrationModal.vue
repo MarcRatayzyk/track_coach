@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import CelebrationBarbell from './CelebrationBarbell.vue';
 import UiIcon from './UiIcon.vue';
 
 const props = defineProps({
@@ -94,27 +95,27 @@ async function shareForInstagram() {
     >
       <div
         v-if="open && celebration"
-        class="fixed inset-0 z-[80] flex min-h-[100dvh] flex-col bg-gradient-to-b from-emerald-950 via-slate-950 to-blue-950 text-white"
+        class="fixed inset-0 z-[80] flex min-h-[100dvh] flex-col bg-gradient-to-b from-black via-slate-950 to-red-950 text-white"
         role="dialog"
         aria-modal="true"
       >
         <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-          <div class="absolute -left-20 top-1/4 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl" />
-          <div class="absolute -right-16 bottom-1/4 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl" />
+          <div class="absolute -left-24 top-1/4 h-80 w-80 rounded-full bg-red-600/15 blur-3xl" />
+          <div class="absolute -right-20 bottom-1/3 h-72 w-72 rounded-full bg-red-900/25 blur-3xl" />
           <span
-            v-for="particle in 32"
+            v-for="particle in 28"
             :key="particle"
-            class="tc-celebration-particle absolute block h-2 w-2 rounded-full"
+            class="tc-celebration-particle absolute block h-1.5 w-1.5 rounded-full"
             :style="{
               left: `${(particle * 17) % 100}%`,
               top: `${(particle * 23) % 100}%`,
               animationDelay: `${(particle % 8) * 0.12}s`,
               background:
                 particle % 3 === 0
-                  ? 'rgb(52, 211, 153)'
+                  ? 'rgb(239, 68, 68)'
                   : particle % 3 === 1
-                    ? 'rgb(96, 165, 250)'
-                    : 'rgb(251, 191, 36)',
+                    ? 'rgb(148, 163, 184)'
+                    : 'rgb(220, 38, 38)',
             }"
           />
         </div>
@@ -124,7 +125,7 @@ async function shareForInstagram() {
         >
           <button
             type="button"
-            class="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl text-slate-300 transition hover:bg-white/10 hover:text-white"
+            class="flex h-10 w-10 items-center justify-center rounded-full border border-red-500/30 bg-red-950/40 text-xl text-red-100 transition hover:bg-red-900/50 hover:text-white"
             aria-label="Fermer"
             @click="close"
           >
@@ -132,7 +133,9 @@ async function shareForInstagram() {
           </button>
         </header>
 
-        <div class="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <div
+          class="relative z-10 flex flex-1 flex-col items-center justify-center px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        >
           <Transition
             appear
             enter-active-class="duration-700 ease-out"
@@ -141,34 +144,54 @@ async function shareForInstagram() {
           >
             <div v-if="open && celebration" class="w-full max-w-lg text-center">
               <div
-                class="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-emerald-400/40 bg-emerald-500/20 text-4xl shadow-2xl shadow-emerald-500/25"
+                class="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-red-500/50 bg-red-600/20 text-4xl shadow-2xl shadow-red-600/30"
               >
                 ✓
               </div>
 
-              <p class="mt-8 text-xs font-bold uppercase tracking-[0.32em] text-emerald-300">
+              <p class="mt-8 text-xs font-bold uppercase tracking-[0.32em] text-red-400">
                 Séance validée
               </p>
               <h2 class="mt-4 text-4xl font-bold leading-tight sm:text-5xl">
                 {{ celebration.sessionTitle }}
               </h2>
-              <p class="mt-4 text-lg font-medium text-emerald-100/90 sm:text-xl">
-                {{ celebration.topsetSubtitle }}
-              </p>
 
               <div
-                class="mt-10 flex items-center justify-center gap-4 rounded-2xl border border-white/10 bg-slate-950/40 px-6 py-5 backdrop-blur-sm"
+                class="mt-6 rounded-2xl border border-red-500/30 bg-red-950/25 px-4 py-4 shadow-lg shadow-red-900/20"
               >
-                <div class="min-w-0 flex-1 text-center">
-                  <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tonnage</p>
-                  <p class="mt-1 text-2xl font-bold tabular-nums sm:text-3xl">
+                <p class="text-[10px] font-bold uppercase tracking-[0.28em] text-red-400/90">
+                  Topset
+                </p>
+                <p class="mt-2 text-lg font-bold leading-snug tracking-wide text-white sm:text-xl">
+                  {{ celebration.topsetSubtitle }}
+                </p>
+                <CelebrationBarbell :barbell="celebration.barbell" />
+              </div>
+
+              <div
+                class="mt-8 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-black/50 px-3 py-4 backdrop-blur-sm sm:gap-3 sm:px-4"
+              >
+                <div class="min-w-0 text-center">
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Adhérence
+                  </p>
+                  <p class="mt-1 text-xl font-bold tabular-nums text-red-300 sm:text-2xl">
+                    {{ celebration.adherenceLabel }}
+                  </p>
+                </div>
+                <div class="min-w-0 border-x border-slate-800 text-center">
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Tonnage
+                  </p>
+                  <p class="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl">
                     {{ celebration.tonnageLabel }}
                   </p>
                 </div>
-                <div class="h-12 w-px bg-slate-600" />
-                <div class="min-w-0 flex-1 text-center">
-                  <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reps</p>
-                  <p class="mt-1 text-2xl font-bold tabular-nums sm:text-3xl">
+                <div class="min-w-0 text-center">
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Reps
+                  </p>
+                  <p class="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl">
                     {{ celebration.repsLabel }}
                   </p>
                 </div>
@@ -177,7 +200,7 @@ async function shareForInstagram() {
               <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
+                  class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-500"
                   @click="nativeShare"
                 >
                   <UiIcon name="share" class="h-4 w-4" />
@@ -185,7 +208,7 @@ async function shareForInstagram() {
                 </button>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl border border-pink-500/40 bg-pink-500/15 px-5 py-3 text-sm font-semibold text-pink-100 transition hover:bg-pink-500/25"
+                  class="inline-flex items-center gap-2 rounded-xl border border-pink-500/40 bg-pink-500/10 px-5 py-3 text-sm font-semibold text-pink-100 transition hover:bg-pink-500/20"
                   @click="shareForInstagram"
                 >
                   <span class="text-base leading-none">📸</span>
@@ -193,14 +216,14 @@ async function shareForInstagram() {
                 </button>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl border border-slate-500 bg-slate-900/60 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-slate-400"
+                  class="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-900/80 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-slate-500"
                   @click="copyShareText"
                 >
                   Copier
                 </button>
               </div>
 
-              <p v-if="shareFeedback" class="mt-4 text-sm text-emerald-300">
+              <p v-if="shareFeedback" class="mt-4 text-sm text-red-300">
                 {{ shareFeedback }}
               </p>
             </div>
@@ -214,17 +237,17 @@ async function shareForInstagram() {
 <style scoped>
 .tc-celebration-particle {
   animation: tc-celebration-float 2.8s ease-in-out infinite alternate;
-  opacity: 0.65;
+  opacity: 0.55;
 }
 
 @keyframes tc-celebration-float {
   0% {
     transform: translate3d(0, 0, 0) scale(0.8);
-    opacity: 0.2;
+    opacity: 0.15;
   }
   100% {
     transform: translate3d(0, -18px, 0) scale(1.15);
-    opacity: 0.9;
+    opacity: 0.85;
   }
 }
 </style>

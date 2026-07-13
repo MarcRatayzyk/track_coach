@@ -116,7 +116,10 @@ function initializeWorkItems() {
       const validated = new Set();
       for (const item of day.items) {
         const key = itemKey(item);
-        if (item.line?.rpe != null && item.line.rpe !== '') {
+        const hasCharge =
+          (item.line?.load != null && item.line.load !== '') ||
+          (item.line?.load_percent != null && item.line.load_percent !== '');
+        if (hasCharge && item.line?.rpe != null && item.line.rpe !== '') {
           counts[key] = totalSetsFor(item);
           validated.add(key);
         }
@@ -234,6 +237,7 @@ function validateItem(key) {
         celebrationData.value = buildSessionCelebrationPayload({
           sessionTitle: sessionTitle.value,
           workItems: workItems.value,
+          plannedItems: session.value?.items ?? [],
           oneRm: props.oneRm,
           mainLift: mainLift.value,
         });

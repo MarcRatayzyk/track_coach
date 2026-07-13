@@ -63,26 +63,37 @@ class TrainingLoadSupport
         string $fallbackLift,
     ): bool {
         $plannedLift = self::resolveLift($plannedLine, $fallbackLift);
-        $actualLift = self::resolveLift($actualLine, $fallbackLift);
-        $plannedKg = self::resolveLoadKgIgnoringRpe($plannedLine, $oneRm, $plannedLift);
-        $actualKg = self::resolveLoadKgIgnoringRpe($actualLine, $oneRm, $actualLift);
 
-        if ($plannedKg !== null && $actualKg !== null) {
-            return abs($plannedKg - $actualKg) < 0.25;
+        if (self::hasNumericValue($plannedLine['load'] ?? null)) {
+            $plannedKg = (float) $plannedLine['load'];
+            $actualKg = self::resolveLoadKgIgnoringRpe($actualLine, $oneRm, $plannedLift);
+
+            if ($actualKg !== null) {
+                return abs($plannedKg - $actualKg) < 0.25;
+            }
+
+            return self::valuesMatch($plannedLine['load'] ?? null, $actualLine['load'] ?? null);
         }
 
-        if (self::hasNumericValue($plannedLine['rpe'] ?? null) || self::hasNumericValue($actualLine['rpe'] ?? null)) {
+        if (self::hasNumericValue($plannedLine['load_percent'] ?? null)) {
+            $plannedKg = self::resolveLoadKgIgnoringRpe($plannedLine, $oneRm, $plannedLift);
+            $actualKg = self::resolveLoadKgIgnoringRpe($actualLine, $oneRm, $plannedLift);
+
+            if ($plannedKg !== null && $actualKg !== null) {
+                return abs($plannedKg - $actualKg) < 0.25;
+            }
+
+            return self::valuesMatch(
+                $plannedLine['load_percent'] ?? null,
+                $actualLine['load_percent'] ?? null,
+            );
+        }
+
+        if (self::hasNumericValue($plannedLine['rpe'] ?? null)) {
             return self::valuesMatch($plannedLine['rpe'] ?? null, $actualLine['rpe'] ?? null);
         }
 
-        if (
-            self::hasNumericValue($plannedLine['load_percent'] ?? null)
-            || self::hasNumericValue($actualLine['load_percent'] ?? null)
-        ) {
-            return self::valuesMatch($plannedLine['load_percent'] ?? null, $actualLine['load_percent'] ?? null);
-        }
-
-        return self::valuesMatch($plannedLine['load'] ?? null, $actualLine['load'] ?? null);
+        return true;
     }
 
     public static function valuesMatch(mixed $a, mixed $b): bool
