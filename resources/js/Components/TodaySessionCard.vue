@@ -11,6 +11,8 @@ import {
   sessionToDay,
 } from '../utils/programBuilder';
 import TodaySessionSetBlock from './TodaySessionSetBlock.vue';
+import SessionCelebrationModal from './SessionCelebrationModal.vue';
+import { buildSessionCelebrationPayload } from '../utils/sessionCelebration';
 
 const props = defineProps({
   todaySession: {
@@ -29,17 +31,14 @@ const props = defineProps({
     type: Object,
     default: null,
   },
-  adherenceSharePayload: {
-    type: Object,
-    default: null,
-  },
 });
-const emit = defineEmits(['share-adherence']);
 
 const workItems = ref([]);
 const expandedItemKey = ref(null);
 const validatedItemKeys = ref(new Set());
 const validatedSetCounts = ref({});
+const celebrationOpen = ref(false);
+const celebrationData = ref(null);
 
 function itemKey(item) {
   return `${item.section}-${item.line?.exercise_name ?? ''}`;
@@ -211,6 +210,7 @@ function validateItem(key) {
     return;
   }
 
+  const wasAllValidated = allSeriesValidated.value;
   const total = totalSetsFor(item);
   const nextCount = Math.min(getValidatedSetCount(key) + 1, total);
   validatedSetCounts.value = { ...validatedSetCounts.value, [key]: nextCount };
@@ -228,17 +228,24 @@ function validateItem(key) {
     item.line.rpe = null;
   }
 
-  saveSession();
+  saveSession({
+    onSuccess: () => {
+      if (!wasAllValidated && allSeriesValidated.value) {
+        celebrationData.value = buildSessionCelebrationPayload({
+          sessionTitle: sessionTitle.value,
+          workItems: workItems.value,
+          oneRm: props.oneRm,
+          mainLift: mainLift.value,
+        });
+        celebrationOpen.value = true;
+      }
+    },
+  });
 }
 
-function shareAdherenceCard() {
-  if (!props.adherenceSharePayload) {
-    return;
-  }
-
-  emit('share-adherence', props.adherenceSharePayload);
+function closeCelebration() {
+  celebrationOpen.value = false;
 }
-
 </script>
 
 <template>
@@ -301,14 +308,6 @@ function shareAdherenceCard() {
         >
           Envoyer un retour
         </Link>
-        <button
-          v-if="allSeriesValidated && adherenceSharePayload"
-          type="button"
-          class="mt-2 flex w-full items-center justify-center rounded-lg border border-blue-500/40 bg-blue-600/20 px-3 py-2.5 text-sm font-semibold text-blue-100 hover:bg-blue-600/30"
-          @click="shareAdherenceCard"
-        >
-          Partager ma séance
-        </button>
       </div>
     </template>
 
@@ -341,4 +340,10 @@ function shareAdherenceCard() {
       </p>
     </template>
   </section>
+
+  <SessionCelebrationModal
+    :open="celebrationOpen"
+    :celebration="celebrationData"
+    @close="closeCelebration"
+  />
 </template>

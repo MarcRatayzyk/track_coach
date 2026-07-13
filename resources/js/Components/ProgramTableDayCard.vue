@@ -9,6 +9,7 @@ import {
   resolveVisibleColumns,
   spacedColumnPercent,
 } from '../config/dayTableColumns';
+import { uppercaseSessionLabel } from '../utils/programBuilder';
 import { programSessionVisitOptions } from '../utils/programBuilderVisit';
 import { useTableRowEditor } from '../composables/useTableRowEditor';
 
@@ -133,6 +134,7 @@ function normaliseRows(items = []) {
 const rows = ref([]);
 const sessionLabel = ref(props.defaultSessionLabel);
 const sessionNotes = ref('');
+const persistedSessionLabel = ref(props.defaultSessionLabel);
 
 const form = useForm({
   week_number: props.weekNumber,
@@ -150,6 +152,7 @@ watch(
   (session) => {
     rows.value = normaliseRows(session?.items ?? []);
     sessionLabel.value = session?.session_label ?? props.defaultSessionLabel;
+    persistedSessionLabel.value = sessionLabel.value;
     sessionNotes.value = session?.notes ?? '';
   },
   { immediate: true },
@@ -276,8 +279,23 @@ function closeInstructionsModal() {
   instructionsModalOpen.value = false;
 }
 
-function saveInstructions({ sessionLabel: label, sessionNotes: notes }) {
-  sessionLabel.value = label;
+function onSessionLabelInput(event) {
+  sessionLabel.value = uppercaseSessionLabel(event.target.value);
+}
+
+function commitSessionLabel() {
+  const normalized = uppercaseSessionLabel(sessionLabel.value?.trim() || props.defaultSessionLabel);
+  sessionLabel.value = normalized;
+
+  if (normalized === persistedSessionLabel.value) {
+    return;
+  }
+
+  persistedSessionLabel.value = normalized;
+  saveSession();
+}
+
+function saveInstructions({ sessionNotes: notes }) {
   sessionNotes.value = notes;
   saveSession();
   closeInstructionsModal();
@@ -387,17 +405,27 @@ function selectRow(index) {
     </div>
     <div class="border-l-2 border-amber-400 bg-black px-3 py-2">
       <div class="flex items-center justify-between gap-3">
-        <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <p class="text-xs font-semibold uppercase tracking-wide text-amber-300">
-            {{ sessionHeading }}
-          </p>
+        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+          <label class="flex min-w-0 flex-1 items-center gap-1.5">
+            <span class="sr-only">Nom de la séance</span>
+            <input
+              :value="sessionLabel"
+              type="text"
+              maxlength="255"
+              :placeholder="defaultSessionLabel"
+              class="min-w-[5rem] flex-1 bg-transparent text-xs font-semibold uppercase tracking-wide text-amber-300 outline-none placeholder:text-amber-300/40 focus:underline"
+              @input="onSessionLabelInput"
+              @blur="commitSessionLabel"
+              @keydown.enter.prevent="$event.target.blur()"
+            />
+          </label>
           <button
             type="button"
-            class="text-[10px] font-medium text-slate-400 hover:text-slate-200"
+            class="shrink-0 text-[10px] font-medium text-slate-400 hover:text-slate-200"
             :class="hasInstructions ? 'text-amber-300/80' : ''"
             @click="openInstructionsModal"
           >
-            + instructions
+            Instructions
           </button>
         </div>
         <div class="flex flex-wrap justify-end gap-1.5">
@@ -502,10 +530,10 @@ function selectRow(index) {
 
     <ProgramSessionInstructionsModal
       :open="instructionsModalOpen"
-      :session-label="sessionLabel"
       :session-notes="sessionNotes"
       :default-session-label="defaultSessionLabel"
       :processing="form.processing"
+      :show-session-label="false"
       @confirm="saveInstructions"
       @cancel="closeInstructionsModal"
     />

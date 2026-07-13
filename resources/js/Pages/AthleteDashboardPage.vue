@@ -11,7 +11,6 @@ import { Link } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import AthleteDailyCheckInModal from '../Components/AthleteDailyCheckInModal.vue';
 import AthleteDashboardHeader from '../Components/AthleteDashboardHeader.vue';
-import AthleteMonthCalendar from '../Components/AthleteMonthCalendar.vue';
 import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
 import TodaySessionCard from '../Components/TodaySessionCard.vue';
 import WrappedStoryModal from '../Components/WrappedStoryModal.vue';
@@ -30,26 +29,13 @@ const props = defineProps({
   latestPr: { type: Object, default: null },
   feedbackDueToday: { type: Boolean, default: false },
   feedbackFrequency: { type: String, default: 'weekly' },
-  shareHighlights: {
-    type: Object,
-    default: () => ({ pr_card: null, adherence_card: null, templates: [] }),
-  },
   wrapped: {
     type: Object,
     default: () => ({ weekly: null, monthly: null }),
   },
-  programBlock: {
-    type: Object,
-    default: null,
-  },
-  competitions: {
-    type: Array,
-    default: () => [],
-  },
 });
 
 const checkInModalOpen = ref(false);
-const shareMessage = ref('');
 const activeWrapped = ref(null);
 const wrappedModalOpen = ref(false);
 
@@ -156,14 +142,12 @@ async function sharePayload(payload) {
   try {
     if (navigator.share) {
       await navigator.share(shareData);
-      shareMessage.value = 'Partage envoyé.';
       return;
     }
 
     await navigator.clipboard.writeText(text);
-    shareMessage.value = 'Texte copié dans le presse-papiers.';
   } catch (_error) {
-    shareMessage.value = 'Partage non disponible sur cet appareil.';
+    // Partage annulé ou indisponible.
   }
 }
 
@@ -194,64 +178,7 @@ onMounted(() => {
       :athlete-id="athleteId"
       :one-rm="oneRm"
       :today-logged-session="todayLoggedSession"
-      :adherence-share-payload="shareHighlights.adherence_card"
-      @share-adherence="sharePayload"
     />
-
-    <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <h2 class="text-sm font-semibold text-white">Calendrier</h2>
-        <Link
-          :href="`/athletes/${athleteId}`"
-          class="text-xs font-medium text-blue-400 hover:text-blue-300"
-        >
-          Voir mon profil →
-        </Link>
-      </div>
-      <AthleteMonthCalendar
-        class="mt-3"
-        mode="overview"
-        :program-block="programBlock"
-        :competitions="competitions"
-        :training-sessions="[]"
-      />
-    </section>
-
-    <section
-      v-if="shareHighlights.pr_card || (shareHighlights.templates?.length ?? 0) > 0"
-      class="rounded-2xl border border-blue-500/30 bg-blue-950/15 p-4 shadow-lg"
-    >
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-300/90">Partage</p>
-          <p class="mt-1 text-sm font-semibold text-white">Mets en avant ta progression</p>
-        </div>
-        <button
-          v-if="shareHighlights.pr_card"
-          type="button"
-          class="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-500"
-          @click="sharePayload(shareHighlights.pr_card)"
-        >
-          Partager mon PR
-        </button>
-      </div>
-      <p
-        v-if="shareHighlights.pr_card"
-        class="mt-3 rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-xs text-slate-300"
-      >
-        {{ shareHighlights.pr_card.headline }} · {{ shareHighlights.pr_card.subline }}
-      </p>
-      <div v-if="shareHighlights.templates?.length" class="mt-3 flex flex-wrap gap-2">
-        <span
-          v-for="template in shareHighlights.templates"
-          :key="template.id"
-          class="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-[10px] font-medium text-slate-300"
-        >
-          {{ template.label }}
-        </span>
-      </div>
-      <p v-if="shareMessage" class="mt-2 text-xs text-emerald-300">{{ shareMessage }}</p>
-    </section>
 
     <section
       v-if="wrappedCards.length"

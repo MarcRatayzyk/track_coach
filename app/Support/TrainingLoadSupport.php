@@ -62,8 +62,10 @@ class TrainingLoadSupport
         array $oneRm,
         string $fallbackLift,
     ): bool {
-        $plannedKg = self::resolveLoadKg($plannedLine, $oneRm, $fallbackLift);
-        $actualKg = self::resolveLoadKg($actualLine, $oneRm, $fallbackLift);
+        $plannedLift = self::resolveLift($plannedLine, $fallbackLift);
+        $actualLift = self::resolveLift($actualLine, $fallbackLift);
+        $plannedKg = self::resolveLoadKgIgnoringRpe($plannedLine, $oneRm, $plannedLift);
+        $actualKg = self::resolveLoadKgIgnoringRpe($actualLine, $oneRm, $actualLift);
 
         if ($plannedKg !== null && $actualKg !== null) {
             return abs($plannedKg - $actualKg) < 0.25;
@@ -107,6 +109,7 @@ class TrainingLoadSupport
     public static function exerciseLineToArray(ProgramDayExercise $line): array
     {
         return [
+            'section' => $line->section,
             'exercise_variant_id' => $line->exercise_variant_id,
             'exercise_name' => $line->exercise_name,
             'lift' => $line->lift,
@@ -116,6 +119,33 @@ class TrainingLoadSupport
             'load_percent' => $line->load_percent,
             'rpe' => $line->rpe,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $line
+     * @param  array{squat?: int, bench?: int, deadlift?: int}  $oneRm
+     */
+    private static function resolveLoadKgIgnoringRpe(array $line, array $oneRm, string $fallbackLift): ?float
+    {
+        if (self::hasNumericValue($line['load'] ?? null)) {
+            $load = (float) $line['load'];
+
+            return $load > 0 ? $load : null;
+        }
+
+        if (self::hasNumericValue($line['load_percent'] ?? null)) {
+            $lift = self::resolveLift($line, $fallbackLift);
+            $pct = (float) $line['load_percent'];
+            $rm = (float) ($oneRm[$lift] ?? 0);
+
+            if ($pct <= 0 || $rm <= 0) {
+                return null;
+            }
+
+            return ($pct / 100) * $rm;
+        }
+
+        return null;
     }
 
     /**

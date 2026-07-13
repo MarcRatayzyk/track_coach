@@ -101,48 +101,50 @@ const filteredBodyWeight = computed(() =>
       </p>
     </article>
 
-    <SbdTonnageDonutChart class="mt-3" :flat-items="stats?.flatItems ?? []" />
+    <div class="mt-3 grid min-w-0 gap-4 lg:grid-cols-2">
+      <SbdTonnageDonutChart :flat-items="stats?.flatItems ?? []" />
 
-    <article class="mt-3 min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h3 class="text-sm font-semibold text-white">Évolution RPE (réalisé)</h3>
-        <div class="flex flex-wrap gap-2">
+      <article class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h3 class="text-sm font-semibold text-white">Évolution RPE (réalisé)</h3>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="option in wellnessTimeRangeOptions.filter((item) => ['7d', '1m', '3m', '6m'].includes(item.value))"
+              :key="`rpe-range-${option.value}`"
+              type="button"
+              class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
+              :class="
+                rpeTimeRange === option.value
+                  ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
+                  : 'border-slate-700 text-slate-400 hover:bg-slate-800'
+              "
+              @click="rpeTimeRange = option.value"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-2">
           <button
-            v-for="option in wellnessTimeRangeOptions.filter((item) => ['7d', '1m', '3m', '6m'].includes(item.value))"
-            :key="`rpe-range-${option.value}`"
+            v-for="option in RPE_EXERCISE_FILTERS"
+            :key="option.value"
             type="button"
             class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
             :class="
-              rpeTimeRange === option.value
+              rpeExerciseFilter === option.value
                 ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
                 : 'border-slate-700 text-slate-400 hover:bg-slate-800'
             "
-            @click="rpeTimeRange = option.value"
+            @click="rpeExerciseFilter = option.value"
           >
             {{ option.label }}
           </button>
         </div>
-      </div>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <button
-          v-for="option in RPE_EXERCISE_FILTERS"
-          :key="option.value"
-          type="button"
-          class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
-          :class="
-            rpeExerciseFilter === option.value
-              ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
-              : 'border-slate-700 text-slate-400 hover:bg-slate-800'
-          "
-          @click="rpeExerciseFilter = option.value"
-        >
-          {{ option.label }}
-        </button>
-      </div>
-      <div class="mt-3 min-w-0 overflow-x-auto">
-        <RpeTrendChart :points="rpePoints" embedded />
-      </div>
-    </article>
+        <div class="mt-3 min-w-0 overflow-x-auto">
+          <RpeTrendChart :points="rpePoints" embedded />
+        </div>
+      </article>
+    </div>
 
     <div class="mt-3 flex flex-wrap gap-2">
       <button

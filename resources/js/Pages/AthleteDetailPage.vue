@@ -687,6 +687,8 @@ onMounted(() => {
         :name="athlete.name"
         :email="athlete.email"
         :weight-class="athleteWeightCategoryLabel"
+        :weight-category="athlete.profile?.weight_category ?? ''"
+        :birth-date="athlete.profile?.birth_date?.slice?.(0, 10) ?? athlete.profile?.birth_date ?? ''"
         :height-label="heightLabel"
         :level-label="athleteLevelLabel"
         :injuries-notes="athlete.profile?.injuries_notes ?? ''"
@@ -721,6 +723,7 @@ onMounted(() => {
           :program-block="programBlock"
           :training-sessions="trainingSessions"
           :competitions="athlete.competitions ?? []"
+          :one-rm="referenceLifts"
           :can-edit="canManageSessions"
           @edit-session="openEditSession"
         />

@@ -94,9 +94,17 @@ class AthleteAdherenceCalculator
                 continue;
             }
 
-            $plannedSessions++;
             $dateKey = $cursor->toDateString();
             $actualItems = $actualByDate[$dateKey]['items'] ?? [];
+            $isToday = $dateKey === $end->toDateString();
+
+            if ($actualItems === [] && $isToday) {
+                $cursor = $cursor->copy()->addDay();
+
+                continue;
+            }
+
+            $plannedSessions++;
 
             if ($actualItems !== []) {
                 $completedSessions++;
@@ -157,6 +165,7 @@ class AthleteAdherenceCalculator
                 }
 
                 $map[$dateKey]['items'][] = array_merge($item, [
+                    'section' => $item['section'] ?? null,
                     'lift' => in_array($item['lift'] ?? null, ['squat', 'bench', 'deadlift'], true)
                         ? $item['lift']
                         : $mainLift,
@@ -211,9 +220,16 @@ class AthleteAdherenceCalculator
         $bestMatchedChecks = 0;
         $bestTotalChecks = 1;
         $plannedName = strtolower(trim((string) ($plannedLine['exercise_name'] ?? '')));
+        $plannedLift = in_array($plannedLine['lift'] ?? null, ['squat', 'bench', 'deadlift'], true)
+            ? $plannedLine['lift']
+            : $fallbackLift;
 
         foreach ($actualItems as $index => $actualLine) {
             if (in_array($index, $usedIndices, true)) {
+                continue;
+            }
+
+            if (! self::sectionsCompatible($plannedLine, $actualLine)) {
                 continue;
             }
 
@@ -245,7 +261,7 @@ class AthleteAdherenceCalculator
 
             if (TrainingLoadSupport::hasExplicitLoadTarget($plannedLine)) {
                 $totalChecks++;
-                if (TrainingLoadSupport::loadsMatch($plannedLine, $actualLine, $oneRm, $fallbackLift)) {
+                if (TrainingLoadSupport::loadsMatch($plannedLine, $actualLine, $oneRm, $plannedLift)) {
                     $matchedChecks++;
                 }
             }
@@ -303,17 +319,21 @@ class AthleteAdherenceCalculator
     }
 
     /**
-     * @return array{
-     *     planned_sessions: int,
-     *     completed_sessions: int,
-     *     session_coverage: int|null,
-     *     matched_checks: int,
-     *     total_checks: int,
-     *     percentage: int|null,
-     *     planned_lines: int,
-     *     exact_lines: int,
-     * }
+     * @param  array<string, mixed>  $plannedLine
+     * @param  array<string, mixed>  $actualLine
      */
+    private function sectionsCompatible(array $plannedLine, array $actualLine): bool
+    {
+        $plannedSection = trim((string) ($plannedLine['section'] ?? ''));
+        $actualSection = trim((string) ($actualLine['section'] ?? ''));
+
+        if ($plannedSection === '' || $actualSection === '') {
+            return true;
+        }
+
+        return $plannedSection === $actualSection;
+    }
+
     private function emptyResult(): array
     {
         return [

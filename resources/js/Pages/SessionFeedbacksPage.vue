@@ -8,7 +8,7 @@ export default {
 
 <script setup>
 import { Link, router, useForm } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import VideoAnnotator from '../Components/VideoAnnotator.vue';
 
@@ -24,11 +24,12 @@ const props = defineProps({
 const isCoach = computed(() => props.role === 'coach');
 const isWeekly = computed(() => props.feedbackFrequency === 'weekly');
 const showSubmitForm = ref(false);
+const selectedVideos = ref([]);
+const videoInputRef = useTemplateRef('videoInput');
 
 const submitForm = useForm({
   session_date: props.eligibleSessions[0]?.session_date ?? '',
   athlete_notes: '',
-  videos: [],
 });
 
 const filterOptions = [
@@ -38,9 +39,9 @@ const filterOptions = [
 
 const athleteDescription = computed(() => {
   if (isWeekly.value) {
-    return 'Envoyez une vidéo et un message pour votre retour hebdomadaire.';
+    return 'Envoyez un message et, si besoin, une vidéo pour votre retour hebdomadaire.';
   }
-  return 'Envoyez une vidéo et un message pour chaque séance programme réalisée.';
+  return 'Envoyez un message et, si besoin, une vidéo pour chaque séance programme réalisée.';
 });
 
 function feedbackUrl(id) {
@@ -69,18 +70,37 @@ function selectFeedback(id) {
 }
 
 function onVideoChange(event) {
-  submitForm.videos = Array.from(event.target.files ?? []);
+  selectedVideos.value = Array.from(event.target.files ?? []);
+}
+
+function clearSelectedVideos() {
+  selectedVideos.value = [];
+  if (videoInputRef.value) {
+    videoInputRef.value.value = '';
+  }
 }
 
 function submitFeedback() {
-  submitForm.post('/feedbacks', {
-    forceFormData: true,
-    preserveScroll: true,
-    onSuccess: () => {
-      submitForm.reset();
-      showSubmitForm.value = false;
-    },
-  });
+  const notes = submitForm.athlete_notes?.trim() ?? '';
+  if (!notes && selectedVideos.value.length === 0) {
+    submitForm.setError('athlete_notes', 'Ajoutez un message ou au moins une vidéo.');
+    return;
+  }
+
+  submitForm
+    .transform((data) => ({
+      ...data,
+      videos: selectedVideos.value,
+    }))
+    .post('/feedbacks', {
+      forceFormData: selectedVideos.value.length > 0,
+      preserveScroll: true,
+      onSuccess: () => {
+        submitForm.reset();
+        clearSelectedVideos();
+        showSubmitForm.value = false;
+      },
+    });
 }
 
 function formatSubmitted(iso) {
@@ -189,18 +209,24 @@ watch(
             placeholder="Comment s’est passée la séance ?"
             class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-600"
           />
+          <p v-if="submitForm.errors.athlete_notes" class="mt-1 text-sm text-red-400">
+            {{ submitForm.errors.athlete_notes }}
+          </p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300">Vidéos (1 à 3)</label>
+          <label class="block text-sm font-medium text-slate-300">Vidéos (optionnel, 1 à 3)</label>
           <input
+            ref="videoInput"
             type="file"
             accept="video/*"
             multiple
-            required
             class="mt-1 w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white"
             @change="onVideoChange"
           />
+          <p v-if="selectedVideos.length" class="mt-2 text-xs text-slate-500">
+            {{ selectedVideos.length }} fichier{{ selectedVideos.length > 1 ? 's' : '' }} sélectionné{{ selectedVideos.length > 1 ? 's' : '' }}
+          </p>
           <p v-if="submitForm.errors.videos" class="mt-1 text-sm text-red-400">
             {{ submitForm.errors.videos }}
           </p>

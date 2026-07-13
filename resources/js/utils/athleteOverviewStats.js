@@ -1,4 +1,5 @@
 import { cellDate } from './programBuilder';
+import { scorePlannedLine } from './sessionAdherence';
 import {
   LIFTS,
   countExcludedRpeLines,
@@ -77,46 +78,6 @@ function normalizeExerciseName(value) {
 
 function hasExerciseName(line) {
   return Boolean(String(line?.exercise_name ?? '').trim());
-}
-
-function hasNumericValue(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed);
-}
-
-function hasExplicitLoadTarget(line) {
-  return (
-    (line?.load != null && line.load !== '') ||
-    (line?.load_percent != null && line.load_percent !== '') ||
-    (line?.rpe != null && line.rpe !== '')
-  );
-}
-
-function valuesMatch(a, b) {
-  if (!hasNumericValue(a) || !hasNumericValue(b)) {
-    return false;
-  }
-
-  return Math.abs(Number(a) - Number(b)) < 0.05;
-}
-
-function loadsMatch(plannedLine, actualLine, oneRm = {}, fallbackLift = 'squat') {
-  const plannedKg = resolveLoadKg(plannedLine, oneRm, fallbackLift);
-  const actualKg = resolveLoadKg(actualLine, oneRm, fallbackLift);
-
-  if (plannedKg != null && actualKg != null) {
-    return Math.abs(plannedKg - actualKg) < 0.25;
-  }
-
-  if (plannedLine?.rpe != null || actualLine?.rpe != null) {
-    return valuesMatch(plannedLine?.rpe, actualLine?.rpe);
-  }
-
-  if (plannedLine?.load_percent != null || actualLine?.load_percent != null) {
-    return valuesMatch(plannedLine?.load_percent, actualLine?.load_percent);
-  }
-
-  return valuesMatch(plannedLine?.load, actualLine?.load);
 }
 
 function formatShortDate(value) {
@@ -370,91 +331,6 @@ function buildPlannedSessions(programBlock, today = new Date()) {
     })
     .filter((session) => session.items.length && parseIsoDate(session.sessionDate) <= today)
     .sort((a, b) => String(a.sessionDate).localeCompare(String(b.sessionDate)));
-}
-
-function scorePlannedLine(plannedLine, actualItems, usedIndices, oneRm, fallbackLift) {
-  let bestIndex = -1;
-  let bestMatchedChecks = 0;
-  let bestTotalChecks = 1;
-
-  const plannedName = normalizeExerciseName(plannedLine.exercise_name);
-
-  for (let index = 0; index < actualItems.length; index += 1) {
-    if (usedIndices.has(index)) {
-      continue;
-    }
-
-    const actualLine = actualItems[index];
-    const sameVariant =
-      plannedLine.exercise_variant_id &&
-      actualLine.exercise_variant_id &&
-      Number(plannedLine.exercise_variant_id) === Number(actualLine.exercise_variant_id);
-    const sameName = normalizeExerciseName(actualLine.exercise_name) === plannedName;
-
-    if (!sameVariant && !sameName) {
-      continue;
-    }
-
-    let matchedChecks = 1;
-    let totalChecks = 1;
-
-    if (hasNumericValue(plannedLine.sets)) {
-      totalChecks += 1;
-      if (valuesMatch(plannedLine.sets, actualLine.sets)) {
-        matchedChecks += 1;
-      }
-    }
-
-    if (hasNumericValue(plannedLine.reps)) {
-      totalChecks += 1;
-      if (valuesMatch(plannedLine.reps, actualLine.reps)) {
-        matchedChecks += 1;
-      }
-    }
-
-    if (hasExplicitLoadTarget(plannedLine)) {
-      totalChecks += 1;
-      if (loadsMatch(plannedLine, actualLine, oneRm, fallbackLift)) {
-        matchedChecks += 1;
-      }
-    }
-
-    const bestRatio = bestMatchedChecks / bestTotalChecks;
-    const candidateRatio = matchedChecks / totalChecks;
-    if (
-      bestIndex === -1 ||
-      candidateRatio > bestRatio ||
-      (candidateRatio === bestRatio && matchedChecks > bestMatchedChecks)
-    ) {
-      bestIndex = index;
-      bestMatchedChecks = matchedChecks;
-      bestTotalChecks = totalChecks;
-    }
-  }
-
-  if (bestIndex >= 0) {
-    usedIndices.add(bestIndex);
-  } else {
-    let totalChecks = 1;
-    if (hasNumericValue(plannedLine.sets)) {
-      totalChecks += 1;
-    }
-    if (hasNumericValue(plannedLine.reps)) {
-      totalChecks += 1;
-    }
-    if (hasExplicitLoadTarget(plannedLine)) {
-      totalChecks += 1;
-    }
-
-    bestMatchedChecks = 0;
-    bestTotalChecks = totalChecks;
-  }
-
-  return {
-    matchedChecks: bestMatchedChecks,
-    totalChecks: bestTotalChecks,
-    exact: bestMatchedChecks === bestTotalChecks && bestTotalChecks > 0,
-  };
 }
 
 function buildAdherence(programBlock, trainingSessions = [], oneRm = {}) {

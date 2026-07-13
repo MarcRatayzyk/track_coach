@@ -2,11 +2,11 @@
 import { computed } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
-  SECTION_LABELS,
   formatLineRecap,
   formatPrescription,
   sessionDayOrdinalInWeek,
 } from '../utils/programBuilder';
+import { sectionBadgeClass, sectionOption } from '../config/programTableSections';
 
 const props = defineProps({
   programBlock: {
@@ -52,14 +52,8 @@ function exerciseLineText(line) {
   return formatLineRecap(line) || formatPrescription(line);
 }
 
-function sectionTextClass(section) {
-  if (section === 'topset') {
-    return 'text-emerald-400';
-  }
-  if (section === 'backoff') {
-    return 'text-amber-300';
-  }
-  return 'text-slate-400';
+function sectionLabel(section) {
+  return sectionOption(section).label;
 }
 </script>
 
@@ -87,12 +81,15 @@ function sectionTextClass(section) {
         <li
           v-for="(line, index) in exerciseLines"
           :key="`${line.section}-${index}`"
-          class="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm"
+          class="flex flex-wrap items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm"
         >
-          <span class="text-xs font-medium uppercase" :class="sectionTextClass(line.section)">
-            {{ SECTION_LABELS[line.section] ?? line.section }}
+          <span
+            class="inline-flex shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+            :class="sectionBadgeClass(line.section)"
+          >
+            {{ sectionLabel(line.section) }}
           </span>
-          <p class="mt-1 text-slate-200">{{ exerciseLineText(line) }}</p>
+          <span class="text-slate-200">{{ exerciseLineText(line) }}</span>
         </li>
       </ul>
     </template>

@@ -23,9 +23,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  colorKey: {
+    type: String,
+    default: null,
+  },
 });
 
-const liftColors = computed(() => LIFT_COLORS[props.liftKey]);
+const liftColors = computed(() => LIFT_COLORS[props.colorKey ?? props.liftKey]);
 
 const currentValue = computed(() => currentValueFromSeries(props.series));
 
@@ -43,16 +47,22 @@ const cardStyle = computed(() => {
   return glowCardStyle(liftColors.value);
 });
 
+function rgbaFromRgb(rgb, alpha) {
+  return String(rgb).replace('rgb(', 'rgba(').replace(')', `, ${alpha})`);
+}
+
+const fillColor = computed(() => rgbaFromRgb(liftColors.value.border, 0.32));
+
 const chartData = computed(() => ({
-  labels: props.series.map((point) => formatCalendarFr(point.date, 'medium')),
+  labels: props.series.map((point) => formatCalendarFr(point.date, 'short')),
   datasets: [
     {
       label: props.label,
       data: props.series.map((point) => point.value),
       borderColor: liftColors.value.border,
-      backgroundColor: liftColors.value.bg,
-      tension: 0.25,
-      fill: false,
+      backgroundColor: fillColor.value,
+      tension: 0.3,
+      fill: 'origin',
       pointRadius: props.series.length <= 3 ? 3 : 0,
       pointHoverRadius: 4,
       pointBackgroundColor: liftColors.value.border,
@@ -69,10 +79,18 @@ const chartOptions = computed(() => {
 
   return {
     maintainAspectRatio: false,
+    layout: {
+      padding: { top: 2, bottom: 0, left: 0, right: 0 },
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
         callbacks: {
+          title(items) {
+            const index = items[0]?.dataIndex ?? 0;
+            const point = props.series[index];
+            return point ? formatCalendarFr(point.date, 'medium') : '';
+          },
           label(context) {
             return `${props.label}: ${context.parsed.y} kg`;
           },
@@ -81,8 +99,17 @@ const chartOptions = computed(() => {
     },
     scales: {
       x: {
-        display: false,
+        display: true,
         grid: { display: false },
+        border: { display: false },
+        ticks: {
+          maxTicksLimit: 3,
+          maxRotation: 0,
+          autoSkip: true,
+          color: 'rgb(100, 116, 139)',
+          font: { size: 9, weight: '500' },
+          padding: 2,
+        },
       },
       y: {
         display: false,
@@ -106,7 +133,7 @@ function formatKgCompact(value) {
 
 <template>
   <article
-    class="glow-card flex min-h-[96px] flex-col rounded-lg px-2.5 py-2 transition-shadow duration-300"
+    class="glow-card flex min-h-[112px] flex-col rounded-lg px-2.5 py-2 transition-shadow duration-300"
     :style="cardStyle"
   >
     <div class="flex items-start justify-between gap-2">
@@ -129,12 +156,12 @@ function formatKgCompact(value) {
       </div>
     </div>
 
-    <div v-if="hasData && series.length >= 2" class="relative mt-1 h-14 w-full">
+    <div v-if="hasData && series.length >= 2" class="relative mt-1 h-[4.75rem] w-full">
       <LineChart :chart-data="chartData" :options="chartOptions" />
     </div>
     <div
       v-else-if="hasData"
-      class="mt-1 flex h-14 items-center justify-center rounded-md border border-dashed border-slate-700/80 bg-slate-950/30"
+      class="mt-1 flex h-[4.75rem] items-center justify-center rounded-md border border-dashed border-slate-700/80 bg-slate-950/30"
     >
       <p class="text-[10px] text-slate-500">Premier repère enregistré</p>
     </div>

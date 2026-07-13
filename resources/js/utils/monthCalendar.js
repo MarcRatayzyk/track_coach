@@ -55,20 +55,23 @@ function isWithinRange(date, startDate, endDate) {
 
 export function defaultCalendarRange() {
   const now = new Date();
+  const year = now.getFullYear();
 
   return {
-    start: startOfMonth(addMonths(now, -4)),
-    end: endOfMonth(addMonths(now, 2)),
+    start: new Date(year - 1, 0, 1),
+    end: new Date(year + 1, 11, 31),
   };
 }
 
-function monthHeaderLabel(year, month) {
+function monthHeaderLabel(year, month, includeYear = false) {
   const d = new Date(year, month, 1);
-  return d
+  const monthPart = d
     .toLocaleDateString('fr-FR', { month: 'short' })
     .replace('.', '')
     .toUpperCase()
     .slice(0, 4);
+
+  return includeYear ? `${monthPart} ${year}` : monthPart;
 }
 
 function rangeLabel(startDate, endDate) {
@@ -127,6 +130,7 @@ export function buildTrainingYearGrid(startDate, endDate) {
   const gridStart = startOfIsoWeekFromDate(startDate);
   const gridEnd = addDays(startOfIsoWeekFromDate(endDate), 6);
   const monthIndexLookup = buildMonthIndexLookup(startDate, endDate);
+  const includeYearInHeaders = startDate.getFullYear() !== endDate.getFullYear();
 
   const weekColumns = [];
   let currentMonday = gridStart;
@@ -164,7 +168,7 @@ export function buildTrainingYearGrid(startDate, endDate) {
     if (key !== currentKey) {
       if (currentKey !== null && currentMonth) {
         monthHeaders.push({
-          label: monthHeaderLabel(currentMonth.year, currentMonth.month),
+          label: monthHeaderLabel(currentMonth.year, currentMonth.month, includeYearInHeaders),
           colSpan: index - groupStart,
           monthIndex: monthIndexForDate(monthIndexLookup, currentMonth.year, currentMonth.month),
           year: currentMonth.year,
@@ -179,7 +183,7 @@ export function buildTrainingYearGrid(startDate, endDate) {
 
   if (currentKey !== null && currentMonth) {
     monthHeaders.push({
-      label: monthHeaderLabel(currentMonth.year, currentMonth.month),
+      label: monthHeaderLabel(currentMonth.year, currentMonth.month, includeYearInHeaders),
       colSpan: weekColumns.length - groupStart,
       monthIndex: monthIndexForDate(monthIndexLookup, currentMonth.year, currentMonth.month),
       year: currentMonth.year,

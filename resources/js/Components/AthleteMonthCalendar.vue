@@ -10,7 +10,9 @@ import {
   indexRosterBlockBoundariesByDate,
   indexTrainingSessionsByDate,
 } from '../utils/monthCalendar';
-import { formatLineRecap, SECTION_LABELS } from '../utils/programBuilder';
+import { formatLineRecap } from '../utils/programBuilder';
+import { sectionBadgeClass, sectionOption } from '../config/programTableSections';
+import { scoreDayAdherence } from '../utils/sessionAdherence';
 
 const props = defineProps({
   programBlock: {
@@ -36,6 +38,10 @@ const props = defineProps({
   canEdit: {
     type: Boolean,
     default: false,
+  },
+  oneRm: {
+    type: Object,
+    default: () => ({ squat: 0, bench: 0, deadlift: 0 }),
   },
   mode: {
     type: String,
@@ -87,7 +93,7 @@ const selectedDetail = computed(() => {
   const blockBoundaries = blockByDate.value[selectedDate.value] ?? [];
   const dayReminders = remindersByDate.value[selectedDate.value] ?? [];
 
-  return {
+  const detail = {
     date: selectedDate.value,
     label: formatCalendarFr(selectedDate.value),
     competition,
@@ -97,6 +103,11 @@ const selectedDetail = computed(() => {
     reminders: dayReminders,
     isToday: selectedDate.value === today,
     isEmpty: !competition && !program && !training.length && !blockBoundaries.length && !dayReminders.length,
+  };
+
+  return {
+    ...detail,
+    adherence: dayAdherenceForDetail(detail),
   };
 });
 
@@ -113,24 +124,47 @@ function programItems(session) {
   return session?.items ?? session?.exercises ?? [];
 }
 
-function formatLift(value) {
-  const numeric = Number(value ?? 0);
-  return numeric > 0 ? `${numeric} kg` : null;
+function plannedItemsForAdherence(session) {
+  return programItems(session).filter((item) => String(item?.exercise_name ?? '').trim());
 }
 
-function trainingSummary(session) {
-  const lifts = ['squat', 'bench', 'deadlift']
-    .map((lift) => {
-      const value = formatLift(session[lift]);
-      if (!value) {
-        return null;
-      }
-      const label = lift === 'deadlift' ? 'Terre' : lift.charAt(0).toUpperCase() + lift.slice(1);
-      return `${label} : ${value}`;
-    })
-    .filter(Boolean);
+function actualItemsForAdherence(sessions) {
+  const items = [];
 
-  return lifts.length ? lifts.join(' · ') : 'Séance enregistrée';
+  for (const session of sessions ?? []) {
+    for (const item of session?.items ?? []) {
+      if (!String(item?.exercise_name ?? '').trim()) {
+        continue;
+      }
+
+      items.push({
+        ...item,
+        lift: item.lift ?? session.main_lift ?? 'squat',
+      });
+    }
+  }
+
+  return items;
+}
+
+function dayAdherenceForDetail(detail) {
+  if (!detail?.program || isOverview.value) {
+    return null;
+  }
+
+  const plannedItems = plannedItemsForAdherence(detail.program);
+  if (!plannedItems.length) {
+    return null;
+  }
+
+  const actualItems = actualItemsForAdherence(detail.training);
+  const fallbackLift = detail.program.main_lift ?? 'squat';
+
+  return scoreDayAdherence(plannedItems, actualItems, props.oneRm, fallbackLift);
+}
+
+function sectionLabel(section) {
+  return sectionOption(section).label;
 }
 
 function hasProgram(date) {
@@ -374,13 +408,15 @@ onMounted(() => {
           <h3 class="text-sm font-semibold text-white">{{ selectedDetail.label }}</h3>
           <p v-if="selectedDetail.isToday" class="mt-0.5 text-xs text-amber-400">Aujourd'hui</p>
         </div>
-        <button
-          type="button"
-          class="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-800 hover:text-slate-300"
-          @click="selectedDate = null"
-        >
-          Fermer
-        </button>
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            class="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-800 hover:text-slate-300"
+            @click="selectedDate = null"
+          >
+            Fermer
+          </button>
+        </div>
       </div>
 
       <p v-if="selectedDetail.isEmpty" class="mt-3 text-sm text-slate-500">
@@ -433,29 +469,41 @@ onMounted(() => {
             Séance programmée
           </p>
           <p class="mt-1 text-sm font-semibold text-white">{{ programLabel(selectedDetail.program) }}</p>
-          <ul v-if="programItems(selectedDetail.program).length" class="mt-2 space-y-1">
+          <ul v-if="programItems(selectedDetail.program).length" class="mt-2 space-y-1.5">
             <li
               v-for="(item, index) in programItems(selectedDetail.program)"
               :key="index"
-              class="text-xs text-slate-300"
+              class="flex flex-wrap items-center gap-2 text-xs text-slate-300"
             >
-              <span class="font-medium text-emerald-400/90">
-                {{ SECTION_LABELS[item.section] ?? item.section }}
+              <span
+                class="inline-flex shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                :class="sectionBadgeClass(item.section)"
+              >
+                {{ sectionLabel(item.section) }}
               </span>
-              <span v-if="formatLineRecap(item)"> — {{ formatLineRecap(item) }}</span>
+              <span v-if="formatLineRecap(item)">{{ formatLineRecap(item) }}</span>
             </li>
           </ul>
         </section>
 
         <section
-          v-for="session in selectedDetail.training"
+          v-for="(session, sessionIndex) in selectedDetail.training"
           :key="session.id"
           class="rounded-lg border border-violet-500/25 bg-violet-500/5 px-3 py-2.5"
         >
           <div class="flex flex-wrap items-start justify-between gap-2">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-violet-300">
-              Séance réalisée
-            </p>
+            <div class="flex min-w-0 flex-wrap items-center gap-2">
+              <p class="text-[10px] font-semibold uppercase tracking-wide text-violet-300">
+                Séance réalisée
+              </p>
+              <span
+                v-if="selectedDetail.adherence && sessionIndex === 0"
+                class="text-[10px] font-semibold uppercase tracking-wide text-violet-300 tabular-nums"
+                :title="`Adhérence : ${selectedDetail.adherence.percentage}% (${selectedDetail.adherence.matchedChecks}/${selectedDetail.adherence.totalChecks} critères)`"
+              >
+                Adhérence : {{ selectedDetail.adherence.percentage }}%
+              </span>
+            </div>
             <button
               v-if="canEdit"
               type="button"
@@ -465,7 +513,24 @@ onMounted(() => {
               Modifier
             </button>
           </div>
-          <p class="mt-1 text-sm text-slate-200">{{ trainingSummary(session) }}</p>
+          <ul
+            v-if="(session.items ?? []).some((item) => String(item.exercise_name ?? '').trim())"
+            class="mt-2 space-y-1.5"
+          >
+            <li
+              v-for="(item, index) in session.items.filter((row) => String(row.exercise_name ?? '').trim())"
+              :key="`${session.id}-${index}`"
+              class="flex flex-wrap items-center gap-2 text-xs text-slate-300"
+            >
+              <span
+                class="inline-flex shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                :class="sectionBadgeClass(item.section)"
+              >
+                {{ sectionLabel(item.section) }}
+              </span>
+              <span v-if="formatLineRecap(item)">{{ formatLineRecap(item) }}</span>
+            </li>
+          </ul>
           <p v-if="session.notes" class="mt-1 text-xs text-slate-500">{{ session.notes }}</p>
         </section>
       </div>

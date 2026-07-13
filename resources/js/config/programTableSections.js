@@ -40,3 +40,12 @@ export function sectionOption(section) {
     PROGRAM_TABLE_SECTIONS[2]
   );
 }
+
+export function sectionBadgeClass(section) {
+  const option = sectionOption(section);
+  return {
+    topset: 'border-amber-500/40 bg-amber-500/15 text-amber-200',
+    backoff: 'border-blue-500/40 bg-blue-500/15 text-blue-200',
+    accessory: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200',
+  }[option.value] ?? 'border-slate-600 bg-slate-800 text-slate-300';
+}

@@ -27,6 +27,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showSessionLabel: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['confirm', 'cancel']);
@@ -50,7 +54,7 @@ function onLabelInput(event) {
 
 function onConfirm() {
   emit('confirm', {
-    sessionLabel: uppercaseSessionLabel(draftLabel.value),
+    sessionLabel: props.showSessionLabel ? uppercaseSessionLabel(draftLabel.value) : undefined,
     sessionNotes: draftNotes.value,
   });
 }
@@ -79,7 +83,7 @@ function onCancel() {
           </button>
         </div>
 
-        <label class="mt-4 block text-xs text-slate-500">
+        <label v-if="showSessionLabel" class="mt-4 block text-xs text-slate-500">
           Titre de la séance
           <input
             :value="draftLabel"

@@ -22,7 +22,7 @@ function calendarDateFromValue(value) {
 }
 
 /**
- * @param {'long'|'medium'} style — long : jour de semaine + date ; medium : date lisible
+ * @param {'long'|'medium'|'short'} style — long : jour de semaine + date ; medium : date lisible ; short : mois + année
  */
 export function formatCalendarFr(value, style = 'long') {
     const date = calendarDateFromValue(value);
@@ -30,14 +30,16 @@ export function formatCalendarFr(value, style = 'long') {
         return '—';
     }
     const opts =
-        style === 'medium'
-            ? { day: 'numeric', month: 'long', year: 'numeric' }
-            : {
-                  weekday: 'short',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-              };
+        style === 'short'
+            ? { month: 'short', year: '2-digit' }
+            : style === 'medium'
+              ? { day: 'numeric', month: 'long', year: 'numeric' }
+              : {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                };
     return date.toLocaleDateString('fr-FR', opts);
 }
 

@@ -74,6 +74,45 @@ class SessionFeedbackTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_athlete_can_submit_text_only_feedback(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-05-20 14:00:00'));
+
+        [$coach, $athlete, , $trainingDay] = $this->seedProgramSession();
+
+        $this->actingAs($athlete)
+            ->post('/feedbacks', [
+                'session_date' => '2026-05-20',
+                'athlete_notes' => 'Séance terminée sans vidéo.',
+            ])
+            ->assertRedirect();
+
+        $feedback = SessionFeedback::query()->first();
+        $this->assertNotNull($feedback);
+        $this->assertSame('Séance terminée sans vidéo.', $feedback->athlete_notes);
+        $this->assertSame(0, $feedback->athleteVideos()->count());
+
+        Carbon::setTestNow();
+    }
+
+    public function test_athlete_cannot_submit_empty_feedback(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-05-20 14:00:00'));
+
+        [, $athlete] = $this->seedProgramSession();
+
+        $this->actingAs($athlete)
+            ->post('/feedbacks', [
+                'session_date' => '2026-05-20',
+                'athlete_notes' => '   ',
+            ])
+            ->assertSessionHasErrors('athlete_notes');
+
+        $this->assertDatabaseCount('session_feedbacks', 0);
+
+        Carbon::setTestNow();
+    }
+
     public function test_cannot_submit_without_program_session_on_date(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-05-19 14:00:00'));

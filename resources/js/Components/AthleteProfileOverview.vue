@@ -12,6 +12,7 @@ import {
   weightCategoriesForSex,
   weightCategoryLabel,
 } from '../config/ipfWeightCategories';
+import { formatAthleteCategoryLine, formatAthleteDisplayName } from '../utils/athleteDisplay';
 import UiIcon from './UiIcon.vue';
 
 const props = defineProps({
@@ -26,6 +27,14 @@ const props = defineProps({
   weightClass: {
     type: String,
     default: '—',
+  },
+  weightCategory: {
+    type: String,
+    default: '',
+  },
+  birthDate: {
+    type: String,
+    default: '',
   },
   heightLabel: {
     type: String,
@@ -156,11 +165,17 @@ const prEvolution = computed(() =>
 );
 
 const prCards = computed(() => [
-  { key: 'squat', label: LIFT_LABELS.squat, series: prEvolution.value.squat },
-  { key: 'bench', label: LIFT_LABELS.bench, series: prEvolution.value.bench },
-  { key: 'deadlift', label: LIFT_LABELS.deadlift, series: prEvolution.value.deadlift },
+  { key: 'squat', label: LIFT_LABELS.squat, series: prEvolution.value.squat, colorKey: 'squat' },
+  { key: 'bench', label: LIFT_LABELS.bench, series: prEvolution.value.bench, colorKey: 'squat' },
+  { key: 'deadlift', label: LIFT_LABELS.deadlift, series: prEvolution.value.deadlift, colorKey: 'squat' },
   { key: 'total', label: LIFT_LABELS.total, series: prEvolution.value.total, usePrGlow: true },
 ]);
+
+const displayName = computed(() => formatAthleteDisplayName(props.name));
+
+const categoryLine = computed(() =>
+  formatAthleteCategoryLine(props.weightCategory, props.birthDate),
+);
 
 const modalPrValues = computed(() =>
   prCards.value.map((card) => ({
@@ -201,31 +216,47 @@ function openNextCompetition() {
 
 <template>
   <section class="rounded-xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg">
-    <div class="mb-2.5 flex items-center justify-between gap-3">
-      <h2 class="truncate text-base font-bold text-white">{{ name }}</h2>
-      <div class="flex shrink-0 items-center gap-2">
-        <Link
-          v-if="isCoach && programUrl"
-          :href="programUrl"
-          class="rounded-lg border border-emerald-500/40 bg-emerald-950/30 px-2.5 py-1.5 text-xs font-semibold text-emerald-200 transition hover:border-emerald-400/60 hover:bg-emerald-950/50"
-        >
-          Aller au programme
-        </Link>
-        <a
-          v-if="isCoach && programExportUrl"
-          :href="programExportUrl"
-          class="rounded-lg border border-slate-600 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800/60"
-        >
-          PDF
-        </a>
-        <button
-          type="button"
-          class="rounded-lg border border-slate-700/80 bg-slate-950/60 p-2 text-slate-400 transition hover:border-slate-600 hover:bg-slate-800 hover:text-white"
-          aria-label="Voir le profil"
-          @click="showProfileModal = true"
-        >
-          <UiIcon name="user-circle" class="h-5 w-5" />
-        </button>
+    <div class="mb-3">
+      <div class="flex items-start justify-between gap-3">
+        <h2 class="truncate text-xl font-bold text-white sm:text-2xl">{{ displayName }}</h2>
+        <div class="flex shrink-0 items-center gap-2">
+          <a
+            v-if="isCoach && programExportUrl"
+            :href="programExportUrl"
+            class="rounded-lg border border-slate-600 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800/60"
+          >
+            PDF
+          </a>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-700/80 bg-slate-950/60 p-2 text-slate-400 transition hover:border-slate-600 hover:bg-slate-800 hover:text-white"
+            aria-label="Voir le profil"
+            @click="showProfileModal = true"
+          >
+            <UiIcon name="user-circle" class="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p class="text-base font-medium text-slate-300 sm:text-lg">{{ categoryLine }}</p>
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            v-if="nextCompetition"
+            type="button"
+            class="rounded-lg border border-amber-500/50 bg-amber-500/10 px-3.5 py-1.5 text-sm font-semibold tabular-nums text-amber-200 transition hover:border-amber-400/70 hover:bg-amber-500/15"
+            @click="openNextCompetition"
+          >
+            {{ competitionCountdown }}
+          </button>
+          <Link
+            v-if="isCoach && programUrl"
+            :href="programUrl"
+            class="rounded-lg border border-emerald-500/50 bg-emerald-950/30 px-3.5 py-1.5 text-sm font-semibold text-emerald-200 transition hover:border-emerald-400/70 hover:bg-emerald-950/50"
+          >
+            Aller au programme
+          </Link>
+        </div>
       </div>
     </div>
 
@@ -237,6 +268,7 @@ function openNextCompetition() {
         v-for="card in prCards"
         :key="card.key"
         :lift-key="card.key"
+        :color-key="card.colorKey"
         :label="card.label"
         :series="card.series"
         :use-pr-glow="Boolean(card.usePrGlow)"
@@ -258,7 +290,7 @@ function openNextCompetition() {
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
-              <h2 id="athlete-profile-title" class="text-lg font-bold text-white">{{ name }}</h2>
+              <h2 id="athlete-profile-title" class="text-lg font-bold text-white">{{ displayName }}</h2>
               <p v-if="email" class="mt-0.5 truncate text-sm text-slate-400">{{ email }}</p>
             </div>
             <button
