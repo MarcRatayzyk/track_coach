@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
 
 class SessionFeedbackWebController extends Controller
 {
@@ -91,6 +92,7 @@ class SessionFeedbackWebController extends Controller
             'activeFeedback' => $activeFeedback,
             'eligibleSessions' => [],
             'feedbackFrequency' => null,
+            'uploadLimits' => $this->uploadLimits(),
         ]);
     }
 
@@ -126,6 +128,7 @@ class SessionFeedbackWebController extends Controller
             'activeFeedback' => $activeFeedback,
             'eligibleSessions' => $eligibleService->forAthlete($athlete),
             'feedbackFrequency' => FeedbackFrequencySupport::frequencyFor($athlete),
+            'uploadLimits' => $this->uploadLimits(),
         ]);
     }
 
@@ -152,6 +155,7 @@ class SessionFeedbackWebController extends Controller
                 'feedbacks' => SessionFeedbackPresenter::list($feedbacks),
                 'eligibleSessions' => [],
                 'feedbackFrequency' => null,
+                'uploadLimits' => $this->uploadLimits(),
             ];
         }
 
@@ -168,6 +172,48 @@ class SessionFeedbackWebController extends Controller
             'feedbacks' => SessionFeedbackPresenter::list($feedbacks),
             'eligibleSessions' => app(AthleteEligibleFeedbackSessionsService::class)->forAthlete($user),
             'feedbackFrequency' => FeedbackFrequencySupport::frequencyFor($user),
+            'uploadLimits' => $this->uploadLimits(),
         ];
+    }
+
+    /**
+     * @return array{maxFiles:int, maxFileBytes:int}
+     */
+    private function uploadLimits(): array
+    {
+        $uploadMax = $this->bytesFromIni((string) ini_get('upload_max_filesize'));
+        $postMax = $this->bytesFromIni((string) ini_get('post_max_size'));
+
+        // On garde une marge sur post_max_size (il contient aussi les champs texte + multipart overhead)
+        $effectiveMax = max(0, min($uploadMax, (int) floor($postMax * 0.9)));
+
+        return [
+            'maxFiles' => 3,
+            'maxFileBytes' => $effectiveMax,
+        ];
+    }
+
+    private function bytesFromIni(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return 0;
+        }
+
+        if (! preg_match('/^(\d+(?:\.\d+)?)\s*([KMG])?B?$/i', $value, $m)) {
+            throw new InvalidArgumentException("Invalid ini size: {$value}");
+        }
+
+        $number = (float) $m[1];
+        $unit = strtoupper($m[2] ?? '');
+
+        $multiplier = match ($unit) {
+            'G' => 1024 * 1024 * 1024,
+            'M' => 1024 * 1024,
+            'K' => 1024,
+            default => 1,
+        };
+
+        return (int) floor($number * $multiplier);
     }
 }

@@ -19,6 +19,7 @@ const props = defineProps({
   activeFeedback: { type: Object, default: null },
   eligibleSessions: { type: Array, default: () => [] },
   feedbackFrequency: { type: String, default: 'weekly' },
+  uploadLimits: { type: Object, default: () => ({ maxFiles: 3, maxFileBytes: 100 * 1024 * 1024 }) },
 });
 
 const isCoach = computed(() => props.role === 'coach');
@@ -26,8 +27,8 @@ const isWeekly = computed(() => props.feedbackFrequency === 'weekly');
 const showSubmitForm = ref(false);
 const selectedVideos = ref([]);
 const videoInputRef = useTemplateRef('videoInput');
-const MAX_VIDEOS = 3;
-const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 Mo
+const MAX_VIDEOS = computed(() => props.uploadLimits?.maxFiles ?? 3);
+const MAX_VIDEO_BYTES = computed(() => props.uploadLimits?.maxFileBytes ?? 100 * 1024 * 1024);
 const ALLOWED_VIDEO_MIME_TYPES = new Set([
   'video/mp4',
   'video/webm',
@@ -85,8 +86,8 @@ function onVideoChange(event) {
   const files = Array.from(event.target.files ?? []);
 
   const errors = [];
-  if (files.length > MAX_VIDEOS) {
-    errors.push(`Vous pouvez envoyer au maximum ${MAX_VIDEOS} vidéos.`);
+  if (files.length > MAX_VIDEOS.value) {
+    errors.push(`Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
   }
 
   const invalidType = files.find((f) => f.type && !ALLOWED_VIDEO_MIME_TYPES.has(f.type));
@@ -94,9 +95,10 @@ function onVideoChange(event) {
     errors.push('Format vidéo non pris en charge (MP4, MOV, WebM, 3GP…).');
   }
 
-  const tooBig = files.find((f) => f.size > MAX_VIDEO_BYTES);
+  const tooBig = files.find((f) => f.size > MAX_VIDEO_BYTES.value);
   if (tooBig) {
-    errors.push('Chaque vidéo ne doit pas dépasser 100 Mo.');
+    const mb = Math.max(1, Math.floor(MAX_VIDEO_BYTES.value / (1024 * 1024)));
+    errors.push(`Chaque vidéo ne doit pas dépasser ${mb} Mo (limite serveur actuelle).`);
   }
 
   if (errors.length) {
