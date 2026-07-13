@@ -1,12 +1,42 @@
-export const BARBELL_PLATE_SPECS = [
-  { weight: 25, color: 'red', height: 64, width: 14 },
-  { weight: 20, color: 'blue', height: 56, width: 12 },
-  { weight: 15, color: 'yellow', height: 48, width: 12 },
-  { weight: 10, color: 'green', height: 40, width: 10 },
-  { weight: 5, color: 'white', height: 32, width: 8 },
-  { weight: 2.5, color: 'black', height: 24, width: 6 },
-  { weight: 1.25, color: 'grey', height: 20, width: 6 },
+// Spécifications IPF (diamètre / épaisseur en mm), mises à l'échelle en px pour l'UI.
+// Référence user:
+// - Barre: 2.2 m, manchons Ø51 mm, shaft Ø28 mm
+// - Disques:
+//   25: Ø450 / 27 (rouge)
+//   20: Ø450 / 22.5 (bleu)
+//   15: Ø400 / 22 (jaune)
+//   10: Ø350 / 22 (vert)
+//    5: Ø225 / 21.5 (blanc)
+//  2.5: Ø190 / 16 (noir)
+// 1.25: Ø160 / 12 (argent)
+//  0.5: Ø134 / 8 (argent)
+// 0.25: Ø112 / 6 (argent)
+const PLATE_MM = [
+  { weight: 25, color: 'red', diameterMm: 450, thicknessMm: 27 },
+  { weight: 20, color: 'blue', diameterMm: 450, thicknessMm: 22.5 },
+  { weight: 15, color: 'yellow', diameterMm: 400, thicknessMm: 22 },
+  { weight: 10, color: 'green', diameterMm: 350, thicknessMm: 22 },
+  { weight: 5, color: 'white', diameterMm: 225, thicknessMm: 21.5 },
+  { weight: 2.5, color: 'black', diameterMm: 190, thicknessMm: 16 },
+  { weight: 1.25, color: 'silver', diameterMm: 160, thicknessMm: 12 },
+  { weight: 0.5, color: 'silver', diameterMm: 134, thicknessMm: 8 },
+  { weight: 0.25, color: 'silver', diameterMm: 112, thicknessMm: 6 },
 ];
+
+const MAX_DIAMETER_MM = 450;
+const MAX_PLATE_HEIGHT_PX = 64; // ≈ l'ancien rendu, mais désormais proportionnel.
+const HEIGHT_SCALE = MAX_PLATE_HEIGHT_PX / MAX_DIAMETER_MM;
+
+// Épaisseur en px: contrainte UI (évite des disques trop "épais" visuellement).
+const THICKNESS_SCALE = 0.45; // px/mm (27mm -> ~12px)
+const MIN_PLATE_WIDTH_PX = 4;
+
+export const BARBELL_PLATE_SPECS = PLATE_MM.map((plate) => ({
+  weight: plate.weight,
+  color: plate.color,
+  height: Math.max(10, Math.round(plate.diameterMm * HEIGHT_SCALE)),
+  width: Math.max(MIN_PLATE_WIDTH_PX, Math.round(plate.thicknessMm * THICKNESS_SCALE)),
+}));
 
 const PLATE_BY_WEIGHT = new Map(BARBELL_PLATE_SPECS.map((plate) => [plate.weight, plate]));
 

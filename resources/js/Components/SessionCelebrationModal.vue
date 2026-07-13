@@ -160,12 +160,28 @@ async function shareForInstagram() {
                 class="mt-6 rounded-2xl border border-red-500/30 bg-red-950/25 px-4 py-4 shadow-lg shadow-red-900/20"
               >
                 <p class="text-[10px] font-bold uppercase tracking-[0.28em] text-red-400/90">
-                  Topset
+                  {{ (celebration.topsets?.length ?? 0) > 1 ? 'Topsets' : 'Topset' }}
                 </p>
-                <p class="mt-2 text-lg font-bold leading-snug tracking-wide text-white sm:text-xl">
-                  {{ celebration.topsetSubtitle }}
-                </p>
-                <CelebrationBarbell :barbell="celebration.barbell" />
+
+                <div v-if="(celebration.topsets?.length ?? 0) > 1" class="mt-3 space-y-4">
+                  <div
+                    v-for="(topset, index) in celebration.topsets"
+                    :key="`${topset.lift}-${index}`"
+                    class="rounded-2xl border border-red-500/20 bg-black/30 px-3 py-3"
+                  >
+                    <p class="text-sm font-bold leading-snug tracking-wide text-white">
+                      {{ topset.subtitle }}
+                    </p>
+                    <CelebrationBarbell :barbell="topset.barbell" />
+                  </div>
+                </div>
+
+                <template v-else>
+                  <p class="mt-2 text-lg font-bold leading-snug tracking-wide text-white sm:text-xl">
+                    {{ celebration.topsetSubtitle }}
+                  </p>
+                  <CelebrationBarbell :barbell="celebration.barbell" />
+                </template>
               </div>
 
               <div

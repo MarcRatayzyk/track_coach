@@ -14,6 +14,7 @@ const plateClass = {
   white: 'bg-white border-slate-200 text-slate-900',
   black: 'bg-black border-slate-600 text-white',
   grey: 'bg-slate-400 border-slate-300 text-slate-900',
+  silver: 'bg-slate-200 border-slate-300 text-slate-900',
 };
 
 function plateStyle(plate) {

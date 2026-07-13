@@ -39,6 +39,47 @@ export function formatTopsetCelebration(line, oneRm = {}, mainLift = 'squat') {
   return parts.join(' - ');
 }
 
+function pickTopsets(workItems = [], plannedItems = [], oneRm = {}, mainLift = 'squat') {
+  const plannedLiftByKey = new Map();
+  for (const planned of plannedItems ?? []) {
+    const key = String(planned?.exercise_variant_id ?? '') || String(planned?.exercise_name ?? '').trim().toLowerCase();
+    if (!key) {
+      continue;
+    }
+    plannedLiftByKey.set(key, planned?.lift ?? planned?.main_lift ?? null);
+  }
+
+  const candidates = (workItems ?? [])
+    .filter((item) => item?.section === 'topset')
+    .map((item) => {
+      const line = item?.line ?? null;
+      const key = String(line?.exercise_variant_id ?? '') || String(line?.exercise_name ?? '').trim().toLowerCase();
+      const liftHint = plannedLiftByKey.get(key) ?? line?.lift ?? mainLift;
+      const loadKg = resolveTopsetLoadKg(line, oneRm, mainLift);
+      return { item, line, lift: liftHint ?? mainLift, loadKg: loadKg ?? 0 };
+    })
+    .filter((c) => c.line);
+
+  // 1 topset max par lift, on garde le plus lourd.
+  const bestByLift = new Map();
+  for (const c of candidates) {
+    const lift = c.lift ?? mainLift;
+    const best = bestByLift.get(lift);
+    if (!best || c.loadKg > best.loadKg) {
+      bestByLift.set(lift, c);
+    }
+  }
+
+  return [...bestByLift.values()]
+    .sort((a, b) => b.loadKg - a.loadKg)
+    .slice(0, 3)
+    .map((c) => ({
+      lift: c.lift,
+      line: c.line,
+      loadKg: c.loadKg || null,
+    }));
+}
+
 function actualLinesFromWorkItems(workItems = []) {
   return workItems
     .filter((item) => String(item?.line?.exercise_name ?? '').trim())
@@ -56,14 +97,19 @@ export function buildSessionCelebrationPayload({
   mainLift = 'squat',
   barWeightKg = 20,
 }) {
-  const topsetItem = workItems.find((item) => item.section === 'topset');
-  const topsetLine = topsetItem?.line;
-  const topsetSubtitle = topsetLine
-    ? formatTopsetCelebration(topsetLine, oneRm, mainLift)
-    : 'SÉANCE TERMINÉE';
+  const selectedTopsets = pickTopsets(workItems, plannedItems, oneRm, mainLift);
+  const primaryTopset = selectedTopsets[0] ?? null;
+  const topsetLine = primaryTopset?.line ?? null;
+  const topsetSubtitle = topsetLine ? formatTopsetCelebration(topsetLine, oneRm, mainLift) : 'SÉANCE TERMINÉE';
 
-  const topsetLoadKg = resolveTopsetLoadKg(topsetLine, oneRm, mainLift);
+  const topsetLoadKg = primaryTopset?.loadKg ?? null;
   const barbell = topsetLoadKg ? buildBarbellLoading(topsetLoadKg, barWeightKg) : null;
+  const topsets = selectedTopsets.map((entry) => ({
+    lift: entry.lift,
+    subtitle: formatTopsetCelebration(entry.line, oneRm, mainLift),
+    loadKg: entry.loadKg,
+    barbell: entry.loadKg ? buildBarbellLoading(entry.loadKg, barWeightKg) : null,
+  }));
 
   let tonnage = 0;
   let totalReps = 0;
@@ -105,6 +151,7 @@ export function buildSessionCelebrationPayload({
     topsetSubtitle,
     topsetLoadKg,
     barbell,
+    topsets,
     tonnage: Math.round(tonnage),
     tonnageLabel,
     totalReps,
