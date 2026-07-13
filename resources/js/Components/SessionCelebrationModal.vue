@@ -134,7 +134,7 @@ async function shareForInstagram() {
         </header>
 
         <div
-          class="relative z-10 flex flex-1 flex-col items-center justify-center px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+          class="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
         >
           <Transition
             appear
@@ -144,26 +144,26 @@ async function shareForInstagram() {
           >
             <div v-if="open && celebration" class="w-full max-w-lg text-center">
               <div
-                class="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-red-500/50 bg-red-600/20 text-4xl shadow-2xl shadow-red-600/30"
+                class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl border border-red-500/50 bg-red-600/20 text-4xl shadow-2xl shadow-red-600/30 sm:h-20 sm:w-20"
               >
                 ✓
               </div>
 
-              <p class="mt-8 text-xs font-bold uppercase tracking-[0.32em] text-red-400">
+              <p class="mt-6 text-xs font-bold uppercase tracking-[0.32em] text-red-400 sm:mt-8">
                 Séance validée
               </p>
-              <h2 class="mt-4 text-4xl font-bold leading-tight sm:text-5xl">
+              <h2 class="mt-3 text-3xl font-bold leading-tight sm:mt-4 sm:text-5xl">
                 {{ celebration.sessionTitle }}
               </h2>
 
               <div
-                class="mt-6 rounded-2xl border border-red-500/30 bg-red-950/25 px-4 py-4 shadow-lg shadow-red-900/20"
+                class="mt-5 rounded-2xl border border-red-500/30 bg-red-950/25 px-4 py-4 shadow-lg shadow-red-900/20 sm:mt-6"
               >
                 <p class="text-[10px] font-bold uppercase tracking-[0.28em] text-red-400/90">
                   {{ (celebration.topsets?.length ?? 0) > 1 ? 'Topsets' : 'Topset' }}
                 </p>
 
-                <div v-if="(celebration.topsets?.length ?? 0) > 1" class="mt-3 space-y-4">
+                <div v-if="(celebration.topsets?.length ?? 0) > 1" class="mt-3 space-y-3 sm:space-y-4">
                   <div
                     v-for="(topset, index) in celebration.topsets"
                     :key="`${topset.lift}-${index}`"
@@ -185,7 +185,7 @@ async function shareForInstagram() {
               </div>
 
               <div
-                class="mt-8 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-black/50 px-3 py-4 backdrop-blur-sm sm:gap-3 sm:px-4"
+                class="mt-6 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-black/50 px-3 py-4 backdrop-blur-sm sm:mt-8 sm:gap-3 sm:px-4"
               >
                 <div class="min-w-0 text-center">
                   <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
@@ -213,7 +213,7 @@ async function shareForInstagram() {
                 </div>
               </div>
 
-              <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <div class="mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-8">
                 <button
                   type="button"
                   class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-500"
