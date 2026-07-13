@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_pgsql mbstring \
     && rm -rf /var/lib/apt/lists/*
 
+COPY docker/php-overrides.ini /usr/local/etc/php/conf.d/99-track-coach.ini
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
