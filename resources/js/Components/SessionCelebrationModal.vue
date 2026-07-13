@@ -143,16 +143,10 @@ async function shareForInstagram() {
             enter-to-class="opacity-100 translate-y-0 scale-100"
           >
             <div v-if="open && celebration" class="w-full max-w-lg text-center">
-              <div
-                class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl border border-red-500/50 bg-red-600/20 text-4xl shadow-2xl shadow-red-600/30 sm:h-20 sm:w-20"
-              >
-                ✓
-              </div>
-
-              <p class="mt-6 text-xs font-bold uppercase tracking-[0.32em] text-red-400 sm:mt-8">
+              <p class="mt-2 text-xs font-bold uppercase tracking-[0.32em] text-red-400 sm:mt-3">
                 Séance validée
               </p>
-              <h2 class="mt-3 text-3xl font-bold leading-tight sm:mt-4 sm:text-5xl">
+              <h2 class="mt-2 text-3xl font-bold leading-tight sm:mt-3 sm:text-5xl">
                 {{ celebration.sessionTitle }}
               </h2>
 

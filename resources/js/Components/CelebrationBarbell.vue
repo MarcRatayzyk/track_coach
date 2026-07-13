@@ -75,8 +75,5 @@ function plateStyle(plate) {
       </div>
     </div>
 
-    <p class="mt-2 text-center text-[10px] font-medium uppercase tracking-[0.2em] text-red-300/80">
-      {{ barbell.loadLabel }} kg sur la barre
-    </p>
   </div>
 </template>

@@ -26,6 +26,18 @@ const isWeekly = computed(() => props.feedbackFrequency === 'weekly');
 const showSubmitForm = ref(false);
 const selectedVideos = ref([]);
 const videoInputRef = useTemplateRef('videoInput');
+const MAX_VIDEOS = 3;
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 Mo
+const ALLOWED_VIDEO_MIME_TYPES = new Set([
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/3gpp',
+  'video/3gpp2',
+  'video/x-matroska',
+  'video/x-m4v',
+]);
 
 const submitForm = useForm({
   session_date: props.eligibleSessions[0]?.session_date ?? '',
@@ -70,11 +82,39 @@ function selectFeedback(id) {
 }
 
 function onVideoChange(event) {
-  selectedVideos.value = Array.from(event.target.files ?? []);
+  const files = Array.from(event.target.files ?? []);
+
+  const errors = [];
+  if (files.length > MAX_VIDEOS) {
+    errors.push(`Vous pouvez envoyer au maximum ${MAX_VIDEOS} vidéos.`);
+  }
+
+  const invalidType = files.find((f) => f.type && !ALLOWED_VIDEO_MIME_TYPES.has(f.type));
+  if (invalidType) {
+    errors.push('Format vidéo non pris en charge (MP4, MOV, WebM, 3GP…).');
+  }
+
+  const tooBig = files.find((f) => f.size > MAX_VIDEO_BYTES);
+  if (tooBig) {
+    errors.push('Chaque vidéo ne doit pas dépasser 100 Mo.');
+  }
+
+  if (errors.length) {
+    submitForm.setError('videos', errors[0]);
+    selectedVideos.value = [];
+    if (videoInputRef.value) {
+      videoInputRef.value.value = '';
+    }
+    return;
+  }
+
+  submitForm.clearErrors('videos');
+  selectedVideos.value = files;
 }
 
 function clearSelectedVideos() {
   selectedVideos.value = [];
+  submitForm.clearErrors('videos');
   if (videoInputRef.value) {
     videoInputRef.value.value = '';
   }
