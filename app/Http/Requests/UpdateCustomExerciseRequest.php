@@ -33,7 +33,7 @@ class UpdateCustomExerciseRequest extends FormRequest
                 Exercise::CATEGORY_MAIN_LIFT,
                 Exercise::CATEGORY_ACCESSORY,
             ])],
-            'equipment' => ['sometimes', 'required', Rule::in([
+            'equipment' => ['sometimes', 'nullable', Rule::in([
                 'barbell',
                 'dumbbell',
                 'machine',

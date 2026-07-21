@@ -267,8 +267,8 @@ function sessionExerciseRecaps(session) {
   return (session.items ?? [])
     .filter((item) => String(item.exercise_name ?? '').trim())
     .filter((item) => item.section !== 'warmup')
-    .map((item) => ({
-      key: `${item.section}-${item.exercise_name}`,
+    .map((item, index) => ({
+      key: `${item.section}-${item.exercise_name}-${index}`,
       section: SESSION_SECTION_LABELS[item.section] ?? item.section,
       recap: formatLineRecap(item),
       athleteNote: String(item.athlete_note ?? '').trim() || null,

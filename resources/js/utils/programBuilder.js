@@ -151,6 +151,133 @@ export function formatLineRecapWithKg(line, oneRm = {}, mainLift = 'squat') {
   return base;
 }
 
+/** Snapshot d’une série réellement validée (reps / charge / RPE). */
+export function snapshotValidatedSet(line) {
+  if (!line) {
+    return null;
+  }
+
+  return {
+    reps: line.reps != null && line.reps !== '' ? Number(line.reps) : null,
+    load: line.load != null && line.load !== '' ? Number(line.load) : null,
+    load_percent:
+      line.load_percent != null && line.load_percent !== '' ? Number(line.load_percent) : null,
+    rpe: line.rpe != null && line.rpe !== '' ? Number(line.rpe) : null,
+    load_mode: line.load_mode ?? inferLoadMode(line),
+  };
+}
+
+function setPerformanceKey(snap) {
+  return [
+    snap?.reps ?? '',
+    snap?.load ?? '',
+    snap?.load_percent ?? '',
+    snap?.load_mode ?? '',
+  ].join('|');
+}
+
+/**
+ * Regroupe les séries consécutives identiques (même reps / charge).
+ * Ex. [6@235, 6@235, 5@240] → [{count:2, reps:6, load:235}, {count:1, reps:5, load:240}]
+ */
+export function groupValidatedSets(validatedSets = []) {
+  const groups = [];
+
+  for (const snap of validatedSets ?? []) {
+    if (!snap) {
+      continue;
+    }
+    const key = setPerformanceKey(snap);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.count += 1;
+      last.rpe = snap.rpe;
+      continue;
+    }
+    groups.push({
+      key,
+      count: 1,
+      reps: snap.reps,
+      load: snap.load,
+      load_percent: snap.load_percent,
+      rpe: snap.rpe,
+      load_mode: snap.load_mode,
+    });
+  }
+
+  return groups;
+}
+
+/** Une ligne de récap par groupe de séries distinctes. */
+export function formatValidatedSetsRecapLines(line, validatedSets = [], oneRm = {}, mainLift = 'squat') {
+  const groups = groupValidatedSets(validatedSets);
+  if (!groups.length) {
+    const recap = formatLineRecapWithKg(line, oneRm, mainLift) ?? formatLineRecap(line);
+    return recap ? [recap] : [];
+  }
+
+  return groups
+    .map((group) => {
+      const groupLine = {
+        ...line,
+        sets: group.count,
+        reps: group.reps,
+        load: group.load,
+        load_percent: group.load_percent,
+        rpe: group.rpe,
+        load_mode: group.load_mode,
+      };
+      return formatLineRecapWithKg(groupLine, oneRm, mainLift) ?? formatLineRecap(groupLine);
+    })
+    .filter(Boolean);
+}
+
+/** Développe les séries validées en items persistables (1 ligne par perf distincte). */
+export function expandValidatedSetsToItems(items = []) {
+  return (items ?? []).flatMap((item) => {
+    const validatedSets = item?.validatedSets ?? [];
+    if (!validatedSets.length) {
+      return [item];
+    }
+
+    const groups = groupValidatedSets(validatedSets);
+    return groups.map((group, index) =>
+      createSessionItem(item.section, {
+        exercise_variant_id: item.line?.exercise_variant_id ?? null,
+        exercise_name: item.line?.exercise_name ?? '',
+        lift: item.line?.lift ?? null,
+        sets: group.count,
+        reps: group.reps,
+        load: group.load,
+        load_percent: group.load_percent,
+        rpe: group.rpe,
+        load_mode: group.load_mode,
+        rest_seconds: item.line?.rest_seconds ?? null,
+        athlete_note: index === groups.length - 1 ? (item.line?.athlete_note ?? null) : null,
+      }),
+    );
+  });
+}
+
+/** Reconstruit des snapshots depuis des items déjà enregistrés (ex. 2×6 → deux séries). */
+export function validatedSetsFromLoggedItems(loggedItems = []) {
+  const snapshots = [];
+
+  for (const item of loggedItems ?? []) {
+    const line = item?.line ?? item;
+    const sets = Math.max(1, Number(line?.sets ?? 1));
+    const snap = snapshotValidatedSet(line);
+    if (!snap) {
+      continue;
+    }
+    for (let i = 0; i < sets; i += 1) {
+      snapshots.push({ ...snap });
+    }
+  }
+
+  return snapshots;
+}
+
 const EDITOR_SECTION_LABELS = {
   topset: 'Topset',
   backoff: 'Back-off',

@@ -1,13 +1,9 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { formatCalendarFr } from '../utils/formatDates';
+import CelebrationBarbell from './CelebrationBarbell.vue';
 
 const props = defineProps({
-  athleteName: {
-    type: String,
-    required: true,
-  },
   athleteId: {
     type: Number,
     required: true,
@@ -20,24 +16,26 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  topsetBarbell: {
+    type: Object,
+    default: null,
+  },
   showCheckInButton: {
     type: Boolean,
     default: false,
   },
+  /** Première visite du jour : anime titre + barre depuis le bas */
+  introAnimate: {
+    type: Boolean,
+    default: false,
+  },
+  introVisible: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['open-check-in']);
-
-const todayLabel = formatCalendarFr(new Date().toISOString().slice(0, 10), 'long');
-
-const athleteFirstName = computed(() => {
-  const trimmed = props.athleteName.trim();
-  if (!trimmed) {
-    return '';
-  }
-
-  return trimmed.split(/\s+/)[0];
-});
 
 const competitionCountdown = computed(() => {
   if (!props.nextCompetition) {
@@ -47,13 +45,25 @@ const competitionCountdown = computed(() => {
   const days = props.nextCompetition.days_until;
   return days === 0 ? 'J-0' : `J-${days}`;
 });
+
+const heroMotionClass = computed(() => {
+  if (!props.introAnimate) {
+    return '';
+  }
+  return [
+    'transition-all duration-700 ease-out',
+    props.introVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
+  ];
+});
 </script>
 
 <template>
   <div class="space-y-3">
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    <div
+      v-if="competitionCountdown || showCheckInButton"
+      class="flex flex-wrap items-center justify-between gap-3"
+    >
       <div class="flex min-w-0 flex-wrap items-center gap-2">
-        <p class="text-xs text-slate-500">{{ todayLabel }}</p>
         <Link
           v-if="competitionCountdown"
           :href="`/athletes/${athleteId}?competition=${nextCompetition.id}`"
@@ -72,15 +82,15 @@ const competitionCountdown = computed(() => {
       </button>
     </div>
 
-    <h1 class="text-lg font-bold text-white sm:text-2xl">
-      Bonjour, {{ athleteFirstName }}
-    </h1>
+    <div :class="heroMotionClass">
+      <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+        Aujourd'hui
+        <template v-if="todaySessionTitle"> {{ todaySessionTitle }}</template>
+      </h1>
 
-    <h2
-      v-if="todaySessionTitle"
-      class="text-2xl font-bold tracking-tight text-white sm:text-3xl"
-    >
-      Aujourd'hui {{ todaySessionTitle }}
-    </h2>
+      <div v-if="topsetBarbell" class="mt-3">
+        <CelebrationBarbell :barbell="topsetBarbell" variant="peek" />
+      </div>
+    </div>
   </div>
 </template>

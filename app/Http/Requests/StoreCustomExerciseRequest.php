@@ -30,7 +30,7 @@ class StoreCustomExerciseRequest extends FormRequest
                 Exercise::CATEGORY_MAIN_LIFT,
                 Exercise::CATEGORY_ACCESSORY,
             ])],
-            'equipment' => ['required', Rule::in([
+            'equipment' => ['nullable', Rule::in([
                 'barbell',
                 'dumbbell',
                 'machine',

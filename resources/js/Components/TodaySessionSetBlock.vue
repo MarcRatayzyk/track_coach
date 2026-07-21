@@ -5,6 +5,7 @@ import {
   RPE_OPTIONS,
   formatLineRecap,
   formatLineRecapWithKg,
+  formatValidatedSetsRecapLines,
   inferLoadMode,
 } from '../utils/programBuilder';
 
@@ -33,6 +34,14 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  validatedSets: {
+    type: Array,
+    default: () => [],
+  },
+  plannedSets: {
+    type: Number,
+    default: null,
+  },
   saving: {
     type: Boolean,
     default: false,
@@ -43,13 +52,25 @@ const emit = defineEmits(['toggle', 'validate', 'save-note']);
 
 const line = computed(() => props.item.line ?? {});
 
-const totalSets = computed(() => Math.max(1, Number(line.value.sets ?? 1)));
+const totalSets = computed(() =>
+  Math.max(1, Number(props.plannedSets ?? line.value.sets ?? 1)),
+);
 
 const fullyValidated = computed(() => props.validatedSetsCount >= totalSets.value);
 
-const collapsedRecap = computed(() => {
+const collapsedRecapLines = computed(() => {
+  if (props.validatedSetsCount > 0 && props.validatedSets.length > 0) {
+    return formatValidatedSetsRecapLines(
+      line.value,
+      props.validatedSets,
+      props.oneRm,
+      props.mainLift,
+    );
+  }
+
   const withKg = formatLineRecapWithKg(line.value, props.oneRm, props.mainLift);
-  return withKg ?? formatLineRecap(line.value) ?? 'Série à renseigner';
+  const fallback = withKg ?? formatLineRecap(line.value) ?? 'Série à renseigner';
+  return [fallback];
 });
 
 const sectionClass = computed(() => {
@@ -184,9 +205,15 @@ const inputClass =
         <p class="text-[10px] font-semibold uppercase tracking-wide" :class="sectionClass">
           {{ title }}
         </p>
-        <p class="truncate text-sm font-medium text-slate-100">
-          {{ collapsedRecap }}
-        </p>
+        <div class="space-y-0.5">
+          <p
+            v-for="(recapLine, index) in collapsedRecapLines"
+            :key="`${index}-${recapLine}`"
+            class="truncate text-sm font-medium text-slate-100"
+          >
+            {{ recapLine }}
+          </p>
+        </div>
         <p
           v-if="!expanded && hasAthleteNote"
           class="mt-0.5 truncate text-xs text-slate-400"
@@ -210,6 +237,22 @@ const inputClass =
 
     <div v-if="expanded" class="border-t border-slate-800 px-3 py-3">
       <template v-if="!fullyValidated">
+        <div
+          v-if="validatedSetsCount > 0 && collapsedRecapLines.length"
+          class="mb-3 space-y-1 rounded-lg border border-emerald-500/20 bg-emerald-950/20 px-2.5 py-2"
+        >
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-300/90">
+            Séries validées
+          </p>
+          <p
+            v-for="(recapLine, index) in collapsedRecapLines"
+            :key="`validated-${index}-${recapLine}`"
+            class="text-xs font-medium text-slate-200"
+          >
+            {{ recapLine }}
+          </p>
+        </div>
+
         <p v-if="totalSets > 1" class="mb-3 text-xs font-medium text-blue-300/90">
           Série {{ currentSetNumber }} sur {{ totalSets }}
         </p>
@@ -287,10 +330,6 @@ const inputClass =
           />
         </div>
 
-        <p v-if="!canValidate" class="mt-3 text-xs text-slate-500">
-          Renseigne la charge et le RPE pour valider la série.
-        </p>
-
         <button
           type="button"
           class="mt-4 w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
@@ -302,6 +341,21 @@ const inputClass =
       </template>
 
       <div v-else class="space-y-3">
+        <div
+          v-if="collapsedRecapLines.length"
+          class="space-y-1 rounded-lg border border-emerald-500/20 bg-emerald-950/20 px-2.5 py-2"
+        >
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-300/90">
+            Séries validées
+          </p>
+          <p
+            v-for="(recapLine, index) in collapsedRecapLines"
+            :key="`done-${index}-${recapLine}`"
+            class="text-xs font-medium text-slate-200"
+          >
+            {{ recapLine }}
+          </p>
+        </div>
         <p class="text-xs text-emerald-300/90">Exercice validé — note optionnelle (non envoyée dans le retour).</p>
         <label class="block text-xs font-medium text-slate-400">
           Note sur cet exercice

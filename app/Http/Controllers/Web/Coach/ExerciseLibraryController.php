@@ -67,7 +67,7 @@ class ExerciseLibraryController extends Controller
             'slug' => $slug,
             'lift' => $validated['lift'],
             'category' => $validated['category'],
-            'equipment' => $validated['equipment'],
+            'equipment' => $validated['equipment'] ?? 'other',
             'movement_pattern' => $validated['movement_pattern'] ?? null,
         ]);
 

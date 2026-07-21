@@ -3,12 +3,14 @@ import { Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
-  BLOCK_TYPES,
   createSessionItem,
   dayToSessionPayload,
+  expandValidatedSetsToItems,
   hydrateExerciseLine,
   itemSectionTitle,
   sessionToDay,
+  snapshotValidatedSet,
+  validatedSetsFromLoggedItems,
 } from '../utils/programBuilder';
 import TodaySessionSetBlock from './TodaySessionSetBlock.vue';
 import SessionCelebrationModal from './SessionCelebrationModal.vue';
@@ -35,13 +37,20 @@ const props = defineProps({
 
 const workItems = ref([]);
 const expandedItemKey = ref(null);
-const validatedItemKeys = ref(new Set());
-const validatedSetCounts = ref({});
 const celebrationOpen = ref(false);
 const celebrationData = ref(null);
 
 function itemKey(item) {
   return `${item.section}-${item.line?.exercise_name ?? ''}`;
+}
+
+function withSetTracking(item, { plannedSets = null, validatedSets = [] } = {}) {
+  const planned = Math.max(1, Number(plannedSets ?? item?.line?.sets ?? 1));
+  return {
+    ...item,
+    plannedSets: planned,
+    validatedSets: [...validatedSets],
+  };
 }
 
 const form = useForm({
@@ -56,11 +65,6 @@ const form = useForm({
 const status = computed(() => props.todaySession?.status ?? 'no_program');
 const session = computed(() => props.todaySession?.session ?? null);
 const mainLift = computed(() => session.value?.main_lift ?? 'squat');
-
-const blockTypeLabel = computed(() => {
-  const value = props.todaySession?.block_type;
-  return BLOCK_TYPES.find((item) => item.value === value)?.label ?? value ?? '';
-});
 
 const sessionTitle = computed(() => {
   const label = session.value?.session_label?.trim();
@@ -104,16 +108,15 @@ const programCalendarHref = computed(() => {
 const hasLoggedToday = computed(() => Boolean(props.todayLoggedSession?.id));
 
 function totalSetsFor(item) {
-  return Math.max(1, Number(item?.line?.sets ?? 1));
+  return Math.max(1, Number(item?.plannedSets ?? item?.line?.sets ?? 1));
 }
 
-function getValidatedSetCount(key) {
-  return validatedSetCounts.value[key] ?? 0;
+function getValidatedSetCount(item) {
+  return item?.validatedSets?.length ?? 0;
 }
 
 function isBlockFullyValidated(item) {
-  const key = itemKey(item);
-  return getValidatedSetCount(key) >= totalSetsFor(item);
+  return getValidatedSetCount(item) >= totalSetsFor(item);
 }
 
 const allSeriesValidated = computed(() => {
@@ -123,64 +126,118 @@ const allSeriesValidated = computed(() => {
   return sortedWorkItems.value.every((item) => isBlockFullyValidated(item));
 });
 
+function applySnapshotToLine(line, snapshot) {
+  if (!line || !snapshot) {
+    return;
+  }
+  line.reps = snapshot.reps;
+  line.load = snapshot.load;
+  line.load_percent = snapshot.load_percent;
+  line.rpe = snapshot.rpe;
+  line.load_mode = snapshot.load_mode;
+}
+
+function mergeLoggedOntoPlanned(plannedRows, loggedItems) {
+  const loggedByKey = new Map();
+  for (const item of loggedItems) {
+    const key = itemKey(item);
+    if (!loggedByKey.has(key)) {
+      loggedByKey.set(key, []);
+    }
+    loggedByKey.get(key).push(item);
+  }
+
+  const usedKeys = new Set();
+  const merged = plannedRows.map((row) => {
+    const item = createSessionItem(
+      row.section,
+      hydrateExerciseLine({ ...row, lift: row.lift ?? mainLift.value }),
+    );
+    const key = itemKey(item);
+    const loggedGroup = loggedByKey.get(key) ?? [];
+    usedKeys.add(key);
+    const validatedSets = validatedSetsFromLoggedItems(loggedGroup);
+    const tracked = withSetTracking(item, {
+      plannedSets: item.line.sets,
+      validatedSets,
+    });
+    const noteFromLogged = [...loggedGroup]
+      .reverse()
+      .map((row) => row.line?.athlete_note)
+      .find((note) => String(note ?? '').trim());
+    if (noteFromLogged) {
+      tracked.line.athlete_note = noteFromLogged;
+    }
+    if (validatedSets.length) {
+      applySnapshotToLine(tracked.line, validatedSets[validatedSets.length - 1]);
+      tracked.line.sets = tracked.plannedSets;
+      if (validatedSets.length < tracked.plannedSets) {
+        tracked.line.rpe = null;
+      }
+    }
+    return tracked;
+  });
+
+  for (const [key, loggedGroup] of loggedByKey.entries()) {
+    if (usedKeys.has(key) || !loggedGroup.length) {
+      continue;
+    }
+    const first = loggedGroup[0];
+    const validatedSets = validatedSetsFromLoggedItems(loggedGroup);
+    const tracked = withSetTracking(
+      createSessionItem(first.section, hydrateExerciseLine(first.line)),
+      {
+        plannedSets: validatedSets.length || first.line?.sets,
+        validatedSets,
+      },
+    );
+    const noteFromLogged = [...loggedGroup]
+      .reverse()
+      .map((row) => row.line?.athlete_note)
+      .find((note) => String(note ?? '').trim());
+    if (noteFromLogged) {
+      tracked.line.athlete_note = noteFromLogged;
+    }
+    if (validatedSets.length) {
+      applySnapshotToLine(tracked.line, validatedSets[validatedSets.length - 1]);
+      tracked.line.sets = tracked.plannedSets;
+      if (validatedSets.length < tracked.plannedSets) {
+        tracked.line.rpe = null;
+      }
+    }
+    merged.push(tracked);
+  }
+
+  return merged;
+}
+
 function initializeWorkItems() {
   const plannedItems = (session.value?.items ?? []).filter((row) => row.section !== 'warmup');
 
   if (hasLoggedToday.value) {
     const day = sessionToDay(props.todayLoggedSession);
-    workItems.value = day.items.filter((item) => item.section !== 'warmup');
-    if (Object.keys(validatedSetCounts.value).length === 0) {
-      const counts = {};
-      const validated = new Set();
-      for (const item of workItems.value) {
-        const key = itemKey(item);
-        const hasCharge =
-          (item.line?.load != null && item.line.load !== '') ||
-          (item.line?.load_percent != null && item.line.load_percent !== '');
-        if (hasCharge && item.line?.rpe != null && item.line.rpe !== '') {
-          counts[key] = totalSetsFor(item);
-          validated.add(key);
-        }
-      }
-      validatedSetCounts.value = counts;
-      validatedItemKeys.value = validated;
-    }
+    const loggedItems = day.items.filter((item) => item.section !== 'warmup');
+    workItems.value = mergeLoggedOntoPlanned(plannedItems, loggedItems);
     return;
   }
 
   workItems.value = plannedItems.map((row) =>
-    createSessionItem(row.section, hydrateExerciseLine({ ...row, lift: row.lift ?? mainLift.value })),
+    withSetTracking(
+      createSessionItem(row.section, hydrateExerciseLine({ ...row, lift: row.lift ?? mainLift.value })),
+      { plannedSets: row.sets },
+    ),
   );
-  validatedItemKeys.value = new Set();
-  validatedSetCounts.value = {};
   expandedItemKey.value = workItems.value[0] ? itemKey(workItems.value[0]) : null;
 }
 
 watch(
-  () => [props.todaySession?.date, props.todaySession?.session, props.todayLoggedSession?.id],
+  () => [props.todaySession?.date, status.value],
   () => {
     if (status.value === 'session') {
       initializeWorkItems();
     }
   },
-  { immediate: true, deep: true },
-);
-
-watch(
-  () => props.todayLoggedSession,
-  (logged) => {
-    if (!logged?.id || status.value !== 'session') {
-      return;
-    }
-
-    const preservedValidated = new Set(validatedItemKeys.value);
-    const preservedCounts = { ...validatedSetCounts.value };
-    const day = sessionToDay(logged);
-    workItems.value = day.items.filter((item) => item.section !== 'warmup');
-    validatedItemKeys.value = preservedValidated;
-    validatedSetCounts.value = preservedCounts;
-  },
-  { deep: true },
+  { immediate: true },
 );
 
 function toggleItem(key) {
@@ -189,7 +246,7 @@ function toggleItem(key) {
 
 function buildPayload() {
   const day = {
-    items: workItems.value,
+    items: expandValidatedSetsToItems(workItems.value),
     lift: mainLift.value,
     session_label: sessionTitle.value,
   };
@@ -233,11 +290,22 @@ function validateItem(key) {
 
   const wasAllValidated = allSeriesValidated.value;
   const total = totalSetsFor(item);
-  const nextCount = Math.min(getValidatedSetCount(key) + 1, total);
-  validatedSetCounts.value = { ...validatedSetCounts.value, [key]: nextCount };
+  const snapshot = snapshotValidatedSet(item.line);
+  if (!snapshot) {
+    return;
+  }
+
+  if (!Array.isArray(item.validatedSets)) {
+    item.validatedSets = [];
+  }
+  if (item.validatedSets.length >= total) {
+    return;
+  }
+
+  item.validatedSets = [...item.validatedSets, snapshot];
+  const nextCount = item.validatedSets.length;
 
   if (nextCount >= total) {
-    validatedItemKeys.value = new Set([...validatedItemKeys.value, key]);
     // Keep expanded so the athlete can leave an exercise note.
     expandedItemKey.value = key;
   } else {
@@ -249,7 +317,7 @@ function validateItem(key) {
       if (!wasAllValidated && allSeriesValidated.value) {
         celebrationData.value = buildSessionCelebrationPayload({
           sessionTitle: sessionTitle.value,
-          workItems: workItems.value,
+          workItems: expandValidatedSetsToItems(workItems.value),
           plannedItems: (session.value?.items ?? []).filter((row) => row.section !== 'warmup'),
           oneRm: props.oneRm,
           mainLift: mainLift.value,
@@ -272,22 +340,9 @@ function closeCelebration() {
 <template>
   <section class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
     <div class="flex flex-wrap items-start justify-between gap-2">
-      <div>
-        <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400/80">
-          Séance du jour
-        </p>
-        <p v-if="todaySession.program_name" class="mt-1 text-xs text-slate-400">
-          <template v-if="status === 'rest'">Jour de repos</template>
-          <template v-else-if="status === 'no_program'">Aucun programme actif</template>
-          <template v-else>
-            {{ todaySession.program_name }}
-            <template v-if="todaySession.week_number">
-              · S{{ todaySession.week_number }}
-              <span v-if="blockTypeLabel">— {{ blockTypeLabel }}</span>
-            </template>
-          </template>
-        </p>
-      </div>
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400/80">
+        Séance du jour
+      </p>
       <span
         v-if="allSeriesValidated"
         class="rounded-lg border border-emerald-500/40 bg-emerald-950/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300"
@@ -342,7 +397,9 @@ function closeCelebration() {
           :one-rm="oneRm"
           :main-lift="mainLift"
           :expanded="expandedItemKey === itemKey(item)"
-          :validated-sets-count="getValidatedSetCount(itemKey(item))"
+          :validated-sets-count="getValidatedSetCount(item)"
+          :validated-sets="item.validatedSets ?? []"
+          :planned-sets="totalSetsFor(item)"
           :saving="form.processing"
           @toggle="toggleItem(itemKey(item))"
           @validate="validateItem(itemKey(item))"

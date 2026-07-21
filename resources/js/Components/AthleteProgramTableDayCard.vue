@@ -72,16 +72,7 @@ function cellValue(row, columnId) {
     case 'reps':
       return row.reps ?? '—';
     case 'load':
-      if (row.load != null && row.load !== '') {
-        return `${row.load} kg`;
-      }
-      if (row.load_percent != null && row.load_percent !== '') {
-        return `${row.load_percent}%`;
-      }
-      if (row.rpe != null && row.rpe !== '') {
-        return `RPE ${row.rpe}`;
-      }
-      return '—';
+      return loadLabel(row);
     case 'rest':
       return row.rest_seconds != null ? `${row.rest_seconds}s` : '—';
     case 'muscles':
@@ -91,8 +82,59 @@ function cellValue(row, columnId) {
   }
 }
 
+function loadLabel(row) {
+  if (row.load != null && row.load !== '') {
+    return `${row.load} kg`;
+  }
+  if (row.load_percent != null && row.load_percent !== '') {
+    return `${row.load_percent}%`;
+  }
+  if (row.rpe != null && row.rpe !== '') {
+    return `RPE ${row.rpe}`;
+  }
+  return '—';
+}
+
+function prescriptionSummary(row) {
+  const parts = [];
+  const type = sectionOption(row.section).label;
+  if (type) {
+    parts.push(type);
+  }
+
+  const sets = row.sets != null && row.sets !== '' ? row.sets : null;
+  const reps = row.reps != null && row.reps !== '' ? row.reps : null;
+  if (sets != null && reps != null) {
+    parts.push(`${sets}×${reps}`);
+  } else if (sets != null) {
+    parts.push(`${sets} sér.`);
+  } else if (reps != null) {
+    parts.push(`${reps} reps`);
+  }
+
+  const load = loadLabel(row);
+  if (load !== '—') {
+    parts.push(load);
+  }
+
+  if (row.rest_seconds != null && row.rest_seconds !== '') {
+    parts.push(`${row.rest_seconds}s`);
+  }
+
+  return parts.join(' · ');
+}
+
+function exerciseTitle(row) {
+  if (normalizedLayout.value.exercise_mode === 'split_lift') {
+    const lift = row.lift ? String(row.lift).toUpperCase() : '';
+    const name = row.exercise_name || '';
+    return [lift, name].filter(Boolean).join(' — ') || '—';
+  }
+  return row.exercise_name || '—';
+}
+
 function cellTitle(row, columnId) {
-  if (columnId === 'exercise') {
+  if (columnId === 'exercise' || columnId === 'variant') {
     return cellValue(row, columnId);
   }
 
@@ -102,23 +144,55 @@ function cellTitle(row, columnId) {
 
   return undefined;
 }
+
+function isPrescriptionColumn(columnId) {
+  return ['sets', 'reps', 'load', 'rest', 'section'].includes(columnId);
+}
 </script>
 
 <template>
   <article class="overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
-    <div class="border-l-2 border-amber-400 bg-black px-2.5 py-1.5 sm:px-3 sm:py-2">
-      <p class="text-center text-[11px] font-semibold uppercase tracking-wide text-amber-300 sm:text-xs">
+    <div class="flex items-center gap-2 border-l-2 border-amber-400 bg-black px-3 py-2">
+      <p class="min-w-0 flex-1 text-[12px] font-semibold uppercase tracking-wide text-amber-300 sm:text-sm">
         Jour {{ dayOrdinal }} · S{{ weekNumber }}
         <span v-if="sessionLabel" class="font-normal normal-case text-amber-200/80">
           — {{ sessionLabel }}
         </span>
       </p>
+      <button
+        v-if="hasSessionNotes"
+        type="button"
+        class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-400/20 text-xs font-bold leading-none text-amber-300 hover:bg-amber-400/35"
+        title="Voir les instructions"
+        aria-label="Voir les instructions de séance"
+        @click="notesModalOpen = true"
+      >
+        !
+      </button>
     </div>
 
-    <div v-if="rows.length" class="overflow-hidden">
-      <table class="w-full table-fixed border-collapse">
+    <!-- Mobile : cartes lisibles -->
+    <div v-if="rows.length" class="sm:hidden">
+      <ul class="divide-y divide-slate-800">
+        <li
+          v-for="(row, index) in rows"
+          :key="index"
+          class="px-3 py-3"
+        >
+          <p class="text-sm font-semibold leading-snug text-white">
+            {{ exerciseTitle(row) }}
+          </p>
+          <p class="mt-1 text-sm tabular-nums tracking-tight text-slate-300">
+            {{ prescriptionSummary(row) }}
+          </p>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Desktop / tablette : tableau aéré -->
+    <div v-if="rows.length" class="hidden overflow-x-auto sm:block">
+      <table class="w-full min-w-[28rem] table-fixed border-collapse">
         <colgroup>
-          <col v-if="hasSessionNotes" style="width: 1.5rem" />
           <col
             v-for="column in visibleColumns"
             :key="`col-${column.id}`"
@@ -126,22 +200,14 @@ function cellTitle(row, columnId) {
           />
         </colgroup>
         <thead class="bg-slate-950">
-          <tr class="text-center text-[9px] font-medium uppercase tracking-wide text-slate-300 sm:text-[10px]">
-            <th
-              v-if="hasSessionNotes"
-              class="border-b border-t border-r border-slate-700 px-0 py-1"
-              aria-label="Instructions"
-            />
+          <tr class="text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">
             <th
               v-for="(column, index) in visibleColumns"
               :key="column.id"
-              class="border-b border-t border-slate-700 px-0.5 py-1 whitespace-nowrap sm:px-1 sm:py-1.5"
+              class="border-b border-slate-800 px-2 py-2 whitespace-nowrap"
               :class="[
-                index < visibleColumns.length - 1 ? 'border-r' : '',
+                index < visibleColumns.length - 1 ? 'border-r border-slate-800/70' : '',
                 column.align === 'left' ? 'text-left' : 'text-center',
-                column.id === 'exercise' || column.id === 'variant' || column.id === 'muscles'
-                  ? 'text-[8px] sm:text-[9px]'
-                  : 'text-[9px] sm:text-[10px]',
               ]"
             >
               {{ athleteColumnHeaderLabel(column.id, column.label) }}
@@ -152,45 +218,40 @@ function cellTitle(row, columnId) {
           <tr
             v-for="(row, index) in rows"
             :key="index"
-            class="border-b border-slate-800 text-[10px] text-slate-200 sm:text-xs"
+            class="border-b border-slate-800/80 text-slate-200 last:border-b-0"
           >
-            <td
-              v-if="hasSessionNotes"
-              class="border-r border-slate-800 px-0 py-1 text-center align-middle"
-            >
-              <button
-                v-if="index === 0"
-                type="button"
-                class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-400/20 text-[10px] font-bold leading-none text-amber-300 hover:bg-amber-400/35"
-                title="Voir les instructions"
-                aria-label="Voir les instructions de séance"
-                @click="notesModalOpen = true"
-              >
-                !
-              </button>
-            </td>
             <td
               v-for="(column, colIndex) in visibleColumns"
               :key="column.id"
-              class="px-0.5 py-1.5 sm:px-1 sm:py-2"
+              class="px-2 py-2.5 align-middle"
               :class="[
-                colIndex < visibleColumns.length - 1 ? 'border-r border-slate-800' : '',
+                colIndex < visibleColumns.length - 1 ? 'border-r border-slate-800/60' : '',
                 column.align === 'left' ? 'text-left' : 'text-center',
                 column.id === 'exercise' || column.id === 'variant' || column.id === 'muscles'
-                  ? 'max-w-[5.5rem] truncate text-[9px] sm:max-w-none sm:text-[10px]'
+                  ? 'text-[13px] font-medium leading-snug text-white'
                   : '',
-                column.id === 'section' || column.id === 'sets' ? 'text-[9px] sm:text-[10px]' : '',
+                isPrescriptionColumn(column.id)
+                  ? 'text-sm font-semibold tabular-nums tracking-tight text-white'
+                  : '',
               ]"
               :title="cellTitle(row, column.id)"
             >
-              {{ cellValue(row, column.id) }}
+              <span
+                v-if="column.id === 'exercise' || column.id === 'variant' || column.id === 'muscles'"
+                class="line-clamp-2"
+              >
+                {{ cellValue(row, column.id) }}
+              </span>
+              <template v-else>
+                {{ cellValue(row, column.id) }}
+              </template>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <p v-else class="px-3 py-6 text-center text-[11px] text-slate-500 sm:text-xs">
+    <p v-else class="px-3 py-6 text-center text-sm text-slate-500">
       Aucun exercice programmé.
     </p>
 

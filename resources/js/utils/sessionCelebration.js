@@ -90,6 +90,30 @@ function actualLinesFromWorkItems(workItems = []) {
     }));
 }
 
+/**
+ * Construit le chargement barre du topset principal à partir des items plats d'une séance programmée.
+ * @returns {ReturnType<typeof buildBarbellLoading>|null}
+ */
+export function buildPrimaryTopsetBarbell(session, oneRm = {}, barWeightKg = 20) {
+  if (!session) {
+    return null;
+  }
+
+  const mainLift = session.main_lift ?? 'squat';
+  const plannedItems = (session.items ?? []).filter((row) => row?.section !== 'warmup');
+  const workItems = plannedItems.map((row) => ({
+    section: row.section,
+    line: row.line ?? row,
+  }));
+
+  const primary = pickTopsets(workItems, plannedItems, oneRm, mainLift)[0] ?? null;
+  if (!primary?.loadKg) {
+    return null;
+  }
+
+  return buildBarbellLoading(primary.loadKg, barWeightKg);
+}
+
 export function buildSessionCelebrationPayload({
   sessionTitle,
   workItems = [],

@@ -156,15 +156,15 @@ export function spacedColumnPercent(columnId, visibleColumns) {
 }
 
 const ATHLETE_COLUMN_WEIGHTS = {
-  exercise: 2.4,
-  main_lift: 0.95,
-  variant: 1.7,
-  section: 1.2,
-  sets: 1.15,
-  reps: 0.95,
-  load: 2.1,
-  rest: 0.85,
-  muscles: 0.9,
+  exercise: 3.2,
+  main_lift: 1.0,
+  variant: 2.0,
+  section: 1.0,
+  sets: 1.0,
+  reps: 1.0,
+  load: 2.0,
+  rest: 0.9,
+  muscles: 1.1,
 };
 
 const ATHLETE_COLUMN_HEADER_SHORT = {

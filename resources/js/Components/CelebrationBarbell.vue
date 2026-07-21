@@ -4,6 +4,12 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  /** `full` = barre complète (célébration) ; `peek` = disques seuls, sortie gauche */
+  variant: {
+    type: String,
+    default: 'full',
+    validator: (value) => ['full', 'peek'].includes(value),
+  },
 });
 
 const plateClass = {
@@ -34,8 +40,29 @@ function plateStyle(plate) {
 </script>
 
 <template>
-  <div v-if="barbell?.sidePlates?.length" class="mt-4">
-    <div class="flex items-center justify-center gap-1">
+  <div v-if="barbell?.sidePlates?.length" :class="variant === 'peek' ? '' : 'mt-4'">
+    <!-- Peek : disques seuls, clipped comme si la barre sortait du cadre gauche -->
+    <div
+      v-if="variant === 'peek'"
+      class="overflow-hidden"
+      aria-hidden="true"
+    >
+      <div class="flex items-center -translate-x-3">
+        <div
+          v-for="(plate, index) in [...barbell.sidePlates].reverse()"
+          :key="`peek-${plate.weight}-${index}`"
+          class="flex shrink-0 items-end justify-center rounded-[1.5px] border shadow-sm"
+          :class="plateClass[plate.color]"
+          :style="plateStyle(plate)"
+          :title="`${plate.weight} kg`"
+        >
+          <span class="sr-only">{{ plate.weight }} kg</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full : barre complète -->
+    <div v-else class="flex items-center justify-center gap-1">
       <div class="flex items-center">
         <div
           class="mr-0.5 h-2 w-3.5 rounded-[3px] bg-gradient-to-b from-slate-200 via-slate-50 to-slate-200 shadow-sm"
@@ -74,6 +101,5 @@ function plateStyle(plate) {
         />
       </div>
     </div>
-
   </div>
 </template>

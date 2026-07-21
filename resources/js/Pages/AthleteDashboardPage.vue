@@ -7,13 +7,14 @@ export default {
 </script>
 
 <script setup>
-import { Link } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import AthleteDailyCheckInModal from '../Components/AthleteDailyCheckInModal.vue';
 import AthleteDashboardHeader from '../Components/AthleteDashboardHeader.vue';
 import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
 import TodaySessionCard from '../Components/TodaySessionCard.vue';
 import WrappedStoryModal from '../Components/WrappedStoryModal.vue';
+import { WEEKDAY_LABELS } from '../utils/programBuilder';
+import { buildPrimaryTopsetBarbell } from '../utils/sessionCelebration';
 
 const props = defineProps({
   athleteName: { type: String, required: true },
@@ -39,6 +40,8 @@ const props = defineProps({
 const checkInModalOpen = ref(false);
 const activeWrapped = ref(null);
 const wrappedModalOpen = ref(false);
+const playHomeIntro = ref(false);
+const homeIntroVisible = ref(true);
 
 const wrappedCards = computed(() => [
   props.wrapped?.weekly ?? null,
@@ -89,14 +92,72 @@ function maybeAutoOpenWrapped() {
   }
 }
 
+function isDefaultSessionLabel(label) {
+  const normalized = String(label ?? '').trim().toLowerCase();
+  if (!normalized) {
+    return true;
+  }
+  return WEEKDAY_LABELS.some((weekday) => weekday.toLowerCase() === normalized);
+}
+
 const todaySessionTitle = computed(() => {
   if (props.todaySession?.status !== 'session') {
     return null;
   }
 
   const label = props.todaySession?.session?.session_label?.trim();
-  return label || 'Séance du jour';
+  if (!label || isDefaultSessionLabel(label)) {
+    return null;
+  }
+
+  return label;
 });
+
+const topsetBarbell = computed(() => {
+  if (props.todaySession?.status !== 'session') {
+    return null;
+  }
+  return buildPrimaryTopsetBarbell(props.todaySession.session, props.oneRm);
+});
+
+const sessionCardMotionClass = computed(() => {
+  if (!playHomeIntro.value) {
+    return '';
+  }
+  return [
+    'transition-opacity duration-700 ease-out',
+    homeIntroVisible.value ? 'opacity-100' : 'opacity-0',
+  ];
+});
+
+function homeIntroStorageKey() {
+  const today = new Date().toISOString().slice(0, 10);
+  return `tc-home-intro-${props.athleteId}-${today}`;
+}
+
+function initHomeIntro() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (window.localStorage.getItem(homeIntroStorageKey())) {
+    playHomeIntro.value = false;
+    homeIntroVisible.value = true;
+    return;
+  }
+
+  playHomeIntro.value = true;
+  homeIntroVisible.value = false;
+  window.localStorage.setItem(homeIntroStorageKey(), '1');
+
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        homeIntroVisible.value = true;
+      });
+    });
+  });
+}
 
 function skipStorageKey() {
   const today = new Date().toISOString().slice(0, 10);
@@ -153,6 +214,8 @@ async function sharePayload(payload) {
 }
 
 onMounted(() => {
+  initHomeIntro();
+
   if (shouldPromptCheckIn()) {
     openCheckInModal();
     return;
@@ -165,16 +228,19 @@ onMounted(() => {
 <template>
   <div class="space-y-3 lg:space-y-4">
     <AthleteDashboardHeader
-      :athlete-name="athleteName"
       :athlete-id="athleteId"
       :next-competition="nextCompetition"
       :today-session-title="todaySessionTitle"
+      :topset-barbell="topsetBarbell"
       :show-check-in-button="!todayReadiness || !todayBodyWeight"
+      :intro-animate="playHomeIntro"
+      :intro-visible="homeIntroVisible"
       @open-check-in="openCheckInModal"
     />
 
     <TodaySessionCard
       class="min-w-0"
+      :class="sessionCardMotionClass"
       :today-session="todaySession"
       :athlete-id="athleteId"
       :one-rm="oneRm"
@@ -230,19 +296,6 @@ onMounted(() => {
         </article>
       </div>
     </section>
-
-    <Link
-      v-if="feedbackDueToday"
-      href="/feedbacks"
-      class="flex items-center justify-between gap-3 rounded-xl border border-blue-500/40 bg-blue-600/15 px-4 py-2.5 text-sm transition hover:bg-blue-600/25"
-    >
-      <span class="font-medium text-blue-200">
-        {{ feedbackFrequency === 'weekly'
-          ? 'Retour hebdomadaire attendu'
-          : 'Retour vidéo attendu pour ta séance du jour' }}
-      </span>
-      <span class="shrink-0 text-xs font-semibold text-blue-300">Envoyer →</span>
-    </Link>
 
     <AthleteReadinessCheckIn
       class="hidden lg:block"

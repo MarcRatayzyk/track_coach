@@ -8,7 +8,14 @@ const page = usePage();
 const open = defineModel('open', { type: Boolean, default: false });
 
 const catalog = computed(() => page.props.exerciseLibrary ?? []);
-const customExercises = computed(() => catalog.value.filter((exercise) => exercise.is_custom));
+
+const defaultExercises = computed(() =>
+  catalog.value.filter((exercise) => !exercise.is_custom),
+);
+
+const customExercises = computed(() =>
+  catalog.value.filter((exercise) => exercise.is_custom),
+);
 
 const editingId = ref(null);
 
@@ -16,8 +23,6 @@ const form = useForm({
   name: '',
   lift: 'general',
   category: 'accessory',
-  equipment: 'barbell',
-  movement_pattern: '',
 });
 
 const liftOptions = [
@@ -32,14 +37,14 @@ const categoryOptions = [
   { value: 'accessory', label: 'Accessoire' },
 ];
 
-const equipmentOptions = [
-  { value: 'barbell', label: 'Barre' },
-  { value: 'dumbbell', label: 'Haltères' },
-  { value: 'machine', label: 'Machine' },
-  { value: 'cable', label: 'Poulie' },
-  { value: 'bodyweight', label: 'Poids du corps' },
-  { value: 'other', label: 'Autre' },
-];
+const liftLabelByValue = Object.fromEntries(liftOptions.map((option) => [option.value, option.label]));
+const categoryLabelByValue = Object.fromEntries(categoryOptions.map((option) => [option.value, option.label]));
+
+function exerciseMeta(exercise) {
+  const lift = liftLabelByValue[exercise.lift] ?? exercise.lift;
+  const category = categoryLabelByValue[exercise.category] ?? exercise.category;
+  return `${lift} · ${category}`;
+}
 
 function resetForm() {
   editingId.value = null;
@@ -52,8 +57,6 @@ function startEdit(exercise) {
   form.name = exercise.name;
   form.lift = exercise.lift;
   form.category = exercise.category;
-  form.equipment = exercise.equipment;
-  form.movement_pattern = exercise.movement_pattern ?? '';
 }
 
 function submit() {
@@ -114,7 +117,7 @@ function close() {
           <div>
             <h2 class="text-xl font-bold text-white">Mes exercices</h2>
             <p class="mt-1 text-sm text-slate-400">
-              Crée des exercices personnalisés visibles uniquement dans ton catalogue.
+              Banque par défaut et exercices personnalisés de ton catalogue.
             </p>
           </div>
           <button type="button" class="text-slate-400 hover:text-white" @click="close">✕</button>
@@ -150,24 +153,6 @@ function close() {
             </select>
           </label>
 
-          <label class="block text-sm">
-            <span class="text-slate-300">Équipement</span>
-            <select v-model="form.equipment" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white">
-              <option v-for="option in equipmentOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-
-          <label class="block text-sm">
-            <span class="text-slate-300">Pattern (optionnel)</span>
-            <input
-              v-model="form.movement_pattern"
-              type="text"
-              class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-            />
-          </label>
-
           <div class="sm:col-span-2 flex gap-2">
             <button
               type="submit"
@@ -188,18 +173,20 @@ function close() {
         </form>
 
         <div v-if="customExercises.length" class="mt-8 border-t border-slate-800 pt-6">
-          <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Exercices personnalisés</h3>
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Tes exercices ({{ customExercises.length }})
+          </h3>
           <ul class="mt-3 space-y-2">
             <li
               v-for="exercise in customExercises"
               :key="exercise.id"
-              class="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2"
+              class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2"
             >
-              <div>
+              <div class="min-w-0">
                 <p class="font-medium text-white">{{ exercise.name }}</p>
-                <p class="text-xs text-slate-500">{{ exercise.lift }} · {{ exercise.category }} · {{ exercise.equipment }}</p>
+                <p class="text-xs text-slate-500">{{ exerciseMeta(exercise) }}</p>
               </div>
-              <div class="flex gap-2">
+              <div class="flex shrink-0 gap-2">
                 <button type="button" class="text-xs text-blue-400 hover:text-blue-300" @click="startEdit(exercise)">
                   Modifier
                 </button>
@@ -210,6 +197,29 @@ function close() {
             </li>
           </ul>
         </div>
+
+        <div v-if="defaultExercises.length" class="mt-8 border-t border-slate-800 pt-6">
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Banque par défaut ({{ defaultExercises.length }})
+          </h3>
+          <ul class="mt-3 max-h-64 space-y-1.5 overflow-y-auto pr-1">
+            <li
+              v-for="exercise in defaultExercises"
+              :key="exercise.id"
+              class="rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2"
+            >
+              <p class="text-sm font-medium text-slate-200">{{ exercise.name }}</p>
+              <p class="text-xs text-slate-500">{{ exerciseMeta(exercise) }}</p>
+            </li>
+          </ul>
+        </div>
+
+        <p
+          v-if="!defaultExercises.length && !customExercises.length"
+          class="mt-8 border-t border-slate-800 pt-6 text-sm text-slate-500"
+        >
+          Aucun exercice dans le catalogue pour le moment.
+        </p>
       </div>
     </div>
   </Teleport>
