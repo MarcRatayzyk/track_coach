@@ -182,15 +182,14 @@ function putFileToSignedUrl(url, file, headers, onProgress) {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', url, true);
 
-    const contentType = headers?.['Content-Type'] || headers?.['content-type'] || file.type || 'application/octet-stream';
+    // Uniquement Content-Type : d’autres headers déclenchent un preflight CORS
+    // que R2 refuse souvent si AllowedHeaders vaut "*".
+    const contentType =
+      headers?.['Content-Type'] ||
+      headers?.['content-type'] ||
+      file.type ||
+      'application/octet-stream';
     xhr.setRequestHeader('Content-Type', contentType);
-
-    Object.entries(headers || {}).forEach(([key, value]) => {
-      if (key.toLowerCase() === 'content-type' || key.toLowerCase() === 'host') {
-        return;
-      }
-      xhr.setRequestHeader(key, value);
-    });
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && typeof onProgress === 'function') {
