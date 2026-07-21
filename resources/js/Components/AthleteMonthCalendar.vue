@@ -514,21 +514,29 @@ onMounted(() => {
             </button>
           </div>
           <ul
-            v-if="(session.items ?? []).some((item) => String(item.exercise_name ?? '').trim())"
+            v-if="(session.items ?? []).some((item) => String(item.exercise_name ?? '').trim() && item.section !== 'warmup')"
             class="mt-2 space-y-1.5"
           >
             <li
-              v-for="(item, index) in session.items.filter((row) => String(row.exercise_name ?? '').trim())"
+              v-for="(item, index) in session.items.filter((row) => String(row.exercise_name ?? '').trim() && row.section !== 'warmup')"
               :key="`${session.id}-${index}`"
-              class="flex flex-wrap items-center gap-2 text-xs text-slate-300"
+              class="text-xs text-slate-300"
             >
-              <span
-                class="inline-flex shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                :class="sectionBadgeClass(item.section)"
+              <div class="flex flex-wrap items-center gap-2">
+                <span
+                  class="inline-flex shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                  :class="sectionBadgeClass(item.section)"
+                >
+                  {{ sectionLabel(item.section) }}
+                </span>
+                <span v-if="formatLineRecap(item)">{{ formatLineRecap(item) }}</span>
+              </div>
+              <p
+                v-if="String(item.athlete_note ?? '').trim()"
+                class="mt-1 whitespace-pre-wrap text-[11px] leading-relaxed text-slate-400"
               >
-                {{ sectionLabel(item.section) }}
-              </span>
-              <span v-if="formatLineRecap(item)">{{ formatLineRecap(item) }}</span>
+                Note : {{ item.athlete_note }}
+              </p>
             </li>
           </ul>
           <p v-if="session.notes" class="mt-1 text-xs text-slate-500">{{ session.notes }}</p>

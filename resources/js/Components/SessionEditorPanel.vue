@@ -35,6 +35,8 @@ const form = useForm({
   main_lift: 'squat',
   session_label: null,
   notes: null,
+  warmup_override: false,
+  warmup_notes: null,
   items: [],
   blocks: [],
 });
@@ -70,6 +72,11 @@ const headerTitle = computed(() => {
   return `Semaine ${week} - Jour ${dayNum}`;
 });
 
+const defaultWarmup = computed(() => ({
+  notes: props.activeBlock?.default_warmup_notes ?? null,
+  items: props.activeBlock?.default_warmup_items ?? [],
+}));
+
 function save() {
   day.value.session_label = sessionLabel.value;
   day.value.notes = sessionNotes.value;
@@ -85,6 +92,8 @@ function save() {
   form.main_lift = payload.main_lift;
   form.session_label = payload.session_label;
   form.notes = payload.notes;
+  form.warmup_override = payload.warmup_override;
+  form.warmup_notes = payload.warmup_notes;
   form.items = payload.items;
   form.blocks = payload.blocks;
 
@@ -131,6 +140,8 @@ function deleteSession() {
       :errors="form.errors"
       :show-delete="hasSavedSession"
       show-notes
+      show-warmup
+      :default-warmup="defaultWarmup"
       @save="save"
       @delete="deleteSession"
       @close="emit('close')"

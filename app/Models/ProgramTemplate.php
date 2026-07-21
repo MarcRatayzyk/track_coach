@@ -14,10 +14,13 @@ class ProgramTemplate extends Model
         'goal',
         'level',
         'table_layout',
+        'default_warmup_notes',
+        'default_warmup_items',
     ];
 
     protected $casts = [
         'table_layout' => 'array',
+        'default_warmup_items' => 'array',
     ];
 
     public function coach(): BelongsTo

@@ -1,7 +1,9 @@
 <script setup>
+import { computed } from 'vue';
 import TrainingDayEditor from './TrainingDayEditor.vue';
+import { createSessionItem, emptyExerciseLine, formatLineRecap } from '../utils/programBuilder';
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     required: true,
@@ -26,6 +28,14 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  showWarmup: {
+    type: Boolean,
+    default: false,
+  },
+  defaultWarmup: {
+    type: Object,
+    default: () => ({ notes: null, items: [] }),
+  },
 });
 
 const sessionLabel = defineModel('sessionLabel', { type: String, default: '' });
@@ -34,6 +44,46 @@ const day = defineModel('day', { type: Object, required: true });
 const notes = defineModel('notes', { type: String, default: '' });
 
 defineEmits(['save', 'delete', 'close']);
+
+const warmupOverride = computed({
+  get: () => Boolean(day.value?.warmup_override),
+  set(value) {
+    day.value.warmup_override = Boolean(value);
+    if (value) {
+      seedWarmupFromDefault();
+    } else {
+      // Keep inherited items out of the editable list when returning to block default.
+      day.value.items = (day.value.items ?? []).filter((item) => item.section !== 'warmup');
+      day.value.warmup_notes = '';
+    }
+  },
+});
+
+const inheritedWarmup = computed(() => ({
+  notes: props.defaultWarmup?.notes ?? null,
+  items: props.defaultWarmup?.items ?? [],
+}));
+
+const hasInheritedWarmup = computed(() => {
+  return (
+    Boolean(String(inheritedWarmup.value.notes ?? '').trim()) ||
+    (inheritedWarmup.value.items?.length ?? 0) > 0
+  );
+});
+
+function seedWarmupFromDefault() {
+  if (!day.value.warmup_notes?.trim() && inheritedWarmup.value.notes) {
+    day.value.warmup_notes = inheritedWarmup.value.notes;
+  }
+
+  const hasWarmupItems = (day.value.items ?? []).some((item) => item.section === 'warmup');
+  if (!hasWarmupItems && (inheritedWarmup.value.items?.length ?? 0) > 0) {
+    const seeded = inheritedWarmup.value.items.map((row) =>
+      createSessionItem('warmup', { ...emptyExerciseLine(''), ...row }),
+    );
+    day.value.items = [...seeded, ...(day.value.items ?? [])];
+  }
+}
 
 function onSessionLabelInput(event) {
   sessionLabel.value = event.target.value.toUpperCase();
@@ -102,7 +152,66 @@ function formatErrorMessages(errors) {
     </div>
 
     <div class="tc-scrollbar mt-4 flex-1 overflow-y-auto pr-1">
-      <TrainingDayEditor v-model="day" />
+      <div
+        v-if="showWarmup"
+        class="mb-4 space-y-3 rounded-xl border border-sky-500/25 bg-sky-950/15 px-3 py-3"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-[10px] font-semibold uppercase tracking-widest text-sky-300/90">
+            Échauffement
+          </p>
+          <label class="flex items-center gap-2 text-xs text-slate-300">
+            <input
+              v-model="warmupOverride"
+              type="checkbox"
+              class="rounded border-slate-600 bg-slate-950 text-sky-500"
+            />
+            Personnaliser pour cette séance
+          </label>
+        </div>
+
+        <template v-if="!warmupOverride">
+          <p v-if="hasInheritedWarmup" class="text-xs text-slate-400">
+            Hérité du bloc
+          </p>
+          <p
+            v-if="inheritedWarmup.notes?.trim()"
+            class="whitespace-pre-wrap text-sm text-slate-200"
+          >
+            {{ inheritedWarmup.notes }}
+          </p>
+          <ul v-if="inheritedWarmup.items?.length" class="space-y-1">
+            <li
+              v-for="(item, index) in inheritedWarmup.items"
+              :key="`${item.exercise_name}-${index}`"
+              class="text-sm text-slate-300"
+            >
+              {{ formatLineRecap(item) || item.exercise_name }}
+            </li>
+          </ul>
+          <p v-else-if="!inheritedWarmup.notes?.trim()" class="text-xs text-slate-500">
+            Aucun échauffement défini sur le bloc.
+          </p>
+        </template>
+
+        <template v-else>
+          <label class="block text-xs font-medium text-slate-400">
+            Instructions
+            <textarea
+              v-model="day.warmup_notes"
+              rows="2"
+              maxlength="5000"
+              placeholder="Instructions spécifiques à cette séance…"
+              class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-white placeholder:text-slate-600"
+            />
+          </label>
+          <p class="text-xs text-slate-500">
+            Ajoute les exercices d’échauffement avec le bouton ci-dessous.
+          </p>
+        </template>
+      </div>
+
+      <TrainingDayEditor v-model="day" :allow-warmup="showWarmup && warmupOverride" />
     </div>
 
     <label v-if="showNotes" class="mt-4 block text-sm text-slate-400">

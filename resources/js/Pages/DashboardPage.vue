@@ -12,6 +12,7 @@ import { computed, onMounted, ref } from 'vue';
 import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
 import CoachDashboardCalendar from '../Components/CoachDashboardCalendar.vue';
 import CoachOnboardingTour from '../Components/CoachOnboardingTour.vue';
+import CoachRosterAwardsModal from '../Components/CoachRosterAwardsModal.vue';
 import CompetitionCalendarModal from '../Components/CompetitionCalendarModal.vue';
 import DashboardAlertsPanel from '../Components/DashboardAlertsPanel.vue';
 import FeedbackBreakdownModal from '../Components/FeedbackBreakdownModal.vue';
@@ -21,7 +22,6 @@ import UiIcon from '../Components/UiIcon.vue';
 import {
   formatCalendarFr,
   formatDateTimeFr,
-  formatShortDateTimeFr,
 } from '../utils/formatDates';
 import { isCoachOnboardingDone } from '../utils/coachOnboarding';
 
@@ -96,6 +96,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  coachReadinessForm: {
+    type: Object,
+    default: null,
+  },
+  monthlyReadinessAwards: {
+    type: Object,
+    default: null,
+  },
 });
 
 const daily = computed(() => props.feedback.daily ?? {});
@@ -150,18 +158,68 @@ const competitionSummary = computed(() => props.competitionSummary ?? {});
 const hasAthletes = computed(() => props.athleteCount > 0);
 const showAddAthleteModal = ref(false);
 const showOnboardingTour = ref(false);
+const showRosterAwardsModal = ref(false);
+
+function awardsStorageKey(awards) {
+  return `tc-roster-awards-seen-${awards?.variant}-${awards?.period_end}`;
+}
+
+function hasSeenRosterAwards(awards) {
+  if (typeof window === 'undefined' || !awards) {
+    return true;
+  }
+  return window.localStorage.getItem(awardsStorageKey(awards)) === '1';
+}
+
+function markRosterAwardsSeen(awards) {
+  if (typeof window === 'undefined' || !awards) {
+    return;
+  }
+  window.localStorage.setItem(awardsStorageKey(awards), '1');
+}
+
+function openRosterAwards() {
+  if (!props.monthlyReadinessAwards) {
+    return;
+  }
+  showRosterAwardsModal.value = true;
+}
+
+function closeRosterAwards() {
+  if (props.monthlyReadinessAwards) {
+    markRosterAwardsSeen(props.monthlyReadinessAwards);
+  }
+  showRosterAwardsModal.value = false;
+}
 
 function openAddAthleteModal() {
   showAddAthleteModal.value = true;
 }
 
 function onAthleteInvited() {
-  router.reload({ only: ['athleteCount', 'feedback', 'stats', 'alerts', 'recentThreads', 'competitionSummary', 'upcomingCompetitions'] });
+  router.reload({
+    only: [
+      'athleteCount',
+      'feedback',
+      'stats',
+      'alerts',
+      'recentThreads',
+      'competitionSummary',
+      'upcomingCompetitions',
+      'monthlyReadinessAwards',
+    ],
+  });
 }
 
 onMounted(() => {
   if (!hasAthletes.value && !isCoachOnboardingDone()) {
     showOnboardingTour.value = true;
+  }
+  if (
+    props.monthlyReadinessAwards?.screens?.length
+    && !hasSeenRosterAwards(props.monthlyReadinessAwards)
+  ) {
+    showRosterAwardsModal.value = true;
   }
 });
 </script>
@@ -172,7 +230,11 @@ onMounted(() => {
       v-model="showOnboardingTour"
       @add-athlete="openAddAthleteModal"
     />
-    <CoachAddAthleteModal v-model="showAddAthleteModal" @invited="onAthleteInvited" />
+    <CoachAddAthleteModal
+      v-model="showAddAthleteModal"
+      :coach-readiness-form="coachReadinessForm"
+      @invited="onAthleteInvited"
+    />
 
     <template v-if="!hasAthletes">
       <div
@@ -214,6 +276,28 @@ onMounted(() => {
 
     <template v-else>
     <h1 class="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+
+    <section
+      v-if="monthlyReadinessAwards?.screens?.length"
+      class="mt-4 rounded-xl border border-violet-500/30 bg-gradient-to-r from-violet-950/40 via-slate-900/60 to-slate-900/50 p-4 shadow-lg"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-widest text-violet-300/90">Monthly Wrapped</p>
+          <h2 class="mt-1 text-base font-semibold text-white">Roster Awards · {{ monthlyReadinessAwards.month_label }}</h2>
+          <p class="mt-1 text-sm text-slate-400">
+            Podiums humour du groupe (pas, kcal, sommeil) — seulement si ces facteurs sont dans ton questionnaire.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+          @click="openRosterAwards"
+        >
+          Voir les awards
+        </button>
+      </div>
+    </section>
 
     <!-- Ligne 1 : Retours journaliers + hebdomadaires -->
     <div class="mt-4 grid gap-4 lg:grid-cols-2 lg:items-stretch">
@@ -460,8 +544,11 @@ onMounted(() => {
               <span class="block text-sm font-semibold text-white">{{
                 t.athlete?.name ?? 'Athlète'
               }}</span>
-              <span class="mt-0.5 block text-xs text-slate-500">
-                {{ t.messages_count ?? 0 }} msg · {{ formatShortDateTimeFr(t.updated_at) }}
+              <span class="mt-0.5 block truncate text-xs text-slate-500">
+                <template v-if="t.last_message">
+                  {{ t.last_message.is_mine ? 'Toi : ' : '' }}{{ t.last_message.content }}
+                </template>
+                <template v-else>Aucun message</template>
               </span>
             </Link>
           </li>
@@ -499,6 +586,12 @@ onMounted(() => {
       :subtitle="weekLabel"
       :breakdown="weeklyBreakdown"
       @close="showWeeklyFeedbackModal = false"
+    />
+
+    <CoachRosterAwardsModal
+      :open="showRosterAwardsModal"
+      :awards="monthlyReadinessAwards"
+      @close="closeRosterAwards"
     />
     </template>
   </div>

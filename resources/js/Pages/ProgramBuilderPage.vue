@@ -22,6 +22,7 @@ import { router } from '@inertiajs/vue3';
 
 import BlockSetupCard from '../Components/BlockSetupCard.vue';
 import BlockSetupTableCard from '../Components/BlockSetupTableCard.vue';
+import BlockWarmupPanel from '../Components/BlockWarmupPanel.vue';
 
 import ProgramBlockCalendar from '../Components/ProgramBlockCalendar.vue';
 import AthleteProgramTableView from '../Components/AthleteProgramTableView.vue';
@@ -939,6 +940,13 @@ function clearClipboard() {
     />
 
     <template v-else>
+      <BlockWarmupPanel
+        class="mb-4"
+        :active-block="activeBlock"
+        :builder-tab="activeTab"
+        @saved="afterSessionChange"
+      />
+
       <section
         v-if="activeTab === 'stats'"
         class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6"

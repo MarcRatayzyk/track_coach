@@ -33,6 +33,10 @@ class TrainingSessionSupport
         $totals = ['squat' => 0, 'bench' => 0, 'deadlift' => 0];
 
         foreach ($items as $item) {
+            if (($item['section'] ?? null) === 'warmup') {
+                continue;
+            }
+
             if (empty(trim((string) ($item['exercise_name'] ?? '')))) {
                 continue;
             }

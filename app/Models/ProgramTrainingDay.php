@@ -20,6 +20,12 @@ class ProgramTrainingDay extends Model
         'main_lift',
         'session_label',
         'notes',
+        'warmup_override',
+        'warmup_notes',
+    ];
+
+    protected $casts = [
+        'warmup_override' => 'boolean',
     ];
 
     public function week(): BelongsTo

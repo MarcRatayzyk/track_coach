@@ -50,6 +50,9 @@ function exerciseLineText(line) {
 }
 
 function sectionTextClass(section) {
+  if (section === 'warmup') {
+    return 'text-sky-400';
+  }
   if (section === 'topset') {
     return 'text-emerald-400';
   }

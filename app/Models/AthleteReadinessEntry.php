@@ -14,6 +14,7 @@ class AthleteReadinessEntry extends Model
     protected $fillable = [
         'athlete_id',
         'entry_date',
+        'values',
         'score',
         'sleep_score',
         'stress_score',
@@ -23,12 +24,16 @@ class AthleteReadinessEntry extends Model
 
     protected $casts = [
         'entry_date' => 'date',
+        'values' => 'array',
         'score' => 'integer',
         'sleep_score' => 'integer',
         'stress_score' => 'integer',
         'motivation_score' => 'integer',
     ];
 
+    /**
+     * @deprecated Legacy fixed-form score; new entries use values JSON only.
+     */
     public static function computeScore(int $sleep, int $stress, int $motivation): int
     {
         return (int) round(($sleep + $stress + $motivation) / 3);

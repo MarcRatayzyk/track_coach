@@ -79,6 +79,7 @@ class AthleteDashboardPresenter
             'todayLoggedSession' => $todayLoggedSession,
             'todayReadiness' => $readiness['todayReadiness'],
             'readinessRecent' => $readiness['readinessRecent'],
+            'readinessForm' => $readiness['readinessForm'],
             'todayBodyWeight' => $bodyWeight['todayBodyWeight'],
             'nextCompetition' => self::nextCompetitionPayload($athlete->upcomingCompetition, $date),
             'blockProgress' => $blockProgress,

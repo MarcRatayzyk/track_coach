@@ -72,7 +72,25 @@ const sessionTitle = computed(() => {
 
 const sortedWorkItems = computed(() => {
   const order = { topset: 0, backoff: 1, accessory: 2 };
-  return [...workItems.value].sort((a, b) => (order[a.section] ?? 9) - (order[b.section] ?? 9));
+  return [...workItems.value]
+    .filter((item) => item.section !== 'warmup')
+    .sort((a, b) => (order[a.section] ?? 9) - (order[b.section] ?? 9));
+});
+
+const resolvedWarmup = computed(() => {
+  const sessionWarmup = props.todaySession?.session?.warmup;
+  if (sessionWarmup && (sessionWarmup.notes || (sessionWarmup.items?.length ?? 0) > 0)) {
+    return sessionWarmup;
+  }
+  return null;
+});
+
+const hasWarmup = computed(() => {
+  const warmup = resolvedWarmup.value;
+  if (!warmup) {
+    return false;
+  }
+  return Boolean(String(warmup.notes ?? '').trim()) || (warmup.items?.length ?? 0) > 0;
 });
 
 const programCalendarHref = computed(() => {
@@ -106,15 +124,15 @@ const allSeriesValidated = computed(() => {
 });
 
 function initializeWorkItems() {
-  const plannedItems = session.value?.items ?? [];
+  const plannedItems = (session.value?.items ?? []).filter((row) => row.section !== 'warmup');
 
   if (hasLoggedToday.value) {
     const day = sessionToDay(props.todayLoggedSession);
-    workItems.value = day.items;
+    workItems.value = day.items.filter((item) => item.section !== 'warmup');
     if (Object.keys(validatedSetCounts.value).length === 0) {
       const counts = {};
       const validated = new Set();
-      for (const item of day.items) {
+      for (const item of workItems.value) {
         const key = itemKey(item);
         const hasCharge =
           (item.line?.load != null && item.line.load !== '') ||
@@ -158,7 +176,7 @@ watch(
     const preservedValidated = new Set(validatedItemKeys.value);
     const preservedCounts = { ...validatedSetCounts.value };
     const day = sessionToDay(logged);
-    workItems.value = day.items;
+    workItems.value = day.items.filter((item) => item.section !== 'warmup');
     validatedItemKeys.value = preservedValidated;
     validatedSetCounts.value = preservedCounts;
   },
@@ -220,13 +238,8 @@ function validateItem(key) {
 
   if (nextCount >= total) {
     validatedItemKeys.value = new Set([...validatedItemKeys.value, key]);
-    expandedItemKey.value = null;
-
-    const currentIndex = sortedWorkItems.value.findIndex((row) => itemKey(row) === key);
-    const nextItem = sortedWorkItems.value[currentIndex + 1];
-    if (nextItem && !isBlockFullyValidated(nextItem)) {
-      expandedItemKey.value = itemKey(nextItem);
-    }
+    // Keep expanded so the athlete can leave an exercise note.
+    expandedItemKey.value = key;
   } else {
     item.line.rpe = null;
   }
@@ -237,7 +250,7 @@ function validateItem(key) {
         celebrationData.value = buildSessionCelebrationPayload({
           sessionTitle: sessionTitle.value,
           workItems: workItems.value,
-          plannedItems: session.value?.items ?? [],
+          plannedItems: (session.value?.items ?? []).filter((row) => row.section !== 'warmup'),
           oneRm: props.oneRm,
           mainLift: mainLift.value,
         });
@@ -245,6 +258,10 @@ function validateItem(key) {
       }
     },
   });
+}
+
+function saveItemNote() {
+  saveSession();
 }
 
 function closeCelebration() {
@@ -286,6 +303,36 @@ function closeCelebration() {
     </div>
 
     <template v-if="status === 'session'">
+      <div
+        v-if="hasWarmup"
+        class="mt-3 space-y-2 rounded-xl border border-sky-500/25 bg-sky-950/20 px-3 py-3"
+      >
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-sky-300/90">
+          Échauffement
+        </p>
+        <p
+          v-if="resolvedWarmup.notes?.trim()"
+          class="whitespace-pre-wrap text-sm leading-relaxed text-slate-200"
+        >
+          {{ resolvedWarmup.notes }}
+        </p>
+        <ul v-if="resolvedWarmup.items?.length" class="space-y-1.5">
+          <li
+            v-for="(row, index) in resolvedWarmup.items"
+            :key="`${row.exercise_name}-${index}`"
+            class="text-sm text-slate-300"
+          >
+            <span class="font-medium text-slate-100">{{ row.exercise_name }}</span>
+            <span v-if="row.sets || row.reps" class="text-slate-400">
+              — {{ row.sets ?? '?' }}×{{ row.reps ?? '?' }}
+              <template v-if="row.load"> @ {{ row.load }} kg</template>
+              <template v-else-if="row.load_percent"> @ {{ row.load_percent }}%</template>
+              <template v-else-if="row.rpe"> @ RPE {{ row.rpe }}</template>
+            </span>
+          </li>
+        </ul>
+      </div>
+
       <div v-if="sortedWorkItems.length" class="mt-3 space-y-2 border-t border-slate-800 pt-3">
         <TodaySessionSetBlock
           v-for="item in sortedWorkItems"
@@ -299,6 +346,7 @@ function closeCelebration() {
           :saving="form.processing"
           @toggle="toggleItem(itemKey(item))"
           @validate="validateItem(itemKey(item))"
+          @save-note="saveItemNote"
         />
       </div>
       <p v-else class="mt-3 border-t border-slate-800 pt-3 text-xs text-slate-500">

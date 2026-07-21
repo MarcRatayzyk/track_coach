@@ -1,6 +1,11 @@
 <script setup>
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import ReadinessFormBuilderModal from './ReadinessFormBuilderModal.vue';
+import {
+  cloneFields,
+  defaultReadinessFields,
+} from '../config/readinessFormFields';
 
 const page = usePage();
 const manualActivationLinks = computed(() => page.props.appConfig?.manualActivationLinks ?? true);
@@ -10,18 +15,25 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  coachReadinessForm: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'invited']);
 
 const modalStep = ref('form');
 const invitationUrl = ref('');
+const showReadinessBuilder = ref(false);
+const readinessFields = ref(defaultReadinessFields());
 
 const form = useForm({
   first_name: '',
   last_name: '',
   email: '',
   feedback_frequency: 'weekly',
+  fields: [],
 });
 
 watch(
@@ -30,6 +42,11 @@ watch(
     if (open) {
       modalStep.value = 'form';
       invitationUrl.value = '';
+      readinessFields.value = cloneFields(
+        props.coachReadinessForm?.fields?.length
+          ? props.coachReadinessForm.fields
+          : defaultReadinessFields(),
+      );
       form.clearErrors();
     }
   },
@@ -41,7 +58,12 @@ function closeModal() {
   invitationUrl.value = '';
 }
 
+function onReadinessFieldsSaved(fields) {
+  readinessFields.value = cloneFields(fields);
+}
+
 function submitNewAthlete() {
+  form.fields = readinessFields.value;
   form.post('/coach/athletes', {
     preserveScroll: true,
     onSuccess: (page) => {
@@ -107,7 +129,7 @@ async function copyInvitation() {
                 required
                 autocomplete="given-name"
                 class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              />
+              >
               <p v-if="form.errors.first_name" class="mt-1 text-sm text-red-400">
                 {{ form.errors.first_name }}
               </p>
@@ -120,7 +142,7 @@ async function copyInvitation() {
                 required
                 autocomplete="family-name"
                 class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              />
+              >
               <p v-if="form.errors.last_name" class="mt-1 text-sm text-red-400">
                 {{ form.errors.last_name }}
               </p>
@@ -133,7 +155,7 @@ async function copyInvitation() {
                 required
                 autocomplete="email"
                 class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              />
+              >
               <p v-if="form.errors.email" class="mt-1 text-sm text-red-400">
                 {{ form.errors.email }}
               </p>
@@ -148,6 +170,38 @@ async function copyInvitation() {
                 <option value="weekly">Hebdomadaire (1 retour par semaine)</option>
               </select>
             </label>
+
+            <div class="rounded-xl border border-slate-700 bg-slate-950/50 p-3">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm font-medium text-white">Formulaire readiness</p>
+                  <p class="mt-1 text-xs text-slate-400">
+                    {{ readinessFields.length }} champ{{ readinessFields.length > 1 ? 's' : '' }} —
+                    prérempli depuis ton modèle par défaut.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="shrink-0 rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-200 hover:bg-blue-500/20"
+                  @click="showReadinessBuilder = true"
+                >
+                  Personnaliser
+                </button>
+              </div>
+              <ul class="mt-2 flex flex-wrap gap-1.5">
+                <li
+                  v-for="field in readinessFields"
+                  :key="field.id"
+                  class="rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-300"
+                >
+                  {{ field.label }}
+                </li>
+              </ul>
+              <p v-if="form.errors.fields" class="mt-2 text-sm text-red-400">
+                {{ form.errors.fields }}
+              </p>
+            </div>
+
             <div class="flex flex-wrap gap-3 pt-2">
               <button
                 type="submit"
@@ -201,4 +255,13 @@ async function copyInvitation() {
       </div>
     </div>
   </Teleport>
+
+  <ReadinessFormBuilderModal
+    :open="showReadinessBuilder"
+    mode="local"
+    title="Formulaire readiness de cet athlète"
+    :initial-fields="readinessFields"
+    @close="showReadinessBuilder = false"
+    @save-local="onReadinessFieldsSaved"
+  />
 </template>

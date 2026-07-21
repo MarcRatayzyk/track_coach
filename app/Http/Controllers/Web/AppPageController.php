@@ -21,10 +21,12 @@ use App\Support\MessagingInboxSupport;
 use App\Support\MessagePresenter;
 use App\Support\ChartTemplatePresenter;
 use App\Support\ChartTemplateSupport;
+use App\Support\CoachMonthlyReadinessAwardsPresenter;
 use App\Support\DayTableLayoutPresenter;
 use App\Support\DayTableLayoutSupport;
 use App\Support\ProgramBlockPresenter;
 use App\Support\ProgramHistorySupport;
+use App\Support\ReadinessFormSupport;
 use App\Support\SessionFeedbackPresenter;
 use App\Support\TrainingSessionSupport;
 use Illuminate\Http\RedirectResponse;
@@ -65,7 +67,11 @@ class AppPageController extends Controller
             ->where('coach_id', $coach->id)
             ->withUnreadCountFor($coach)
             ->withCount('messages')
-            ->with('athlete:id,name')
+            ->with([
+                'athlete:id,name',
+                'latestMessage.sender:id,name',
+                'latestMessage.audioFiles',
+            ])
             ->orderByDesc('updated_at')
             ->limit(24)
             ->get()
@@ -74,7 +80,9 @@ class AppPageController extends Controller
                 $thread->updated_at?->timestamp ?? 0,
             ])
             ->take(6)
-            ->values();
+            ->values()
+            ->map(fn (MessageThread $thread) => MessagingInboxSupport::threadListItem($thread, $coach))
+            ->all();
 
         $activeProgramsCount = AthleteProgramAssignment::query()
             ->whereIn('athlete_id', $athleteIds)
@@ -103,6 +111,12 @@ class AppPageController extends Controller
             ->values()
             ->all();
 
+        $coachReadinessForm = ReadinessFormSupport::formPayload(
+            ReadinessFormSupport::ensureCoachHasDefaultForm($coach),
+        );
+
+        $monthlyReadinessAwards = app(CoachMonthlyReadinessAwardsPresenter::class)->forCoach($coach);
+
         return Inertia::render('DashboardPage', [
             'athleteCount' => $athleteIds->count(),
             'feedback' => $feedback,
@@ -114,6 +128,8 @@ class AppPageController extends Controller
             'calendarCompetitions' => $calendarCompetitions,
             'calendarBlockEvents' => $calendarBlockEvents,
             'rosterAthletes' => $rosterAthletes,
+            'coachReadinessForm' => $coachReadinessForm,
+            'monthlyReadinessAwards' => $monthlyReadinessAwards,
             'stats' => [
                 'active_programs' => $activeProgramsCount,
                 'program_templates' => $templatesCount,
@@ -124,9 +140,11 @@ class AppPageController extends Controller
     public function athletes(CoachAthleteRosterService $rosterService): Response
     {
         $coach = auth()->user();
+        $coachForm = ReadinessFormSupport::ensureCoachHasDefaultForm($coach);
 
         return Inertia::render('AthletesListPage', [
             'athletes' => $rosterService->rowsForCoach($coach),
+            'coachReadinessForm' => ReadinessFormSupport::formPayload($coachForm),
         ]);
     }
 
@@ -145,17 +163,25 @@ class AppPageController extends Controller
 
         $todayReadiness = null;
         $readinessRecent = [];
+        $readinessForm = null;
         $todayBodyWeight = null;
         $bodyWeightRecent = [];
+        $coachReadinessForm = null;
 
         if ($viewer?->id === $athlete->id || $viewer?->role === 'coach') {
             $readiness = AthleteReadinessPresenter::forAthlete($athlete);
             $todayReadiness = $readiness['todayReadiness'];
             $readinessRecent = $readiness['readinessRecent'];
+            $readinessForm = $readiness['readinessForm'];
 
             $bodyWeight = AthleteBodyWeightPresenter::forAthlete($athlete);
             $todayBodyWeight = $bodyWeight['todayBodyWeight'];
             $bodyWeightRecent = $bodyWeight['bodyWeightRecent'];
+        }
+
+        if ($viewer?->role === 'coach') {
+            $coachForm = ReadinessFormSupport::ensureCoachHasDefaultForm($viewer);
+            $coachReadinessForm = ReadinessFormSupport::formPayload($coachForm);
         }
 
         $activeProgram = ActiveProgramAssignmentSupport::forAthleteDisplay($athlete);
@@ -181,6 +207,8 @@ class AppPageController extends Controller
             'followUpStartedAt' => $followUpStartedAt,
             'todayReadiness' => $todayReadiness,
             'readinessRecent' => $readinessRecent,
+            'readinessForm' => $readinessForm,
+            'coachReadinessForm' => $coachReadinessForm,
             'todayBodyWeight' => $todayBodyWeight,
             'bodyWeightRecent' => $bodyWeightRecent,
             'programHistory' => $viewer?->role === 'coach'
@@ -397,7 +425,11 @@ class AppPageController extends Controller
             ->where('coach_id', $user->id)
             ->orderedForInbox($user)
             ->withCount('messages')
-            ->with('athlete')
+            ->with([
+                'athlete:id,name',
+                'latestMessage.sender:id,name',
+                'latestMessage.audioFiles',
+            ])
             ->get()
             ->map(fn (MessageThread $thread) => MessagingInboxSupport::threadListItem($thread, $user))
             ->values()
@@ -414,11 +446,7 @@ class AppPageController extends Controller
                 ] : null,
             ] : null,
             'messages' => MessagePresenter::list($messages),
-            'athletesForThread' => $user->athletes()
-                ->where('users.role', 'athlete')
-                ->orderBy('users.name')
-                ->select('users.*')
-                ->get(),
+            'athletesForThread' => [],
             'feedbackContext' => $feedbackContext,
         ]);
     }

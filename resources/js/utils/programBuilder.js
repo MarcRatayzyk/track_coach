@@ -24,6 +24,7 @@ export function emptyExerciseLine(name = '') {
     rpe: null,
     rest_seconds: null,
     load_mode: null,
+    athlete_note: null,
   };
 }
 
@@ -154,6 +155,7 @@ const EDITOR_SECTION_LABELS = {
   topset: 'Topset',
   backoff: 'Back-off',
   accessory: 'Accessoires',
+  warmup: 'Échauffement',
 };
 
 /**
@@ -205,6 +207,7 @@ export const SESSION_SECTION_LABELS = {
   topset: 'Top set',
   backoff: 'Backoff',
   accessory: 'Accessoire',
+  warmup: 'Échauffement',
 };
 
 export function createSessionItem(section, line = null) {
@@ -220,6 +223,8 @@ export function emptySessionDay() {
     lift: 'squat',
     session_label: '',
     notes: '',
+    warmup_override: false,
+    warmup_notes: '',
     items: [],
     editingId: null,
   };
@@ -255,9 +260,26 @@ export function accessoryOrdinal(items, itemId) {
   return n;
 }
 
+export function warmupOrdinal(items, itemId) {
+  let n = 0;
+  for (const item of items) {
+    if (item.section !== 'warmup') {
+      continue;
+    }
+    n += 1;
+    if (item.id === itemId) {
+      return n;
+    }
+  }
+  return n;
+}
+
 export function itemSectionTitle(item, items) {
   if (item.section === 'accessory') {
     return `Accessoire ${accessoryOrdinal(items, item.id)}`;
+  }
+  if (item.section === 'warmup') {
+    return `Échauffement ${warmupOrdinal(items, item.id)}`;
   }
   return SESSION_SECTION_LABELS[item.section] ?? item.section;
 }
@@ -309,6 +331,7 @@ export const SECTION_LABELS = {
   topset: 'Top set',
   backoff: 'Backoff',
   accessory: 'Accessoire',
+  warmup: 'Échauffement',
 };
 
 /** Jours de la semaine ayant au moins une séance ou un nom. */
@@ -475,6 +498,8 @@ export function sessionToDay(session) {
 
   day.session_label = session.session_label ?? '';
   day.notes = session.notes ?? '';
+  day.warmup_override = Boolean(session.warmup_override);
+  day.warmup_notes = session.warmup_notes ?? '';
 
   return day;
 }
@@ -483,6 +508,7 @@ export function normalizeLineForSave(line) {
   if (!line?.exercise_name?.trim()) {
     return null;
   }
+  const note = typeof line.athlete_note === 'string' ? line.athlete_note.trim() : '';
   const normalized = {
     exercise_variant_id: line.exercise_variant_id ? Number(line.exercise_variant_id) : null,
     exercise_name: line.exercise_name,
@@ -492,30 +518,38 @@ export function normalizeLineForSave(line) {
     load: null,
     load_percent: null,
     rpe: null,
+    rest_seconds: line.rest_seconds != null && line.rest_seconds !== ''
+      ? Number(line.rest_seconds)
+      : null,
+    athlete_note: note !== '' ? note : null,
   };
 
   const mode = line.load_mode ?? inferLoadMode(line);
-  if (mode === 'rpe') {
-    normalized.rpe = line.rpe;
-  } else if (mode === 'percent') {
+  if (mode === 'percent') {
     normalized.load_percent = line.load_percent;
   } else if (mode === 'kg') {
     normalized.load =
       line.load != null && line.load !== '' ? Number(line.load) : null;
+  } else if (mode === 'rpe') {
+    // RPE-only prescription (coach)
+  }
+
+  if (line.rpe != null && line.rpe !== '') {
+    normalized.rpe = line.rpe;
   }
 
   return normalized;
 }
 
 export function inferLoadMode(line) {
-  if (line?.rpe != null && line.rpe !== '') {
-    return 'rpe';
-  }
   if (line?.load_percent != null && line.load_percent !== '') {
     return 'percent';
   }
   if (line?.load != null && line.load !== '') {
     return 'kg';
+  }
+  if (line?.rpe != null && line.rpe !== '') {
+    return 'rpe';
   }
   return null;
 }
@@ -531,8 +565,15 @@ export function dayToSessionPayload(day) {
     })
     .filter(Boolean);
 
+  const warmupOverride = Boolean(day.warmup_override);
+  const persistedItems = warmupOverride
+    ? items
+    : items.filter((item) => item.section !== 'warmup');
+
   const lift =
-    items.find((item) => item.lift)?.lift ?? day.lift ?? 'squat';
+    persistedItems.find((item) => item.lift && item.section !== 'warmup')?.lift
+    ?? day.lift
+    ?? 'squat';
 
   const block = {
     lift,
@@ -541,7 +582,7 @@ export function dayToSessionPayload(day) {
     accessories: [],
   };
 
-  for (const item of items) {
+  for (const item of persistedItems) {
     const { section, ...line } = item;
     if (section === 'topset') {
       block.topset = line;
@@ -552,15 +593,18 @@ export function dayToSessionPayload(day) {
     }
   }
 
-  const hasContent = items.length > 0;
+  const hasContent = persistedItems.length > 0;
   const label = day.session_label?.trim() ?? '';
   const notes = day.notes?.trim() ?? '';
+  const warmupNotes = day.warmup_notes?.trim() ?? '';
 
   return {
     main_lift: lift,
     session_label: label !== '' ? label : null,
     notes: notes !== '' ? notes : null,
-    items: hasContent ? items : [],
+    warmup_override: warmupOverride,
+    warmup_notes: warmupOverride && warmupNotes !== '' ? warmupNotes : null,
+    items: hasContent ? persistedItems : [],
     blocks: hasContent ? [block] : [],
   };
 }

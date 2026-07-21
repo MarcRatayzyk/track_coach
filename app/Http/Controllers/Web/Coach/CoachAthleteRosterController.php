@@ -8,6 +8,7 @@ use App\Models\AthleteProfile;
 use App\Models\User;
 use App\Support\AccountSetupUrlGenerator;
 use App\Support\ActivationDelivery;
+use App\Support\ReadinessFormSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -38,6 +39,12 @@ class CoachAthleteRosterController extends Controller
         ]);
 
         $coach->athletes()->attach($athlete->id, ['status' => 'active']);
+
+        $fields = $request->validated('fields') ?? null;
+        $fields = is_array($fields)
+            ? ReadinessFormSupport::normalizeFields($fields)
+            : null;
+        ReadinessFormSupport::copyToAthlete($athlete, $coach, $fields);
 
         $setupUrl = AccountSetupUrlGenerator::signedSetupUrl($athlete);
 

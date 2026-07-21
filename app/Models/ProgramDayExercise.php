@@ -13,6 +13,8 @@ class ProgramDayExercise extends Model
 
     public const SECTION_ACCESSORY = 'accessory';
 
+    public const SECTION_WARMUP = 'warmup';
+
     protected $fillable = [
         'training_day_id',
         'block_index',

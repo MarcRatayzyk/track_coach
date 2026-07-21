@@ -14,6 +14,7 @@ import AthleteProfileOverview from '../Components/AthleteProfileOverview.vue';
 import AthleteStatsOverview from '../Components/AthleteStatsOverview.vue';
 import CompetitionDetailPanel from '../Components/CompetitionDetailPanel.vue';
 import MatchPlanBuilder from '../Components/MatchPlanBuilder.vue';
+import ReadinessFormBuilderModal from '../Components/ReadinessFormBuilderModal.vue';
 import TrainingSessionEditorModal from '../Components/TrainingSessionEditorModal.vue';
 import { buildAthleteOverviewStats } from '../utils/athleteOverviewStats';
 import { levelLabel as formatLevelLabel, weightCategoryLabel } from '../config/ipfWeightCategories';
@@ -44,6 +45,14 @@ const props = defineProps({
   readinessRecent: {
     type: Array,
     default: () => [],
+  },
+  readinessForm: {
+    type: Object,
+    default: null,
+  },
+  coachReadinessForm: {
+    type: Object,
+    default: null,
   },
   todayBodyWeight: {
     type: Object,
@@ -129,6 +138,7 @@ const selectedCompetition = ref(null);
 const sessionModalOpen = ref(false);
 const editingSession = ref(null);
 const selectedSessionDay = ref(null);
+const showReadinessBuilder = ref(false);
 
 const editCompForm = useForm({
   name: '',
@@ -697,6 +707,7 @@ onMounted(() => {
         :age-label="ageLabel"
         :bio="athlete.profile?.bio ?? ''"
         :can-edit-profile="canEditProfile"
+        :can-edit-prs="canManageSessions"
         :editable-profile="editableProfileForm"
         :latest-competition-date-label="latestCompetitionDateLabel"
         :latest-competition-bars="latestCompetitionBars"
@@ -739,12 +750,31 @@ onMounted(() => {
       </section>
 
       <div class="mt-3">
+        <div
+          v-if="isCoach"
+          class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2"
+        >
+          <p class="text-xs text-slate-400">
+            Formulaire readiness de cet athlète
+            <span class="text-slate-500">
+              ({{ readinessForm?.fields?.length ?? 0 }} champs)
+            </span>
+          </p>
+          <button
+            type="button"
+            class="rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-200 hover:bg-blue-500/20"
+            @click="showReadinessBuilder = true"
+          >
+            Modifier le formulaire
+          </button>
+        </div>
         <AthleteStatsOverview
           :stats="overviewStats"
           :has-active-program="Boolean(programBlock)"
           :program-upcoming-label="programUpcomingLabel"
           :pr-records="filteredPrRecords"
           :readiness-recent="readinessRecent"
+          :readiness-form="readinessForm"
           :body-weight-recent="bodyWeightRecent"
           :training-sessions="trainingSessions"
           :time-range="timeRange"
@@ -1046,5 +1076,14 @@ onMounted(() => {
         </div>
       </div>
     </Teleport>
+
+    <ReadinessFormBuilderModal
+      :open="showReadinessBuilder"
+      mode="athlete"
+      :athlete-id="athlete.id"
+      title="Formulaire readiness de l'athlète"
+      :initial-fields="readinessForm?.fields ?? []"
+      @close="showReadinessBuilder = false"
+    />
   </div>
 </template>

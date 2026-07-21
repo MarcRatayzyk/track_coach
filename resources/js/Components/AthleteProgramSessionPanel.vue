@@ -41,8 +41,18 @@ const headerTitle = computed(() => {
   return `Semaine ${week} · Jour ${dayNum}`;
 });
 
+const resolvedWarmup = computed(() => props.session?.warmup ?? null);
+
+const hasWarmup = computed(() => {
+  const warmup = resolvedWarmup.value;
+  if (!warmup) {
+    return false;
+  }
+  return Boolean(String(warmup.notes ?? '').trim()) || (warmup.items?.length ?? 0) > 0;
+});
+
 const exerciseLines = computed(() => {
-  const items = props.session?.items ?? [];
+  const items = (props.session?.items ?? []).filter((item) => item.section !== 'warmup');
   const order = { topset: 0, backoff: 1, accessory: 2 };
 
   return [...items].sort((a, b) => (order[a.section] ?? 9) - (order[b.section] ?? 9));
@@ -76,6 +86,30 @@ function sectionLabel(section) {
       </button>
     </div>
 
+    <div
+      v-if="hasWarmup"
+      class="mt-4 space-y-2 rounded-xl border border-sky-500/25 bg-sky-950/20 px-3 py-3"
+    >
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-sky-300/90">
+        Échauffement
+      </p>
+      <p
+        v-if="resolvedWarmup.notes?.trim()"
+        class="whitespace-pre-wrap text-sm leading-relaxed text-slate-200"
+      >
+        {{ resolvedWarmup.notes }}
+      </p>
+      <ul v-if="resolvedWarmup.items?.length" class="space-y-1">
+        <li
+          v-for="(item, index) in resolvedWarmup.items"
+          :key="`${item.exercise_name}-${index}`"
+          class="text-sm text-slate-300"
+        >
+          {{ formatLineRecap(item) || item.exercise_name }}
+        </li>
+      </ul>
+    </div>
+
     <template v-if="session && exerciseLines.length">
       <ul class="mt-4 space-y-2 border-t border-slate-800 pt-4">
         <li
@@ -94,7 +128,10 @@ function sectionLabel(section) {
       </ul>
     </template>
 
-    <p v-else class="mt-4 border-t border-slate-800 pt-4 text-sm text-slate-500">
+    <p
+      v-else-if="!hasWarmup"
+      class="mt-4 border-t border-slate-800 pt-4 text-sm text-slate-500"
+    >
       Aucune séance programmée pour ce jour.
     </p>
   </section>

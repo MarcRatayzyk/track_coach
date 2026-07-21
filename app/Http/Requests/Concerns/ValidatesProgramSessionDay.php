@@ -85,6 +85,7 @@ trait ValidatesProgramSessionDay
                 'topset',
                 'backoff',
                 'accessory',
+                'warmup',
             ])],
             'items.*.exercise_variant_id' => $exerciseLine['exercise_variant_id'],
             'items.*.exercise_name' => ['required', 'string', 'max:255'],
@@ -98,6 +99,8 @@ trait ValidatesProgramSessionDay
             'main_lift' => ['nullable', Rule::in(['squat', 'bench', 'deadlift'])],
             'session_label' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'warmup_override' => ['sometimes', 'boolean'],
+            'warmup_notes' => ['nullable', 'string', 'max:5000'],
         ];
 
         foreach ($blockRules as $key => $rule) {

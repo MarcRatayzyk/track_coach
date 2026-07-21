@@ -11,6 +11,13 @@ import {
 
 const day = defineModel({ type: Object, required: true });
 
+const props = defineProps({
+  allowWarmup: {
+    type: Boolean,
+    default: false,
+  },
+});
+
 const items = computed({
   get: () => day.value.items ?? [],
   set(value) {
@@ -42,18 +49,21 @@ const editingRecapText = computed(
 );
 
 const accentBySection = {
+  warmup: 'sky',
   topset: 'emerald',
   backoff: 'slate',
   accessory: 'zinc',
 };
 
 const borderBySection = {
+  warmup: 'border-sky-500/25 bg-sky-950/10',
   topset: 'border-emerald-500/20 bg-emerald-950/10',
   backoff: 'border-slate-800 bg-slate-950/40',
   accessory: 'border-slate-800 bg-slate-950/40',
 };
 
 const titleClassBySection = {
+  warmup: 'text-sky-400/90',
   topset: 'text-emerald-400/90',
   backoff: 'text-slate-500',
   accessory: 'text-slate-500',
@@ -133,6 +143,14 @@ function itemIndex(itemId) {
         Choisis ce que tu veux programmer pour ce jour.
       </p>
       <div class="flex flex-wrap gap-2">
+        <button
+          v-if="allowWarmup"
+          type="button"
+          class="min-w-0 flex-1 rounded-xl border border-sky-600/60 bg-slate-950 px-2 py-2.5 text-center text-xs font-semibold text-sky-200 hover:border-sky-500 sm:px-3 sm:text-sm"
+          @click="startSection('warmup')"
+        >
+          Ajouter échauffement
+        </button>
         <button
           type="button"
           class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-950 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"

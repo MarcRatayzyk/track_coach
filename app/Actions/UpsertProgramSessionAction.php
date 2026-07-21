@@ -31,8 +31,22 @@ class UpsertProgramSessionAction
 
             $items = $request->input('items', []);
             $blocks = $request->input('blocks', []);
+
+            $warmupOverride = (bool) $request->boolean('warmup_override');
+            if (! $warmupOverride && is_array($items)) {
+                $items = array_values(array_filter(
+                    $items,
+                    static fn ($item): bool => ! is_array($item) || ($item['section'] ?? null) !== 'warmup',
+                ));
+            }
+
+            $workItems = array_values(array_filter(
+                is_array($items) ? $items : [],
+                static fn ($item): bool => is_array($item) && ($item['section'] ?? null) !== 'warmup',
+            ));
+
             $primaryLift = $request->input('main_lift')
-                ?? ($items[0]['lift'] ?? null)
+                ?? ($workItems[0]['lift'] ?? null)
                 ?? ($blocks[0]['lift'] ?? 'squat');
 
             $sessionLabel = $request->input('session_label');
@@ -45,6 +59,11 @@ class UpsertProgramSessionAction
                 ? trim($notes)
                 : null;
 
+            $warmupNotes = $request->input('warmup_notes');
+            $warmupNotes = $warmupOverride && is_string($warmupNotes) && trim($warmupNotes) !== ''
+                ? trim($warmupNotes)
+                : null;
+
             $day = ProgramTrainingDay::query()->updateOrCreate(
                 [
                     'week_id' => $week->id,
@@ -54,6 +73,8 @@ class UpsertProgramSessionAction
                     'main_lift' => $primaryLift,
                     'session_label' => $sessionLabel,
                     'notes' => $notes,
+                    'warmup_override' => $warmupOverride,
+                    'warmup_notes' => $warmupNotes,
                 ],
             );
 
@@ -61,9 +82,10 @@ class UpsertProgramSessionAction
                 'main_lift' => $primaryLift,
                 'items' => $items,
                 'blocks' => $blocks,
+                'warmup_override' => $warmupOverride,
             ]);
 
-            $day->load('week');
+            $day->load(['week.template', 'exercises.exerciseVariant.exercise']);
 
             return ProgramSessionSerializer::trainingDayToPayload($day);
         });

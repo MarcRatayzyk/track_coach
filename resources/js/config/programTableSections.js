@@ -1,5 +1,14 @@
 export const PROGRAM_TABLE_SECTIONS = [
   {
+    value: 'warmup',
+    label: 'Échauffement',
+    shortLabel: 'Éch.',
+    compactLabel: 'Éc',
+    rowClass: 'bg-sky-500/12',
+    buttonActiveClass: 'bg-sky-400 text-slate-950 font-semibold shadow-sm shadow-sky-900/30',
+    buttonInactiveClass: 'text-sky-300/75 hover:bg-sky-500/15 hover:text-sky-200',
+  },
+  {
     value: 'topset',
     label: 'Topset',
     shortLabel: 'Top',
@@ -37,13 +46,14 @@ export function sectionRowClass(section) {
 export function sectionOption(section) {
   return (
     PROGRAM_TABLE_SECTIONS.find((option) => option.value === section) ??
-    PROGRAM_TABLE_SECTIONS[2]
+    PROGRAM_TABLE_SECTIONS.find((option) => option.value === 'accessory')
   );
 }
 
 export function sectionBadgeClass(section) {
   const option = sectionOption(section);
   return {
+    warmup: 'border-sky-500/40 bg-sky-500/15 text-sky-200',
     topset: 'border-amber-500/40 bg-amber-500/15 text-amber-200',
     backoff: 'border-blue-500/40 bg-blue-500/15 text-blue-200',
     accessory: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200',

@@ -7,12 +7,14 @@ use App\Actions\BulkUpsertProgramSessionsAction;
 use App\Actions\ClearProgramSessionAction;
 use App\Actions\CreateProgramBlockAction;
 use App\Actions\DeleteProgramBlockAction;
+use App\Actions\UpdateProgramBlockWarmupAction;
 use App\Actions\UpsertProgramSessionAction;
 use App\Http\Requests\BulkUpsertProgramSessionsRequest;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClearProgramSessionRequest;
 use App\Http\Requests\StoreProgramBlockRequest;
 use App\Http\Requests\StoreProgramSessionRequest;
+use App\Http\Requests\UpdateProgramBlockWarmupRequest;
 use App\Models\AthleteProgramAssignment;
 use Illuminate\Http\RedirectResponse;
 
@@ -69,6 +71,21 @@ class ProgramWebController extends Controller
         return redirect()
             ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
             ->with('success', 'Bloc enregistré et assigné à l\'athlète.');
+    }
+
+    public function updateWarmup(
+        UpdateProgramBlockWarmupRequest $request,
+        AthleteProgramAssignment $assignment,
+        UpdateProgramBlockWarmupAction $action,
+    ): RedirectResponse {
+        $this->authorize('manage', $assignment);
+        $tab = $request->input('builder_tab', $request->query('tab'));
+
+        $action->execute($request, $assignment);
+
+        return redirect()
+            ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
+            ->with('success', 'Échauffement du bloc enregistré.');
     }
 
     public function upsertSession(

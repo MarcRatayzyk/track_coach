@@ -17,6 +17,7 @@ use App\Http\Controllers\Web\Coach\ExerciseLibraryController;
 use App\Http\Controllers\Web\Coach\CoachCalendarReminderController;
 use App\Http\Controllers\Web\Coach\CoachAthleteRosterController;
 use App\Http\Controllers\Web\Coach\CoachProfileController;
+use App\Http\Controllers\Web\Coach\CoachReadinessFormController;
 use App\Http\Controllers\Web\Coach\DashboardTaskController;
 use App\Http\Controllers\Web\Coach\MessageWebController;
 use App\Http\Controllers\Web\Coach\CoachChartTemplateWebController;
@@ -139,6 +140,8 @@ Route::middleware(['auth', 'verified', 'coach'])->group(function (): void {
         ->name('coach.program-blocks.destroy');
     Route::post('/coach/program-blocks/{assignment}/assign', [ProgramWebController::class, 'assignBlock'])
         ->name('coach.program-blocks.assign');
+    Route::put('/coach/program-blocks/{assignment}/warmup', [ProgramWebController::class, 'updateWarmup'])
+        ->name('coach.program-blocks.warmup.update');
     Route::put('/coach/program-blocks/{assignment}/sessions', [ProgramWebController::class, 'upsertSession'])
         ->name('coach.program-blocks.sessions.upsert');
     Route::post('/coach/program-blocks/{assignment}/sessions/bulk', [ProgramWebController::class, 'bulkUpsertSessions'])
@@ -173,6 +176,11 @@ Route::middleware(['auth', 'verified', 'coach'])->group(function (): void {
         ->name('coach.athletes.resend-invitation');
     Route::delete('/coach/athletes/{athlete}', [CoachAthleteRosterController::class, 'destroy'])
         ->name('coach.athletes.destroy');
+
+    Route::put('/coach/readiness-form', [CoachReadinessFormController::class, 'updateTemplate'])
+        ->name('coach.readiness-form.update');
+    Route::put('/coach/athletes/{athlete}/readiness-form', [CoachReadinessFormController::class, 'updateAthleteForm'])
+        ->name('coach.athletes.readiness-form.update');
 
     Route::patch('/coach/athletes/{athlete}/profile', [AthleteDataWebController::class, 'updateProfile'])
         ->name('coach.athletes.profile.update');

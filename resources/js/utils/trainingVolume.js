@@ -140,6 +140,9 @@ export function flattenBlockItems(sessions = {}, dateStart = '') {
       if (!item?.exercise_name?.trim()) {
         continue;
       }
+      if (item.section === 'warmup') {
+        continue;
+      }
 
       const line = { ...item, lift: item.lift ?? mainLift };
       rows.push({

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\ProgramDayExercise;
+use App\Models\ProgramTemplate;
 use App\Models\ProgramTrainingDay;
 
 class ProgramSessionSerializer
@@ -12,7 +13,18 @@ class ProgramSessionSerializer
      */
     public static function trainingDayToPayload(ProgramTrainingDay $day): array
     {
-        $day->loadMissing('exercises.exerciseVariant.exercise');
+        $day->loadMissing(['exercises.exerciseVariant.exercise', 'week.template']);
+
+        $override = (bool) $day->warmup_override;
+        $warmup = self::resolveWarmup($day, $day->week?->template);
+
+        $items = self::itemsFromExercises($day->exercises);
+        if (! $override) {
+            $items = array_values(array_filter(
+                $items,
+                static fn (array $item): bool => ($item['section'] ?? null) !== ProgramDayExercise::SECTION_WARMUP,
+            ));
+        }
 
         return [
             'id' => $day->id,
@@ -21,8 +33,64 @@ class ProgramSessionSerializer
             'main_lift' => $day->main_lift,
             'session_label' => $day->session_label,
             'notes' => $day->notes,
-            'items' => self::itemsFromExercises($day->exercises),
+            'warmup_override' => $override,
+            'warmup_notes' => $override ? $day->warmup_notes : null,
+            'warmup' => $warmup,
+            'items' => $items,
             'blocks' => self::blocksFromExercises($day->exercises),
+        ];
+    }
+
+    /**
+     * @return array{notes: ?string, items: list<array<string, mixed>>, source: string}
+     */
+    public static function resolveWarmup(ProgramTrainingDay $day, ?ProgramTemplate $template = null): array
+    {
+        $template ??= $day->week?->template;
+
+        if ($day->warmup_override) {
+            $items = [];
+            foreach ($day->exercises as $line) {
+                if ($line->section !== ProgramDayExercise::SECTION_WARMUP) {
+                    continue;
+                }
+                $items[] = self::lineToPayload($line);
+            }
+
+            return [
+                'notes' => $day->warmup_notes,
+                'items' => $items,
+                'source' => 'session',
+            ];
+        }
+
+        $notes = $template?->default_warmup_notes;
+        $rawItems = $template?->default_warmup_items ?? [];
+        $items = [];
+
+        if (is_array($rawItems)) {
+            foreach ($rawItems as $item) {
+                if (! is_array($item) || empty(trim((string) ($item['exercise_name'] ?? '')))) {
+                    continue;
+                }
+                $items[] = [
+                    'exercise_variant_id' => $item['exercise_variant_id'] ?? null,
+                    'exercise_name' => $item['exercise_name'],
+                    'lift' => $item['lift'] ?? null,
+                    'sets' => $item['sets'] ?? null,
+                    'reps' => $item['reps'] ?? null,
+                    'load' => $item['load'] ?? null,
+                    'load_percent' => $item['load_percent'] ?? null,
+                    'rpe' => $item['rpe'] ?? null,
+                    'rest_seconds' => $item['rest_seconds'] ?? null,
+                ];
+            }
+        }
+
+        return [
+            'notes' => is_string($notes) && trim($notes) !== '' ? $notes : null,
+            'items' => $items,
+            'source' => 'block',
         ];
     }
 
@@ -53,6 +121,10 @@ class ProgramSessionSerializer
         $grouped = [];
 
         foreach ($exercises as $line) {
+            if ($line->section === ProgramDayExercise::SECTION_WARMUP) {
+                continue;
+            }
+
             $index = (int) $line->block_index;
             if (! isset($grouped[$index])) {
                 $grouped[$index] = [
@@ -108,6 +180,7 @@ class ProgramSessionSerializer
     {
         $day->exercises()->delete();
 
+        $warmupOverride = (bool) ($dayData['warmup_override'] ?? $day->warmup_override);
         $items = $dayData['items'] ?? null;
 
         if (is_array($items) && $items !== []) {
@@ -119,9 +192,15 @@ class ProgramSessionSerializer
                     continue;
                 }
 
+                $section = $item['section'] ?? ProgramDayExercise::SECTION_ACCESSORY;
+
+                if ($section === ProgramDayExercise::SECTION_WARMUP && ! $warmupOverride) {
+                    continue;
+                }
+
                 self::createLine(
                     $day->id,
-                    $item['section'],
+                    $section,
                     $item,
                     $sortOrder++,
                     0,

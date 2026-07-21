@@ -4,7 +4,7 @@ import { filterEntriesByRange } from '../utils/athleteOverviewStats';
 import { buildRpeTrendSeries, filterRpeTrendByRange, RPE_EXERCISE_FILTERS } from '../utils/rpeTrend';
 import BodyWeightTrendChart from './charts/BodyWeightTrendChart.vue';
 import PrProgressionCharts from './charts/PrProgressionCharts.vue';
-import ReadinessTrendChart from './charts/ReadinessTrendChart.vue';
+import ReadinessWeekTable from './ReadinessWeekTable.vue';
 import RpeTrendChart from './charts/RpeTrendChart.vue';
 import SbdTonnageDonutChart from './charts/SbdTonnageDonutChart.vue';
 
@@ -28,6 +28,10 @@ const props = defineProps({
   readinessRecent: {
     type: Array,
     default: () => [],
+  },
+  readinessForm: {
+    type: Object,
+    default: null,
   },
   bodyWeightRecent: {
     type: Array,
@@ -166,8 +170,12 @@ const filteredBodyWeight = computed(() =>
     <div class="mt-3 grid min-w-0 gap-4 lg:grid-cols-2">
       <article class="min-w-0 overflow-hidden">
         <h3 class="mb-3 text-sm font-semibold text-white">Readiness</h3>
-        <div v-if="filteredReadiness.length" class="min-w-0 overflow-x-auto">
-          <ReadinessTrendChart :entries="filteredReadiness" embedded />
+        <div v-if="filteredReadiness.length || (readinessForm?.fields?.length)" class="min-w-0 overflow-x-auto">
+          <ReadinessWeekTable
+            :fields="readinessForm?.fields ?? []"
+            :entries="filteredReadiness"
+            embedded
+          />
         </div>
         <p v-else class="text-sm text-slate-500">Aucune saisie readiness sur cette période.</p>
       </article>

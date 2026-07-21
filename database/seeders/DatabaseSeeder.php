@@ -3,8 +3,10 @@ namespace Database\Seeders;
 
 use App\Models\AthleteProfile;
 use App\Models\AthleteReadinessEntry;
+use App\Models\AthleteReadinessForm;
 use App\Models\AthleteProgramAssignment;
 use App\Models\Competition;
+use App\Models\CoachReadinessForm;
 use App\Models\DashboardTask;
 use App\Models\Message;
 use App\Models\MessageThread;
@@ -18,6 +20,7 @@ use App\Support\FeedbackReplySupport;
 use App\Models\TrainingSession;
 use App\Models\User;
 use App\Support\MatchPlanData;
+use App\Support\ReadinessFormSupport;
 use App\Support\TrainingSessionSupport;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -84,6 +87,7 @@ class DatabaseSeeder extends Seeder
             $this->seedSessionFeedbacks($coach, $athletes, $assignments);
             $this->call(SeedCurrentPeriodFeedbacksSeeder::class);
             $this->seedMessageThreads($coach, $athletes);
+            $this->seedReadinessForms($coach, $athletes);
             $this->seedReadinessEntries($athletes);
         });
     }
@@ -338,6 +342,8 @@ class DatabaseSeeder extends Seeder
 
         TrainingSession::query()->whereIn('athlete_id', $athleteIds)->delete();
         AthleteReadinessEntry::query()->whereIn('athlete_id', $athleteIds)->delete();
+        AthleteReadinessForm::query()->whereIn('athlete_id', $athleteIds)->delete();
+        CoachReadinessForm::query()->where('coach_id', $coach->id)->delete();
         PersonalRecord::query()->whereIn('athlete_id', $athleteIds)->delete();
         Competition::query()->whereIn('athlete_id', $athleteIds)->delete();
         AthleteProgramAssignment::query()->whereIn('athlete_id', $athleteIds)->delete();
@@ -1011,8 +1017,31 @@ class DatabaseSeeder extends Seeder
     /**
      * @param  array<string, User>  $athletes
      */
+    private function seedReadinessForms(User $coach, array $athletes): void
+    {
+        $fields = ReadinessFormSupport::defaultFields();
+
+        CoachReadinessForm::query()->create([
+            'coach_id' => $coach->id,
+            'fields' => $fields,
+        ]);
+
+        foreach ($athletes as $athlete) {
+            AthleteReadinessForm::query()->create([
+                'athlete_id' => $athlete->id,
+                'fields' => $fields,
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<string, User>  $athletes
+     */
     private function seedReadinessEntries(array $athletes): void
     {
+        $fields = ReadinessFormSupport::defaultFields();
+        $fieldsByKey = collect($fields)->keyBy('preset_key');
+
         $scoresByAthlete = [
             'daily' => [7, 8, 6, 7, 9, 8, 7],
             'weekly' => [6, 7, 7, 5, 8, 7, 6],
@@ -1029,6 +1058,13 @@ class DatabaseSeeder extends Seeder
             'ines' => [8, 8, 7, 8, 9, 8, 8],
         ];
 
+        $sommeilOptions = ['lt_5h', '5_6h', '6_7h', '7_8h', '8_9h'];
+        $alimentationOptions = ['mauvaise', 'moyenne', 'bonne'];
+        $hydratationOptions = ['faible', 'moyenne', 'bonne', 'excellente'];
+        $stressOptions = ['eleve', 'moyen', 'bas'];
+        $motivationOptions = ['faible', 'moyenne', 'bonne', 'excellente'];
+        $formeOptions = ['1', '2', '3', '4', '5'];
+
         foreach ($scoresByAthlete as $key => $scores) {
             if (! isset($athletes[$key])) {
                 continue;
@@ -1037,17 +1073,41 @@ class DatabaseSeeder extends Seeder
             $athlete = $athletes[$key];
 
             foreach ($scores as $offset => $score) {
-                $sleep = max(1, min(10, $score + (($offset % 3) - 1)));
-                $stress = max(1, min(10, $score + (($offset % 2) === 0 ? 0 : -1)));
-                $motivation = max(1, min(10, $score + (($offset % 4) - 2)));
+                $values = [];
+
+                if ($field = $fieldsByKey->get('steps')) {
+                    $values[$field['id']] = 3000 + ($score * 800) + ($offset * 150);
+                }
+                if ($field = $fieldsByKey->get('kcal')) {
+                    $values[$field['id']] = (string) (1800 + ($score * 80));
+                }
+                if ($field = $fieldsByKey->get('sommeil')) {
+                    $values[$field['id']] = $sommeilOptions[min(4, max(0, (int) round(($score - 5) / 1.2)))];
+                }
+                if ($field = $fieldsByKey->get('alimentation')) {
+                    $values[$field['id']] = $alimentationOptions[min(2, max(0, (int) floor(($score - 5) / 2)))];
+                }
+                if ($field = $fieldsByKey->get('hydratation')) {
+                    $values[$field['id']] = $hydratationOptions[min(3, max(0, (int) floor(($score - 4) / 1.5)))];
+                }
+                if ($field = $fieldsByKey->get('stress_global')) {
+                    $values[$field['id']] = $stressOptions[min(2, max(0, (int) floor(($score - 5) / 2)))];
+                }
+                if ($field = $fieldsByKey->get('motivation')) {
+                    $values[$field['id']] = $motivationOptions[min(3, max(0, (int) floor(($score - 5) / 1.5)))];
+                }
+                if ($field = $fieldsByKey->get('forme_physique')) {
+                    $values[$field['id']] = $formeOptions[min(4, max(0, (int) round(($score - 4) / 1.5)))];
+                }
+                if ($field = $fieldsByKey->get('forme_mentale')) {
+                    $values[$field['id']] = $formeOptions[min(4, max(0, (int) round(($score - 5) / 1.2)))];
+                }
 
                 AthleteReadinessEntry::query()->create([
                     'athlete_id' => $athlete->id,
                     'entry_date' => now()->copy()->subDays(6 - $offset)->toDateString(),
-                    'sleep_score' => $sleep,
-                    'stress_score' => $stress,
-                    'motivation_score' => $motivation,
-                    'score' => AthleteReadinessEntry::computeScore($sleep, $stress, $motivation),
+                    'values' => $values,
+                    'score' => 0,
                 ]);
             }
         }

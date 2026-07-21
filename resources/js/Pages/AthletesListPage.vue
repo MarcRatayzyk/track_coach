@@ -10,6 +10,7 @@ export default {
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
+import ReadinessFormBuilderModal from '../Components/ReadinessFormBuilderModal.vue';
 import UiIcon from '../Components/UiIcon.vue';
 
 const props = defineProps({
@@ -17,9 +18,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  coachReadinessForm: {
+    type: Object,
+    default: null,
+  },
 });
 
 const showModal = ref(false);
+const showDefaultReadinessBuilder = ref(false);
 
 const page = usePage();
 const activationLink = computed(() => page.props.flash?.first_login_url ?? '');
@@ -50,8 +56,8 @@ function sortValue(row, key) {
       return row.total_kg;
     case 'gl_points':
       return row.gl_points;
-    case 'readiness_average':
-      return row.readiness_average;
+    case 'readiness_checkins_7d':
+      return row.readiness_checkins_7d ?? row.readiness_entries_count ?? 0;
     case 'adherence_percentage':
       return row.adherence_percentage;
     case 'next_competition_days':
@@ -142,11 +148,8 @@ function formatGlPoints(value) {
   return value != null ? value.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '—';
 }
 
-function formatReadiness(value, count) {
-  if (value == null) {
-    return count > 0 ? '—' : '—';
-  }
-  return `${value}/10`;
+function formatReadinessCheckins(count) {
+  return `${count ?? 0}/7`;
 }
 
 function formatAdherence(value) {
@@ -187,14 +190,14 @@ function adherenceTone(value) {
   return 'text-red-400';
 }
 
-function readinessTone(value) {
-  if (value == null) {
+function readinessTone(count) {
+  if (count == null || count === 0) {
     return 'text-slate-500';
   }
-  if (value >= 8) {
+  if (count >= 5) {
     return 'text-emerald-400';
   }
-  if (value >= 6) {
+  if (count >= 3) {
     return 'text-amber-400';
   }
   return 'text-red-400';
@@ -262,13 +265,22 @@ function confirmRemove(row) {
           Tous les athlètes ({{ athleteCount }}) · actifs
         </p>
       </div>
-      <button
-        type="button"
-        class="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg hover:bg-blue-500"
-        @click="openModal"
-      >
-        Nouvel athlète
-      </button>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="rounded-xl border border-slate-600 px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+          @click="showDefaultReadinessBuilder = true"
+        >
+          Formulaire readiness
+        </button>
+        <button
+          type="button"
+          class="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg hover:bg-blue-500"
+          @click="openModal"
+        >
+          Nouvel athlète
+        </button>
+      </div>
     </div>
 
     <div
@@ -375,21 +387,21 @@ function confirmRemove(row) {
                 <button
                   type="button"
                   class="group ml-auto inline-flex items-center justify-end gap-1.5 hover:text-slate-300"
-                  @click="toggleSort('readiness_average')"
+                  @click="toggleSort('readiness_checkins_7d')"
                 >
-                  <span>Readiness (7 j)</span>
+                  <span>Check-in (7 j)</span>
                   <span class="inline-flex flex-col leading-none" aria-hidden="true">
                     <span
                       class="cursor-pointer text-[10px] leading-3"
-                      :class="sortArrowClass('readiness_average', 'desc')"
+                      :class="sortArrowClass('readiness_checkins_7d', 'desc')"
                       title="Tri décroissant"
-                      @click.stop="toggleSort('readiness_average', 'desc')"
+                      @click.stop="toggleSort('readiness_checkins_7d', 'desc')"
                     >▲</span>
                     <span
                       class="cursor-pointer text-[10px] leading-3"
-                      :class="sortArrowClass('readiness_average', 'asc')"
+                      :class="sortArrowClass('readiness_checkins_7d', 'asc')"
                       title="Tri croissant"
-                      @click.stop="toggleSort('readiness_average', 'asc')"
+                      @click.stop="toggleSort('readiness_checkins_7d', 'asc')"
                     >▼</span>
                   </span>
                 </button>
@@ -530,15 +542,9 @@ function confirmRemove(row) {
               </td>
 
               <td class="px-3 py-4 text-right">
-                <span :class="['font-semibold', readinessTone(row.readiness_average)]">
-                  {{ formatReadiness(row.readiness_average, row.readiness_entries_count) }}
+                <span :class="['font-semibold', readinessTone(row.readiness_checkins_7d ?? row.readiness_entries_count)]">
+                  {{ formatReadinessCheckins(row.readiness_checkins_7d ?? row.readiness_entries_count) }}
                 </span>
-                <p
-                  v-if="row.readiness_entries_count > 0 && row.readiness_entries_count < 7"
-                  class="text-[10px] text-slate-500"
-                >
-                  {{ row.readiness_entries_count }} j. saisis
-                </p>
               </td>
 
               <td class="px-3 py-4 text-right">
@@ -575,6 +581,18 @@ function confirmRemove(row) {
       </div>
     </div>
 
-    <CoachAddAthleteModal v-model="showModal" @invited="() => router.reload({ preserveScroll: true })" />
+    <CoachAddAthleteModal
+      v-model="showModal"
+      :coach-readiness-form="coachReadinessForm"
+      @invited="() => router.reload({ preserveScroll: true })"
+    />
+
+    <ReadinessFormBuilderModal
+      :open="showDefaultReadinessBuilder"
+      mode="template"
+      title="Formulaire readiness par défaut"
+      :initial-fields="coachReadinessForm?.fields ?? []"
+      @close="showDefaultReadinessBuilder = false"
+    />
   </div>
 </template>

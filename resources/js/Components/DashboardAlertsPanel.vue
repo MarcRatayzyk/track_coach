@@ -190,21 +190,21 @@ async function shareAlert() {
         @click.self="closeModal"
       >
         <div
-          class="tc-scrollbar tc-scrollbar-alerts w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl"
+          class="tc-scrollbar tc-scrollbar-alerts w-full max-w-3xl rounded-2xl border border-slate-700 bg-slate-900 p-8 shadow-2xl"
           @click.stop
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-base font-semibold text-white">{{ selectedAlert.title }}</h3>
+                <h3 class="text-xl font-semibold text-white">{{ selectedAlert.title }}</h3>
                 <span
-                  class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                  class="rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide"
                   :class="stylesFor(selectedAlert).badge"
                 >
                   {{ severityLabels[selectedAlert.severity] ?? selectedAlert.severity }}
                 </span>
               </div>
-              <p v-if="selectedAlert.athlete_name" class="mt-1 text-sm text-blue-400">
+              <p v-if="selectedAlert.athlete_name" class="mt-2 text-base text-blue-400">
                 {{ selectedAlert.athlete_name }}
               </p>
             </div>
@@ -218,19 +218,19 @@ async function shareAlert() {
             </button>
           </div>
 
-          <p class="mt-4 text-sm leading-relaxed text-slate-300">{{ selectedAlert.body }}</p>
+          <p class="mt-6 text-base leading-relaxed text-slate-300">{{ selectedAlert.body }}</p>
 
           <div
             v-if="canShare && sharePreview"
-            class="mt-5 rounded-xl border border-blue-500/30 bg-slate-950/70 p-4"
+            class="mt-6 rounded-xl border border-blue-500/30 bg-slate-950/70 p-5"
           >
             <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-300/90">
               Aperçu partage
             </p>
-            <div class="mt-2 rounded-xl border border-slate-700 bg-slate-900 p-3">
-              <p class="animate-pulse text-sm font-semibold text-white">{{ sharePreview.headline }}</p>
-              <p class="mt-1 text-xs text-slate-400">{{ sharePreview.subline }}</p>
-              <p class="mt-2 text-xs font-medium text-blue-300">{{ sharePreview.athleteName }}</p>
+            <div class="mt-2 rounded-xl border border-slate-700 bg-slate-900 p-4">
+              <p class="animate-pulse text-base font-semibold text-white">{{ sharePreview.headline }}</p>
+              <p class="mt-1 text-sm text-slate-400">{{ sharePreview.subline }}</p>
+              <p class="mt-2 text-sm font-medium text-blue-300">{{ sharePreview.athleteName }}</p>
             </div>
             <div v-if="sharePreview.templates.length" class="mt-3 flex flex-wrap gap-2">
               <span
@@ -244,10 +244,10 @@ async function shareAlert() {
             <p v-if="shareFeedback" class="mt-3 text-xs text-emerald-300">{{ shareFeedback }}</p>
           </div>
 
-          <div class="mt-6 flex flex-wrap justify-end gap-3">
+          <div class="mt-8 flex flex-wrap justify-end gap-3">
             <button
               type="button"
-              class="rounded-xl border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+              class="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
               @click="closeModal"
             >
               Fermer
@@ -255,14 +255,14 @@ async function shareAlert() {
             <button
               v-if="canShare"
               type="button"
-              class="rounded-xl border border-blue-500/40 bg-blue-600/20 px-4 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-600/30"
+              class="rounded-xl border border-blue-500/40 bg-blue-600/20 px-5 py-2.5 text-sm font-semibold text-blue-100 hover:bg-blue-600/30"
               @click="shareAlert"
             >
               Partager
             </button>
             <Link
               :href="selectedAlert.href"
-              class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-blue-500"
+              class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-blue-500"
               @click="closeModal"
             >
               Voir le détail

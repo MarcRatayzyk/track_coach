@@ -19,10 +19,13 @@ class AthleteSessionCoverageService
      * @return array{
      *     planned: int,
      *     completed: int,
+     *     missed: int,
      *     percentage: int|null,
      *     session_coverage: int|null,
      *     planned_lines: int,
      *     exact_lines: int,
+     *     missed_exercises: int,
+     *     mismatched_sets: int,
      * }
      */
     public function coverageBetween(
@@ -43,10 +46,13 @@ class AthleteSessionCoverageService
         return [
             'planned' => $metrics['planned_sessions'],
             'completed' => $metrics['completed_sessions'],
+            'missed' => $metrics['missed_sessions'],
             'percentage' => $metrics['percentage'],
             'session_coverage' => $metrics['session_coverage'],
             'planned_lines' => $metrics['planned_lines'],
             'exact_lines' => $metrics['exact_lines'],
+            'missed_exercises' => $metrics['missed_exercises'],
+            'mismatched_sets' => $metrics['mismatched_sets'],
         ];
     }
 

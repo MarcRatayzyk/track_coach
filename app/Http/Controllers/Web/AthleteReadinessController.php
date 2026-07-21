@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpsertAthleteReadinessRequest;
 use App\Models\AthleteReadinessEntry;
 use App\Models\User;
+use App\Support\ReadinessFormSupport;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 
@@ -17,9 +18,12 @@ class AthleteReadinessController extends Controller
             ? Carbon::parse($request->string('entry_date')->toString())->toDateString()
             : now()->toDateString();
 
-        $sleep = $request->integer('sleep_score');
-        $stress = $request->integer('stress_score');
-        $motivation = $request->integer('motivation_score');
+        $form = ReadinessFormSupport::ensureAthleteHasForm($athlete);
+        $fields = ReadinessFormSupport::normalizeFields($form->fields ?? []);
+        $values = ReadinessFormSupport::normalizeEntryValues(
+            $fields,
+            $request->validated('values') ?? [],
+        );
 
         AthleteReadinessEntry::query()->updateOrCreate(
             [
@@ -27,16 +31,17 @@ class AthleteReadinessController extends Controller
                 'entry_date' => $entryDate,
             ],
             [
-                'sleep_score' => $sleep,
-                'stress_score' => $stress,
-                'motivation_score' => $motivation,
-                'score' => AthleteReadinessEntry::computeScore($sleep, $stress, $motivation),
+                'values' => $values,
+                'score' => 0,
+                'sleep_score' => null,
+                'stress_score' => null,
+                'motivation_score' => null,
                 'notes' => $request->string('notes')->toString() ?: null,
             ],
         );
 
         return redirect()
             ->route('athlete.dashboard')
-            ->with('success', 'Readiness enregistrée.');
+            ->with('success', 'Check-in enregistré.');
     }
 }

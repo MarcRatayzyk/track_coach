@@ -56,6 +56,8 @@ class ProgramBlockPresenter
             'week_count' => $weeks->count(),
             'days_per_week' => $daysPerWeek,
             'table_layout' => DayTableLayoutSupport::resolveSnapshot($template?->table_layout),
+            'default_warmup_notes' => $template?->default_warmup_notes,
+            'default_warmup_items' => $template?->default_warmup_items ?? [],
             'sessions' => $sessions,
             'athlete_one_rm' => [
                 'squat' => (int) ($latestPr?->squat ?? 0),

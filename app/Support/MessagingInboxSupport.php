@@ -110,7 +110,12 @@ class MessagingInboxSupport
      */
     public static function threadListItem(MessageThread $thread, User $viewer): array
     {
-        $thread->loadMissing(['athlete:id,name', 'coach:id,name']);
+        $thread->loadMissing([
+            'athlete:id,name',
+            'coach:id,name',
+            'latestMessage.sender:id,name',
+            'latestMessage.audioFiles',
+        ]);
         $thread->loadCount([
             'messages as unread_messages_count' => fn ($query) => $query
                 ->whereNull('read_at')
@@ -130,6 +135,36 @@ class MessagingInboxSupport
             'messages_count' => $thread->messages_count ?? $thread->messages()->count(),
             'unread_messages_count' => (int) ($thread->unread_messages_count ?? 0),
             'updated_at' => $thread->updated_at?->toIso8601String(),
+            'last_message' => self::lastMessagePreview($thread, $viewer),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function lastMessagePreview(MessageThread $thread, User $viewer): ?array
+    {
+        $message = $thread->latestMessage;
+
+        if ($message === null) {
+            return null;
+        }
+
+        $content = trim((string) ($message->content ?? ''));
+
+        if ($content === '') {
+            $hasAudio = $message->relationLoaded('audioFiles')
+                ? $message->audioFiles->isNotEmpty()
+                : $message->audioFiles()->exists();
+
+            $content = $hasAudio ? 'Message vocal' : 'Pièce jointe';
+        }
+
+        return [
+            'content' => $content,
+            'created_at' => $message->created_at?->toIso8601String(),
+            'is_mine' => (int) $message->sender_id === (int) $viewer->id,
+            'sender_name' => $message->sender?->name,
         ];
     }
 }

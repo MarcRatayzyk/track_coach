@@ -1,6 +1,8 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
+import ReadinessDynamicFields from './ReadinessDynamicFields.vue';
+import { emptyValuesForFields } from '../config/readinessFormFields';
 
 const props = defineProps({
   open: {
@@ -10,6 +12,10 @@ const props = defineProps({
   athleteId: {
     type: Number,
     required: true,
+  },
+  readinessForm: {
+    type: Object,
+    default: null,
   },
   todayReadiness: {
     type: Object,
@@ -23,30 +29,16 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'skipped']);
 
+const fields = computed(() => props.readinessForm?.fields ?? []);
+
 const readinessForm = useForm({
-  sleep_score: props.todayReadiness?.sleep_score ?? 7,
-  stress_score: props.todayReadiness?.stress_score ?? 7,
-  motivation_score: props.todayReadiness?.motivation_score ?? 7,
+  values: {},
   notes: '',
 });
 
 const bodyWeightForm = useForm({
   weight_kg: props.todayBodyWeight?.weight_kg ?? '',
 });
-
-const metrics = [
-  { key: 'sleep_score', label: 'Sommeil' },
-  { key: 'stress_score', label: 'Détente' },
-  { key: 'motivation_score', label: 'Motivation' },
-];
-
-const scoreOptions = Array.from({ length: 10 }, (_, i) => i + 1);
-
-const computedReadiness = computed(() =>
-  Math.round(
-    (readinessForm.sleep_score + readinessForm.stress_score + readinessForm.motivation_score) / 3,
-  ),
-);
 
 const needsReadiness = computed(() => !props.todayReadiness);
 const needsWeight = computed(() => !props.todayBodyWeight);
@@ -57,9 +49,11 @@ watch(
     if (!isOpen) {
       return;
     }
-    readinessForm.sleep_score = props.todayReadiness?.sleep_score ?? 7;
-    readinessForm.stress_score = props.todayReadiness?.stress_score ?? 7;
-    readinessForm.motivation_score = props.todayReadiness?.motivation_score ?? 7;
+    readinessForm.values = {
+      ...emptyValuesForFields(fields.value),
+      ...(props.todayReadiness?.values ?? {}),
+    };
+    readinessForm.notes = props.todayReadiness?.notes ?? '';
     bodyWeightForm.weight_kg = props.todayBodyWeight?.weight_kg ?? '';
   },
 );
@@ -143,37 +137,13 @@ function submitAll() {
           v-if="needsReadiness"
           class="mt-4 rounded-xl border border-slate-800 bg-slate-950/40 p-3"
         >
-          <div class="flex items-center justify-between gap-2">
-            <h3 class="text-sm font-semibold text-white">Readiness</h3>
-            <span class="rounded-lg border border-blue-500/30 bg-blue-950/20 px-2 py-1 text-sm font-bold text-blue-200">
-              {{ computedReadiness }}/10
-            </span>
-          </div>
-
-          <div class="mt-3 space-y-3">
-            <div
-              v-for="metric in metrics"
-              :key="metric.key"
-              class="rounded-lg border border-slate-800 bg-slate-950/50 p-2.5"
-            >
-              <p class="text-xs font-medium text-white">{{ metric.label }}</p>
-              <div class="mt-2 grid grid-cols-5 gap-1 sm:grid-cols-10">
-                <button
-                  v-for="value in scoreOptions"
-                  :key="`${metric.key}-${value}`"
-                  type="button"
-                  class="flex h-9 items-center justify-center rounded-md border text-xs font-semibold"
-                  :class="
-                    readinessForm[metric.key] === value
-                      ? 'border-blue-500 bg-blue-600 text-white'
-                      : 'border-slate-700 bg-slate-950 text-slate-300'
-                  "
-                  @click="readinessForm[metric.key] = value"
-                >
-                  {{ value }}
-                </button>
-              </div>
-            </div>
+          <h3 class="text-sm font-semibold text-white">Indicateurs du jour</h3>
+          <div class="mt-3">
+            <ReadinessDynamicFields
+              v-model="readinessForm.values"
+              :fields="fields"
+              :errors="readinessForm.errors"
+            />
           </div>
         </div>
 
@@ -193,7 +163,7 @@ function submitAll() {
               inputmode="decimal"
               placeholder="82.5"
               class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white"
-            />
+            >
             <p v-if="bodyWeightForm.errors.weight_kg" class="mt-1 text-xs text-red-400">
               {{ bodyWeightForm.errors.weight_kg }}
             </p>

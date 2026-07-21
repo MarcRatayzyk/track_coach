@@ -259,13 +259,15 @@ class CoachAlertsService
             && ($previous['percentage'] - $recent['percentage']) >= self::ADHERENCE_DROP_POINTS
         ) {
             $drop = $previous['percentage'] - $recent['percentage'];
+            $gapSummary = $this->describeAdherenceGaps($recent);
             $alerts->push($this->makeAlert(
                 key: "adherence-drop-{$athlete->id}",
                 type: 'adherence_drop',
                 severity: 'warning',
                 title: "Baisse d'adhérence",
-                body: "{$athlete->name} : adhérence à {$recent['percentage']} % sur 7 jours "
-                    ."(séances, séries, reps et charges), contre {$previous['percentage']} % la semaine précédente (−{$drop} pts).",
+                body: "{$athlete->name} {$gapSummary} "
+                    ."Son adhérence a baissé à {$recent['percentage']} % sur 7 jours "
+                    ."(contre {$previous['percentage']} % la semaine précédente, −{$drop} pts).",
                 href: "/athletes/{$athlete->id}",
                 athleteId: $athlete->id,
                 athleteName: $athlete->name,
@@ -276,13 +278,14 @@ class CoachAlertsService
             && $recent['percentage'] !== null
             && $recent['percentage'] < self::ADHERENCE_LOW_PERCENT
         ) {
+            $gapSummary = $this->describeAdherenceGaps($recent);
             $alerts->push($this->makeAlert(
                 key: "adherence-low-{$athlete->id}",
                 type: 'adherence_low',
                 severity: 'warning',
                 title: 'Adhérence faible',
-                body: "{$athlete->name} : {$recent['percentage']} % d'adhérence sur les 7 derniers jours "
-                    ."({$recent['completed']}/{$recent['planned']} séances, concordance séries / reps / charges).",
+                body: "{$athlete->name} {$gapSummary} "
+                    ."Adhérence à {$recent['percentage']} % sur les 7 derniers jours.",
                 href: "/athletes/{$athlete->id}",
                 athleteId: $athlete->id,
                 athleteName: $athlete->name,
@@ -291,6 +294,62 @@ class CoachAlertsService
         }
 
         return $alerts;
+    }
+
+    /**
+     * @param  array{
+     *     planned: int,
+     *     completed: int,
+     *     missed?: int,
+     *     missed_exercises?: int,
+     *     mismatched_sets?: int,
+     * }  $coverage
+     */
+    private function describeAdherenceGaps(array $coverage): string
+    {
+        $missedSessions = (int) ($coverage['missed'] ?? max(0, $coverage['planned'] - $coverage['completed']));
+        $missedExercises = (int) ($coverage['missed_exercises'] ?? 0);
+        $mismatchedSets = (int) ($coverage['mismatched_sets'] ?? 0);
+        $parts = [];
+
+        if ($missedSessions > 0) {
+            $parts[] = sprintf(
+                "n'a pas enregistré %d séance%s sur %d",
+                $missedSessions,
+                $missedSessions > 1 ? 's' : '',
+                $coverage['planned'],
+            );
+        } else {
+            $parts[] = sprintf(
+                'a enregistré %d séance%s sur %d',
+                $coverage['completed'],
+                $coverage['completed'] > 1 ? 's' : '',
+                $coverage['planned'],
+            );
+        }
+
+        if ($missedExercises > 0) {
+            $parts[] = sprintf(
+                '%d exercice%s non réalisé%s',
+                $missedExercises,
+                $missedExercises > 1 ? 's' : '',
+                $missedExercises > 1 ? 's' : '',
+            );
+        }
+
+        if ($mismatchedSets > 0) {
+            $parts[] = sprintf(
+                '%d ligne%s avec séries non respectées',
+                $mismatchedSets,
+                $mismatchedSets > 1 ? 's' : '',
+            );
+        }
+
+        if (count($parts) === 0) {
+            return 'a un suivi incomplet sur la période.';
+        }
+
+        return implode(' ; ', $parts).'.';
     }
 
     /**
@@ -327,7 +386,11 @@ class CoachAlertsService
                 severity: 'info',
                 title: 'Adhérence élevée',
                 body: "{$athlete->name} maintient {$recent['percentage']} % d'adhérence sur 7 jours "
-                    ."({$recent['completed']}/{$recent['planned']} séances).",
+                    ."({$recent['completed']}/{$recent['planned']} séances"
+                    .($recent['missed_exercises'] > 0
+                        ? ", {$recent['missed_exercises']} exercice".($recent['missed_exercises'] > 1 ? 's' : '').' manquant'.($recent['missed_exercises'] > 1 ? 's' : '')
+                        : '')
+                    .').',
                 href: "/athletes/{$athlete->id}",
                 athleteId: $athlete->id,
                 athleteName: $athlete->name,

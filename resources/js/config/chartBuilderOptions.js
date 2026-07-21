@@ -29,6 +29,7 @@ export const SECTION_FILTER_OPTIONS = [
   { value: 'topset', label: 'Topset' },
   { value: 'backoff', label: 'Backoff' },
   { value: 'accessory', label: 'Accessoire' },
+  { value: 'warmup', label: 'Échauffement' },
 ];
 
 export const SERIES_LIFT_OPTIONS = [

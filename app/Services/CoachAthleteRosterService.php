@@ -77,9 +77,7 @@ class CoachAthleteRosterService
                 $glPoints = GlPointsCalculator::calculate($total, $bodyweight, $sex);
 
                 $entries = $readinessByAthlete->get($athlete->id, collect());
-                $readinessAverage = $entries->isEmpty()
-                    ? null
-                    : (int) round($entries->avg('score'));
+                $readinessEntriesCount = $entries->count();
 
                 $assignment = $athlete->programAssignments->first();
                 $adherence = $this->adherenceForAssignment($athlete->id, $assignment, $today);
@@ -102,8 +100,8 @@ class CoachAthleteRosterService
                     'weight_category_label' => IpfWeightCategorySupport::labelForCategory($weightCategory),
                     'total_kg' => $total > 0 ? $total : null,
                     'gl_points' => $glPoints,
-                    'readiness_average' => $readinessAverage,
-                    'readiness_entries_count' => $entries->count(),
+                    'readiness_entries_count' => $readinessEntriesCount,
+                    'readiness_checkins_7d' => $readinessEntriesCount,
                     'adherence_percentage' => $adherence,
                     'next_competition_days' => $nextCompetitionDays,
                     'next_competition_name' => $nextCompetition?->name,

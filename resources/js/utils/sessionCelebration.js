@@ -82,6 +82,7 @@ function pickTopsets(workItems = [], plannedItems = [], oneRm = {}, mainLift = '
 
 function actualLinesFromWorkItems(workItems = []) {
   return workItems
+    .filter((item) => item?.section !== 'warmup')
     .filter((item) => String(item?.line?.exercise_name ?? '').trim())
     .map((item) => ({
       ...item.line,

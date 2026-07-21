@@ -266,10 +266,12 @@ function sessionHasItemDetails(session) {
 function sessionExerciseRecaps(session) {
   return (session.items ?? [])
     .filter((item) => String(item.exercise_name ?? '').trim())
+    .filter((item) => item.section !== 'warmup')
     .map((item) => ({
       key: `${item.section}-${item.exercise_name}`,
       section: SESSION_SECTION_LABELS[item.section] ?? item.section,
       recap: formatLineRecap(item),
+      athleteNote: String(item.athlete_note ?? '').trim() || null,
     }));
 }
 
@@ -437,6 +439,12 @@ watch(
                 </p>
                 <p class="mt-0.5 text-sm font-semibold text-white">
                   {{ line.recap }}
+                </p>
+                <p
+                  v-if="line.athleteNote"
+                  class="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed text-slate-400"
+                >
+                  Note : {{ line.athleteNote }}
                 </p>
               </li>
             </ul>

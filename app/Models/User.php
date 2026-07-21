@@ -127,6 +127,16 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->hasMany(AthleteReadinessEntry::class, 'athlete_id');
     }
 
+    public function coachReadinessForm(): HasOne
+    {
+        return $this->hasOne(CoachReadinessForm::class, 'coach_id');
+    }
+
+    public function athleteReadinessForm(): HasOne
+    {
+        return $this->hasOne(AthleteReadinessForm::class, 'athlete_id');
+    }
+
     public function dayTableLayouts(): HasMany
     {
         return $this->hasMany(DayTableLayout::class, 'coach_id');

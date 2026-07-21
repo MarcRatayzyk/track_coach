@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import PrEvolutionMiniCard from './charts/PrEvolutionMiniCard.vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import { buildPrEvolutionSeries, currentValueFromSeries } from '../utils/prEvolution';
@@ -68,6 +68,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  canEditPrs: {
+    type: Boolean,
+    default: false,
+  },
   editableProfile: {
     type: Object,
     default: null,
@@ -127,12 +131,65 @@ const emit = defineEmits([
 
 const showProfileModal = ref(false);
 const showEditForm = ref(false);
+const showPrForm = ref(false);
+const today = new Date().toISOString().slice(0, 10);
+
+const prForm = useForm({
+  squat: '',
+  bench: '',
+  deadlift: '',
+  reference_date: today,
+});
 
 watch(showProfileModal, (open) => {
   if (!open) {
     showEditForm.value = false;
+    showPrForm.value = false;
   }
 });
+
+const prSubmitUrl = computed(() => {
+  if (!props.athleteId) {
+    return null;
+  }
+
+  return props.isCoach
+    ? `/coach/athletes/${props.athleteId}/prs`
+    : `/athletes/${props.athleteId}/prs`;
+});
+
+function openPrForm() {
+  const values = Object.fromEntries(
+    modalPrValues.value.map((card) => [card.key, Number(card.value ?? 0)]),
+  );
+
+  prForm.clearErrors();
+  prForm.squat = values.squat > 0 ? values.squat : 0;
+  prForm.bench = values.bench > 0 ? values.bench : 0;
+  prForm.deadlift = values.deadlift > 0 ? values.deadlift : 0;
+  prForm.reference_date = today;
+  showPrForm.value = true;
+}
+
+function submitPr() {
+  if (!prSubmitUrl.value) {
+    return;
+  }
+
+  prForm
+    .transform((data) => ({
+      squat: Number(data.squat) || 0,
+      bench: Number(data.bench) || 0,
+      deadlift: Number(data.deadlift) || 0,
+      reference_date: data.reference_date,
+    }))
+    .post(prSubmitUrl.value, {
+      preserveScroll: true,
+      onSuccess: () => {
+        showPrForm.value = false;
+      },
+    });
+}
 
 const categoryOptions = computed(() => {
   const sex = props.editableProfile?.sex ?? null;
@@ -227,6 +284,15 @@ function openNextCompetition() {
           >
             PDF
           </a>
+          <Link
+            v-if="isCoach && athleteId"
+            :href="`/messaging?athlete=${athleteId}`"
+            class="rounded-lg border border-slate-700/80 bg-slate-950/60 p-2 text-slate-400 transition hover:border-blue-500/40 hover:bg-slate-800 hover:text-blue-300"
+            aria-label="Ouvrir la conversation"
+            title="Messagerie"
+          >
+            <UiIcon name="chat" class="h-5 w-5" />
+          </Link>
           <button
             type="button"
             class="rounded-lg border border-slate-700/80 bg-slate-950/60 p-2 text-slate-400 transition hover:border-slate-600 hover:bg-slate-800 hover:text-white"
@@ -504,8 +570,19 @@ function openNextCompetition() {
           </div>
 
           <div class="mt-4 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5">
-            <p class="text-xs font-semibold text-white">Records personnels</p>
-            <ul class="mt-2 space-y-1.5 text-sm">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs font-semibold text-white">Records personnels</p>
+              <button
+                v-if="canEditPrs && athleteId && !showPrForm"
+                type="button"
+                class="shrink-0 rounded-lg border border-slate-600/80 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                @click="openPrForm"
+              >
+                Modifier
+              </button>
+            </div>
+
+            <ul v-if="!showPrForm" class="mt-2 space-y-1.5 text-sm">
               <li
                 v-for="card in modalPrValues"
                 :key="`modal-pr-${card.key}`"
@@ -515,6 +592,75 @@ function openNextCompetition() {
                 <span class="font-semibold tabular-nums text-white">{{ formatKg(card.value) }}</span>
               </li>
             </ul>
+
+            <form
+              v-else
+              class="mt-3 space-y-2.5"
+              @submit.prevent="submitPr"
+            >
+              <div class="grid grid-cols-3 gap-2">
+                <label class="text-[11px] text-slate-400">
+                  Squat
+                  <input
+                    v-model.number="prForm.squat"
+                    type="number"
+                    min="0"
+                    inputmode="numeric"
+                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                  />
+                </label>
+                <label class="text-[11px] text-slate-400">
+                  Bench
+                  <input
+                    v-model.number="prForm.bench"
+                    type="number"
+                    min="0"
+                    inputmode="numeric"
+                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                  />
+                </label>
+                <label class="text-[11px] text-slate-400">
+                  Terre
+                  <input
+                    v-model.number="prForm.deadlift"
+                    type="number"
+                    min="0"
+                    inputmode="numeric"
+                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                  />
+                </label>
+              </div>
+              <label class="block text-[11px] text-slate-400">
+                Date
+                <input
+                  v-model="prForm.reference_date"
+                  type="date"
+                  class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                />
+              </label>
+              <p
+                v-if="prForm.errors.squat || prForm.errors.bench || prForm.errors.deadlift || prForm.errors.reference_date"
+                class="text-xs text-red-400"
+              >
+                {{ prForm.errors.squat || prForm.errors.bench || prForm.errors.deadlift || prForm.errors.reference_date }}
+              </p>
+              <div class="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  class="rounded-lg border border-slate-600 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
+                  @click="showPrForm = false"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  :disabled="prForm.processing"
+                  class="rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </form>
           </div>
 
           <div class="mt-4 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5">

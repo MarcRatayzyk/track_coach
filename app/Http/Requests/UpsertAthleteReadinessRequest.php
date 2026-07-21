@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Models\AthleteReadinessEntry;
+use App\Models\User;
+use App\Support\ReadinessFormSupport;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpsertAthleteReadinessRequest extends FormRequest
 {
@@ -20,14 +20,11 @@ class UpsertAthleteReadinessRequest extends FormRequest
      */
     public function rules(): array
     {
-        $scoreRange = Rule::in(range(AthleteReadinessEntry::MIN_SCORE, AthleteReadinessEntry::MAX_SCORE));
+        /** @var User $athlete */
+        $athlete = $this->route('athlete');
+        $form = ReadinessFormSupport::ensureAthleteHasForm($athlete);
+        $fields = ReadinessFormSupport::normalizeFields($form->fields ?? []);
 
-        return [
-            'entry_date' => ['nullable', 'date', 'before_or_equal:today'],
-            'sleep_score' => ['required', 'integer', $scoreRange],
-            'stress_score' => ['required', 'integer', $scoreRange],
-            'motivation_score' => ['required', 'integer', $scoreRange],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ];
+        return ReadinessFormSupport::entryValueRules($fields);
     }
 }

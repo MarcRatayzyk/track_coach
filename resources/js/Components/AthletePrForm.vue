@@ -1,5 +1,6 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
+import { computed, watch } from 'vue';
 
 const props = defineProps({
   athleteId: {
@@ -9,6 +10,10 @@ const props = defineProps({
   latestPr: {
     type: Object,
     default: null,
+  },
+  isCoach: {
+    type: Boolean,
+    default: false,
   },
   title: {
     type: String,
@@ -23,14 +28,29 @@ const props = defineProps({
 const today = new Date().toISOString().slice(0, 10);
 
 const form = useForm({
-  squat: props.latestPr?.squat ?? '',
-  bench: props.latestPr?.bench ?? '',
-  deadlift: props.latestPr?.deadlift ?? '',
+  squat: props.latestPr?.squat ?? 0,
+  bench: props.latestPr?.bench ?? 0,
+  deadlift: props.latestPr?.deadlift ?? 0,
   reference_date: today,
 });
 
+const submitUrl = computed(() =>
+  props.isCoach
+    ? `/coach/athletes/${props.athleteId}/prs`
+    : `/athletes/${props.athleteId}/prs`,
+);
+
+watch(
+  () => props.latestPr,
+  (pr) => {
+    form.squat = pr?.squat ?? 0;
+    form.bench = pr?.bench ?? 0;
+    form.deadlift = pr?.deadlift ?? 0;
+  },
+);
+
 function submit() {
-  form.post(`/athletes/${props.athleteId}/prs`, {
+  form.post(submitUrl.value, {
     preserveScroll: true,
     onSuccess: () => {
       form.reference_date = today;

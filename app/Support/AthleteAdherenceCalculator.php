@@ -16,12 +16,15 @@ class AthleteAdherenceCalculator
      * @return array{
      *     planned_sessions: int,
      *     completed_sessions: int,
+     *     missed_sessions: int,
      *     session_coverage: int|null,
      *     matched_checks: int,
      *     total_checks: int,
      *     percentage: int|null,
      *     planned_lines: int,
      *     exact_lines: int,
+     *     missed_exercises: int,
+     *     mismatched_sets: int,
      * }
      */
     public function between(
@@ -75,6 +78,8 @@ class AthleteAdherenceCalculator
         $totalChecks = 0;
         $exactLines = 0;
         $plannedLines = 0;
+        $missedExercises = 0;
+        $mismatchedSets = 0;
 
         $cursor = $start->copy();
 
@@ -112,6 +117,7 @@ class AthleteAdherenceCalculator
 
             $mainLift = $day?->main_lift ?? 'squat';
             $usedIndices = [];
+            $sessionWasLogged = $actualItems !== [];
 
             foreach ($plannedItems as $plannedLine) {
                 $plannedLines++;
@@ -122,6 +128,18 @@ class AthleteAdherenceCalculator
                 if ($score['exact']) {
                     $exactLines++;
                 }
+
+                // Détail exo/séries uniquement si la séance a été ouverte
+                // (sinon le résumé « X séances non enregistrées » suffit).
+                if ($sessionWasLogged) {
+                    if (! $score['found']) {
+                        $missedExercises++;
+                    }
+
+                    if ($score['sets_mismatch']) {
+                        $mismatchedSets++;
+                    }
+                }
             }
 
             $cursor = $cursor->copy()->addDay();
@@ -130,6 +148,7 @@ class AthleteAdherenceCalculator
         return [
             'planned_sessions' => $plannedSessions,
             'completed_sessions' => $completedSessions,
+            'missed_sessions' => max(0, $plannedSessions - $completedSessions),
             'session_coverage' => $plannedSessions > 0
                 ? (int) round(($completedSessions / $plannedSessions) * 100)
                 : null,
@@ -140,6 +159,8 @@ class AthleteAdherenceCalculator
                 : null,
             'planned_lines' => $plannedLines,
             'exact_lines' => $exactLines,
+            'missed_exercises' => $missedExercises,
+            'mismatched_sets' => $mismatchedSets,
         ];
     }
 
@@ -161,6 +182,9 @@ class AthleteAdherenceCalculator
 
             foreach ($session->items ?? [] as $item) {
                 if (trim((string) ($item['exercise_name'] ?? '')) === '') {
+                    continue;
+                }
+                if (($item['section'] ?? null) === 'warmup') {
                     continue;
                 }
 
@@ -195,6 +219,9 @@ class AthleteAdherenceCalculator
             if (trim((string) ($exercise->exercise_name ?? '')) === '') {
                 continue;
             }
+            if ($exercise->section === 'warmup') {
+                continue;
+            }
 
             $items[] = TrainingLoadSupport::exerciseLineToArray($exercise);
         }
@@ -207,7 +234,13 @@ class AthleteAdherenceCalculator
      * @param  list<array<string, mixed>>  $actualItems
      * @param  list<int>  $usedIndices
      * @param  array{squat?: int, bench?: int, deadlift?: int}  $oneRm
-     * @return array{matched_checks: int, total_checks: int, exact: bool}
+     * @return array{
+     *     matched_checks: int,
+     *     total_checks: int,
+     *     exact: bool,
+     *     found: bool,
+     *     sets_mismatch: bool,
+     * }
      */
     private function scorePlannedLine(
         array $plannedLine,
@@ -219,6 +252,8 @@ class AthleteAdherenceCalculator
         $bestIndex = -1;
         $bestMatchedChecks = 0;
         $bestTotalChecks = 1;
+        $bestSetsMatch = false;
+        $hasSetsTarget = TrainingLoadSupport::hasNumericValue($plannedLine['sets'] ?? null);
         $plannedName = strtolower(trim((string) ($plannedLine['exercise_name'] ?? '')));
         $plannedLift = in_array($plannedLine['lift'] ?? null, ['squat', 'bench', 'deadlift'], true)
             ? $plannedLine['lift']
@@ -244,11 +279,13 @@ class AthleteAdherenceCalculator
 
             $matchedChecks = 1;
             $totalChecks = 1;
+            $setsMatch = ! $hasSetsTarget;
 
-            if (TrainingLoadSupport::hasNumericValue($plannedLine['sets'] ?? null)) {
+            if ($hasSetsTarget) {
                 $totalChecks++;
                 if (TrainingLoadSupport::valuesMatch($plannedLine['sets'], $actualLine['sets'] ?? null)) {
                     $matchedChecks++;
+                    $setsMatch = true;
                 }
             }
 
@@ -277,6 +314,7 @@ class AthleteAdherenceCalculator
                 $bestIndex = $index;
                 $bestMatchedChecks = $matchedChecks;
                 $bestTotalChecks = $totalChecks;
+                $bestSetsMatch = $setsMatch;
             }
         }
 
@@ -284,7 +322,7 @@ class AthleteAdherenceCalculator
             $usedIndices[] = $bestIndex;
         } else {
             $bestTotalChecks = 1;
-            if (TrainingLoadSupport::hasNumericValue($plannedLine['sets'] ?? null)) {
+            if ($hasSetsTarget) {
                 $bestTotalChecks++;
             }
             if (TrainingLoadSupport::hasNumericValue($plannedLine['reps'] ?? null)) {
@@ -294,12 +332,15 @@ class AthleteAdherenceCalculator
                 $bestTotalChecks++;
             }
             $bestMatchedChecks = 0;
+            $bestSetsMatch = false;
         }
 
         return [
             'matched_checks' => $bestMatchedChecks,
             'total_checks' => $bestTotalChecks,
             'exact' => $bestMatchedChecks === $bestTotalChecks && $bestTotalChecks > 0,
+            'found' => $bestIndex >= 0,
+            'sets_mismatch' => $hasSetsTarget && $bestIndex >= 0 && ! $bestSetsMatch,
         ];
     }
 
@@ -339,12 +380,15 @@ class AthleteAdherenceCalculator
         return [
             'planned_sessions' => 0,
             'completed_sessions' => 0,
+            'missed_sessions' => 0,
             'session_coverage' => null,
             'matched_checks' => 0,
             'total_checks' => 0,
             'percentage' => null,
             'planned_lines' => 0,
             'exact_lines' => 0,
+            'missed_exercises' => 0,
+            'mismatched_sets' => 0,
         ];
     }
 }

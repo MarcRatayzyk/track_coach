@@ -48,10 +48,6 @@ const localMessages = ref([...props.messages]);
 const recordedAudioFiles = ref([]);
 let echoChannel = null;
 
-const threadForm = useForm({
-  athlete_id: props.athletesForThread.length ? props.athletesForThread[0].id : '',
-});
-
 const messageForm = useForm({
   content: '',
   session_feedback_id: props.feedbackContext?.can_reply ? props.feedbackContext.id : null,
@@ -75,8 +71,14 @@ function openThreadUrl(id) {
   return `/messaging?thread=${id}`;
 }
 
-function submitNewThread() {
-  threadForm.post('/coach/threads', { preserveScroll: true });
+function lastMessagePreview(thread) {
+  const last = thread?.last_message;
+  if (!last) {
+    return 'Aucun message';
+  }
+
+  const prefix = last.is_mine ? 'Toi : ' : '';
+  return `${prefix}${last.content}`;
 }
 
 function onVoiceRecorded(file) {
@@ -247,38 +249,15 @@ onUnmounted(() => {
             >
               <MessageThreadUnreadBadge :count="t.unread_messages_count ?? 0" />
               <span class="text-xl font-semibold">{{ t.athlete?.name ?? 'Athlète' }}</span>
-              <span class="mt-1 block text-base opacity-80">
-                {{ t.messages_count ?? 0 }} message(s)
+              <span class="mt-1 block truncate text-base opacity-80">
+                {{ lastMessagePreview(t) }}
               </span>
             </Link>
           </li>
         </ul>
-
-        <div class="mt-5 border-t border-slate-800 pt-6">
-          <h3 class="text-sm font-semibold text-white">Nouvelle conversation</h3>
-          <form class="mt-4 space-y-4" @submit.prevent="submitNewThread">
-            <select
-              v-model="threadForm.athlete_id"
-              required
-              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-lg text-white"
-            >
-              <option value="" disabled>Choisir un athlète</option>
-              <option v-for="a in athletesForThread" :key="a.id" :value="a.id">
-                {{ a.name }}
-              </option>
-            </select>
-            <p v-if="Object.keys(threadForm.errors).length" class="text-base text-red-400">
-              {{ Object.values(threadForm.errors).flat().join(' ') }}
-            </p>
-            <button
-              type="submit"
-              :disabled="threadForm.processing"
-              class="w-full rounded-xl bg-slate-700 py-4 text-sm font-semibold text-white shadow hover:bg-slate-600 disabled:opacity-50"
-            >
-              Ouvrir
-            </button>
-          </form>
-        </div>
+        <p v-if="!threads.length" class="mt-4 text-sm text-slate-500">
+          Aucune conversation pour le moment. Ouvre-en une depuis le profil d’un athlète.
+        </p>
       </aside>
 
       <section
@@ -288,7 +267,6 @@ onUnmounted(() => {
         <template v-if="activeThread">
           <div class="border-b border-slate-800 px-6 py-3 lg:px-8 lg:py-6">
             <h2 class="text-sm font-semibold text-white">{{ conversationTitle }}</h2>
-            <p class="mt-1 text-xs text-slate-500">Fil #{{ activeThread.id }}</p>
           </div>
 
           <div
@@ -372,7 +350,7 @@ onUnmounted(() => {
         >
           <p class="max-w-md leading-relaxed">
             <template v-if="isCoach">
-              Sélectionne une conversation à gauche ou ouvre-en une nouvelle.
+              Sélectionne une conversation à gauche, ou ouvre-en une depuis le profil d’un athlète.
             </template>
             <template v-else>
               Aucun coach associé pour le moment.

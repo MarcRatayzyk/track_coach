@@ -22,6 +22,7 @@ const props = defineProps({
   todayLoggedSession: { type: Object, default: null },
   todayReadiness: { type: Object, default: null },
   readinessRecent: { type: Array, default: () => [] },
+  readinessForm: { type: Object, default: null },
   todayBodyWeight: { type: Object, default: null },
   nextCompetition: { type: Object, default: null },
   blockProgress: { type: Object, default: null },
@@ -246,6 +247,7 @@ onMounted(() => {
     <AthleteReadinessCheckIn
       class="hidden lg:block"
       :athlete-id="athleteId"
+      :readiness-form="readinessForm"
       :today-readiness="todayReadiness"
       :readiness-recent="readinessRecent"
       :today-body-weight="todayBodyWeight"
@@ -256,6 +258,7 @@ onMounted(() => {
     <AthleteDailyCheckInModal
       :open="checkInModalOpen"
       :athlete-id="athleteId"
+      :readiness-form="readinessForm"
       :today-readiness="todayReadiness"
       :today-body-weight="todayBodyWeight"
       @close="closeCheckInModal"

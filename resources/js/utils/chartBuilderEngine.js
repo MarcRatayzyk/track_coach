@@ -13,6 +13,7 @@ const SECTION_LABELS = {
   topset: 'Topset',
   backoff: 'Backoff',
   accessory: 'Accessoire',
+  warmup: 'Échauffement',
 };
 
 const GENERIC_COLORS = [
@@ -52,6 +53,9 @@ function applyFilters(flatItems, filters = {}) {
       return false;
     }
     const section = row.section ?? row.line?.section ?? '';
+    if (section === 'warmup') {
+      return false;
+    }
     if (filters.section && filters.section !== 'all' && section !== filters.section) {
       return false;
     }

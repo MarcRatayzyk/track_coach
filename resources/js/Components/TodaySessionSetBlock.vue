@@ -39,7 +39,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['toggle', 'validate']);
+const emit = defineEmits(['toggle', 'validate', 'save-note']);
 
 const line = computed(() => props.item.line ?? {});
 
@@ -75,6 +75,8 @@ const validateButtonLabel = computed(() => {
   }
   return 'Valider la série';
 });
+
+const hasAthleteNote = computed(() => Boolean(String(line.value.athlete_note ?? '').trim()));
 
 const chargeModes = [
   { id: 'kg', label: 'kg' },
@@ -117,6 +119,14 @@ function setChargeMode(mode) {
 
 function updateRpe(value) {
   line.value.rpe = value;
+}
+
+function updateAthleteNote(rawValue) {
+  line.value.athlete_note = rawValue;
+}
+
+function persistNote() {
+  emit('save-note');
 }
 
 function validateLine() {
@@ -177,6 +187,12 @@ const inputClass =
         <p class="truncate text-sm font-medium text-slate-100">
           {{ collapsedRecap }}
         </p>
+        <p
+          v-if="!expanded && hasAthleteNote"
+          class="mt-0.5 truncate text-xs text-slate-400"
+        >
+          Note : {{ line.athlete_note }}
+        </p>
       </div>
       <span
         v-if="fullyValidated"
@@ -193,95 +209,121 @@ const inputClass =
     </button>
 
     <div v-if="expanded" class="border-t border-slate-800 px-3 py-3">
-      <p v-if="totalSets > 1" class="mb-3 text-xs font-medium text-blue-300/90">
-        Série {{ currentSetNumber }} sur {{ totalSets }}
-      </p>
+      <template v-if="!fullyValidated">
+        <p v-if="totalSets > 1" class="mb-3 text-xs font-medium text-blue-300/90">
+          Série {{ currentSetNumber }} sur {{ totalSets }}
+        </p>
 
-      <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block text-xs font-medium text-slate-400">
+            Reps
+            <input
+              :value="line.reps ?? ''"
+              type="number"
+              min="1"
+              max="30"
+              step="1"
+              inputmode="numeric"
+              :class="inputClass"
+              @input="updateIntegerField('reps', $event.target.value)"
+            />
+          </label>
+
+          <div>
+            <p class="text-xs font-medium text-slate-400">Charge</p>
+            <div class="mt-1 flex flex-wrap gap-1.5">
+              <button
+                v-for="mode in chargeModes"
+                :key="mode.id"
+                type="button"
+                class="rounded-lg px-2.5 py-1 text-[11px] font-medium transition"
+                :class="
+                  activeChargeMode === mode.id
+                    ? 'bg-blue-600 text-white'
+                    : 'border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-white'
+                "
+                @click="setChargeMode(mode.id)"
+              >
+                {{ mode.label }}
+              </button>
+            </div>
+
+            <label v-if="activeChargeMode === 'kg'" class="mt-2 block text-xs text-slate-500">
+              <input
+                :value="line.load ?? ''"
+                type="number"
+                min="0"
+                max="999"
+                step="0.5"
+                inputmode="decimal"
+                placeholder="kg"
+                :class="inputClass"
+                @input="updateDecimalField('load', $event.target.value)"
+              />
+            </label>
+
+            <label v-else class="mt-2 block text-xs text-slate-500">
+              <input
+                :value="line.load_percent ?? ''"
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                inputmode="decimal"
+                placeholder="% 1RM"
+                :class="inputClass"
+                @input="updateDecimalField('load_percent', $event.target.value)"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <OptionButtonGroup
+            :model-value="line.rpe"
+            :options="RPE_OPTIONS"
+            label="RPE de la série"
+            @update:model-value="updateRpe"
+          />
+        </div>
+
+        <p v-if="!canValidate" class="mt-3 text-xs text-slate-500">
+          Renseigne la charge et le RPE pour valider la série.
+        </p>
+
+        <button
+          type="button"
+          class="mt-4 w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+          :disabled="saving || !canValidate"
+          @click="validateLine"
+        >
+          {{ validateButtonLabel }}
+        </button>
+      </template>
+
+      <div v-else class="space-y-3">
+        <p class="text-xs text-emerald-300/90">Exercice validé — note optionnelle (non envoyée dans le retour).</p>
         <label class="block text-xs font-medium text-slate-400">
-          Reps
-          <input
-            :value="line.reps ?? ''"
-            type="number"
-            min="1"
-            max="30"
-            step="1"
-            inputmode="numeric"
-            :class="inputClass"
-            @input="updateIntegerField('reps', $event.target.value)"
+          Note sur cet exercice
+          <textarea
+            :value="line.athlete_note ?? ''"
+            rows="3"
+            maxlength="1000"
+            placeholder="Sensation, douleur, commentaire…"
+            class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-white placeholder:text-slate-600"
+            @input="updateAthleteNote($event.target.value)"
+            @blur="persistNote"
           />
         </label>
-
-        <div>
-          <p class="text-xs font-medium text-slate-400">Charge</p>
-          <div class="mt-1 flex flex-wrap gap-1.5">
-            <button
-              v-for="mode in chargeModes"
-              :key="mode.id"
-              type="button"
-              class="rounded-lg px-2.5 py-1 text-[11px] font-medium transition"
-              :class="
-                activeChargeMode === mode.id
-                  ? 'bg-blue-600 text-white'
-                  : 'border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-white'
-              "
-              @click="setChargeMode(mode.id)"
-            >
-              {{ mode.label }}
-            </button>
-          </div>
-
-          <label v-if="activeChargeMode === 'kg'" class="mt-2 block text-xs text-slate-500">
-            <input
-              :value="line.load ?? ''"
-              type="number"
-              min="0"
-              max="999"
-              step="0.5"
-              inputmode="decimal"
-              placeholder="kg"
-              :class="inputClass"
-              @input="updateDecimalField('load', $event.target.value)"
-            />
-          </label>
-
-          <label v-else class="mt-2 block text-xs text-slate-500">
-            <input
-              :value="line.load_percent ?? ''"
-              type="number"
-              min="0"
-              max="100"
-              step="0.5"
-              inputmode="decimal"
-              placeholder="% 1RM"
-              :class="inputClass"
-              @input="updateDecimalField('load_percent', $event.target.value)"
-            />
-          </label>
-        </div>
+        <button
+          type="button"
+          class="w-full rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-slate-500 disabled:opacity-50"
+          :disabled="saving"
+          @click="persistNote"
+        >
+          {{ saving ? 'Enregistrement…' : 'Enregistrer la note' }}
+        </button>
       </div>
-
-      <div class="mt-4">
-        <OptionButtonGroup
-          :model-value="line.rpe"
-          :options="RPE_OPTIONS"
-          label="RPE de la série"
-          @update:model-value="updateRpe"
-        />
-      </div>
-
-      <p v-if="!canValidate" class="mt-3 text-xs text-slate-500">
-        Renseigne la charge et le RPE pour valider la série.
-      </p>
-
-      <button
-        type="button"
-        class="mt-4 w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-        :disabled="saving || !canValidate"
-        @click="validateLine"
-      >
-        {{ validateButtonLabel }}
-      </button>
     </div>
   </article>
 </template>
