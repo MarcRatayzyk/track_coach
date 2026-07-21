@@ -19,14 +19,21 @@ const props = defineProps({
   activeFeedback: { type: Object, default: null },
   eligibleSessions: { type: Array, default: () => [] },
   feedbackFrequency: { type: String, default: 'weekly' },
-  uploadLimits: { type: Object, default: () => ({ maxFiles: 3, maxFileBytes: 100 * 1024 * 1024 }) },
+  uploadLimits: {
+    type: Object,
+    default: () => ({ maxFiles: 3, maxFileBytes: 100 * 1024 * 1024, driver: 'local' }),
+  },
 });
 
 const isCoach = computed(() => props.role === 'coach');
 const isWeekly = computed(() => props.feedbackFrequency === 'weekly');
+const usesDirectUpload = computed(() => props.uploadLimits?.driver === 's3');
 const showSubmitForm = ref(false);
 const selectedVideos = ref([]);
 const videoInputRef = useTemplateRef('videoInput');
+const uploadProgress = ref(0);
+const uploadStatus = ref('');
+const isUploading = ref(false);
 const MAX_VIDEOS = computed(() => props.uploadLimits?.maxFiles ?? 3);
 const MAX_VIDEO_BYTES = computed(() => props.uploadLimits?.maxFileBytes ?? 100 * 1024 * 1024);
 const ALLOWED_VIDEO_MIME_TYPES = new Set([
@@ -43,6 +50,8 @@ const ALLOWED_VIDEO_MIME_TYPES = new Set([
 const submitForm = useForm({
   session_date: props.eligibleSessions[0]?.session_date ?? '',
   athlete_notes: '',
+  videos: [],
+  video_upload_ids: [],
 });
 
 const filterOptions = [
@@ -56,6 +65,10 @@ const athleteDescription = computed(() => {
   }
   return 'Envoyez un message et, si besoin, une vidéo pour chaque séance programme réalisée.';
 });
+
+const maxVideoMbLabel = computed(() =>
+  Math.max(1, Math.floor(MAX_VIDEO_BYTES.value / (1024 * 1024))),
+);
 
 function feedbackUrl(id) {
   return `/feedbacks?feedback=${id}${isCoach.value && props.filter === 'pending' ? '&filter=pending' : ''}`;
@@ -82,6 +95,10 @@ function selectFeedback(id) {
   router.get(feedbackUrl(id), {}, { preserveState: true, preserveScroll: true });
 }
 
+function csrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+}
+
 function onVideoChange(event) {
   const files = Array.from(event.target.files ?? []);
 
@@ -90,15 +107,20 @@ function onVideoChange(event) {
     errors.push(`Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
   }
 
-  const invalidType = files.find((f) => f.type && !ALLOWED_VIDEO_MIME_TYPES.has(f.type));
+  // Certains téléphones envoient un MIME vide ou non standard : on accepte si extension vidéo connue.
+  const invalidType = files.find((f) => {
+    if (!f.type) {
+      return !/\.(mp4|mov|webm|m4v|3gp|3gpp|mkv|avi)$/i.test(f.name || '');
+    }
+    return !ALLOWED_VIDEO_MIME_TYPES.has(f.type);
+  });
   if (invalidType) {
     errors.push('Format vidéo non pris en charge (MP4, MOV, WebM, 3GP…).');
   }
 
   const tooBig = files.find((f) => f.size > MAX_VIDEO_BYTES.value);
   if (tooBig) {
-    const mb = Math.max(1, Math.floor(MAX_VIDEO_BYTES.value / (1024 * 1024)));
-    errors.push(`Chaque vidéo ne doit pas dépasser ${mb} Mo (limite serveur actuelle).`);
+    errors.push(`Chaque vidéo ne doit pas dépasser ${maxVideoMbLabel.value} Mo.`);
   }
 
   if (errors.length) {
@@ -111,38 +133,218 @@ function onVideoChange(event) {
   }
 
   submitForm.clearErrors('videos');
+  submitForm.clearErrors('video_upload_ids');
   selectedVideos.value = files;
+  uploadProgress.value = 0;
+  uploadStatus.value = '';
 }
 
 function clearSelectedVideos() {
   selectedVideos.value = [];
   submitForm.clearErrors('videos');
+  submitForm.clearErrors('video_upload_ids');
+  uploadProgress.value = 0;
+  uploadStatus.value = '';
   if (videoInputRef.value) {
     videoInputRef.value.value = '';
   }
 }
 
-function submitFeedback() {
+async function jsonRequest(url, method, body = null) {
+  const response = await fetch(url, {
+    method,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken(),
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    credentials: 'same-origin',
+    body: body ? JSON.stringify(body) : null,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message =
+      data?.message ||
+      data?.errors?.video?.[0] ||
+      data?.errors?.mime_type?.[0] ||
+      data?.errors?.video_upload_ids?.[0] ||
+      'Erreur lors de l’envoi de la vidéo.';
+    throw new Error(message);
+  }
+
+  return data;
+}
+
+function putFileToSignedUrl(url, file, headers, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url, true);
+
+    const contentType = headers?.['Content-Type'] || headers?.['content-type'] || file.type || 'application/octet-stream';
+    xhr.setRequestHeader('Content-Type', contentType);
+
+    Object.entries(headers || {}).forEach(([key, value]) => {
+      if (key.toLowerCase() === 'content-type' || key.toLowerCase() === 'host') {
+        return;
+      }
+      xhr.setRequestHeader(key, value);
+    });
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && typeof onProgress === 'function') {
+        onProgress(event.loaded / event.total);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+        return;
+      }
+      reject(
+        new Error(
+          xhr.status === 0
+            ? 'Échec CORS ou réseau vers le stockage. Vérifiez la config CORS du bucket R2.'
+            : `Échec de l’upload vers le stockage (HTTP ${xhr.status}).`,
+        ),
+      );
+    };
+
+    xhr.onerror = () => {
+      reject(new Error('Échec CORS ou réseau vers le stockage. Vérifiez la config CORS du bucket R2.'));
+    };
+
+    xhr.send(file);
+  });
+}
+
+async function uploadVideosDirectly(files) {
+  const ids = [];
+  const total = files.length;
+
+  for (let index = 0; index < files.length; index += 1) {
+    const file = files[index];
+    uploadStatus.value = `Préparation ${index + 1}/${total}…`;
+
+    const presign = await jsonRequest('/feedbacks/video-uploads', 'POST', {
+      filename: file.name,
+      mime_type: file.type || 'video/mp4',
+      size_bytes: file.size,
+    });
+
+    uploadStatus.value = `Envoi ${index + 1}/${total}…`;
+    await putFileToSignedUrl(presign.upload_url, file, presign.headers || {}, (ratio) => {
+      const base = index / total;
+      uploadProgress.value = Math.round((base + ratio / total) * 100);
+    });
+
+    uploadStatus.value = `Finalisation ${index + 1}/${total}…`;
+    await jsonRequest(`/feedbacks/video-uploads/${presign.id}/complete`, 'POST');
+    ids.push(presign.id);
+  }
+
+  uploadProgress.value = 100;
+  uploadStatus.value = 'Vidéos envoyées.';
+  return ids;
+}
+
+async function submitFeedback() {
   const notes = submitForm.athlete_notes?.trim() ?? '';
+  if (!submitForm.session_date) {
+    submitForm.setError('session_date', 'Choisissez une séance.');
+    return;
+  }
   if (!notes && selectedVideos.value.length === 0) {
     submitForm.setError('athlete_notes', 'Ajoutez un message ou au moins une vidéo.');
     return;
   }
 
-  submitForm
-    .transform((data) => ({
-      ...data,
-      videos: selectedVideos.value,
-    }))
-    .post('/feedbacks', {
-      forceFormData: selectedVideos.value.length > 0,
+  submitForm.clearErrors();
+
+  if (!usesDirectUpload.value) {
+    uploadStatus.value = selectedVideos.value.length
+      ? 'Envoi en cours (cela peut prendre une minute)…'
+      : 'Envoi en cours…';
+    submitForm.videos = selectedVideos.value;
+    submitForm.video_upload_ids = [];
+    submitForm.post('/feedbacks', {
+      forceFormData: true,
       preserveScroll: true,
       onSuccess: () => {
         submitForm.reset();
         clearSelectedVideos();
         showSubmitForm.value = false;
+        uploadStatus.value = '';
+      },
+      onError: (errors) => {
+        const first =
+          errors?.videos ||
+          errors?.athlete_notes ||
+          errors?.session_date ||
+          Object.values(errors || {})[0];
+        if (first && !errors?.videos) {
+          submitForm.setError('videos', Array.isArray(first) ? first[0] : String(first));
+        }
+        uploadStatus.value = '';
+      },
+      onFinish: () => {
+        if (uploadStatus.value.startsWith('Envoi')) {
+          uploadStatus.value = '';
+        }
       },
     });
+    return;
+  }
+
+  isUploading.value = true;
+  uploadProgress.value = 0;
+
+  try {
+    let videoUploadIds = [];
+    if (selectedVideos.value.length > 0) {
+      videoUploadIds = await uploadVideosDirectly(selectedVideos.value);
+    }
+
+    submitForm.videos = [];
+    submitForm.video_upload_ids = videoUploadIds;
+
+    await new Promise((resolve, reject) => {
+      submitForm.post('/feedbacks', {
+        preserveScroll: true,
+        onSuccess: () => {
+          submitForm.reset();
+          clearSelectedVideos();
+          showSubmitForm.value = false;
+          resolve();
+        },
+        onError: (errors) => {
+          const first =
+            errors?.video_upload_ids ||
+            errors?.videos ||
+            errors?.athlete_notes ||
+            errors?.session_date ||
+            Object.values(errors || {})[0];
+          if (first) {
+            submitForm.setError(
+              'videos',
+              Array.isArray(first) ? first[0] : String(first),
+            );
+          }
+          reject(new Error('validation'));
+        },
+        onFinish: () => {
+          isUploading.value = false;
+        },
+      });
+    });
+  } catch (error) {
+    if (error?.message && error.message !== 'validation') {
+      submitForm.setError('videos', error.message);
+    }
+    isUploading.value = false;
+  }
 }
 
 function formatSubmitted(iso) {
@@ -257,29 +459,57 @@ watch(
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300">Vidéos (optionnel, 1 à 3)</label>
+          <label class="block text-sm font-medium text-slate-300">
+            Vidéos (optionnel, 1 à {{ MAX_VIDEOS }}, max {{ maxVideoMbLabel }} Mo)
+          </label>
           <input
             ref="videoInput"
             type="file"
             accept="video/*"
             multiple
-            class="mt-1 w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white"
+            :disabled="isUploading || submitForm.processing"
+            class="mt-1 w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white disabled:opacity-50"
             @change="onVideoChange"
           />
           <p v-if="selectedVideos.length" class="mt-2 text-xs text-slate-500">
             {{ selectedVideos.length }} fichier{{ selectedVideos.length > 1 ? 's' : '' }} sélectionné{{ selectedVideos.length > 1 ? 's' : '' }}
           </p>
+          <div v-if="usesDirectUpload && (isUploading || uploadProgress > 0)" class="mt-3">
+            <div class="h-2 overflow-hidden rounded-full bg-slate-800">
+              <div
+                class="h-full rounded-full bg-blue-500 transition-all duration-200"
+                :style="{ width: `${uploadProgress}%` }"
+              />
+            </div>
+            <p v-if="uploadStatus" class="mt-1 text-xs text-slate-400">{{ uploadStatus }}</p>
+          </div>
+          <p
+            v-else-if="uploadStatus && (submitForm.processing || isUploading)"
+            class="mt-2 text-xs text-slate-400"
+          >
+            {{ uploadStatus }}
+          </p>
+          <p v-if="!usesDirectUpload" class="mt-2 text-xs text-amber-400/90">
+            Mode local : limite PHP ~{{ maxVideoMbLabel }} Mo. Configure R2 (clés AWS_*) pour aller jusqu’à 500 Mo.
+          </p>
           <p v-if="submitForm.errors.videos" class="mt-1 text-sm text-red-400">
             {{ submitForm.errors.videos }}
+          </p>
+          <p v-else-if="submitForm.errors.video_upload_ids" class="mt-1 text-sm text-red-400">
+            {{ submitForm.errors.video_upload_ids }}
           </p>
         </div>
 
         <button
           type="submit"
-          :disabled="submitForm.processing"
+          :disabled="submitForm.processing || isUploading"
           class="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
         >
-          Envoyer au coach
+          {{
+            isUploading || submitForm.processing
+              ? 'Envoi en cours…'
+              : 'Envoyer au coach'
+          }}
         </button>
       </form>
     </div>

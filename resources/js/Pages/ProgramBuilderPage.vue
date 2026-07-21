@@ -25,7 +25,7 @@ import BlockSetupTableCard from '../Components/BlockSetupTableCard.vue';
 import BlockWarmupPanel from '../Components/BlockWarmupPanel.vue';
 
 import ProgramBlockCalendar from '../Components/ProgramBlockCalendar.vue';
-import AthleteProgramTableView from '../Components/AthleteProgramTableView.vue';
+import ProgramBlockTableBuilder from '../Components/ProgramBlockTableBuilder.vue';
 import ProgramBlockTableBuilderV2 from '../Components/ProgramBlockTableBuilderV2.vue';
 import ProgramPasteIncrementModal from '../Components/ProgramPasteIncrementModal.vue';
 
@@ -963,9 +963,9 @@ function clearClipboard() {
         />
       </section>
 
-      <AthleteProgramTableView
+      <ProgramBlockTableBuilder
         v-else-if="activeTab === 'table'"
-        :program-block="activeBlock"
+        :active-block="activeBlock"
       />
 
       <ProgramBlockTableBuilderV2

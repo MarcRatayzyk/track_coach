@@ -55,6 +55,7 @@ class SessionFeedback extends Model
     {
         return $this->hasMany(SessionFeedbackMedia::class)
             ->where('kind', SessionFeedbackMedia::KIND_VIDEO)
+            ->where('status', SessionFeedbackMedia::STATUS_ATTACHED)
             ->orderBy('sort_order');
     }
 

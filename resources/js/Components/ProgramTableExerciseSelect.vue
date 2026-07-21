@@ -19,13 +19,22 @@ const props = defineProps({
     type: String,
     default: 'squat',
   },
+  /** Si false (tableur V2), le clic ouvre l’édition rapide via @activate au lieu du picker. */
+  pickerEnabled: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(['select', 'activate']);
 
 const open = ref(false);
 
-function openPicker() {
+function onTriggerClick() {
+  if (!props.pickerEnabled) {
+    emit('activate');
+    return;
+  }
   open.value = true;
 }
 
@@ -43,14 +52,15 @@ function handleSelect(payload) {
     <button
       type="button"
       class="flex w-full items-center justify-between gap-1 border-0 bg-transparent px-1 py-1 text-left text-xs text-white outline-none"
-      @click.stop="openPicker"
+      @click.stop="onTriggerClick"
     >
       <span v-if="exerciseName" class="block whitespace-normal break-words">{{ exerciseName }}</span>
-      <span v-else class="text-slate-500">Choisir un exercice</span>
-      <span class="shrink-0 text-[10px] text-slate-400">▾</span>
+      <span v-else class="text-slate-500">{{ pickerEnabled ? 'Choisir un exercice' : 'Sélectionner' }}</span>
+      <span v-if="pickerEnabled" class="shrink-0 text-[10px] text-slate-400">▾</span>
     </button>
 
     <ExercisePicker
+      v-if="pickerEnabled"
       :open="open"
       :section="props.section"
       :main-lift="props.defaultLift"

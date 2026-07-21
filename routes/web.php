@@ -27,6 +27,7 @@ use App\Http\Controllers\Web\Coach\ProgramWebController;
 use App\Http\Controllers\Web\RegisterController;
 use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\LoginController;
+use App\Http\Controllers\Web\SessionFeedbackVideoUploadController;
 use App\Http\Controllers\Web\SessionFeedbackWebController;
 use Illuminate\Support\Facades\Route;
 
@@ -75,6 +76,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/feedbacks', [SessionFeedbackWebController::class, 'index'])->name('feedbacks.index');
     Route::get('/feedbacks/{feedback}', [SessionFeedbackWebController::class, 'show'])->name('feedbacks.show');
     Route::post('/feedbacks', [SessionFeedbackWebController::class, 'store'])->name('feedbacks.store');
+    Route::post('/feedbacks/video-uploads', [SessionFeedbackVideoUploadController::class, 'store'])
+        ->name('feedbacks.video-uploads.store');
+    Route::post('/feedbacks/video-uploads/{media}/complete', [SessionFeedbackVideoUploadController::class, 'complete'])
+        ->name('feedbacks.video-uploads.complete');
 
     Route::get('/athletes/{athlete}', [AppPageController::class, 'athlete'])->name('athletes.show');
     Route::post('/athletes/{athlete}/training-sessions', [AthleteDataWebController::class, 'storeTrainingSession'])

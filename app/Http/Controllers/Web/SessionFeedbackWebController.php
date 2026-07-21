@@ -9,6 +9,7 @@ use App\Models\SessionFeedback;
 use App\Services\AthleteEligibleFeedbackSessionsService;
 use App\Support\FeedbackFrequencySupport;
 use App\Support\SessionFeedbackPresenter;
+use App\Support\VideoUploadDisk;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -46,11 +47,17 @@ class SessionFeedbackWebController extends Controller
         StoreSessionFeedbackRequest $request,
         StoreSessionFeedbackAction $action,
     ): RedirectResponse {
+        $videoUploadIds = array_values(array_map(
+            'intval',
+            (array) $request->validated('video_upload_ids', []),
+        ));
+
         $feedback = $action->execute(
             $request->user(),
             $request->validated('session_date'),
             $request->validated('athlete_notes'),
-            $request->file('videos', []),
+            $request->file('videos', []) ?? [],
+            $videoUploadIds,
         );
 
         return redirect()
@@ -177,7 +184,7 @@ class SessionFeedbackWebController extends Controller
     }
 
     /**
-     * @return array{maxFiles:int, maxFileBytes:int}
+     * @return array{maxFiles:int, maxFileBytes:int, driver:string}
      */
     private function uploadLimits(): array
     {
@@ -187,10 +194,7 @@ class SessionFeedbackWebController extends Controller
         // On garde une marge sur post_max_size (il contient aussi les champs texte + multipart overhead)
         $effectiveMax = max(0, min($uploadMax, (int) floor($postMax * 0.9)));
 
-        return [
-            'maxFiles' => 3,
-            'maxFileBytes' => $effectiveMax,
-        ];
+        return VideoUploadDisk::uploadLimits($effectiveMax);
     }
 
     private function bytesFromIni(string $value): int

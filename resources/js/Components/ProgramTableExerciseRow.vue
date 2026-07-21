@@ -89,7 +89,9 @@ function onRowClick(event) {
             :row="row"
             :default-lift="defaultLift"
             :default-load-mode="normalizedLayout.load_mode"
+            :picker-enabled="!selectable"
             @update="updateRow"
+            @activate-exercise="emit('select')"
           />
         </div>
         <button
@@ -107,7 +109,9 @@ function onRowClick(event) {
         :row="row"
         :default-lift="defaultLift"
         :default-load-mode="normalizedLayout.load_mode"
+        :picker-enabled="!selectable"
         @update="updateRow"
+        @activate-exercise="emit('select')"
       />
     </td>
   </tr>

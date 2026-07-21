@@ -26,9 +26,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  /** Tableur V2 : clic exo → édition rapide, pas le modal picker. */
+  pickerEnabled: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-const emit = defineEmits(['update']);
+const emit = defineEmits(['update', 'activate-exercise']);
 
 function updateField(field, value) {
   emit('update', {
@@ -72,7 +77,9 @@ function onLiftChange(lift) {
       :exercise-variant-id="row.exercise_variant_id"
       :exercise-name="row.exercise_name"
       :default-lift="defaultLift"
+      :picker-enabled="pickerEnabled"
       @select="onExerciseSelect"
+      @activate="emit('activate-exercise')"
     />
   </template>
 
@@ -89,7 +96,9 @@ function onLiftChange(lift) {
       :exercise-variant-id="row.exercise_variant_id"
       :exercise-name="row.exercise_name"
       :default-lift="row.lift ?? defaultLift"
+      :picker-enabled="pickerEnabled"
       @select="onExerciseSelect"
+      @activate="emit('activate-exercise')"
     />
   </template>
 

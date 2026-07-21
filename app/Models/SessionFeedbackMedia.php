@@ -13,8 +13,17 @@ class SessionFeedbackMedia extends Model
 
     public const KIND_AUDIO = 'audio';
 
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_UPLOADED = 'uploaded';
+
+    public const STATUS_ATTACHED = 'attached';
+
+    public const STATUS_FAILED = 'failed';
+
     protected $fillable = [
         'session_feedback_id',
+        'uploaded_by',
         'kind',
         'disk',
         'path',
@@ -22,11 +31,17 @@ class SessionFeedbackMedia extends Model
         'original_name',
         'size_bytes',
         'sort_order',
+        'status',
     ];
 
     public function feedback(): BelongsTo
     {
         return $this->belongsTo(SessionFeedback::class, 'session_feedback_id');
+    }
+
+    public function uploader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 
     public function annotations(): HasMany
@@ -37,6 +52,12 @@ class SessionFeedbackMedia extends Model
 
     public function url(): string
     {
-        return Storage::disk($this->disk)->url($this->path);
+        $disk = Storage::disk($this->disk);
+
+        if ($this->disk === 's3' || config("filesystems.disks.{$this->disk}.driver") === 's3') {
+            return $disk->temporaryUrl($this->path, now()->addHour());
+        }
+
+        return $disk->url($this->path);
     }
 }

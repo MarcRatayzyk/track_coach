@@ -5,6 +5,7 @@ namespace App\Actions;
 use App\Models\AthleteProfile;
 use App\Models\DashboardTask;
 use App\Models\SessionFeedback;
+use App\Models\SessionFeedbackMedia;
 use App\Models\User;
 use App\Notifications\NewSessionFeedbackNotification;
 use App\Support\FeedbackFrequencySupport;
@@ -23,12 +24,14 @@ class StoreSessionFeedbackAction
 
     /**
      * @param  list<UploadedFile>  $videos
+     * @param  list<int>  $videoUploadIds
      */
     public function execute(
         User $athlete,
         string $sessionDate,
         ?string $athleteNotes,
-        array $videos,
+        array $videos = [],
+        array $videoUploadIds = [],
     ): SessionFeedback {
         $date = Carbon::parse($sessionDate)->startOfDay();
 
@@ -55,7 +58,7 @@ class StoreSessionFeedbackAction
             ]);
         }
 
-        return DB::transaction(function () use ($athlete, $date, $athleteNotes, $videos, $resolved): SessionFeedback {
+        return DB::transaction(function () use ($athlete, $date, $athleteNotes, $videos, $videoUploadIds, $resolved): SessionFeedback {
             $feedback = SessionFeedback::query()->create([
                 'coach_id' => $resolved['coach']->id,
                 'athlete_id' => $athlete->id,
@@ -67,7 +70,12 @@ class StoreSessionFeedbackAction
                 'submitted_at' => now(),
             ]);
 
-            $this->storeMedia->storeVideos($feedback, $videos);
+            if ($videoUploadIds !== []) {
+                $this->storeMedia->attachUploadedVideos($feedback, $athlete, $videoUploadIds);
+            } elseif ($videos !== []) {
+                $this->storeMedia->storeVideos($feedback, $videos, $athlete->id);
+            }
+
             $this->linkDashboardTask($feedback, $athlete, $date);
 
             $feedback->load(['athleteVideos', 'programTrainingDay', 'athlete:id,name', 'coach:id,name']);
