@@ -33,10 +33,11 @@ console.log(`Using JAVA_HOME=${env.JAVA_HOME}`);
 
 function runGradle(args) {
     if (process.platform === 'win32') {
-        return spawnSync('cmd.exe', ['/d', '/s', '/c', gradlew, ...args], {
+        return spawnSync('.\\gradlew.bat', args, {
             cwd: androidDir,
             env,
             stdio: 'inherit',
+            shell: true,
         });
     }
 

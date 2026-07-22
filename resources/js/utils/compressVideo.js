@@ -1,7 +1,13 @@
 /**
- * Compresse une vidéo côté navigateur (~720p) via MediaRecorder + canvas.
+ * Compresse une vidéo :
+ * - natif Capacitor : plugin hardware (LightCompressor / MediaCodec)
+ * - web : MediaRecorder + canvas (~720p)
  * En cas d’échec / gain insuffisant, renvoie le fichier d’origine.
  */
+
+import { Capacitor } from '@capacitor/core';
+import { Directory, Filesystem } from '@capacitor/filesystem';
+import { NativeVideoCompressor } from 'capacitor-native-video-compressor';
 
 const SKIP_UNDER_BYTES = 20 * 1024 * 1024;
 const MIN_SAVINGS_RATIO = 0.15;
@@ -9,6 +15,7 @@ const MAX_WIDTH = 1280;
 const MAX_HEIGHT = 720;
 const VIDEO_BITS_PER_SECOND = 2_500_000;
 const COMPRESS_TIMEOUT_MS = 8 * 60 * 1000;
+const NATIVE_QUALITY = 'HIGH';
 
 /**
  * @param {File} file
@@ -27,6 +34,21 @@ export async function compressVideo(file, options = {}) {
       originalBytes,
       outputBytes: originalBytes,
     };
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      return await compressWithNativePlugin(file, onProgress);
+    } catch (error) {
+      console.warn('[compressVideo] native fallback to original', error);
+      onProgress(1);
+      return {
+        file,
+        compressed: false,
+        originalBytes,
+        outputBytes: originalBytes,
+      };
+    }
   }
 
   if (typeof MediaRecorder === 'undefined' || typeof HTMLCanvasElement === 'undefined') {
@@ -115,6 +137,177 @@ export function formatMb(bytes) {
     return `${mb.toFixed(1)} Mo`;
   }
   return `${Math.round(mb)} Mo`;
+}
+
+/**
+ * @param {File} file
+ * @param {(ratio: number) => void} onProgress
+ * @returns {Promise<{ file: File, compressed: boolean, originalBytes: number, outputBytes: number }>}
+ */
+async function compressWithNativePlugin(file, onProgress) {
+  const originalBytes = file.size;
+  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const inputPath = `tc-video-in-${stamp}.mp4`;
+  let destPath = null;
+  let listener = null;
+
+  try {
+    onProgress(0.02);
+    const base64 = await blobToBase64(file);
+    await Filesystem.writeFile({
+      path: inputPath,
+      data: base64,
+      directory: Directory.Cache,
+      recursive: true,
+    });
+
+    const { uri: sourceUri } = await Filesystem.getUri({
+      path: inputPath,
+      directory: Directory.Cache,
+    });
+
+    listener = await NativeVideoCompressor.addListener('onProgress', (info) => {
+      if (info?.status === 'progress' && typeof info.percent === 'number') {
+        const ratio = info.percent > 1 ? info.percent / 100 : info.percent;
+        onProgress(Math.min(0.98, Math.max(0.02, ratio)));
+      } else if (info?.status === 'started') {
+        onProgress(0.05);
+      }
+    });
+
+    const result = await NativeVideoCompressor.compressVideo({
+      sourcePath: sourceUri,
+      quality: NATIVE_QUALITY,
+    });
+
+    if (!result?.success || !result.destPath) {
+      throw new Error('Compression native sans fichier de sortie');
+    }
+
+    destPath = result.destPath;
+    const compressedBlob = await readNativeFileAsBlob(destPath);
+    const savedEnough = compressedBlob.size <= originalBytes * (1 - MIN_SAVINGS_RATIO);
+
+    if (!savedEnough || compressedBlob.size < 1024) {
+      onProgress(1);
+      return {
+        file,
+        compressed: false,
+        originalBytes,
+        outputBytes: originalBytes,
+      };
+    }
+
+    const baseName = (file.name || 'video').replace(/\.[^.]+$/, '');
+    const compressedFile = new File([compressedBlob], `${baseName}-720p.mp4`, {
+      type: 'video/mp4',
+      lastModified: Date.now(),
+    });
+
+    onProgress(1);
+    return {
+      file: compressedFile,
+      compressed: true,
+      originalBytes,
+      outputBytes: compressedFile.size,
+    };
+  } finally {
+    try {
+      await listener?.remove();
+    } catch {
+      // ignore
+    }
+    await safeDeleteCacheFile(inputPath);
+    if (destPath) {
+      await safeDeleteAbsolutePath(destPath);
+    }
+  }
+}
+
+/**
+ * @param {Blob} blob
+ * @returns {Promise<string>}
+ */
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Impossible de lire la vidéo'));
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      const comma = result.indexOf(',');
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * @param {string} absolutePath
+ * @returns {Promise<Blob>}
+ */
+async function readNativeFileAsBlob(absolutePath) {
+  const normalized = absolutePath.startsWith('file://')
+    ? absolutePath
+    : absolutePath.startsWith('/')
+      ? `file://${absolutePath}`
+      : absolutePath;
+
+  try {
+    const webUrl = Capacitor.convertFileSrc(normalized);
+    const response = await fetch(webUrl);
+    if (!response.ok) {
+      throw new Error(`Lecture fichier compressé HTTP ${response.status}`);
+    }
+    const blob = await response.blob();
+    if (blob.size > 0) {
+      return blob;
+    }
+  } catch (error) {
+    console.warn('[compressVideo] convertFileSrc failed, trying Filesystem.readFile', error);
+  }
+
+  const pathForFs = normalized.replace(/^file:\/\//, '');
+  const { data } = await Filesystem.readFile({ path: pathForFs });
+  return base64ToBlob(String(data), 'video/mp4');
+}
+
+/**
+ * @param {string} base64
+ * @param {string} mime
+ * @returns {Blob}
+ */
+function base64ToBlob(base64, mime) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mime });
+}
+
+/**
+ * @param {string} path
+ * @returns {Promise<void>}
+ */
+async function safeDeleteCacheFile(path) {
+  try {
+    await Filesystem.deleteFile({ path, directory: Directory.Cache });
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * @param {string} absolutePath
+ * @returns {Promise<void>}
+ */
+async function safeDeleteAbsolutePath(absolutePath) {
+  try {
+    const pathForFs = absolutePath.replace(/^file:\/\//, '');
+    await Filesystem.deleteFile({ path: pathForFs });
+  } catch {
+    // ignore
+  }
 }
 
 /**
