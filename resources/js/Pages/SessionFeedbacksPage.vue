@@ -9,8 +9,10 @@ export default {
 <script setup>
 import { Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, useTemplateRef, watch } from 'vue';
+import { Capacitor } from '@capacitor/core';
+import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { formatCalendarFr } from '../utils/formatDates';
-import { compressVideo, formatMb } from '../utils/compressVideo';
+import { cleanupSource, compressVideo, formatMb, resolveUploadBlob } from '../utils/compressVideo';
 import VideoAnnotator from '../Components/VideoAnnotator.vue';
 
 const props = defineProps({
@@ -29,15 +31,15 @@ const props = defineProps({
 const isCoach = computed(() => props.role === 'coach');
 const isWeekly = computed(() => props.feedbackFrequency === 'weekly');
 const usesDirectUpload = computed(() => props.uploadLimits?.driver === 's3');
+const isNative = Capacitor.isNativePlatform();
 const showSubmitForm = ref(false);
+// selectedVideos : liste de VideoSource ({ name, size, type, file? | path? }).
 const selectedVideos = ref([]);
-const preparedVideos = ref([]);
-const compressionPromise = ref(null);
 const isCompressing = ref(false);
-const compressionProgress = ref(0);
 const compressionSummary = ref('');
 const videoInputRef = useTemplateRef('videoInput');
-const uploadProgress = ref(0);
+// Barre de progression unifiée (compression + upload) sur 0..100.
+const pipelineProgress = ref(0);
 const uploadStatus = ref('');
 const isUploading = ref(false);
 const MAX_VIDEOS = computed(() => props.uploadLimits?.maxFiles ?? 3);
@@ -76,12 +78,7 @@ const maxVideoMbLabel = computed(() =>
   Math.max(1, Math.floor(MAX_VIDEO_BYTES.value / (1024 * 1024))),
 );
 
-const progressPercent = computed(() => {
-  if (isCompressing.value) {
-    return compressionProgress.value;
-  }
-  return uploadProgress.value;
-});
+const progressPercent = computed(() => pipelineProgress.value);
 
 const showProgressBar = computed(
   () =>
@@ -131,132 +128,88 @@ function csrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 }
 
-function onVideoChange(event) {
-  const files = Array.from(event.target.files ?? []);
+function isAllowedVideo(source) {
+  if (!source.type) {
+    return /\.(mp4|mov|webm|m4v|3gp|3gpp|mkv|avi)$/i.test(source.name || '');
+  }
+  return ALLOWED_VIDEO_MIME_TYPES.has(source.type);
+}
 
+function applySelectedVideos(sources) {
   const errors = [];
-  if (files.length > MAX_VIDEOS.value) {
+  if (sources.length > MAX_VIDEOS.value) {
     errors.push(`Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
   }
-
-  // Certains téléphones envoient un MIME vide ou non standard : on accepte si extension vidéo connue.
-  const invalidType = files.find((f) => {
-    if (!f.type) {
-      return !/\.(mp4|mov|webm|m4v|3gp|3gpp|mkv|avi)$/i.test(f.name || '');
-    }
-    return !ALLOWED_VIDEO_MIME_TYPES.has(f.type);
-  });
-  if (invalidType) {
+  if (sources.some((s) => !isAllowedVideo(s))) {
     errors.push('Format vidéo non pris en charge (MP4, MOV, WebM, 3GP…).');
   }
-
-  const tooBig = files.find((f) => f.size > MAX_VIDEO_BYTES.value);
-  if (tooBig) {
+  if (sources.some((s) => (s.size ?? 0) > MAX_VIDEO_BYTES.value)) {
     errors.push(`Chaque vidéo ne doit pas dépasser ${maxVideoMbLabel.value} Mo.`);
   }
 
   if (errors.length) {
     submitForm.setError('videos', errors[0]);
-    selectedVideos.value = [];
-    preparedVideos.value = [];
-    compressionPromise.value = null;
-    compressionSummary.value = '';
-    if (videoInputRef.value) {
-      videoInputRef.value.value = '';
-    }
+    resetSelectionState();
     return;
   }
 
   submitForm.clearErrors('videos');
   submitForm.clearErrors('video_upload_ids');
-  selectedVideos.value = files;
-  preparedVideos.value = [];
+  selectedVideos.value = sources;
   compressionSummary.value = '';
-  uploadProgress.value = 0;
+  pipelineProgress.value = 0;
   uploadStatus.value = '';
-  startCompression(files);
 }
 
-function clearSelectedVideos() {
+// Web / PWA : input HTML classique -> on transporte le File tel quel.
+function onVideoChange(event) {
+  const sources = Array.from(event.target.files ?? []).map((f) => ({
+    name: f.name,
+    size: f.size,
+    type: f.type,
+    file: f,
+  }));
+  applySelectedVideos(sources);
+}
+
+// Natif : picker qui renvoie un chemin de fichier (aucun chargement mémoire).
+async function pickNativeVideos() {
+  try {
+    const result = await FilePicker.pickVideos({ readData: false });
+    const sources = (result?.files ?? []).map((f) => ({
+      name: f.name || 'video.mp4',
+      size: f.size ?? 0,
+      type: f.mimeType || 'video/mp4',
+      path: f.path,
+    }));
+    if (sources.length) {
+      applySelectedVideos(sources);
+    }
+  } catch (error) {
+    const message = error?.message || '';
+    // Annulation par l'utilisateur -> on ignore silencieusement.
+    if (!/cancel/i.test(message)) {
+      submitForm.setError('videos', message || 'Sélection vidéo impossible.');
+    }
+  }
+}
+
+function resetSelectionState() {
   selectedVideos.value = [];
-  preparedVideos.value = [];
-  compressionPromise.value = null;
-  isCompressing.value = false;
-  compressionProgress.value = 0;
   compressionSummary.value = '';
-  submitForm.clearErrors('videos');
-  submitForm.clearErrors('video_upload_ids');
-  uploadProgress.value = 0;
+  pipelineProgress.value = 0;
   uploadStatus.value = '';
   if (videoInputRef.value) {
     videoInputRef.value.value = '';
   }
 }
 
-function startCompression(files) {
-  isCompressing.value = true;
-  compressionProgress.value = 0;
-  uploadStatus.value = files.length > 1 ? 'Compression des vidéos…' : 'Compression de la vidéo…';
-
-  const total = files.length;
-  const summaries = [];
-
-  const promise = (async () => {
-    const output = [];
-    for (let index = 0; index < files.length; index += 1) {
-      uploadStatus.value = `Compression ${index + 1}/${total}…`;
-      const result = await compressVideo(files[index], {
-        onProgress: (ratio) => {
-          const base = index / total;
-          compressionProgress.value = Math.round((base + ratio / total) * 100);
-        },
-      });
-      output.push(result.file);
-      if (result.compressed) {
-        summaries.push(
-          `${formatMb(result.originalBytes)} → ${formatMb(result.outputBytes)}`,
-        );
-      }
-    }
-    return { files: output, summaries };
-  })()
-    .then((result) => {
-      preparedVideos.value = result.files;
-      compressionSummary.value = result.summaries.length
-        ? `Compressé : ${result.summaries.join(' · ')}`
-        : result.files.length
-          ? 'Vidéo prête (déjà légère ou compression non nécessaire).'
-          : '';
-      compressionProgress.value = 100;
-      uploadStatus.value = compressionSummary.value || 'Compression terminée.';
-      return result.files;
-    })
-    .catch((error) => {
-      console.warn('[SessionFeedbacks] compression failed, using originals', error);
-      preparedVideos.value = files;
-      compressionSummary.value = '';
-      uploadStatus.value = 'Compression impossible : envoi du fichier d’origine.';
-      return files;
-    })
-    .finally(() => {
-      isCompressing.value = false;
-    });
-
-  compressionPromise.value = promise;
-  return promise;
-}
-
-async function ensurePreparedVideos() {
-  if (selectedVideos.value.length === 0) {
-    return [];
-  }
-  if (compressionPromise.value) {
-    return compressionPromise.value;
-  }
-  if (preparedVideos.value.length === selectedVideos.value.length) {
-    return preparedVideos.value;
-  }
-  return startCompression(selectedVideos.value);
+function clearSelectedVideos() {
+  resetSelectionState();
+  isCompressing.value = false;
+  isUploading.value = false;
+  submitForm.clearErrors('videos');
+  submitForm.clearErrors('video_upload_ids');
 }
 
 async function jsonRequest(url, method, body = null) {
@@ -286,19 +239,14 @@ async function jsonRequest(url, method, body = null) {
   return data;
 }
 
-function putFileToSignedUrl(url, file, headers, onProgress) {
+function putFileToSignedUrl(url, blob, contentType, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', url, true);
 
     // Uniquement Content-Type : d’autres headers déclenchent un preflight CORS
     // que R2 refuse souvent si AllowedHeaders vaut "*".
-    const contentType =
-      headers?.['Content-Type'] ||
-      headers?.['content-type'] ||
-      file.type ||
-      'application/octet-stream';
-    xhr.setRequestHeader('Content-Type', contentType);
+    xhr.setRequestHeader('Content-Type', contentType || blob.type || 'application/octet-stream');
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && typeof onProgress === 'function') {
@@ -324,38 +272,95 @@ function putFileToSignedUrl(url, file, headers, onProgress) {
       reject(new Error('Échec CORS ou réseau vers le stockage. Vérifiez la config CORS du bucket R2.'));
     };
 
-    xhr.send(file);
+    xhr.send(blob);
   });
 }
 
-async function uploadVideosDirectly(files) {
+// Position de la barre unifiée : chaque vidéo occupe une tranche de 1/total,
+// répartie 50 % compression + 50 % upload.
+function setPipelineProgress(index, total, fractionWithinFile) {
+  pipelineProgress.value = Math.min(
+    100,
+    Math.round(((index + fractionWithinFile) / total) * 100),
+  );
+}
+
+// Pipeline : pour chaque vidéo on compresse PUIS on l'uploade immédiatement,
+// au lieu de tout compresser puis tout uploader.
+async function uploadVideosDirectly(sources) {
   const ids = [];
-  const total = files.length;
+  const total = sources.length;
+  const summaries = [];
 
-  for (let index = 0; index < files.length; index += 1) {
-    const file = files[index];
+  for (let index = 0; index < total; index += 1) {
+    const original = sources[index];
+
+    isCompressing.value = true;
+    isUploading.value = false;
+    uploadStatus.value = `Compression ${index + 1}/${total}…`;
+    const result = await compressVideo(original, {
+      onProgress: (ratio) => setPipelineProgress(index, total, ratio * 0.5),
+    });
+    if (result.compressed) {
+      summaries.push(`${formatMb(result.originalBytes)} → ${formatMb(result.outputBytes)}`);
+    }
+    const prepared = result.source;
+
+    isCompressing.value = false;
+    isUploading.value = true;
     uploadStatus.value = `Préparation ${index + 1}/${total}…`;
-
     const presign = await jsonRequest('/feedbacks/video-uploads', 'POST', {
-      filename: file.name,
-      mime_type: file.type || 'video/mp4',
-      size_bytes: file.size,
+      filename: prepared.name,
+      mime_type: prepared.type || 'video/mp4',
+      size_bytes: prepared.size,
     });
 
+    const blob = await resolveUploadBlob(prepared);
     uploadStatus.value = `Envoi ${index + 1}/${total}…`;
-    await putFileToSignedUrl(presign.upload_url, file, presign.headers || {}, (ratio) => {
-      const base = index / total;
-      uploadProgress.value = Math.round((base + ratio / total) * 100);
-    });
+    await putFileToSignedUrl(
+      presign.upload_url,
+      blob,
+      prepared.type || 'video/mp4',
+      (ratio) => setPipelineProgress(index, total, 0.5 + ratio * 0.5),
+    );
 
     uploadStatus.value = `Finalisation ${index + 1}/${total}…`;
     await jsonRequest(`/feedbacks/video-uploads/${presign.id}/complete`, 'POST');
     ids.push(presign.id);
+
+    await cleanupSource(prepared);
   }
 
-  uploadProgress.value = 100;
+  compressionSummary.value = summaries.length ? `Compressé : ${summaries.join(' · ')}` : '';
+  pipelineProgress.value = 100;
   uploadStatus.value = 'Vidéos envoyées.';
   return ids;
+}
+
+// Mode local (pas de R2) : on prépare des File réels pour l'upload multipart Inertia.
+async function prepareLocalFiles(sources) {
+  const files = [];
+  const total = sources.length;
+  const summaries = [];
+
+  for (let index = 0; index < total; index += 1) {
+    isCompressing.value = true;
+    uploadStatus.value = `Compression ${index + 1}/${total}…`;
+    const result = await compressVideo(sources[index], {
+      onProgress: (ratio) => setPipelineProgress(index, total, ratio),
+    });
+    if (result.compressed) {
+      summaries.push(`${formatMb(result.originalBytes)} → ${formatMb(result.outputBytes)}`);
+    }
+    const prepared = result.source;
+    const blob = await resolveUploadBlob(prepared);
+    files.push(new File([blob], prepared.name, { type: prepared.type || 'video/mp4' }));
+    await cleanupSource(prepared);
+  }
+
+  isCompressing.value = false;
+  compressionSummary.value = summaries.length ? `Compressé : ${summaries.join(' · ')}` : '';
+  return files;
 }
 
 async function submitFeedback() {
@@ -371,20 +376,23 @@ async function submitFeedback() {
 
   submitForm.clearErrors();
 
-  let filesToSend = [];
-  try {
-    if (selectedVideos.value.length > 0) {
-      filesToSend = await ensurePreparedVideos();
-    }
-  } catch (error) {
-    submitForm.setError(
-      'videos',
-      error?.message || 'Échec de la préparation des vidéos.',
-    );
-    return;
-  }
+  const hasVideos = selectedVideos.value.length > 0;
 
   if (!usesDirectUpload.value) {
+    let filesToSend = [];
+    try {
+      isUploading.value = true;
+      pipelineProgress.value = 0;
+      if (hasVideos) {
+        filesToSend = await prepareLocalFiles(selectedVideos.value);
+      }
+    } catch (error) {
+      isUploading.value = false;
+      isCompressing.value = false;
+      submitForm.setError('videos', error?.message || 'Échec de la préparation des vidéos.');
+      return;
+    }
+
     uploadStatus.value = filesToSend.length
       ? 'Envoi en cours (cela peut prendre une minute)…'
       : 'Envoi en cours…';
@@ -411,6 +419,7 @@ async function submitFeedback() {
         uploadStatus.value = '';
       },
       onFinish: () => {
+        isUploading.value = false;
         if (uploadStatus.value.startsWith('Envoi')) {
           uploadStatus.value = '';
         }
@@ -420,12 +429,12 @@ async function submitFeedback() {
   }
 
   isUploading.value = true;
-  uploadProgress.value = 0;
+  pipelineProgress.value = 0;
 
   try {
     let videoUploadIds = [];
-    if (filesToSend.length > 0) {
-      videoUploadIds = await uploadVideosDirectly(filesToSend);
+    if (hasVideos) {
+      videoUploadIds = await uploadVideosDirectly(selectedVideos.value);
     }
 
     submitForm.videos = [];
@@ -465,6 +474,7 @@ async function submitFeedback() {
       submitForm.setError('videos', error.message);
     }
     isUploading.value = false;
+    isCompressing.value = false;
   }
 }
 
@@ -583,7 +593,17 @@ watch(
           <label class="block text-sm font-medium text-slate-300">
             Vidéos (optionnel, 1 à {{ MAX_VIDEOS }}, max {{ maxVideoMbLabel }} Mo)
           </label>
+          <button
+            v-if="isNative"
+            type="button"
+            :disabled="submitBusy"
+            class="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+            @click="pickNativeVideos"
+          >
+            {{ selectedVideos.length ? 'Changer les vidéos' : 'Choisir des vidéos' }}
+          </button>
           <input
+            v-else
             ref="videoInput"
             type="file"
             accept="video/*"
@@ -599,7 +619,12 @@ watch(
             {{ compressionSummary }}
           </p>
           <p class="mt-2 text-xs text-slate-500">
-            Les vidéos sont compressées automatiquement (~720p) pour un envoi plus rapide.
+            <template v-if="isNative">
+              Les vidéos sont compressées automatiquement (~720p) pour un envoi plus rapide.
+            </template>
+            <template v-else>
+              La vidéo est envoyée telle quelle : privilégiez un format déjà léger pour un envoi plus rapide.
+            </template>
           </p>
           <div v-if="showProgressBar" class="mt-3">
             <div class="h-2 overflow-hidden rounded-full bg-slate-800">
@@ -611,7 +636,7 @@ watch(
             <p v-if="statusLine" class="mt-1 text-xs text-slate-400">{{ statusLine }}</p>
           </div>
           <p v-if="!usesDirectUpload" class="mt-2 text-xs text-amber-400/90">
-            Mode local : limite PHP ~{{ maxVideoMbLabel }} Mo. Configure R2 (clés AWS_*) pour aller jusqu’à 500 Mo.
+            Mode local : limite PHP ~{{ maxVideoMbLabel }} Mo. Configure R2 (clés AWS_*) pour aller jusqu’à 200 Mo.
           </p>
           <p v-if="submitForm.errors.videos" class="mt-1 text-sm text-red-400">
             {{ submitForm.errors.videos }}

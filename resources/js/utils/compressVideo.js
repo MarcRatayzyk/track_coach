@@ -1,130 +1,188 @@
 /**
- * Compresse une vidéo :
- * - natif Capacitor : plugin hardware (LightCompressor / MediaCodec)
- * - web : MediaRecorder + canvas (~720p)
- * En cas d’échec / gain insuffisant, renvoie le fichier d’origine.
+ * Préparation d'une vidéo avant envoi :
+ * - natif Capacitor : compression hardware (MediaCodec) DIRECTEMENT à partir du
+ *   chemin de fichier fourni par le picker natif. Aucun passage par base64 :
+ *   l'ancienne approche encodait tout le fichier en base64 en RAM (+33 %), ce qui
+ *   était très lent et pouvait faire planter l'app sur les grosses vidéos.
+ * - web : aucun ré-encodage (le ré-encodage MediaRecorder se faisait en temps
+ *   réel, donc au moins aussi long que la durée de la vidéo). On uploade
+ *   directement le fichier d'origine, borné par une limite de taille.
+ *
+ * En cas d'échec / gain insuffisant, on renvoie la source d'origine.
  */
 
 import { Capacitor } from '@capacitor/core';
-import { Directory, Filesystem } from '@capacitor/filesystem';
+import { Filesystem } from '@capacitor/filesystem';
 import { NativeVideoCompressor } from 'capacitor-native-video-compressor';
 
 const SKIP_UNDER_BYTES = 20 * 1024 * 1024;
 const MIN_SAVINGS_RATIO = 0.15;
-const MAX_WIDTH = 1280;
-const MAX_HEIGHT = 720;
-const VIDEO_BITS_PER_SECOND = 2_500_000;
-const COMPRESS_TIMEOUT_MS = 8 * 60 * 1000;
-const NATIVE_QUALITY = 'HIGH';
+const COMPRESS_TIMEOUT_MS = 4 * 60 * 1000;
+const NATIVE_QUALITY = 'MEDIUM';
 
 /**
- * @param {File} file
- * @param {{ onProgress?: (ratio: number) => void }} [options]
- * @returns {Promise<{ file: File, compressed: boolean, originalBytes: number, outputBytes: number }>}
+ * @typedef {Object} VideoSource
+ * @property {string} name
+ * @property {number} size
+ * @property {string} type
+ * @property {File} [file]      Fichier web (input HTML).
+ * @property {string} [path]    Chemin natif renvoyé par le picker / la compression.
+ * @property {boolean} [isTemp] Fichier temporaire natif à supprimer après upload.
  */
-export async function compressVideo(file, options = {}) {
+
+/**
+ * @param {VideoSource} source
+ * @param {{ onProgress?: (ratio: number) => void }} [options]
+ * @returns {Promise<{ source: VideoSource, compressed: boolean, originalBytes: number, outputBytes: number }>}
+ */
+export async function compressVideo(source, options = {}) {
   const onProgress = typeof options.onProgress === 'function' ? options.onProgress : () => {};
-  const originalBytes = file.size;
+  const originalBytes = source.size ?? source.file?.size ?? 0;
 
-  if (!(file instanceof Blob) || originalBytes < SKIP_UNDER_BYTES) {
+  const passthrough = () => {
     onProgress(1);
-    return {
-      file,
-      compressed: false,
-      originalBytes,
-      outputBytes: originalBytes,
-    };
+    return { source, compressed: false, originalBytes, outputBytes: originalBytes };
+  };
+
+  // Web / PWA : pas de compression navigateur (trop lente en temps réel) -> upload direct.
+  if (!Capacitor.isNativePlatform() || !source.path) {
+    return passthrough();
   }
 
-  if (Capacitor.isNativePlatform()) {
-    try {
-      return await compressWithNativePlugin(file, onProgress);
-    } catch (error) {
-      console.warn('[compressVideo] native fallback to original', error);
-      onProgress(1);
-      return {
-        file,
-        compressed: false,
-        originalBytes,
-        outputBytes: originalBytes,
-      };
-    }
-  }
-
-  if (typeof MediaRecorder === 'undefined' || typeof HTMLCanvasElement === 'undefined') {
-    onProgress(1);
-    return {
-      file,
-      compressed: false,
-      originalBytes,
-      outputBytes: originalBytes,
-    };
+  // Petites vidéos : le gain ne vaut pas le temps de compression.
+  if (originalBytes > 0 && originalBytes < SKIP_UNDER_BYTES) {
+    return passthrough();
   }
 
   try {
-    const result = await compressWithMediaRecorder(file, onProgress);
-    const savedEnough = result.size <= originalBytes * (1 - MIN_SAVINGS_RATIO);
-
-    if (!savedEnough) {
-      onProgress(1);
-      return {
-        file,
-        compressed: false,
-        originalBytes,
-        outputBytes: originalBytes,
-      };
-    }
-
-    const extension = extensionForMime(result.type);
-    const baseName = (file.name || 'video').replace(/\.[^.]+$/, '');
-    const compressedFile = new File([result], `${baseName}-720p.${extension}`, {
-      type: result.type || 'video/webm',
-      lastModified: Date.now(),
-    });
-
-    onProgress(1);
-    return {
-      file: compressedFile,
-      compressed: true,
-      originalBytes,
-      outputBytes: compressedFile.size,
-    };
+    return await compressWithNativePlugin(source, onProgress);
   } catch (error) {
-    console.warn('[compressVideo] fallback to original', error);
-    onProgress(1);
-    return {
-      file,
-      compressed: false,
-      originalBytes,
-      outputBytes: originalBytes,
-    };
+    console.warn('[compressVideo] native fallback to original', error);
+    return passthrough();
   }
 }
 
 /**
- * @param {File[]} files
- * @param {{ onFileProgress?: (index: number, ratio: number) => void, onStatus?: (message: string) => void }} [options]
- * @returns {Promise<File[]>}
+ * @param {VideoSource} source
+ * @param {(ratio: number) => void} onProgress
+ * @returns {Promise<{ source: VideoSource, compressed: boolean, originalBytes: number, outputBytes: number }>}
  */
-export async function compressVideos(files, options = {}) {
-  const list = Array.from(files || []);
-  const output = [];
+async function compressWithNativePlugin(source, onProgress) {
+  const originalBytes = source.size ?? 0;
+  let listener = null;
+  let timeoutId = 0;
 
-  for (let index = 0; index < list.length; index += 1) {
-    const file = list[index];
-    options.onStatus?.(`Compression ${index + 1}/${list.length}…`);
-    const result = await compressVideo(file, {
-      onProgress: (ratio) => options.onFileProgress?.(index, ratio),
-    });
-    output.push(result.file);
-    if (result.compressed) {
-      options.onStatus?.(
-        `Vidéo ${index + 1} : ${formatMb(result.originalBytes)} → ${formatMb(result.outputBytes)}`,
-      );
+  onProgress(0.02);
+  const sourceUri = toNativeUri(source.path);
+
+  listener = await NativeVideoCompressor.addListener('onProgress', (info) => {
+    if (info?.status === 'progress' && typeof info.percent === 'number') {
+      const ratio = info.percent > 1 ? info.percent / 100 : info.percent;
+      onProgress(Math.min(0.98, Math.max(0.02, ratio)));
+    } else if (info?.status === 'started') {
+      onProgress(0.05);
+    }
+  });
+
+  try {
+    const result = await Promise.race([
+      NativeVideoCompressor.compressVideo({
+        sourcePath: sourceUri,
+        quality: NATIVE_QUALITY,
+      }),
+      new Promise((_, reject) => {
+        timeoutId = window.setTimeout(
+          () => reject(new Error('Compression timeout')),
+          COMPRESS_TIMEOUT_MS,
+        );
+      }),
+    ]);
+
+    if (!result?.success || !result.destPath) {
+      throw new Error('Compression native sans fichier de sortie');
+    }
+
+    const destPath = result.destPath;
+    const outputBytes = await nativeFileSize(destPath);
+    const savedEnough =
+      outputBytes > 1024 &&
+      (originalBytes <= 0 || outputBytes <= originalBytes * (1 - MIN_SAVINGS_RATIO));
+
+    if (!savedEnough) {
+      await safeDeleteAbsolutePath(destPath);
+      onProgress(1);
+      return { source, compressed: false, originalBytes, outputBytes: originalBytes };
+    }
+
+    const baseName = (source.name || 'video').replace(/\.[^.]+$/, '');
+    onProgress(1);
+    return {
+      source: {
+        name: `${baseName}-720p.mp4`,
+        size: outputBytes,
+        type: 'video/mp4',
+        path: destPath,
+        isTemp: true,
+      },
+      compressed: true,
+      originalBytes,
+      outputBytes,
+    };
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    try {
+      await listener?.remove();
+    } catch {
+      // ignore
     }
   }
+}
 
-  return output;
+/**
+ * Charge une source vidéo en Blob prêt pour l'upload.
+ * Web : le File est déjà en mémoire.
+ * Natif : lecture via le pont HTTP local (convertFileSrc + fetch), SANS base64.
+ * @param {VideoSource} source
+ * @returns {Promise<Blob>}
+ */
+export async function resolveUploadBlob(source) {
+  if (source.file instanceof Blob) {
+    return source.file;
+  }
+  if (!source.path) {
+    throw new Error('Vidéo introuvable pour l’envoi.');
+  }
+
+  const uri = toNativeUri(source.path);
+  try {
+    const webUrl = Capacitor.convertFileSrc(uri);
+    const response = await fetch(webUrl);
+    if (response.ok) {
+      const blob = await response.blob();
+      if (blob.size > 0) {
+        return blob;
+      }
+    }
+  } catch (error) {
+    console.warn('[compressVideo] convertFileSrc read failed, fallback to Filesystem', error);
+  }
+
+  const pathForFs = uri.replace(/^file:\/\//, '');
+  const { data } = await Filesystem.readFile({ path: pathForFs });
+  return base64ToBlob(String(data), source.type || 'video/mp4');
+}
+
+/**
+ * Supprime un fichier temporaire natif (résultat de compression) après upload.
+ * @param {VideoSource} source
+ * @returns {Promise<void>}
+ */
+export async function cleanupSource(source) {
+  if (source?.isTemp && source.path) {
+    await safeDeleteAbsolutePath(source.path);
+  }
 }
 
 /**
@@ -140,135 +198,47 @@ export function formatMb(bytes) {
 }
 
 /**
- * @param {File} file
- * @param {(ratio: number) => void} onProgress
- * @returns {Promise<{ file: File, compressed: boolean, originalBytes: number, outputBytes: number }>}
+ * @param {string|undefined} path
+ * @returns {string|undefined}
  */
-async function compressWithNativePlugin(file, onProgress) {
-  const originalBytes = file.size;
-  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const inputPath = `tc-video-in-${stamp}.mp4`;
-  let destPath = null;
-  let listener = null;
-
-  try {
-    onProgress(0.02);
-    const base64 = await blobToBase64(file);
-    await Filesystem.writeFile({
-      path: inputPath,
-      data: base64,
-      directory: Directory.Cache,
-      recursive: true,
-    });
-
-    const { uri: sourceUri } = await Filesystem.getUri({
-      path: inputPath,
-      directory: Directory.Cache,
-    });
-
-    listener = await NativeVideoCompressor.addListener('onProgress', (info) => {
-      if (info?.status === 'progress' && typeof info.percent === 'number') {
-        const ratio = info.percent > 1 ? info.percent / 100 : info.percent;
-        onProgress(Math.min(0.98, Math.max(0.02, ratio)));
-      } else if (info?.status === 'started') {
-        onProgress(0.05);
-      }
-    });
-
-    const result = await NativeVideoCompressor.compressVideo({
-      sourcePath: sourceUri,
-      quality: NATIVE_QUALITY,
-    });
-
-    if (!result?.success || !result.destPath) {
-      throw new Error('Compression native sans fichier de sortie');
-    }
-
-    destPath = result.destPath;
-    const compressedBlob = await readNativeFileAsBlob(destPath);
-    const savedEnough = compressedBlob.size <= originalBytes * (1 - MIN_SAVINGS_RATIO);
-
-    if (!savedEnough || compressedBlob.size < 1024) {
-      onProgress(1);
-      return {
-        file,
-        compressed: false,
-        originalBytes,
-        outputBytes: originalBytes,
-      };
-    }
-
-    const baseName = (file.name || 'video').replace(/\.[^.]+$/, '');
-    const compressedFile = new File([compressedBlob], `${baseName}-720p.mp4`, {
-      type: 'video/mp4',
-      lastModified: Date.now(),
-    });
-
-    onProgress(1);
-    return {
-      file: compressedFile,
-      compressed: true,
-      originalBytes,
-      outputBytes: compressedFile.size,
-    };
-  } finally {
-    try {
-      await listener?.remove();
-    } catch {
-      // ignore
-    }
-    await safeDeleteCacheFile(inputPath);
-    if (destPath) {
-      await safeDeleteAbsolutePath(destPath);
-    }
+function toNativeUri(path) {
+  if (!path) {
+    return path;
   }
-}
-
-/**
- * @param {Blob} blob
- * @returns {Promise<string>}
- */
-function blobToBase64(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Impossible de lire la vidéo'));
-    reader.onload = () => {
-      const result = String(reader.result || '');
-      const comma = result.indexOf(',');
-      resolve(comma >= 0 ? result.slice(comma + 1) : result);
-    };
-    reader.readAsDataURL(blob);
-  });
+  if (path.startsWith('file://') || path.startsWith('content://')) {
+    return path;
+  }
+  if (path.startsWith('/')) {
+    return `file://${path}`;
+  }
+  return path;
 }
 
 /**
  * @param {string} absolutePath
- * @returns {Promise<Blob>}
+ * @returns {Promise<number>}
  */
-async function readNativeFileAsBlob(absolutePath) {
-  const normalized = absolutePath.startsWith('file://')
-    ? absolutePath
-    : absolutePath.startsWith('/')
-      ? `file://${absolutePath}`
-      : absolutePath;
-
+async function nativeFileSize(absolutePath) {
+  const uri = toNativeUri(absolutePath);
   try {
-    const webUrl = Capacitor.convertFileSrc(normalized);
-    const response = await fetch(webUrl);
-    if (!response.ok) {
-      throw new Error(`Lecture fichier compressé HTTP ${response.status}`);
+    const stat = await Filesystem.stat({ path: uri });
+    if (typeof stat.size === 'number' && stat.size > 0) {
+      return stat.size;
     }
-    const blob = await response.blob();
-    if (blob.size > 0) {
-      return blob;
-    }
-  } catch (error) {
-    console.warn('[compressVideo] convertFileSrc failed, trying Filesystem.readFile', error);
+  } catch {
+    // ignore, fallback ci-dessous
   }
-
-  const pathForFs = normalized.replace(/^file:\/\//, '');
-  const { data } = await Filesystem.readFile({ path: pathForFs });
-  return base64ToBlob(String(data), 'video/mp4');
+  try {
+    const webUrl = Capacitor.convertFileSrc(uri);
+    const response = await fetch(webUrl);
+    if (response.ok) {
+      const blob = await response.blob();
+      return blob.size;
+    }
+  } catch {
+    // ignore
+  }
+  return 0;
 }
 
 /**
@@ -286,212 +256,14 @@ function base64ToBlob(base64, mime) {
 }
 
 /**
- * @param {string} path
- * @returns {Promise<void>}
- */
-async function safeDeleteCacheFile(path) {
-  try {
-    await Filesystem.deleteFile({ path, directory: Directory.Cache });
-  } catch {
-    // ignore
-  }
-}
-
-/**
  * @param {string} absolutePath
  * @returns {Promise<void>}
  */
 async function safeDeleteAbsolutePath(absolutePath) {
   try {
-    const pathForFs = absolutePath.replace(/^file:\/\//, '');
+    const pathForFs = toNativeUri(absolutePath)?.replace(/^file:\/\//, '') ?? absolutePath;
     await Filesystem.deleteFile({ path: pathForFs });
   } catch {
     // ignore
   }
-}
-
-/**
- * @param {File} file
- * @param {(ratio: number) => void} onProgress
- * @returns {Promise<Blob>}
- */
-function compressWithMediaRecorder(file, onProgress) {
-  return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'auto';
-    video.src = objectUrl;
-
-    let settled = false;
-    let rafId = 0;
-    let recorder = null;
-    let timeoutId = 0;
-
-    const cleanup = () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
-      try {
-        video.pause();
-      } catch {
-        // ignore
-      }
-      video.removeAttribute('src');
-      video.load();
-      URL.revokeObjectURL(objectUrl);
-    };
-
-    const fail = (error) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      cleanup();
-      reject(error instanceof Error ? error : new Error(String(error)));
-    };
-
-    const succeed = (blob) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      cleanup();
-      resolve(blob);
-    };
-
-    timeoutId = window.setTimeout(() => {
-      try {
-        recorder?.stop();
-      } catch {
-        // ignore
-      }
-      fail(new Error('Compression timeout'));
-    }, COMPRESS_TIMEOUT_MS);
-
-    video.onerror = () => fail(new Error('Impossible de lire la vidéo pour compression'));
-
-    video.onloadedmetadata = async () => {
-      try {
-        const srcW = video.videoWidth || MAX_WIDTH;
-        const srcH = video.videoHeight || MAX_HEIGHT;
-        const scale = Math.min(1, MAX_WIDTH / srcW, MAX_HEIGHT / srcH);
-        const width = Math.max(2, Math.round((srcW * scale) / 2) * 2);
-        const height = Math.max(2, Math.round((srcH * scale) / 2) * 2);
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d', { alpha: false });
-        if (!ctx) {
-          fail(new Error('Canvas indisponible'));
-          return;
-        }
-
-        const stream = canvas.captureStream(30);
-        const mimeType = pickRecorderMimeType();
-        if (!mimeType) {
-          fail(new Error('MediaRecorder non supporté pour la compression'));
-          return;
-        }
-
-        const chunks = [];
-        recorder = new MediaRecorder(stream, {
-          mimeType,
-          videoBitsPerSecond: VIDEO_BITS_PER_SECOND,
-        });
-
-        recorder.ondataavailable = (event) => {
-          if (event.data && event.data.size > 0) {
-            chunks.push(event.data);
-          }
-        };
-
-        recorder.onerror = () => fail(new Error('Erreur MediaRecorder'));
-
-        recorder.onstop = () => {
-          stream.getTracks().forEach((track) => track.stop());
-          const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
-          if (blob.size < 1024) {
-            fail(new Error('Résultat de compression vide'));
-            return;
-          }
-          succeed(blob);
-        };
-
-        const draw = () => {
-          if (settled) {
-            return;
-          }
-          ctx.drawImage(video, 0, 0, width, height);
-          const duration = video.duration;
-          if (Number.isFinite(duration) && duration > 0) {
-            onProgress(Math.min(0.99, video.currentTime / duration));
-          }
-          rafId = requestAnimationFrame(draw);
-        };
-
-        video.onended = () => {
-          if (rafId) {
-            cancelAnimationFrame(rafId);
-            rafId = 0;
-          }
-          ctx.drawImage(video, 0, 0, width, height);
-          onProgress(0.99);
-          if (recorder && recorder.state !== 'inactive') {
-            recorder.stop();
-          }
-        };
-
-        recorder.start(250);
-        draw();
-
-        try {
-          await video.play();
-        } catch (error) {
-          fail(error);
-        }
-      } catch (error) {
-        fail(error);
-      }
-    };
-  });
-}
-
-/**
- * @returns {string|null}
- */
-function pickRecorderMimeType() {
-  const candidates = [
-    'video/webm;codecs=vp9,opus',
-    'video/webm;codecs=vp8,opus',
-    'video/webm;codecs=vp9',
-    'video/webm;codecs=vp8',
-    'video/webm',
-    'video/mp4;codecs=h264,aac',
-    'video/mp4',
-  ];
-
-  for (const type of candidates) {
-    if (MediaRecorder.isTypeSupported(type)) {
-      return type;
-    }
-  }
-
-  return null;
-}
-
-/**
- * @param {string} mime
- * @returns {string}
- */
-function extensionForMime(mime) {
-  if ((mime || '').includes('mp4')) {
-    return 'mp4';
-  }
-  return 'webm';
 }
