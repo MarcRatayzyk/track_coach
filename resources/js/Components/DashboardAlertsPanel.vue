@@ -16,21 +16,21 @@ const severityStyles = {
     bg: 'bg-red-950/25',
     hover: 'hover:border-red-500/50 hover:bg-red-950/35',
     icon: 'text-red-400',
-    badge: 'bg-red-500/20 text-red-200',
+    badge: 'border border-red-500/40 bg-red-500/20 text-red-200',
   },
   warning: {
     border: 'border-amber-500/35',
     bg: 'bg-amber-950/20',
     hover: 'hover:border-amber-500/50 hover:bg-amber-950/30',
     icon: 'text-amber-400',
-    badge: 'bg-amber-500/20 text-amber-200',
+    badge: 'border border-amber-500/50 bg-amber-500/20 text-amber-200',
   },
   info: {
     border: 'border-blue-500/30',
     bg: 'bg-blue-950/15',
     hover: 'hover:border-blue-500/45 hover:bg-blue-950/25',
     icon: 'text-blue-400',
-    badge: 'bg-blue-500/20 text-blue-200',
+    badge: 'border border-blue-500/40 bg-blue-500/20 text-blue-200',
   },
 };
 

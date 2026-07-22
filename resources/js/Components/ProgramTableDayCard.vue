@@ -403,7 +403,7 @@ function selectRow(index) {
       </svg>
       <span class="text-[10px] font-medium uppercase tracking-wide">Glisser</span>
     </div>
-    <div class="border-l-2 border-amber-400 bg-black px-3 py-2">
+    <div class="border-l-2 border-amber-400 bg-slate-950 px-3 py-2">
       <div class="flex items-center justify-between gap-3">
         <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
           <label class="flex min-w-0 flex-1 items-center gap-1.5">

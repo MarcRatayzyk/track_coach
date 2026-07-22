@@ -117,6 +117,14 @@
     color: rgb(180 83 9 / 0.85);
 }
 
+[data-theme='light'] .text-amber-300\/80 {
+    color: rgb(180 83 9 / 0.9);
+}
+
+[data-theme='light'] .placeholder\:text-amber-300\/40::placeholder {
+    color: rgb(180 83 9 / 0.45);
+}
+
 [data-theme='light'] .text-amber-200 {
     color: #92400e;
 }
@@ -318,11 +326,11 @@
 }
 
 [data-theme='light'] .text-slate-400 {
-    color: #64748b;
+    color: #475569;
 }
 
 [data-theme='light'] .text-slate-500 {
-    color: #64748b;
+    color: #475569;
 }
 
 [data-theme='light'] .text-slate-600 {
@@ -820,4 +828,163 @@
 
 [data-theme='light'] .text-blue-300 {
     color: #2563eb;
+}
+
+/* ── Contrastes manquants (boutons, badges, builder, stats) ── */
+
+[data-theme='light'] .bg-black {
+    background-color: #f1f5f9;
+}
+
+[data-theme='light'] .bg-slate-950\/95 {
+    background-color: rgb(248 250 252 / 0.97);
+}
+
+[data-theme='light'] .text-indigo-200 {
+    color: #3730a3;
+}
+
+[data-theme='light'] .hover\:bg-amber-950\/60:hover {
+    background-color: rgb(254 243 199 / 0.98);
+}
+
+[data-theme='light'] .bg-amber-950\/60 {
+    background-color: rgb(254 243 199 / 0.95);
+}
+
+[data-theme='light'] .bg-emerald-950\/30 {
+    background-color: rgb(209 250 229 / 0.85);
+}
+
+[data-theme='light'] .bg-emerald-950\/50 {
+    background-color: rgb(167 243 208 / 0.75);
+}
+
+[data-theme='light'] .bg-emerald-950\/60 {
+    background-color: rgb(167 243 208 / 0.85);
+}
+
+[data-theme='light'] .hover\:bg-emerald-950\/50:hover {
+    background-color: rgb(167 243 208 / 0.95);
+}
+
+[data-theme='light'] .text-emerald-200 {
+    color: #065f46;
+}
+
+[data-theme='light'] .bg-violet-500\/20 {
+    background-color: rgb(237 233 254 / 0.95);
+}
+
+[data-theme='light'] .text-violet-200 {
+    color: #5b21b6;
+}
+
+[data-theme='light'] .border-violet-400\/70 {
+    border-color: rgb(139 92 246 / 0.55);
+}
+
+[data-theme='light'] .bg-sky-950\/15 {
+    background-color: rgb(240 249 255 / 0.95);
+}
+
+[data-theme='light'] .border-sky-500\/25 {
+    border-color: rgb(14 165 233 / 0.4);
+}
+
+[data-theme='light'] .border-sky-500\/20 {
+    border-color: rgb(14 165 233 / 0.35);
+}
+
+[data-theme='light'] .border-sky-500\/40 {
+    border-color: rgb(14 165 233 / 0.45);
+}
+
+[data-theme='light'] .border-sky-600\/60 {
+    border-color: rgb(2 132 199 / 0.55);
+}
+
+[data-theme='light'] .hover\:border-sky-500:hover {
+    border-color: #0ea5e9;
+}
+
+[data-theme='light'] .text-sky-200 {
+    color: #0369a1;
+}
+
+[data-theme='light'] .text-sky-300\/90 {
+    color: rgb(3 105 161 / 0.95);
+}
+
+[data-theme='light'] .text-sky-300\/75 {
+    color: rgb(3 105 161 / 0.9);
+}
+
+[data-theme='light'] .hover\:text-sky-200:hover {
+    color: #075985;
+}
+
+[data-theme='light'] .hover\:bg-sky-500\/15:hover {
+    background-color: rgb(14 165 233 / 0.12);
+}
+
+[data-theme='light'] .bg-sky-500\/15 {
+    background-color: rgb(186 230 253 / 0.75);
+}
+
+[data-theme='light'] .bg-sky-500\/12 {
+    background-color: rgb(224 242 254 / 0.85);
+}
+
+[data-theme='light'] .text-blue-300\/75 {
+    color: rgb(29 78 216 / 0.9);
+}
+
+[data-theme='light'] .hover\:bg-blue-500\/15:hover {
+    background-color: rgb(59 130 246 / 0.12);
+}
+
+[data-theme='light'] .border-emerald-500\/35 {
+    border-color: rgb(16 185 129 / 0.45);
+}
+
+[data-theme='light'] .border-emerald-500\/50 {
+    border-color: rgb(16 185 129 / 0.5);
+}
+
+[data-theme='light'] .hover\:border-emerald-400\/70:hover {
+    border-color: rgb(52 211 153 / 0.65);
+}
+
+[data-theme='light'] .glow-card .text-slate-500,
+[data-theme='light'] .glow-card .text-slate-400 {
+    color: #334155;
+}
+
+[data-theme='light'] .bg-indigo-500\/15 {
+    background-color: rgb(224 231 255 / 0.9);
+}
+
+[data-theme='light'] .hover\:bg-indigo-500\/25:hover {
+    background-color: rgb(199 210 254 / 0.95);
+}
+
+[data-theme='light'] .border-indigo-500\/50 {
+    border-color: rgb(99 102 241 / 0.5);
+}
+
+[data-theme='light'] .hover\:bg-amber-500\/25:hover {
+    background-color: rgb(253 230 138 / 0.85);
+}
+
+[data-theme='light'] .hover\:bg-emerald-500\/25:hover {
+    background-color: rgb(167 243 208 / 0.9);
+}
+
+[data-theme='light'] .bg-blue-500\/12 {
+    background-color: rgb(219 234 254 / 0.85);
+}
+
+[data-theme='light'] .border-red-500\/40 {
+    border-color: rgb(239 68 68 / 0.4);
 }

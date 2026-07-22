@@ -318,7 +318,7 @@ function openNextCompetition() {
           <Link
             v-if="isCoach && programUrl"
             :href="programUrl"
-            class="rounded-lg border border-emerald-500/50 bg-emerald-950/30 px-3.5 py-1.5 text-sm font-semibold text-emerald-200 transition hover:border-emerald-400/70 hover:bg-emerald-950/50"
+            class="rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-3.5 py-1.5 text-sm font-semibold text-emerald-200 transition hover:border-emerald-400/70 hover:bg-emerald-500/25"
           >
             Aller au programme
           </Link>

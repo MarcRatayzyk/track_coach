@@ -88,7 +88,7 @@ const hasAnyValue = computed(() =>
       <table class="min-w-full border-collapse text-left text-xs">
         <thead>
           <tr class="border-b border-slate-800 text-slate-400">
-            <th class="sticky left-0 z-10 bg-slate-950/95 px-2 py-2 font-semibold uppercase tracking-wide">
+            <th class="sticky left-0 z-10 bg-slate-900/95 px-2 py-2 font-semibold uppercase tracking-wide">
               Jour
             </th>
             <th
@@ -106,7 +106,7 @@ const hasAnyValue = computed(() =>
             :key="row.date"
             class="border-b border-slate-800/80"
           >
-            <td class="sticky left-0 z-10 whitespace-nowrap bg-slate-950/95 px-2 py-2 font-medium text-slate-200">
+            <td class="sticky left-0 z-10 whitespace-nowrap bg-slate-900/95 px-2 py-2 font-medium text-slate-200">
               <span class="block">{{ row.label }}</span>
               <span class="text-[10px] text-slate-500">{{ row.fullLabel }}</span>
             </td>

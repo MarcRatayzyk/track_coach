@@ -3,6 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import InstallAppButton from '../Components/InstallAppButton.vue';
 import InstallAppGuideModal from '../Components/InstallAppGuideModal.vue';
+import AppLogo from '../Components/AppLogo.vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import UiIcon from '../Components/UiIcon.vue';
 import { useNativeApp } from '../composables/useNativeApp';
@@ -248,12 +249,7 @@ watch(() => page.url, () => {
                 :href="isCoach ? '/dashboard' : '/athlete/dashboard'"
                 class="flex min-w-0 items-center gap-2"
             >
-                <span
-                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600/25 text-blue-300"
-                >
-                    <UiIcon name="bolt" class="h-4 w-4" />
-                </span>
-                <span class="truncate text-sm font-bold text-white">Track Coach</span>
+                <AppLogo mark-class="h-8 w-8" wordmark-class="truncate text-sm font-bold text-white" />
             </Link>
 
             <div class="flex min-w-0 items-center gap-2">
@@ -325,14 +321,11 @@ watch(() => page.url, () => {
                     :class="isSidebarCollapsed ? 'justify-center px-2.5' : ''"
                     :title="isSidebarCollapsed ? 'Track Coach' : undefined"
                 >
-                    <span
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600/25 text-blue-300"
-                    >
-                        <UiIcon name="bolt" class="h-5 w-5" />
-                    </span>
-                    <span v-if="!isSidebarCollapsed" class="truncate text-base font-bold tracking-tight text-white">
-                        Track Coach
-                    </span>
+                    <AppLogo
+                        :with-wordmark="!isSidebarCollapsed"
+                        mark-class="h-9 w-9"
+                        wordmark-class="truncate text-base font-bold tracking-tight text-white"
+                    />
                 </Link>
 
                 <button

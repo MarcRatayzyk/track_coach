@@ -137,7 +137,7 @@ function itemIndex(itemId) {
 <template>
   <div class="space-y-4">
     <div
-      class="sticky top-0 z-10 -mx-1 rounded-xl border border-slate-800/80 bg-slate-950/95 px-2 py-3 backdrop-blur-sm"
+      class="sticky top-0 z-10 -mx-1 rounded-xl border border-slate-700 bg-slate-900/80 px-2 py-3 backdrop-blur-sm"
     >
       <p v-if="items.length === 0" class="mb-2 text-sm text-slate-400">
         Choisis ce que tu veux programmer pour ce jour.
@@ -146,14 +146,14 @@ function itemIndex(itemId) {
         <button
           v-if="allowWarmup"
           type="button"
-          class="min-w-0 flex-1 rounded-xl border border-sky-600/60 bg-slate-950 px-2 py-2.5 text-center text-xs font-semibold text-sky-200 hover:border-sky-500 sm:px-3 sm:text-sm"
+          class="min-w-0 flex-1 rounded-xl border border-sky-600/60 bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-sky-200 hover:border-sky-500 sm:px-3 sm:text-sm"
           @click="startSection('warmup')"
         >
           Ajouter échauffement
         </button>
         <button
           type="button"
-          class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-950 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"
+          class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"
           @click="startSection('topset')"
         >
           Ajouter top set
@@ -161,14 +161,14 @@ function itemIndex(itemId) {
         <button
           v-if="!items.some((item) => item.section === 'backoff')"
           type="button"
-          class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-950 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"
+          class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"
           @click="startSection('backoff')"
         >
           Ajouter backoff
         </button>
         <button
           type="button"
-          class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-950 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"
+          class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"
           @click="startSection('accessory')"
         >
           Ajouter accessoire

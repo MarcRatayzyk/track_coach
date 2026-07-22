@@ -6,6 +6,7 @@ export default {
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import AppLogo from '../Components/AppLogo.vue';
 import UiIcon from '../Components/UiIcon.vue';
 import { useNativeApp } from '../composables/useNativeApp';
 
@@ -47,13 +48,11 @@ function submit() {
                 class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_20%_0%,rgba(59,130,246,0.22),transparent)]"
             />
             <div class="relative">
-                <Link href="/" class="inline-flex items-center gap-3">
-                    <span
-                        class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600/25 text-blue-400"
-                    >
-                        <UiIcon name="bolt" class="h-7 w-7" />
-                    </span>
-                    <span class="text-2xl font-bold tracking-tight text-white">Track Coach</span>
+                <Link href="/" class="inline-flex items-center">
+                    <AppLogo
+                        mark-class="h-12 w-12"
+                        wordmark-class="text-2xl font-bold tracking-tight text-white"
+                    />
                 </Link>
                 <h1 class="mt-14 max-w-lg text-4xl font-bold leading-tight text-white xl:text-5xl">
                     Ton espace coach & athlète, prêt en quelques secondes.
@@ -95,13 +94,11 @@ function submit() {
         <div class="flex min-h-screen flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 xl:px-20">
             <div class="mx-auto w-full max-w-lg">
                 <div class="mb-8 flex items-center justify-between lg:hidden">
-                    <div class="inline-flex items-center gap-2">
-                        <span
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/25 text-blue-400"
-                        >
-                            <UiIcon name="bolt" class="h-5 w-5" />
-                        </span>
-                        <span class="text-lg font-bold text-white">Track Coach</span>
+                    <div class="inline-flex items-center">
+                        <AppLogo
+                            mark-class="h-10 w-10"
+                            wordmark-class="text-lg font-bold text-white"
+                        />
                     </div>
                 </div>
 

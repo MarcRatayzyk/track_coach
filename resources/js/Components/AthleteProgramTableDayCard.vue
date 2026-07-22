@@ -152,7 +152,7 @@ function isPrescriptionColumn(columnId) {
 
 <template>
   <article class="overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
-    <div class="flex items-center gap-2 border-l-2 border-amber-400 bg-black px-3 py-2">
+    <div class="flex items-center gap-2 border-l-2 border-amber-400 bg-slate-950 px-3 py-2">
       <p class="min-w-0 flex-1 text-[12px] font-semibold uppercase tracking-wide text-amber-300 sm:text-sm">
         Jour {{ dayOrdinal }} · S{{ weekNumber }}
         <span v-if="sessionLabel" class="font-normal normal-case text-amber-200/80">

@@ -88,8 +88,8 @@ const heroMotionClass = computed(() => {
         <template v-if="todaySessionTitle"> {{ todaySessionTitle }}</template>
       </h1>
 
-      <div v-if="topsetBarbell" class="mt-3">
-        <CelebrationBarbell :barbell="topsetBarbell" variant="peek" />
+      <div v-if="topsetBarbell" class="mt-3 overflow-visible">
+        <CelebrationBarbell :barbell="topsetBarbell" variant="full" />
       </div>
     </div>
   </div>

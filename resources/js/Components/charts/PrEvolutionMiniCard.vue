@@ -165,7 +165,7 @@ function formatKgCompact(value) {
     >
       <p class="text-[10px] text-slate-500">Premier repère enregistré</p>
     </div>
-    <p v-else class="mt-auto pt-2 text-center text-[10px] text-slate-500">Pas encore de données</p>
+    <p v-else class="mt-auto pt-2 text-center text-[10px] text-slate-400">Pas encore de données</p>
   </article>
 </template>
 

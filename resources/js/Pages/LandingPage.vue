@@ -1,5 +1,6 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
+import AppLogo from '../Components/AppLogo.vue';
 import UiIcon from '../Components/UiIcon.vue';
 
 const features = [
@@ -70,12 +71,10 @@ const steps = [
         >
             <div class="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-10 sm:py-4 lg:px-14 xl:px-20">
                 <a href="/" class="flex min-w-0 items-center gap-2 sm:gap-3">
-                    <span
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600/25 text-blue-400 sm:h-11 sm:w-11"
-                    >
-                        <UiIcon name="bolt" class="h-5 w-5 sm:h-6 sm:w-6" />
-                    </span>
-                    <span class="truncate text-base font-bold tracking-tight text-white sm:text-xl">Track Coach</span>
+                    <AppLogo
+                        mark-class="h-9 w-9 sm:h-11 sm:w-11"
+                        wordmark-class="truncate text-base font-bold tracking-tight text-white sm:text-xl"
+                    />
                 </a>
                 <div class="flex shrink-0 items-center gap-2 sm:gap-3">
                     <a
@@ -374,8 +373,10 @@ const steps = [
                 class="mx-auto flex w-full max-w-[1600px] flex-col items-center justify-between gap-4 px-6 text-sm text-slate-500 sm:flex-row lg:px-10"
             >
                 <div class="flex items-center gap-2">
-                    <UiIcon name="bolt" class="h-5 w-5 text-blue-500" />
-                    <span class="font-semibold text-slate-400">Track Coach</span>
+                    <AppLogo
+                        mark-class="h-8 w-8"
+                        wordmark-class="font-semibold text-slate-400"
+                    />
                 </div>
                 <p>Coaching powerlifting — roster, programmes & performance.</p>
                 <div class="flex items-center gap-4">

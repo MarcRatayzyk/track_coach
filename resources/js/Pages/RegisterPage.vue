@@ -6,7 +6,7 @@ export default {
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import UiIcon from '../Components/UiIcon.vue';
+import AppLogo from '../Components/AppLogo.vue';
 
 const form = useForm({
     name: '',
@@ -33,13 +33,11 @@ function submit() {
                 class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_20%_0%,rgba(59,130,246,0.22),transparent)]"
             />
             <div class="relative">
-                <Link href="/" class="inline-flex items-center gap-3">
-                    <span
-                        class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600/25 text-blue-400"
-                    >
-                        <UiIcon name="bolt" class="h-7 w-7" />
-                    </span>
-                    <span class="text-2xl font-bold tracking-tight text-white">Track Coach</span>
+                <Link href="/" class="inline-flex items-center">
+                    <AppLogo
+                        mark-class="h-12 w-12"
+                        wordmark-class="text-2xl font-bold tracking-tight text-white"
+                    />
                 </Link>
                 <h1 class="mt-14 max-w-lg text-4xl font-bold leading-tight text-white xl:text-5xl">
                     Lance ton espace coach en quelques minutes.

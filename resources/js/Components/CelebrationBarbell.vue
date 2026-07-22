@@ -13,7 +13,7 @@ const props = defineProps({
 });
 
 const plateClass = {
-  red: 'bg-red-600 border-red-400 text-white',
+  red: 'bg-red-700 border-red-500 text-white',
   blue: 'bg-blue-600 border-blue-400 text-white',
   yellow: 'bg-yellow-400 border-yellow-300 text-slate-900',
   green: 'bg-emerald-500 border-emerald-300 text-white',
@@ -34,7 +34,7 @@ const plateWidthByColor = {
 function plateStyle(plate) {
   return {
     height: `${plate.height}px`,
-    width: `${plateWidthByColor[plate.color] ?? plateWidthByColor.default}px`,
+    width: `${plate.width ?? plateWidthByColor[plate.color] ?? plateWidthByColor.default}px`,
   };
 }
 </script>
@@ -61,45 +61,53 @@ function plateStyle(plate) {
       </div>
     </div>
 
-    <!-- Full : barre complète -->
-    <div v-else class="flex items-center justify-center gap-1">
-      <div class="flex items-center">
-        <div
-          class="mr-0.5 h-2 w-3.5 rounded-[3px] bg-gradient-to-b from-slate-200 via-slate-50 to-slate-200 shadow-sm"
-          aria-hidden="true"
-        />
-        <div
-          v-for="(plate, index) in [...barbell.sidePlates].reverse()"
-          :key="`left-${plate.weight}-${index}`"
-          class="flex shrink-0 items-end justify-center rounded-[1.5px] border shadow-sm"
-          :class="plateClass[plate.color]"
-          :style="plateStyle(plate)"
-          :title="`${plate.weight} kg`"
-        >
-          <span class="sr-only">{{ plate.weight }} kg</span>
+    <!-- Full : barre complète (manchons + disques + barre) -->
+    <div v-else class="flex w-full flex-col items-center gap-1 overflow-x-auto py-1 pb-5">
+      <div class="flex items-center justify-center gap-0.5">
+        <div class="flex shrink-0 items-center">
+          <div
+            class="mr-0.5 h-2.5 w-4 rounded-[3px] bg-gradient-to-b from-slate-200 via-slate-50 to-slate-200 shadow-sm"
+            aria-hidden="true"
+          />
+          <div
+            v-for="(plate, index) in [...barbell.sidePlates].reverse()"
+            :key="`left-${plate.weight}-${index}`"
+            class="flex shrink-0 items-center justify-center rounded-[1.5px] border shadow-sm"
+            :class="plateClass[plate.color]"
+            :style="plateStyle(plate)"
+            :title="`${plate.weight} kg`"
+          >
+            <span class="sr-only">{{ plate.weight }} kg</span>
+          </div>
+        </div>
+
+        <div class="relative mx-1 flex h-3 min-w-[5.25rem] shrink items-center sm:min-w-[6.5rem]">
+          <div class="h-2.5 w-full rounded-full bg-gradient-to-r from-slate-500 via-slate-300 to-slate-500 shadow-inner" />
+        </div>
+
+        <div class="flex shrink-0 items-center">
+          <div
+            v-for="(plate, index) in barbell.sidePlates"
+            :key="`right-${plate.weight}-${index}`"
+            class="flex shrink-0 items-center justify-center rounded-[1.5px] border shadow-sm"
+            :class="plateClass[plate.color]"
+            :style="plateStyle(plate)"
+            :title="`${plate.weight} kg`"
+          >
+            <span class="sr-only">{{ plate.weight }} kg</span>
+          </div>
+          <div
+            class="ml-0.5 h-2.5 w-4 rounded-[3px] bg-gradient-to-b from-slate-200 via-slate-50 to-slate-200 shadow-sm"
+            aria-hidden="true"
+          />
         </div>
       </div>
-
-      <div class="relative mx-1 flex h-3 min-w-[5.25rem] items-center sm:min-w-[6.5rem]">
-        <div class="h-2.5 w-full rounded-full bg-gradient-to-r from-slate-500 via-slate-300 to-slate-500 shadow-inner" />
-      </div>
-
-      <div class="flex items-center">
-        <div
-          v-for="(plate, index) in barbell.sidePlates"
-          :key="`right-${plate.weight}-${index}`"
-          class="flex shrink-0 items-end justify-center rounded-[1.5px] border shadow-sm"
-          :class="plateClass[plate.color]"
-          :style="plateStyle(plate)"
-          :title="`${plate.weight} kg`"
-        >
-          <span class="sr-only">{{ plate.weight }} kg</span>
-        </div>
-        <div
-          class="ml-0.5 h-2 w-3.5 rounded-[3px] bg-gradient-to-b from-slate-200 via-slate-50 to-slate-200 shadow-sm"
-          aria-hidden="true"
-        />
-      </div>
+      <p
+        v-if="barbell.loadLabel"
+        class="text-center text-[10px] font-semibold tabular-nums text-slate-400"
+      >
+        {{ barbell.loadLabel }} kg
+      </p>
     </div>
   </div>
 </template>
