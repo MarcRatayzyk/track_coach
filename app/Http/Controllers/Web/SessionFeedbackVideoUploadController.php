@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\PurgeOrphanSessionFeedbackUploadsAction;
 use App\Http\Controllers\Controller;
 use App\Models\SessionFeedback;
 use App\Models\SessionFeedbackMedia;
@@ -28,8 +29,10 @@ class SessionFeedbackVideoUploadController extends Controller
         'video/x-m4v',
     ];
 
-    public function store(Request $request): JsonResponse
-    {
+    public function store(
+        Request $request,
+        PurgeOrphanSessionFeedbackUploadsAction $purgeOrphans,
+    ): JsonResponse {
         $this->authorize('create', SessionFeedback::class);
 
         if (! VideoUploadDisk::usesDirectUpload()) {
@@ -50,8 +53,11 @@ class SessionFeedbackVideoUploadController extends Controller
             ]);
         }
 
+        $userId = (int) $request->user()->id;
+        $purgeOrphans->forUser($userId, 30);
+
         $pendingCount = SessionFeedbackMedia::query()
-            ->where('uploaded_by', $request->user()->id)
+            ->where('uploaded_by', $userId)
             ->whereIn('status', [
                 SessionFeedbackMedia::STATUS_PENDING,
                 SessionFeedbackMedia::STATUS_UPLOADED,
@@ -60,18 +66,17 @@ class SessionFeedbackVideoUploadController extends Controller
             ->count();
 
         if ($pendingCount >= VideoUploadDisk::MAX_FILES) {
-            throw ValidationException::withMessages([
-                'video' => 'Vous avez déjà '.VideoUploadDisk::MAX_FILES.' vidéos en cours d’envoi. Terminez ou attendez le nettoyage.',
-            ]);
+            // Tentative précédente abandonnée : libère les slots pour réessayer.
+            $purgeOrphans->makeRoomForUser($userId, VideoUploadDisk::MAX_FILES);
         }
 
         $extension = pathinfo($data['filename'], PATHINFO_EXTENSION) ?: 'mp4';
         $extension = Str::lower(preg_replace('/[^a-z0-9]/i', '', $extension) ?: 'mp4');
-        $path = 'session-feedbacks/pending/'.$request->user()->id.'/'.Str::uuid()->toString().'.'.$extension;
+        $path = 'session-feedbacks/pending/'.$userId.'/'.Str::uuid()->toString().'.'.$extension;
 
         $media = SessionFeedbackMedia::query()->create([
             'session_feedback_id' => null,
-            'uploaded_by' => $request->user()->id,
+            'uploaded_by' => $userId,
             'kind' => SessionFeedbackMedia::KIND_VIDEO,
             'disk' => 's3',
             'path' => $path,
