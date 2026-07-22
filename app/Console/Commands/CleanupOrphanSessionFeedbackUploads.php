@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CleanupOrphanSessionFeedbackUploads extends Command
 {
-    protected $signature = 'feedbacks:cleanup-orphan-uploads {--hours=24 : Age threshold in hours}';
+    protected $signature = 'feedbacks:cleanup-orphan-uploads {--hours=2 : Age threshold in hours}';
 
     protected $description = 'Delete pending/uploaded session feedback videos not attached to a feedback';
 
