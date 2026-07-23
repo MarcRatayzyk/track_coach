@@ -13,7 +13,6 @@ import {
     identifyUser,
     initAnalytics,
     resetAnalytics,
-    trackPageview,
 } from './utils/analytics';
 
 initTheme();
@@ -48,7 +47,6 @@ createInertiaApp({
         resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
         syncAnalyticsUser(props.initialPage);
-        trackPageview(props.initialPage?.url);
 
         createApp({ render: () => h(App, props) })
             .use(plugin)
@@ -61,5 +59,4 @@ createInertiaApp({
 
 router.on('navigate', (event) => {
     syncAnalyticsUser(event.detail.page);
-    trackPageview(event.detail.page?.url);
 });

@@ -17,11 +17,22 @@ export function initAnalytics() {
 
     posthog.init(key, {
         api_host: host,
-        capture_pageview: false,
+        ui_host: 'https://eu.posthog.com',
+        // SPA Inertia : laisse PostHog émettre un $pageview à chaque changement d'URL (pushState).
+        capture_pageview: 'history_change',
         capture_pageleave: true,
-        person_profiles: 'identified_only',
+        // Beta : on crée un profil pour tous les visiteurs (sinon Web Analytics reste vide avant login).
+        person_profiles: 'always',
+        autocapture: true,
         session_recording: {
             maskAllInputs: true,
+        },
+        loaded: (ph) => {
+            // Ajoute la plateforme (web/android) sur TOUS les events, y compris pageviews et autocapture.
+            ph.register({ platform: getAnalyticsPlatform() });
+            if (import.meta.env.DEV) {
+                ph.debug();
+            }
         },
     });
 
@@ -56,18 +67,6 @@ export function track(event, props = {}) {
     posthog.capture(event, {
         platform: getAnalyticsPlatform(),
         ...props,
-    });
-}
-
-export function trackPageview(path) {
-    if (!enabled) {
-        return;
-    }
-
-    posthog.capture('$pageview', {
-        platform: getAnalyticsPlatform(),
-        path: path || window.location.pathname,
-        $current_url: window.location.href,
     });
 }
 
