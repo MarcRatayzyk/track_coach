@@ -26,8 +26,8 @@ return [
     */
 
     'posthog' => [
-        'key' => env('POSTHOG_KEY', env('VITE_POSTHOG_KEY')),
-        'host' => env('POSTHOG_HOST', env('VITE_POSTHOG_HOST', 'https://eu.i.posthog.com')),
+        'key' => env('POSTHOG_KEY') ?: env('VITE_POSTHOG_KEY'),
+        'host' => env('POSTHOG_HOST') ?: env('VITE_POSTHOG_HOST', 'https://eu.i.posthog.com'),
         'ui_host' => env('POSTHOG_UI_HOST', 'https://eu.posthog.com'),
     ],
 

@@ -13,11 +13,7 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
-        window.__POSTHOG__ = @json([
-            'key' => config('trackcoach.posthog.key'),
-            'host' => config('trackcoach.posthog.host'),
-            'ui_host' => config('trackcoach.posthog.ui_host'),
-        ]);
+        window.__POSTHOG__ = @json(config('trackcoach.posthog'));
     </script>
     <script>
         (function () {
