@@ -9,6 +9,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLogo from '../Components/AppLogo.vue';
 import UiIcon from '../Components/UiIcon.vue';
 import { useNativeApp } from '../composables/useNativeApp';
+import { track } from '../utils/analytics';
 
 const { isMobileApp } = useNativeApp();
 
@@ -32,6 +33,9 @@ function submit() {
 
     form.post('/login', {
         preserveScroll: true,
+        onSuccess: () => {
+            track('user_logged_in');
+        },
     });
 }
 </script>

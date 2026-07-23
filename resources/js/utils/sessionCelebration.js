@@ -168,7 +168,7 @@ export function buildSessionCelebrationPayload({
     topsetSubtitle,
     `Adhérence ${adherenceLabel} · ${tonnageLabel} · ${totalReps > 0 ? `${totalReps} reps` : '—'}`,
     '',
-    'Track Coach',
+    'Power Roster',
   ].join('\n');
 
   return {

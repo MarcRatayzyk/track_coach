@@ -15,6 +15,7 @@ import {
 import TodaySessionSetBlock from './TodaySessionSetBlock.vue';
 import SessionCelebrationModal from './SessionCelebrationModal.vue';
 import { buildSessionCelebrationPayload } from '../utils/sessionCelebration';
+import { track } from '../utils/analytics';
 
 const props = defineProps({
   todaySession: {
@@ -271,6 +272,10 @@ function saveSession({ onSuccess } = {}) {
   const options = {
     preserveScroll: true,
     onSuccess: () => {
+      track('session_logged', {
+        source: 'today_session',
+        is_update: hasLoggedToday.value,
+      });
       onSuccess?.();
     },
   };

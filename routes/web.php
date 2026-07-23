@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Controllers\Web\ForgotPasswordController;
 use App\Http\Controllers\Web\ResetPasswordController;
 use App\Http\Controllers\Web\AccountSetupController;
+use App\Http\Controllers\Web\AccountPrivacyController;
 use App\Http\Controllers\Web\AppPageController;
 use App\Http\Controllers\Web\AthleteCompetitionController;
 use App\Http\Controllers\Web\AthleteBodyWeightController;
@@ -32,6 +33,8 @@ use App\Http\Controllers\Web\SessionFeedbackWebController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
+
+Route::inertia('/confidentialite', 'PrivacyPolicyPage')->name('privacy');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
@@ -111,6 +114,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::delete('/athletes/{athlete}/competitions/{competition}', [AthleteDataWebController::class, 'destroyCompetition'])
         ->name('athletes.competitions.destroy');
 
+    Route::get('/account/privacy', [AccountPrivacyController::class, 'show'])->name('account.privacy');
+    Route::get('/account/data-export', [AccountPrivacyController::class, 'export'])->name('account.data-export');
+    Route::delete('/account', [AccountPrivacyController::class, 'destroy'])->name('account.destroy');
+
     Route::get('/messaging', [AppPageController::class, 'messaging'])->name('messaging');
     Route::post('/coach/threads/{thread}/messages', [MessageWebController::class, 'storeMessage'])
         ->middleware('throttle:messages')
@@ -147,6 +154,12 @@ Route::middleware(['auth', 'verified', 'coach'])->group(function (): void {
         ->name('coach.program-blocks.destroy');
     Route::post('/coach/program-blocks/{assignment}/assign', [ProgramWebController::class, 'assignBlock'])
         ->name('coach.program-blocks.assign');
+    Route::post('/coach/program-blocks/{assignment}/duplicate', [ProgramWebController::class, 'duplicateBlock'])
+        ->name('coach.program-blocks.duplicate');
+    Route::post('/coach/program-blocks/{assignment}/bulk-assign', [ProgramWebController::class, 'bulkAssignBlock'])
+        ->name('coach.program-blocks.bulk-assign');
+    Route::post('/coach/program-starters', [ProgramWebController::class, 'storeStarter'])
+        ->name('coach.program-starters.store');
     Route::put('/coach/program-blocks/{assignment}/warmup', [ProgramWebController::class, 'updateWarmup'])
         ->name('coach.program-blocks.warmup.update');
     Route::put('/coach/program-blocks/{assignment}/sessions', [ProgramWebController::class, 'upsertSession'])

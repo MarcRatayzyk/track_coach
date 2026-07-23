@@ -1,7 +1,7 @@
 {
     "id": "/",
-    "name": "Track Coach",
-    "short_name": "Track Coach",
+    "name": "Power Roster",
+    "short_name": "Power Roster",
     "description": "Suivi d'entraînement et coaching athlétique",
     "start_url": "/?source=pwa",
     "scope": "/",

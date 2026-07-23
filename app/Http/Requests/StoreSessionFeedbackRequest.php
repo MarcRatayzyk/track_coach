@@ -23,6 +23,8 @@ class StoreSessionFeedbackRequest extends FormRequest
         $rules = [
             'session_date' => ['required', 'date', 'before_or_equal:today'],
             'athlete_notes' => ['nullable', 'string', 'max:10000'],
+            'video_series' => ['nullable', 'array'],
+            'video_series.*' => ['nullable', 'integer'],
         ];
 
         if (VideoUploadDisk::usesDirectUpload()) {

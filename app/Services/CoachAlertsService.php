@@ -606,7 +606,7 @@ class CoachAlertsService
             'headline' => $headline,
             'subline' => $subline,
             'metrics' => $metrics,
-            'social_text' => "{$athleteName} · {$headline} sur Track Coach",
+            'social_text' => "{$athleteName} · {$headline} sur Power Roster",
             'share_url' => '/dashboard',
             'templates' => [
                 ['id' => 'block_recap', 'label' => 'Fin de bloc'],

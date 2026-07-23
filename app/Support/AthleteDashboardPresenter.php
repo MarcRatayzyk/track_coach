@@ -315,7 +315,7 @@ class AthleteDashboardPresenter
                 'date' => $today,
                 'headline' => "Nouveau total {$total} kg",
                 'subline' => "S {$latestPr->squat} · B {$latestPr->bench} · T {$latestPr->deadlift}",
-                'social_text' => "{$athlete->name} vient de poser un nouveau total sur Track Coach",
+                'social_text' => "{$athlete->name} vient de poser un nouveau total sur Power Roster",
                 'share_url' => '/athlete/dashboard',
             ];
         }
@@ -341,7 +341,7 @@ class AthleteDashboardPresenter
                     'date' => $today,
                     'headline' => "Adhérence {$adherence['percentage']} %",
                     'subline' => "7 jours · {$adherence['completed_sessions']}/{$adherence['planned_sessions']} séances",
-                    'social_text' => "{$athlete->name} reste régulier sur son bloc avec Track Coach",
+                    'social_text' => "{$athlete->name} reste régulier sur son bloc avec Power Roster",
                     'share_url' => '/athlete/dashboard',
                 ];
             }

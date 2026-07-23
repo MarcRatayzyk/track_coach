@@ -31,7 +31,7 @@ const emit = defineEmits(['close']);
                             <UiIcon name="bolt" class="h-5 w-5" />
                         </span>
                         <h2 id="ios-install-title" class="text-base font-semibold text-white">
-                            Installer Track Coach
+                            Installer Power Roster
                         </h2>
                     </div>
                     <button
@@ -49,7 +49,7 @@ const emit = defineEmits(['close']);
                         <span
                             class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300"
                         >1</span>
-                        <span>Ouvre Track Coach dans <strong class="text-white">Safari</strong>.</span>
+                        <span>Ouvre Power Roster dans <strong class="text-white">Safari</strong>.</span>
                     </li>
                     <li class="flex gap-3">
                         <span

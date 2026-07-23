@@ -1,8 +1,28 @@
 <script setup>
+import { watch } from 'vue';
 import UiIcon from './UiIcon.vue';
 import { usePwaInstall } from '../composables/usePwaInstall';
+import { track } from '../utils/analytics';
 
 const { showBanner, platform, install, dismiss } = usePwaInstall();
+
+let bannerShownTracked = false;
+
+watch(
+    showBanner,
+    (visible) => {
+        if (visible && !bannerShownTracked) {
+            bannerShownTracked = true;
+            track('install_banner_shown', { install_platform: platform.value });
+        }
+    },
+    { immediate: true },
+);
+
+async function acceptInstall() {
+    track('install_banner_accepted', { install_platform: platform.value });
+    await install();
+}
 </script>
 
 <template>
@@ -38,7 +58,7 @@ const { showBanner, platform, install, dismiss } = usePwaInstall();
                     v-if="platform === 'android'"
                     type="button"
                     class="mt-3 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-500"
-                    @click="install"
+                    @click="acceptInstall"
                 >
                     Installer
                 </button>

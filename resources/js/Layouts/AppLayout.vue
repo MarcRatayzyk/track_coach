@@ -10,6 +10,7 @@ import { useNativeApp } from '../composables/useNativeApp';
 import { usePwaInstall } from '../composables/usePwaInstall';
 import { useTheme } from '../composables/useTheme';
 import { echo } from '../echo';
+import { resetAnalytics } from '../utils/analytics';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
@@ -299,11 +300,20 @@ watch(() => page.url, () => {
             </button>
 
             <Link
+                href="/account/privacy"
+                class="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition hover:bg-slate-800/60"
+                @click="closeMobileMenu"
+            >
+                <UiIcon name="user-circle" class="h-4 w-4 text-blue-400" />
+                <span>Confidentialité et données</span>
+            </Link>
+
+            <Link
                 href="/logout"
                 method="post"
                 as="button"
                 class="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition hover:bg-slate-800/60"
-                @click="closeMobileMenu"
+                @click="() => { resetAnalytics(); closeMobileMenu(); }"
             >
                 <UiIcon name="logout" class="h-4 w-4 text-blue-400" />
                 <span>Déconnexion</span>
@@ -319,7 +329,7 @@ watch(() => page.url, () => {
                     :href="isCoach ? '/dashboard' : '/athlete/dashboard'"
                     class="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2.5 transition hover:border-blue-500/50 hover:bg-slate-800/70"
                     :class="isSidebarCollapsed ? 'justify-center px-2.5' : ''"
-                    :title="isSidebarCollapsed ? 'Track Coach' : undefined"
+                    :title="isSidebarCollapsed ? 'Power Roster' : undefined"
                 >
                     <AppLogo
                         :with-wordmark="!isSidebarCollapsed"
@@ -418,12 +428,23 @@ watch(() => page.url, () => {
                 </button>
 
                 <Link
+                    href="/account/privacy"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
+                    :class="isSidebarCollapsed ? 'px-2' : ''"
+                    :title="isSidebarCollapsed ? 'Confidentialité et données' : undefined"
+                >
+                    <UiIcon name="user-circle" class="h-4 w-4" />
+                    <span v-if="!isSidebarCollapsed">Confidentialité</span>
+                </Link>
+
+                <Link
                     href="/logout"
                     method="post"
                     as="button"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800/50 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-slate-800"
                     :class="isSidebarCollapsed ? 'px-2' : ''"
                     :title="isSidebarCollapsed ? 'Déconnexion' : undefined"
+                    @click="resetAnalytics"
                 >
                     <UiIcon name="logout" class="h-4 w-4" />
                     <span v-if="!isSidebarCollapsed">Déconnexion</span>

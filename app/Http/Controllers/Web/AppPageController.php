@@ -117,8 +117,51 @@ class AppPageController extends Controller
 
         $monthlyReadinessAwards = app(CoachMonthlyReadinessAwardsPresenter::class)->forCoach($coach);
 
+        $hasRepliedToFeedback = SessionFeedback::query()
+            ->where('coach_id', $coach->id)
+            ->where('status', 'coach_replied')
+            ->exists();
+
+        $onboardingSteps = [
+            [
+                'key' => 'add_athlete',
+                'label' => 'Ajoute ton premier athlète',
+                'description' => 'Invite un athlète pour commencer à le suivre.',
+                'href' => route('athletes.index'),
+                'done' => $athleteIds->count() > 0,
+            ],
+            [
+                'key' => 'create_program',
+                'label' => 'Crée un premier programme',
+                'description' => 'Construis un bloc d’entraînement dans le Program Builder.',
+                'href' => route('program.builder'),
+                'done' => $templatesCount > 0,
+            ],
+            [
+                'key' => 'assign_program',
+                'label' => 'Assigne un programme actif',
+                'description' => 'Active un bloc pour l’un de tes athlètes.',
+                'href' => route('program.builder'),
+                'done' => $activeProgramsCount > 0,
+            ],
+            [
+                'key' => 'reply_feedback',
+                'label' => 'Réponds à un retour de séance',
+                'description' => 'Analyse une vidéo et renvoie tes conseils.',
+                'href' => route('feedbacks.index'),
+                'done' => $hasRepliedToFeedback,
+            ],
+        ];
+
+        $onboarding = [
+            'steps' => $onboardingSteps,
+            'completed_count' => collect($onboardingSteps)->where('done', true)->count(),
+            'total' => count($onboardingSteps),
+        ];
+
         return Inertia::render('DashboardPage', [
             'athleteCount' => $athleteIds->count(),
+            'onboarding' => $onboarding,
             'feedback' => $feedback,
             'competitionSummary' => $competitionSummary,
             'upcomingCompetitions' => $upcomingCompetitions,
@@ -284,6 +327,7 @@ class AppPageController extends Controller
 
         return Inertia::render('ProgramBuilderPage', [
             'athletes' => $athletes,
+            'starterPrograms' => \App\Support\StarterProgramLibrary::catalog(),
             'existingBlocks' => ProgramBlockPresenter::existingBlocksList($existingBlocks),
             'activeBlock' => $activeBlock,
             'dayTableLayouts' => $dayTableLayouts,

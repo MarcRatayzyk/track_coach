@@ -15,25 +15,36 @@ class StoreSessionFeedbackMediaAction
 {
     /**
      * @param  list<UploadedFile>  $files
+     * @param  array<int, array{exercise_id:int, snapshot:array<string, mixed>}>  $seriesByPosition
      * @return list<SessionFeedbackMedia>
      */
-    public function storeVideos(SessionFeedback $feedback, array $files, ?int $uploadedBy = null): array
-    {
+    public function storeVideos(
+        SessionFeedback $feedback,
+        array $files,
+        ?int $uploadedBy = null,
+        array $seriesByPosition = [],
+    ): array {
         return $this->storeFiles(
             $feedback,
             $files,
             SessionFeedbackMedia::KIND_VIDEO,
             'videos',
             $uploadedBy ?? $feedback->athlete_id,
+            $seriesByPosition,
         );
     }
 
     /**
      * @param  list<int>  $mediaIds
+     * @param  array<int, array{exercise_id:int, snapshot:array<string, mixed>}>  $seriesByPosition
      * @return list<SessionFeedbackMedia>
      */
-    public function attachUploadedVideos(SessionFeedback $feedback, User $athlete, array $mediaIds): array
-    {
+    public function attachUploadedVideos(
+        SessionFeedback $feedback,
+        User $athlete,
+        array $mediaIds,
+        array $seriesByPosition = [],
+    ): array {
         $ids = array_values(array_unique(array_map('intval', $mediaIds)));
 
         if (count($ids) > VideoUploadDisk::MAX_FILES) {
@@ -61,10 +72,13 @@ class StoreSessionFeedbackMediaAction
         foreach ($ids as $index => $id) {
             /** @var SessionFeedbackMedia $media */
             $media = $mediaItems->get($id);
+            $series = $seriesByPosition[$index] ?? null;
             $media->update([
                 'session_feedback_id' => $feedback->id,
                 'status' => SessionFeedbackMedia::STATUS_ATTACHED,
                 'sort_order' => $index,
+                'program_day_exercise_id' => $series['exercise_id'] ?? null,
+                'series_info' => $series['snapshot'] ?? null,
             ]);
             $attached[] = $media->fresh();
         }
@@ -74,6 +88,7 @@ class StoreSessionFeedbackMediaAction
 
     /**
      * @param  list<UploadedFile>  $files
+     * @param  array<int, array{exercise_id:int, snapshot:array<string, mixed>}>  $seriesByPosition
      * @return list<SessionFeedbackMedia>
      */
     private function storeFiles(
@@ -82,6 +97,7 @@ class StoreSessionFeedbackMediaAction
         string $kind,
         string $subdir,
         int $uploadedBy,
+        array $seriesByPosition = [],
     ): array {
         $disk = 'public';
         $stored = [];
@@ -95,6 +111,8 @@ class StoreSessionFeedbackMediaAction
                 $disk,
             );
 
+            $series = $seriesByPosition[$index] ?? null;
+
             $stored[] = SessionFeedbackMedia::query()->create([
                 'session_feedback_id' => $feedback->id,
                 'uploaded_by' => $uploadedBy,
@@ -106,6 +124,8 @@ class StoreSessionFeedbackMediaAction
                 'size_bytes' => $file->getSize(),
                 'sort_order' => $index,
                 'status' => SessionFeedbackMedia::STATUS_ATTACHED,
+                'program_day_exercise_id' => $series['exercise_id'] ?? null,
+                'series_info' => $series['snapshot'] ?? null,
             ]);
         }
 

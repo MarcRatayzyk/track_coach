@@ -8,8 +8,9 @@ export default {
 
 <script setup>
 import { Link, useForm } from '@inertiajs/vue3';
-import { computed, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
+import { track } from '../utils/analytics';
 
 const props = defineProps({
   athlete: { type: Object, required: true },
@@ -21,6 +22,13 @@ const lifts = ['squat', 'bench', 'deadlift'];
 const warmupSeconds = ref(300);
 const warmupRunning = ref(false);
 let warmupTimer = null;
+
+onMounted(() => {
+  track('competition_live_opened', {
+    competition_id: props.competition.id,
+    athlete_id: props.athlete.id,
+  });
+});
 
 const form = useForm({
   live_state: structuredClone(props.competition.live_state),

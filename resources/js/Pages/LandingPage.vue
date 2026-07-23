@@ -2,8 +2,19 @@
 import { Head } from '@inertiajs/vue3';
 import AppLogo from '../Components/AppLogo.vue';
 import UiIcon from '../Components/UiIcon.vue';
+import { track } from '../utils/analytics';
+
+function trackCta(ctaId) {
+    track('cta_clicked', { cta_id: ctaId });
+}
 
 const features = [
+    {
+        icon: 'video',
+        title: 'Retours vidéo annotés',
+        description:
+            'Tes athlètes envoient leurs vidéos de séance, tu réponds avec des annotations dessinées image par image. Le feedback technique qui fait la différence.',
+    },
     {
         icon: 'dashboard',
         title: 'Dashboard intelligent',
@@ -62,7 +73,7 @@ const steps = [
 </script>
 
 <template>
-    <Head title="Track Coach — Coaching powerlifting structuré" />
+    <Head title="Power Roster — Coaching powerlifting structuré" />
 
     <div class="min-h-screen bg-slate-950 text-slate-200">
         <!-- Nav -->
@@ -80,12 +91,14 @@ const steps = [
                     <a
                         href="/login"
                         class="rounded-xl border border-slate-600 px-3 py-2 text-xs font-semibold text-slate-200 sm:px-5 sm:py-2.5 sm:text-sm"
+                        @click="trackCta('nav_login')"
                     >
                         Se connecter
                     </a>
                     <a
                         href="/register"
                         class="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-900/40 sm:px-5 sm:py-2.5 sm:text-sm"
+                        @click="trackCta('nav_register')"
                     >
                         Créer un compte
                     </a>
@@ -119,14 +132,15 @@ const steps = [
                     vers leurs meilleurs totaux.
                 </h1>
                 <p class="mt-6 max-w-2xl text-lg leading-relaxed text-slate-400 lg:text-xl">
-                    Track Coach réunit roster, programmation, messagerie et suivi des performances dans
+                    Power Roster réunit roster, programmation, retours vidéo annotés et messagerie dans
                     une seule plateforme — pour que tu passes moins de temps à jongler entre outils et
-                    plus de temps à coacher.
+                    plus de temps à faire progresser tes athlètes.
                 </p>
                 <div class="mt-10 flex flex-wrap items-center gap-4">
                     <a
                         href="/register"
                         class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-blue-900/50 transition hover:bg-blue-500"
+                        @click="trackCta('hero_register')"
                     >
                         Créer mon compte coach
                         <span aria-hidden="true">→</span>
@@ -134,12 +148,14 @@ const steps = [
                     <a
                         href="/login"
                         class="inline-flex items-center rounded-2xl border border-slate-600 bg-slate-900/50 px-8 py-4 text-base font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800/50"
+                        @click="trackCta('hero_login')"
                     >
                         Se connecter
                     </a>
                     <a
                         href="#fonctionnalites"
                         class="inline-flex items-center rounded-2xl border border-transparent px-4 py-4 text-base font-semibold text-slate-400 transition hover:text-slate-200"
+                        @click="trackCta('hero_features')"
                     >
                         Découvrir les fonctionnalités
                     </a>
@@ -352,6 +368,7 @@ const steps = [
                     <a
                         href="/register"
                         class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white shadow-xl shadow-blue-900/50 transition hover:bg-blue-500"
+                        @click="trackCta('footer_register')"
                     >
                         Créer mon compte coach
                         <span aria-hidden="true">→</span>
@@ -359,6 +376,7 @@ const steps = [
                     <a
                         href="/login"
                         class="inline-flex items-center rounded-2xl border border-slate-600 px-10 py-4 text-lg font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800/50"
+                        @click="trackCta('footer_login')"
                     >
                         Se connecter
                     </a>
@@ -378,13 +396,16 @@ const steps = [
                         wordmark-class="font-semibold text-slate-400"
                     />
                 </div>
-                <p>Coaching powerlifting — roster, programmes & performance.</p>
+                <p>Power Roster — Coaching powerlifting : roster, programmes & performance.</p>
                 <div class="flex items-center gap-4">
                     <a href="/register" class="text-blue-400 transition hover:text-blue-300">
                         Inscription coach
                     </a>
                     <a href="/login" class="text-slate-400 transition hover:text-slate-300">
                         Connexion
+                    </a>
+                    <a href="/confidentialite" class="text-slate-400 transition hover:text-slate-300">
+                        Confidentialité
                     </a>
                 </div>
             </div>

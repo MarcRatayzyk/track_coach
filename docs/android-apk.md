@@ -1,4 +1,4 @@
-# APK Android athlète — Track Coach
+# APK Android athlète — Power Roster
 
 Application Android via **Capacitor** : une WebView charge l'app web Inertia/Vue depuis le serveur Laravel de production. Même style, même backend, même base de données.
 

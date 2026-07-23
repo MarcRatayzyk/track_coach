@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 import ReadinessDynamicFields from './ReadinessDynamicFields.vue';
 import { emptyValuesForFields } from '../config/readinessFormFields';
+import { track } from '../utils/analytics';
 
 const props = defineProps({
   open: {
@@ -72,6 +73,7 @@ function submitAll() {
     readinessForm.post(`/athletes/${props.athleteId}/readiness`, {
       preserveScroll: true,
       onSuccess: () => {
+        track('readiness_checked_in');
         if (needsWeight.value && bodyWeightForm.weight_kg !== '' && bodyWeightForm.weight_kg != null) {
           bodyWeightForm.post(`/athletes/${props.athleteId}/body-weight`, {
             preserveScroll: true,

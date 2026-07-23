@@ -13,7 +13,8 @@ import { Capacitor } from '@capacitor/core';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { formatCalendarFr } from '../utils/formatDates';
 import { cleanupSource, compressVideo, formatMb, resolveUploadBlob } from '../utils/compressVideo';
-import VideoAnnotator from '../Components/VideoAnnotator.vue';
+import VideoFeedbackSlider from '../Components/VideoFeedbackSlider.vue';
+import { track } from '../utils/analytics';
 
 const props = defineProps({
   role: { type: String, default: 'athlete' },
@@ -60,7 +61,17 @@ const submitForm = useForm({
   athlete_notes: '',
   videos: [],
   video_upload_ids: [],
+  video_series: [],
 });
+
+// videoSeries[i] = id d'exercice choisi pour la vidéo i ('' = aucune série).
+const videoSeries = ref([]);
+
+const selectedSession = computed(() =>
+  props.eligibleSessions.find((s) => s.session_date === submitForm.session_date) ?? null,
+);
+
+const sessionExercises = computed(() => selectedSession.value?.exercises ?? []);
 
 const replyForm = useForm({
   content: '',
@@ -137,6 +148,7 @@ function sendReply() {
     .post(`/feedbacks/${props.activeFeedback.id}/reply`, {
       preserveScroll: true,
       onSuccess: () => {
+        track('feedback_replied', { feedback_id: props.activeFeedback.id });
         replyForm.reset();
       },
     });
@@ -174,6 +186,7 @@ function applySelectedVideos(sources) {
   submitForm.clearErrors('videos');
   submitForm.clearErrors('video_upload_ids');
   selectedVideos.value = sources;
+  videoSeries.value = sources.map(() => '');
   compressionSummary.value = '';
   pipelineProgress.value = 0;
   uploadStatus.value = '';
@@ -214,6 +227,7 @@ async function pickNativeVideos() {
 
 function resetSelectionState() {
   selectedVideos.value = [];
+  videoSeries.value = [];
   compressionSummary.value = '';
   pipelineProgress.value = 0;
   uploadStatus.value = '';
@@ -416,10 +430,15 @@ async function submitFeedback() {
       : 'Envoi en cours…';
     submitForm.videos = filesToSend;
     submitForm.video_upload_ids = [];
+    submitForm.video_series = seriesPayload();
     submitForm.post('/feedbacks', {
       forceFormData: true,
       preserveScroll: true,
       onSuccess: () => {
+        track('feedback_sent', {
+          has_video: filesToSend.length > 0,
+          upload_driver: 'multipart',
+        });
         submitForm.reset();
         clearSelectedVideos();
         showSubmitForm.value = false;
@@ -457,11 +476,16 @@ async function submitFeedback() {
 
     submitForm.videos = [];
     submitForm.video_upload_ids = videoUploadIds;
+    submitForm.video_series = seriesPayload();
 
     await new Promise((resolve, reject) => {
       submitForm.post('/feedbacks', {
         preserveScroll: true,
         onSuccess: () => {
+          track('feedback_sent', {
+            has_video: videoUploadIds.length > 0,
+            upload_driver: 'direct',
+          });
           submitForm.reset();
           clearSelectedVideos();
           showSubmitForm.value = false;
@@ -529,6 +553,18 @@ watch(
   },
   { immediate: true },
 );
+
+// Les exercices dépendent de la séance : on réinitialise les séries choisies quand elle change.
+watch(
+  () => submitForm.session_date,
+  () => {
+    videoSeries.value = selectedVideos.value.map(() => '');
+  },
+);
+
+function seriesPayload() {
+  return videoSeries.value.map((id) => (id === '' || id === null ? null : Number(id)));
+}
 </script>
 
 <template>
@@ -641,6 +677,37 @@ watch(
           <p v-if="selectedVideos.length" class="mt-2 text-xs text-slate-500">
             {{ selectedVideos.length }} fichier{{ selectedVideos.length > 1 ? 's' : '' }} sélectionné{{ selectedVideos.length > 1 ? 's' : '' }}
           </p>
+
+          <div
+            v-if="selectedVideos.length && sessionExercises.length"
+            class="mt-3 space-y-2 rounded-xl border border-slate-800 bg-slate-950/40 p-3"
+          >
+            <p class="text-xs font-medium text-slate-400">
+              Associez chaque vidéo à une série (optionnel)
+            </p>
+            <div
+              v-for="(video, index) in selectedVideos"
+              :key="index"
+              class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3"
+            >
+              <span class="min-w-0 flex-1 truncate text-xs text-slate-300">
+                {{ video.name }}
+              </span>
+              <select
+                v-model="videoSeries[index]"
+                class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white sm:w-64"
+              >
+                <option value="">Aucune série</option>
+                <option
+                  v-for="exercise in sessionExercises"
+                  :key="exercise.id"
+                  :value="exercise.id"
+                >
+                  {{ exercise.label }}{{ exercise.summary ? ` (${exercise.summary})` : '' }}
+                </option>
+              </select>
+            </div>
+          </div>
           <p v-if="compressionSummary && !isCompressing" class="mt-1 text-xs text-emerald-400/90">
             {{ compressionSummary }}
           </p>
@@ -689,7 +756,8 @@ watch(
     </div>
 
     <div class="mt-3 grid gap-4 lg:mt-6 lg:grid-cols-12 lg:gap-6">
-      <aside class="lg:col-span-4">
+      <!-- Colonne gauche : athlète / historique -->
+      <aside class="lg:col-span-3">
         <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl">
           <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
             {{ isCoach ? 'Retours reçus' : 'Historique' }}
@@ -733,8 +801,30 @@ watch(
         </div>
       </aside>
 
+      <!-- Colonne centrale : vidéos (slider) -->
       <section
-        class="min-h-[20rem] rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:col-span-8 lg:min-h-[24rem] lg:p-6"
+        class="min-h-[20rem] rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:col-span-6 lg:min-h-[24rem] lg:p-6"
+      >
+        <template v-if="activeFeedback">
+          <VideoFeedbackSlider
+            v-if="activeFeedback.videos?.length"
+            :videos="activeFeedback.videos"
+          />
+          <div
+            v-else
+            class="flex h-full min-h-[16rem] items-center justify-center text-sm text-slate-500"
+          >
+            Aucune vidéo pour ce retour.
+          </div>
+        </template>
+        <div v-else class="flex h-full min-h-[20rem] items-center justify-center text-slate-500">
+          Sélectionnez un retour dans la liste.
+        </div>
+      </section>
+
+      <!-- Colonne droite : texte (message, réponse) -->
+      <section
+        class="min-h-[20rem] rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:col-span-3 lg:min-h-[24rem] lg:p-6"
       >
         <template v-if="activeFeedback">
           <div class="border-b border-slate-800 pb-4">
@@ -753,15 +843,6 @@ watch(
             <p class="mt-2 whitespace-pre-wrap rounded-lg bg-slate-950/60 p-3 text-slate-200">
               {{ activeFeedback.athlete_notes }}
             </p>
-          </div>
-
-          <div v-if="activeFeedback.videos?.length" class="mt-6 space-y-4">
-            <h3 class="text-sm font-medium text-slate-400">Vidéos</h3>
-            <VideoAnnotator
-              v-for="video in activeFeedback.videos"
-              :key="video.id"
-              :video="video"
-            />
           </div>
 
           <div v-if="activeFeedback.reply" class="mt-8 border-t border-slate-800 pt-6">
@@ -811,7 +892,7 @@ watch(
           </div>
         </template>
         <div v-else class="flex h-full min-h-[20rem] items-center justify-center text-slate-500">
-          Sélectionnez un retour dans la liste.
+          —
         </div>
       </section>
     </div>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { markCoachOnboardingDone } from '../utils/coachOnboarding';
+import { track } from '../utils/analytics';
 import UiIcon from './UiIcon.vue';
 
 const props = defineProps({
@@ -17,7 +18,7 @@ const currentStep = ref(0);
 const steps = [
   {
     icon: 'bolt',
-    title: 'Bienvenue sur Track Coach',
+    title: 'Bienvenue sur Power Roster',
     description:
       'Tu viens de créer ton espace coach. En quelques étapes, découvre comment structurer ton coaching powerlifting.',
     accent: 'text-blue-400',
@@ -84,6 +85,7 @@ function close() {
 
 function skip() {
   markCoachOnboardingDone();
+  track('onboarding_tour_skipped', { step: currentStep.value });
   emit('skip');
   close();
 }
@@ -91,6 +93,7 @@ function skip() {
 function next() {
   if (isLastStep.value) {
     markCoachOnboardingDone();
+    track('onboarding_tour_completed');
     emit('add-athlete');
     close();
     return;

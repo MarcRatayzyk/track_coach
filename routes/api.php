@@ -22,9 +22,13 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/athletes/{athlete}/competitions', [AthleteController::class, 'storeCompetition']);
         Route::get('/athletes/{athlete}/program', [AthleteController::class, 'activeProgram']);
 
-        Route::post('/program-templates', [ProgramTemplateController::class, 'store']);
-        Route::get('/program-templates', [ProgramTemplateController::class, 'index']);
-        Route::post('/program-templates/{template}/assign', [ProgramTemplateController::class, 'assign']);
+        Route::middleware('coach')->group(function (): void {
+            Route::post('/program-templates', [ProgramTemplateController::class, 'store']);
+            Route::get('/program-templates', [ProgramTemplateController::class, 'index']);
+            Route::post('/program-templates/{template}/assign', [ProgramTemplateController::class, 'assign']);
+
+            Route::get('/dashboard/coach', [DashboardController::class, 'coach']);
+        });
 
         Route::get('/threads', [ThreadController::class, 'index']);
         Route::get('/threads/inbox-summary', [ThreadController::class, 'inboxSummary']);
@@ -33,7 +37,5 @@ Route::prefix('v1')->group(function (): void {
         Route::patch('/threads/{thread}/read', [ThreadController::class, 'markRead']);
         Route::post('/threads/{thread}/messages', [ThreadController::class, 'storeMessage'])
             ->middleware('throttle:messages');
-
-        Route::get('/dashboard/coach', [DashboardController::class, 'coach']);
     });
 });

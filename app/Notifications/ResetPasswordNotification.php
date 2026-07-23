@@ -3,9 +3,10 @@
 namespace App\Notifications;
 
 use Illuminate\Auth\Notifications\ResetPassword as BaseResetPassword;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 
-class ResetPasswordNotification extends BaseResetPassword
+class ResetPasswordNotification extends BaseResetPassword implements ShouldQueue
 {
     /**
      * @return array<string, mixed>
@@ -18,7 +19,7 @@ class ResetPasswordNotification extends BaseResetPassword
         ], false));
 
         return (new MailMessage)
-            ->subject('Réinitialise ton mot de passe Track Coach')
+            ->subject('Réinitialise ton mot de passe Power Roster')
             ->line('Tu reçois cet e-mail car nous avons reçu une demande de réinitialisation de mot de passe pour ton compte.')
             ->action('Réinitialiser le mot de passe', $url)
             ->line('Ce lien expirera dans '.config('auth.passwords.'.config('auth.defaults.passwords').'.expire').' minutes.')

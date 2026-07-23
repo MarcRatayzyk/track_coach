@@ -24,6 +24,8 @@ class SessionFeedbackMedia extends Model
     protected $fillable = [
         'session_feedback_id',
         'uploaded_by',
+        'program_day_exercise_id',
+        'series_info',
         'kind',
         'disk',
         'path',
@@ -32,6 +34,10 @@ class SessionFeedbackMedia extends Model
         'size_bytes',
         'sort_order',
         'status',
+    ];
+
+    protected $casts = [
+        'series_info' => 'array',
     ];
 
     public function feedback(): BelongsTo

@@ -55,12 +55,18 @@ class SessionFeedbackWebController extends Controller
             (array) $request->validated('video_upload_ids', []),
         ));
 
+        $videoSeries = array_map(
+            static fn ($id) => $id === null || $id === '' ? null : (int) $id,
+            (array) $request->validated('video_series', []),
+        );
+
         $feedback = $action->execute(
             $request->user(),
             $request->validated('session_date'),
             $request->validated('athlete_notes'),
             $request->file('videos', []) ?? [],
             $videoUploadIds,
+            $videoSeries,
         );
 
         return redirect()

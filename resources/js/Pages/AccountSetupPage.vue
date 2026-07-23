@@ -12,6 +12,7 @@ import {
   SEX_OPTIONS,
   weightCategoriesForSex,
 } from '../config/ipfWeightCategories';
+import { track } from '../utils/analytics';
 
 const props = defineProps({
     user: {
@@ -103,6 +104,9 @@ function prevStep() {
 function submit() {
     form.post(props.submitUrl, {
         preserveScroll: true,
+        onSuccess: () => {
+            track('account_setup_completed', { role: props.role });
+        },
     });
 }
 
@@ -112,7 +116,7 @@ const inputClass =
 
 <template>
     <div class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-blue-950/30 px-4 py-10 text-slate-100">
-        <Head :title="isCoach ? 'Activer mon compte coach' : 'Bienvenue sur Track Coach'" />
+        <Head :title="isCoach ? 'Activer mon compte coach' : 'Bienvenue sur Power Roster'" />
 
         <div class="mx-auto w-full max-w-lg">
             <template v-if="isCoach">

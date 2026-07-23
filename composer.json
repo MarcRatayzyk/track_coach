@@ -1,7 +1,7 @@
 {
-    "name": "track-coach/app",
+    "name": "power-roster/app",
     "type": "project",
-    "description": "Track Coach Laravel API-first app for powerlifting coaches.",
+    "description": "Power Roster Laravel API-first app for powerlifting coaches.",
     "require": {
         "php": "^8.3",
         "laravel/framework": "^11.0",

@@ -17,6 +17,7 @@ import CompetitionCalendarModal from '../Components/CompetitionCalendarModal.vue
 import DashboardAlertsPanel from '../Components/DashboardAlertsPanel.vue';
 import FeedbackBreakdownModal from '../Components/FeedbackBreakdownModal.vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
+import OnboardingChecklist from '../Components/OnboardingChecklist.vue';
 import SemiCircleGauge from '../Components/SemiCircleGauge.vue';
 import UiIcon from '../Components/UiIcon.vue';
 import {
@@ -103,6 +104,10 @@ const props = defineProps({
   monthlyReadinessAwards: {
     type: Object,
     default: null,
+  },
+  onboarding: {
+    type: Object,
+    default: () => ({ steps: [], completed_count: 0, total: 0 }),
   },
 });
 
@@ -276,6 +281,10 @@ onMounted(() => {
 
     <template v-else>
     <h1 class="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+
+    <div class="mt-4">
+      <OnboardingChecklist :onboarding="onboarding" />
+    </div>
 
     <section
       v-if="monthlyReadinessAwards?.screens?.length"

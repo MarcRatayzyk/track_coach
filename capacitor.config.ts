@@ -10,7 +10,7 @@ if (!serverUrl) {
 
 const config: CapacitorConfig = {
     appId: 'com.trackcoach.athlete',
-    appName: 'Track Coach',
+    appName: 'Power Roster',
     webDir: 'capacitor-www',
     server: serverUrl
         ? { url: `${serverUrl}/login`, cleartext: false }

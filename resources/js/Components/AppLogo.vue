@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  /** Affiche le texte « Track Coach » à côté du pictogramme */
+  /** Affiche le texte « Power Roster » à côté du pictogramme */
   withWordmark: {
     type: Boolean,
     default: true,
@@ -56,6 +56,6 @@ defineProps({
         <circle cx="16" cy="14.5" r="1.6" fill="currentColor" />
       </svg>
     </span>
-    <span v-if="withWordmark" class="truncate" :class="wordmarkClass">Track Coach</span>
+    <span v-if="withWordmark" class="truncate" :class="wordmarkClass">Power Roster</span>
   </span>
 </template>

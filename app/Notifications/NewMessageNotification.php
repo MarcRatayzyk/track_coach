@@ -4,10 +4,11 @@ namespace App\Notifications;
 
 use App\Models\Message;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class NewMessageNotification extends Notification
+class NewMessageNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -31,7 +32,7 @@ class NewMessageNotification extends Notification
 
         return (new MailMessage)
             ->subject("Nouveau message de {$senderName}")
-            ->line("{$senderName} t’a envoyé un message sur Track Coach.")
+            ->line("{$senderName} t’a envoyé un message sur Power Roster.")
             ->action('Ouvrir la messagerie', url('/messaging?thread='.$this->message->thread_id));
     }
 }

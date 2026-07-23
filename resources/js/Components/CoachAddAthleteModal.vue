@@ -6,6 +6,7 @@ import {
   cloneFields,
   defaultReadinessFields,
 } from '../config/readinessFormFields';
+import { track } from '../utils/analytics';
 
 const page = usePage();
 const manualActivationLinks = computed(() => page.props.appConfig?.manualActivationLinks ?? true);
@@ -67,6 +68,7 @@ function submitNewAthlete() {
   form.post('/coach/athletes', {
     preserveScroll: true,
     onSuccess: (page) => {
+      track('athlete_invited');
       invitationUrl.value = page.props.flash?.first_login_url ?? '';
       modalStep.value = 'invite';
       form.reset();

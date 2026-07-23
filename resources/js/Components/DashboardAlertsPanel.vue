@@ -104,7 +104,7 @@ async function shareAlert() {
 
   const shareText = `${sharePreview.value.socialText}\n${window.location.origin}${sharePreview.value.shareUrl}`;
   const shareData = {
-    title: selectedAlert.value?.title ?? 'Track Coach',
+    title: selectedAlert.value?.title ?? 'Power Roster',
     text: shareText,
     url: `${window.location.origin}${sharePreview.value.shareUrl}`,
   };

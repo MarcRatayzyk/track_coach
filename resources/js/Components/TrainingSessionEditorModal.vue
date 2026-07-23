@@ -7,6 +7,7 @@ import {
   dayToSessionPayload,
   sessionToDay,
 } from '../utils/programBuilder';
+import { track } from '../utils/analytics';
 
 const props = defineProps({
   open: {
@@ -101,6 +102,7 @@ function save() {
     form.put(`/athletes/${props.athleteId}/training-sessions/${props.session.id}`, {
       preserveScroll: true,
       onSuccess: () => {
+        track('session_logged', { source: 'editor', is_update: true });
         emit('saved', { sessionDate: sessionDate.value });
         close();
       },
@@ -109,6 +111,7 @@ function save() {
     form.post(`/athletes/${props.athleteId}/training-sessions`, {
       preserveScroll: true,
       onSuccess: () => {
+        track('session_logged', { source: 'editor', is_update: false });
         emit('saved', { sessionDate: sessionDate.value });
         close();
       },

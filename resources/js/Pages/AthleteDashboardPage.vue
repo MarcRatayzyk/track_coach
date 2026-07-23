@@ -196,7 +196,7 @@ async function sharePayload(payload) {
 
   const text = `${payload.social_text}\n${window.location.origin}${payload.share_url}`;
   const shareData = {
-    title: payload.headline ?? 'Track Coach',
+    title: payload.headline ?? 'Power Roster',
     text,
     url: `${window.location.origin}${payload.share_url}`,
   };

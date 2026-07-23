@@ -36,7 +36,7 @@ const emit = defineEmits(['close']);
                             <UiIcon name="bolt" class="h-5 w-5" />
                         </span>
                         <h2 id="install-guide-title" class="text-base font-semibold text-white">
-                            Installer Track Coach
+                            Installer Power Roster
                         </h2>
                     </div>
                     <button
@@ -117,7 +117,7 @@ const emit = defineEmits(['close']);
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">2</span>
                         <span>
                             Sinon : menu <strong class="text-white">⋮</strong> →
-                            <strong class="text-white">Installer Track Coach</strong>
+                            <strong class="text-white">Installer Power Roster</strong>
                             ou <strong class="text-white">Applications disponibles</strong>.
                         </span>
                     </li>

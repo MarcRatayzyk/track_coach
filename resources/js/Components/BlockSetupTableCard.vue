@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
+import { track } from '../utils/analytics';
 
 const props = defineProps({
   athletes: {
@@ -34,7 +35,12 @@ const form = useForm({
 });
 
 function submit() {
-  form.post('/coach/program-blocks', { preserveScroll: true });
+  form.post('/coach/program-blocks', {
+    preserveScroll: true,
+    onSuccess: () => {
+      track('program_created', { source: 'table' });
+    },
+  });
 }
 
 const deletingId = ref(null);

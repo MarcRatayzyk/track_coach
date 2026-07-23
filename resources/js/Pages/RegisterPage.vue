@@ -7,6 +7,7 @@ export default {
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLogo from '../Components/AppLogo.vue';
+import { track } from '../utils/analytics';
 
 const form = useForm({
     name: '',
@@ -18,6 +19,9 @@ const form = useForm({
 function submit() {
     form.post('/register', {
         preserveScroll: true,
+        onSuccess: () => {
+            track('user_registered', { role: 'coach' });
+        },
     });
 }
 </script>

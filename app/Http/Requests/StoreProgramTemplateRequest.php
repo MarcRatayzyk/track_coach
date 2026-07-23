@@ -9,7 +9,7 @@ class StoreProgramTemplateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->role === 'coach';
     }
 
     public function rules(): array

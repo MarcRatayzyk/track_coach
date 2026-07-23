@@ -4,12 +4,15 @@ namespace App\Actions;
 
 use App\Models\AthleteProfile;
 use App\Models\DashboardTask;
+use App\Models\ProgramDayExercise;
+use App\Models\ProgramTrainingDay;
 use App\Models\SessionFeedback;
 use App\Models\SessionFeedbackMedia;
 use App\Models\User;
 use App\Notifications\NewSessionFeedbackNotification;
 use App\Support\FeedbackFrequencySupport;
 use App\Support\MailSendSupport;
+use App\Support\SessionFeedbackPresenter;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +28,7 @@ class StoreSessionFeedbackAction
     /**
      * @param  list<UploadedFile>  $videos
      * @param  list<int>  $videoUploadIds
+     * @param  list<int|null>  $videoSeries  Ids d'exercice choisis par vidéo (alignés sur l'ordre des vidéos).
      */
     public function execute(
         User $athlete,
@@ -32,6 +36,7 @@ class StoreSessionFeedbackAction
         ?string $athleteNotes,
         array $videos = [],
         array $videoUploadIds = [],
+        array $videoSeries = [],
     ): SessionFeedback {
         $date = Carbon::parse($sessionDate)->startOfDay();
 
@@ -58,7 +63,7 @@ class StoreSessionFeedbackAction
             ]);
         }
 
-        return DB::transaction(function () use ($athlete, $date, $athleteNotes, $videos, $videoUploadIds, $resolved): SessionFeedback {
+        return DB::transaction(function () use ($athlete, $date, $athleteNotes, $videos, $videoUploadIds, $videoSeries, $resolved): SessionFeedback {
             $feedback = SessionFeedback::query()->create([
                 'coach_id' => $resolved['coach']->id,
                 'athlete_id' => $athlete->id,
@@ -70,10 +75,12 @@ class StoreSessionFeedbackAction
                 'submitted_at' => now(),
             ]);
 
+            $seriesByPosition = $this->resolveSeriesSnapshots($resolved['training_day'], $videoSeries);
+
             if ($videoUploadIds !== []) {
-                $this->storeMedia->attachUploadedVideos($feedback, $athlete, $videoUploadIds);
+                $this->storeMedia->attachUploadedVideos($feedback, $athlete, $videoUploadIds, $seriesByPosition);
             } elseif ($videos !== []) {
-                $this->storeMedia->storeVideos($feedback, $videos, $athlete->id);
+                $this->storeMedia->storeVideos($feedback, $videos, $athlete->id, $seriesByPosition);
             }
 
             $this->linkDashboardTask($feedback, $athlete, $date);
@@ -83,6 +90,51 @@ class StoreSessionFeedbackAction
 
             return $feedback;
         });
+    }
+
+    /**
+     * Construit, par position de vidéo, le snapshot de série (exercice planifié).
+     * Tout id d'exercice hors de la séance est ignoré (sécurité).
+     *
+     * @param  list<int|null>  $videoSeries
+     * @return array<int, array{exercise_id:int, snapshot:array<string, mixed>}>
+     */
+    private function resolveSeriesSnapshots(ProgramTrainingDay $trainingDay, array $videoSeries): array
+    {
+        $ids = array_values(array_filter(
+            array_map(static fn ($id) => $id === null ? null : (int) $id, $videoSeries),
+            static fn ($id) => $id !== null,
+        ));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $exercises = $trainingDay->exercises()
+            ->whereIn('id', $ids)
+            ->get()
+            ->keyBy('id');
+
+        $result = [];
+        foreach (array_values($videoSeries) as $position => $rawId) {
+            $id = $rawId === null ? null : (int) $rawId;
+            if ($id === null) {
+                continue;
+            }
+
+            /** @var ProgramDayExercise|null $exercise */
+            $exercise = $exercises->get($id);
+            if ($exercise === null) {
+                continue;
+            }
+
+            $result[$position] = [
+                'exercise_id' => $exercise->id,
+                'snapshot' => SessionFeedbackPresenter::seriesSnapshot($exercise),
+            ];
+        }
+
+        return $result;
     }
 
     private function linkDashboardTask(SessionFeedback $feedback, User $athlete, Carbon $date): void

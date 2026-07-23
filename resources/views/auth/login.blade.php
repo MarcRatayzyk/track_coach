@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Connexion — Track Coach</title>
+    <title>Connexion — Power Roster</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: system-ui, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0f172a; color: #e2e8f0; }
@@ -20,7 +20,7 @@
 <body>
 <div class="card">
     <p style="margin:0 0 1rem;"><a href="{{ route('home') }}" style="color:#94a3b8;font-size:0.875rem;text-decoration:none;">← Retour à l'accueil</a></p>
-    <h1>Track Coach</h1>
+    <h1>Power Roster</h1>
     @if (session('success'))
         <p style="color:#4ade80;font-size:0.875rem;margin-bottom:1rem;">{{ session('success') }}</p>
     @endif

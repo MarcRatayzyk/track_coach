@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\ProgramDayExercise;
+use App\Models\ProgramTrainingDay;
 use App\Models\SessionFeedback;
 use App\Models\User;
 use App\Support\FeedbackFrequencySupport;
@@ -69,10 +71,23 @@ class AthleteEligibleFeedbackSessionsService
                 'session_date' => $dateString,
                 'program_training_day_id' => $trainingDay->id,
                 'session_label' => SessionFeedbackPresenter::sessionLabel($trainingDay),
+                'exercises' => $this->exercisesFor($trainingDay),
             ];
         }
 
         return $eligible;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function exercisesFor(ProgramTrainingDay $trainingDay): array
+    {
+        return $trainingDay->exercises()
+            ->get()
+            ->map(fn (ProgramDayExercise $exercise) => SessionFeedbackPresenter::seriesOption($exercise))
+            ->values()
+            ->all();
     }
 
     /**
@@ -129,6 +144,7 @@ class AthleteEligibleFeedbackSessionsService
                     $weekStartBound->locale('fr')->isoFormat('D MMM'),
                     $weekEndBound->locale('fr')->isoFormat('D MMM YYYY'),
                 ),
+                'exercises' => $this->exercisesFor($latestTrainingDay),
             ];
         }
 

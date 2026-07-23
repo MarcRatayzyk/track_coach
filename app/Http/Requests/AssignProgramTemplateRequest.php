@@ -8,7 +8,7 @@ class AssignProgramTemplateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->role === 'coach';
     }
 
     protected function prepareForValidation(): void
@@ -25,5 +25,24 @@ class AssignProgramTemplateRequest extends FormRequest
             'date_start' => ['required', 'date'],
             'date_end' => ['nullable', 'date', 'after_or_equal:date_start'],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $coach = $this->user();
+            if ($coach === null) {
+                return;
+            }
+
+            $isOnRoster = $coach->athletes()
+                ->where('users.id', (int) $this->input('athlete_id'))
+                ->where('users.role', 'athlete')
+                ->exists();
+
+            if (! $isOnRoster) {
+                $validator->errors()->add('athlete_id', 'Cet athlète n’est pas dans votre roster.');
+            }
+        });
     }
 }

@@ -42,7 +42,7 @@ class EmailVerificationController extends Controller
         }
 
         return redirect()->intended($this->homeFor($user))
-            ->with('success', 'E-mail confirmé. Bienvenue sur Track Coach !');
+            ->with('success', 'E-mail confirmé. Bienvenue sur Power Roster !');
     }
 
     public function resend(Request $request): RedirectResponse

@@ -10,3 +10,4 @@ Artisan::command('inspire', function (): void {
 
 Schedule::command('programs:archive-completed')->daily();
 Schedule::command('feedbacks:cleanup-orphan-uploads')->hourly();
+Schedule::command('backup:run')->dailyAt('03:00')->withoutOverlapping();

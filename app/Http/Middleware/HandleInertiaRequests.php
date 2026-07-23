@@ -60,6 +60,7 @@ class HandleInertiaRequests extends Middleware
                 'first_login_url' => fn () => $request->session()->get('first_login_url'),
             ],
             'appConfig' => [
+                'name' => config('app.name'),
                 'manualActivationLinks' => fn () => ActivationDelivery::usesManualLinks(),
             ],
             'messagingInbox' => fn () => match ($request->user()?->role) {

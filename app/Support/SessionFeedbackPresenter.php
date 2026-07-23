@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Message;
 use App\Models\MessageMedia;
 use App\Models\MessageThread;
+use App\Models\ProgramDayExercise;
 use App\Models\ProgramTrainingDay;
 use App\Models\SessionFeedback;
 use App\Models\SessionFeedbackAnnotation;
@@ -97,11 +98,124 @@ class SessionFeedbackPresenter
             'url' => $media->url(),
             'original_name' => $media->original_name,
             'mime_type' => $media->mime_type,
+            'series' => self::seriesFromSnapshot($media->series_info),
             'annotations' => $media->annotations
                 ->map(fn (SessionFeedbackAnnotation $annotation) => self::annotation($annotation))
                 ->values()
                 ->all(),
         ];
+    }
+
+    /**
+     * Option de série présentée à l'athlète pour rattacher une vidéo à un exercice planifié.
+     *
+     * @return array<string, mixed>
+     */
+    public static function seriesOption(ProgramDayExercise $exercise): array
+    {
+        return [
+            'id' => $exercise->id,
+            'label' => self::seriesLabel($exercise),
+            'section' => $exercise->section,
+            'section_label' => self::sectionLabel($exercise->section),
+            'exercise_name' => self::exerciseName($exercise),
+            'sets' => $exercise->sets,
+            'reps' => $exercise->reps,
+            'load' => $exercise->load,
+            'load_percent' => $exercise->load_percent,
+            'rpe' => $exercise->rpe,
+            'summary' => self::seriesSummary($exercise),
+        ];
+    }
+
+    /**
+     * Snapshot figé stocké sur la vidéo au moment de l'envoi.
+     *
+     * @return array<string, mixed>
+     */
+    public static function seriesSnapshot(ProgramDayExercise $exercise): array
+    {
+        return self::seriesOption($exercise);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $snapshot
+     * @return array<string, mixed>|null
+     */
+    private static function seriesFromSnapshot(?array $snapshot): ?array
+    {
+        if ($snapshot === null || $snapshot === []) {
+            return null;
+        }
+
+        return $snapshot;
+    }
+
+    private static function exerciseName(ProgramDayExercise $exercise): string
+    {
+        $name = trim((string) $exercise->exercise_name);
+        if ($name !== '') {
+            return $name;
+        }
+
+        $lift = trim((string) $exercise->lift);
+
+        return $lift !== '' ? ucfirst($lift) : 'Exercice';
+    }
+
+    private static function seriesLabel(ProgramDayExercise $exercise): string
+    {
+        $name = self::exerciseName($exercise);
+        $section = self::sectionLabel($exercise->section);
+
+        return $section !== '' ? "{$name} — {$section}" : $name;
+    }
+
+    public static function sectionLabel(?string $section): string
+    {
+        return match ($section) {
+            ProgramDayExercise::SECTION_TOPSET => 'Top set',
+            ProgramDayExercise::SECTION_BACKOFF => 'Back-off',
+            ProgramDayExercise::SECTION_ACCESSORY => 'Accessoire',
+            ProgramDayExercise::SECTION_WARMUP => 'Échauffement',
+            default => '',
+        };
+    }
+
+    private static function seriesSummary(ProgramDayExercise $exercise): string
+    {
+        $parts = [];
+
+        $sets = trim((string) $exercise->sets);
+        $reps = trim((string) $exercise->reps);
+        if ($sets !== '' && $reps !== '') {
+            $parts[] = "{$sets} × {$reps}";
+        } elseif ($reps !== '') {
+            $parts[] = "{$reps} reps";
+        } elseif ($sets !== '') {
+            $parts[] = "{$sets} séries";
+        }
+
+        if ($exercise->load !== null) {
+            $parts[] = self::formatNumber((float) $exercise->load).' kg';
+        } elseif ($exercise->load_percent !== null) {
+            $parts[] = self::formatNumber((float) $exercise->load_percent).' %';
+        }
+
+        if ($exercise->rpe !== null) {
+            $parts[] = 'RPE '.self::formatNumber((float) $exercise->rpe);
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    private static function formatNumber(float $value): string
+    {
+        if (floor($value) === $value) {
+            return (string) (int) $value;
+        }
+
+        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
     }
 
     /**

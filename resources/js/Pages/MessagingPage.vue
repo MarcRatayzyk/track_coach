@@ -13,6 +13,7 @@ import MessageComposeBar from '../Components/MessageComposeBar.vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import { echo } from '../echo';
+import { track } from '../utils/analytics';
 
 const props = defineProps({
   role: {
@@ -130,6 +131,10 @@ function submitMessage() {
       preserveState: true,
       only: ['messages', 'threads'],
       onSuccess: () => {
+        track('message_sent', {
+          role: props.role,
+          has_audio: hasAudio,
+        });
         messageForm.reset('content');
         messageForm.session_feedback_id = null;
         recordedAudioFiles.value = [];

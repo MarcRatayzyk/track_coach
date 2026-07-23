@@ -19,6 +19,7 @@ export default {
 import { computed, ref } from 'vue';
 
 import { router } from '@inertiajs/vue3';
+import { track } from '../utils/analytics';
 
 import BlockSetupCard from '../Components/BlockSetupCard.vue';
 import BlockSetupTableCard from '../Components/BlockSetupTableCard.vue';
@@ -69,6 +70,14 @@ const props = defineProps({
   },
 
   existingBlocks: {
+
+    type: Array,
+
+    default: () => [],
+
+  },
+
+  starterPrograms: {
 
     type: Array,
 
@@ -360,6 +369,13 @@ function assignBlockToAthlete() {
     {
 
       preserveScroll: true,
+
+      onSuccess: () => {
+        track('program_assigned', {
+          block_id: props.activeBlock.id,
+          builder_tab: activeTab.value,
+        });
+      },
 
       onFinish: () => {
 
@@ -929,6 +945,7 @@ function clearClipboard() {
       v-if="!showCalendar && activeTab === 'calendar'"
       :athletes="athletes"
       :existing-blocks="existingBlocks"
+      :starter-programs="starterPrograms"
     />
 
     <BlockSetupTableCard

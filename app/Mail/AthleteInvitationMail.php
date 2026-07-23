@@ -4,12 +4,13 @@ namespace App\Mail;
 
 use App\Models\User;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class AthleteInvitationMail extends Mailable
+class AthleteInvitationMail extends Mailable implements ShouldQueue
 {
     use Queueable;
     use SerializesModels;
@@ -23,7 +24,7 @@ class AthleteInvitationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->coach->name.' t’invite sur Track Coach',
+            subject: $this->coach->name.' t’invite sur Power Roster',
         );
     }
 
