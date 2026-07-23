@@ -62,6 +62,10 @@ const submitForm = useForm({
   video_upload_ids: [],
 });
 
+const replyForm = useForm({
+  content: '',
+});
+
 const filterOptions = [
   { value: 'pending', label: 'En attente' },
   { value: 'all', label: 'Tous' },
@@ -112,16 +116,30 @@ function filterUrl(value) {
   return `/feedbacks?${params.toString()}`;
 }
 
-function messagingReplyUrl(feedback) {
-  const threadId = feedback.coach_thread_id;
-  if (threadId) {
-    return `/messaging?thread=${threadId}&feedback=${feedback.id}`;
-  }
-  return `/messaging?athlete=${feedback.athlete_id}&feedback=${feedback.id}`;
+function selectFeedback(id) {
+  replyForm.reset();
+  replyForm.clearErrors();
+  router.get(feedbackUrl(id), {}, { preserveState: true, preserveScroll: true });
 }
 
-function selectFeedback(id) {
-  router.get(feedbackUrl(id), {}, { preserveState: true, preserveScroll: true });
+function sendReply() {
+  if (!props.activeFeedback?.id) {
+    return;
+  }
+  const content = replyForm.content?.trim() ?? '';
+  if (!content) {
+    replyForm.setError('content', 'Écrivez votre retour avant de l’envoyer.');
+    return;
+  }
+
+  replyForm
+    .transform(() => ({ content }))
+    .post(`/feedbacks/${props.activeFeedback.id}/reply`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        replyForm.reset();
+      },
+    });
 }
 
 function csrfToken() {
@@ -495,6 +513,14 @@ function formatSubmitted(iso) {
 }
 
 watch(
+  () => props.activeFeedback?.id,
+  () => {
+    replyForm.reset();
+    replyForm.clearErrors();
+  },
+);
+
+watch(
   () => props.eligibleSessions,
   (sessions) => {
     if (sessions.length && !submitForm.session_date) {
@@ -636,7 +662,7 @@ watch(
             <p v-if="statusLine" class="mt-1 text-xs text-slate-400">{{ statusLine }}</p>
           </div>
           <p v-if="!usesDirectUpload" class="mt-2 text-xs text-amber-400/90">
-            Mode local : limite PHP ~{{ maxVideoMbLabel }} Mo. Configure R2 (clés AWS_*) pour aller jusqu’à 200 Mo.
+            Mode local : limite PHP ~{{ maxVideoMbLabel }} Mo. Configure R2 (clés AWS_*) pour aller jusqu’à 500 Mo.
           </p>
           <p v-if="submitForm.errors.videos" class="mt-1 text-sm text-red-400">
             {{ submitForm.errors.videos }}
@@ -735,7 +761,6 @@ watch(
               v-for="video in activeFeedback.videos"
               :key="video.id"
               :video="video"
-              :readonly="!isCoach"
             />
           </div>
 
@@ -763,14 +788,26 @@ watch(
 
           <div
             v-else-if="isCoach && activeFeedback.status === 'submitted'"
-            class="mt-8 border-t border-slate-800 pt-6"
+            class="mt-8 space-y-3 border-t border-slate-800 pt-6"
           >
-            <Link
-              :href="messagingReplyUrl(activeFeedback)"
-              class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500"
+            <label class="block text-sm font-medium text-slate-300">Votre retour</label>
+            <textarea
+              v-model="replyForm.content"
+              rows="4"
+              placeholder="Écrivez votre retour à l’athlète…"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-600"
+            />
+            <p v-if="replyForm.errors.content" class="text-sm text-red-400">
+              {{ replyForm.errors.content }}
+            </p>
+            <button
+              type="button"
+              :disabled="replyForm.processing"
+              class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+              @click="sendReply"
             >
-              Répondre dans la messagerie →
-            </Link>
+              {{ replyForm.processing ? 'Envoi…' : 'Envoyer le retour' }}
+            </button>
           </div>
         </template>
         <div v-else class="flex h-full min-h-[20rem] items-center justify-center text-slate-500">

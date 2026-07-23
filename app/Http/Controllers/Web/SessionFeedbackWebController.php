@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\SendFeedbackReplyMessageAction;
 use App\Actions\StoreSessionFeedbackAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSessionFeedbackRequest;
+use App\Models\MessageThread;
 use App\Models\SessionFeedback;
 use App\Services\AthleteEligibleFeedbackSessionsService;
 use App\Support\FeedbackFrequencySupport;
@@ -12,6 +14,7 @@ use App\Support\SessionFeedbackPresenter;
 use App\Support\VideoUploadDisk;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
@@ -63,6 +66,39 @@ class SessionFeedbackWebController extends Controller
         return redirect()
             ->route('feedbacks.index', ['feedback' => $feedback->id])
             ->with('success', 'Retour envoyé au coach.');
+    }
+
+    public function reply(
+        Request $request,
+        SessionFeedback $feedback,
+        SendFeedbackReplyMessageAction $action,
+    ): RedirectResponse {
+        $this->authorize('reply', $feedback);
+
+        $data = $request->validate([
+            'content' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $body = trim($data['content']);
+        if ($body === '') {
+            throw ValidationException::withMessages([
+                'content' => 'Écrivez votre retour avant de l’envoyer.',
+            ]);
+        }
+
+        $thread = MessageThread::query()->firstOrCreate([
+            'coach_id' => $feedback->coach_id,
+            'athlete_id' => $feedback->athlete_id,
+        ]);
+
+        $action->execute($request->user(), $thread, $feedback->id, $body, []);
+
+        return redirect()
+            ->route('feedbacks.index', [
+                'feedback' => $feedback->id,
+                'filter' => $request->query('filter', 'all'),
+            ])
+            ->with('success', 'Retour envoyé à l’athlète.');
     }
 
     private function coachIndex($coach, string $filter, ?int $activeId): Response

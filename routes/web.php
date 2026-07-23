@@ -76,6 +76,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/feedbacks', [SessionFeedbackWebController::class, 'index'])->name('feedbacks.index');
     Route::get('/feedbacks/{feedback}', [SessionFeedbackWebController::class, 'show'])->name('feedbacks.show');
     Route::post('/feedbacks', [SessionFeedbackWebController::class, 'store'])->name('feedbacks.store');
+    Route::post('/feedbacks/{feedback}/reply', [SessionFeedbackWebController::class, 'reply'])
+        ->name('feedbacks.reply');
     Route::post('/feedbacks/video-uploads', [SessionFeedbackVideoUploadController::class, 'store'])
         ->name('feedbacks.video-uploads.store');
     Route::post('/feedbacks/video-uploads/{media}/complete', [SessionFeedbackVideoUploadController::class, 'complete'])

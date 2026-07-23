@@ -6,7 +6,7 @@ class VideoUploadDisk
 {
     public const MAX_FILES = 3;
 
-    public const MAX_FILE_BYTES_S3 = 200 * 1024 * 1024;
+    public const MAX_FILE_BYTES_S3 = 500 * 1024 * 1024;
 
     public static function usesDirectUpload(): bool
     {
