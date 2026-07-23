@@ -13,6 +13,13 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
+        window.__POSTHOG__ = @json([
+            'key' => config('trackcoach.posthog.key'),
+            'host' => config('trackcoach.posthog.host'),
+            'ui_host' => config('trackcoach.posthog.ui_host'),
+        ]);
+    </script>
+    <script>
         (function () {
             var theme = localStorage.getItem('tc-theme');
             if (theme === 'light') {

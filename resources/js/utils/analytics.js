@@ -1,34 +1,51 @@
 import posthog from 'posthog-js';
 import { isNativeApp } from '../composables/useNativeApp';
 
-const key = import.meta.env.VITE_POSTHOG_KEY;
-const host = import.meta.env.VITE_POSTHOG_HOST || 'https://eu.i.posthog.com';
-
 let enabled = false;
+
+function resolveConfig() {
+    const runtime =
+        typeof window !== 'undefined' && window.__POSTHOG__ && typeof window.__POSTHOG__ === 'object'
+            ? window.__POSTHOG__
+            : {};
+
+    return {
+        key: String(runtime.key || import.meta.env.VITE_POSTHOG_KEY || '').trim(),
+        host: String(
+            runtime.host || import.meta.env.VITE_POSTHOG_HOST || 'https://eu.i.posthog.com',
+        ).trim(),
+        uiHost: String(runtime.ui_host || 'https://eu.posthog.com').trim(),
+    };
+}
 
 export function getAnalyticsPlatform() {
     return isNativeApp ? 'android' : 'web';
 }
 
 export function initAnalytics() {
-    if (!key || enabled) {
+    if (enabled) {
+        return;
+    }
+
+    const { key, host, uiHost } = resolveConfig();
+    if (!key) {
         return;
     }
 
     posthog.init(key, {
         api_host: host,
-        ui_host: 'https://eu.posthog.com',
-        // SPA Inertia : laisse PostHog émettre un $pageview à chaque changement d'URL (pushState).
+        ui_host: uiHost,
+        defaults: '2025-05-24',
+        // SPA Inertia : pageviews au chargement + à chaque pushState.
         capture_pageview: 'history_change',
         capture_pageleave: true,
-        // Beta : on crée un profil pour tous les visiteurs (sinon Web Analytics reste vide avant login).
+        // Beta : profils même avant login (sinon Web Analytics / Persons restent vides).
         person_profiles: 'always',
         autocapture: true,
         session_recording: {
             maskAllInputs: true,
         },
         loaded: (ph) => {
-            // Ajoute la plateforme (web/android) sur TOUS les events, y compris pageviews et autocapture.
             ph.register({ platform: getAnalyticsPlatform() });
             if (import.meta.env.DEV) {
                 ph.debug();

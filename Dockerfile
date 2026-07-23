@@ -20,6 +20,13 @@ RUN npm ci
 
 COPY . .
 
+# PostHog / Reverb : les VITE_* au build sont optionnelles.
+# Préférer POSTHOG_KEY au runtime (injecté via blade) — fiable sur Render Docker.
+ARG VITE_POSTHOG_KEY=
+ARG VITE_POSTHOG_HOST=https://eu.i.posthog.com
+ENV VITE_POSTHOG_KEY=$VITE_POSTHOG_KEY
+ENV VITE_POSTHOG_HOST=$VITE_POSTHOG_HOST
+
 RUN composer dump-autoload --optimize
 RUN node scripts/generate-pwa-icons.mjs
 RUN npm run build
