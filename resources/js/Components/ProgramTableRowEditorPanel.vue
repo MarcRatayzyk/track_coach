@@ -1,11 +1,12 @@
 <script setup>
-import { computed } from 'vue';
 import ExerciseVariantStrip from './ExerciseVariantStrip.vue';
 import LoadModePicker from './LoadModePicker.vue';
 import OptionButtonGroup from './OptionButtonGroup.vue';
+import SetSchemeEditor from './SetSchemeEditor.vue';
 import { PROGRAM_TABLE_SECTIONS } from '../config/programTableSections';
 import { SET_OPTIONS, REP_OPTIONS, formatEditorLineRecapParts } from '../utils/programBuilder';
 import { useTableRowEditor } from '../composables/useTableRowEditor';
+import { computed } from 'vue';
 
 const props = defineProps({
   athleteOneRm: {
@@ -20,6 +21,7 @@ const row = computed(() => editor?.state.row ?? null);
 const sessionHeading = computed(() => editor?.state.sessionHeading ?? '');
 const defaultLift = computed(() => editor?.state.defaultLift ?? 'squat');
 const rowNumber = computed(() => (editor?.state.rowIndex ?? 0) + 1);
+const scheme = computed(() => row.value?.set_scheme ?? 'standard');
 const recapParts = computed(() => {
   if (!row.value) {
     return null;
@@ -162,7 +164,11 @@ function goToNextRow() {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div>
+        <SetSchemeEditor v-if="editor?.state.row" v-model="editor.state.row" dense />
+      </div>
+
+      <div v-if="scheme === 'standard'" class="grid grid-cols-2 gap-3">
         <OptionButtonGroup
           :model-value="row.sets"
           :options="SET_OPTIONS"
@@ -181,7 +187,11 @@ function goToNextRow() {
         />
       </div>
 
-      <LoadModePicker v-if="editor?.state.row" v-model="editor.state.row" compact />
+      <LoadModePicker
+        v-if="editor?.state.row && (scheme === 'standard' || scheme === 'cluster')"
+        v-model="editor.state.row"
+        compact
+      />
 
       <div class="flex items-end gap-2.5">
         <label class="block min-w-0 flex-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">

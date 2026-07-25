@@ -9,7 +9,7 @@ import {
   resolveVisibleColumns,
   spacedColumnPercent,
 } from '../config/dayTableColumns';
-import { uppercaseSessionLabel } from '../utils/programBuilder';
+import { uppercaseSessionLabel, applySchemeDerivedFields } from '../utils/programBuilder';
 import { programSessionVisitOptions } from '../utils/programBuilderVisit';
 import { useTableRowEditor } from '../composables/useTableRowEditor';
 
@@ -96,6 +96,8 @@ function makeRow(overrides = {}) {
     exercise_variant_id: null,
     exercise_name: '',
     lift: null,
+    set_scheme: 'standard',
+    scheme_config: null,
     sets: '',
     reps: '',
     load: '',
@@ -119,6 +121,8 @@ function normaliseRows(items = []) {
       exercise_variant_id: item.exercise_variant_id ?? null,
       exercise_name: item.exercise_name ?? '',
       lift: item.lift ?? null,
+      set_scheme: item.set_scheme ?? 'standard',
+      scheme_config: item.scheme_config ?? null,
       sets: item.sets ?? '',
       reps: item.reps ?? '',
       load: item.load ?? '',
@@ -232,18 +236,31 @@ function nullableNumber(value) {
 }
 
 function buildItemsPayload() {
-  return populatedRows.value.map((row) => ({
-    section: row.section ?? 'accessory',
-    exercise_variant_id: row.exercise_variant_id ?? null,
-    exercise_name: String(row.exercise_name).trim(),
-    lift: row.lift ?? primaryLift.value,
-    sets: Number(row.sets),
-    reps: Number(row.reps),
-    load: parseDecimal(row.load),
-    load_percent: parseDecimal(row.load_percent),
-    rpe: parseDecimal(row.rpe),
-    rest_seconds: nullableNumber(row.rest_seconds),
-  }));
+  return populatedRows.value.map((row) => {
+    const derived = applySchemeDerivedFields({
+      ...row,
+      sets: row.sets === '' ? null : Number(row.sets),
+      reps: row.reps === '' ? null : Number(row.reps),
+      load: parseDecimal(row.load),
+      load_percent: parseDecimal(row.load_percent),
+      rpe: parseDecimal(row.rpe),
+    });
+
+    return {
+      section: derived.section ?? 'accessory',
+      exercise_variant_id: derived.exercise_variant_id ?? null,
+      exercise_name: String(derived.exercise_name).trim(),
+      lift: derived.lift ?? primaryLift.value,
+      set_scheme: derived.set_scheme ?? 'standard',
+      scheme_config: derived.set_scheme === 'standard' ? null : derived.scheme_config ?? null,
+      sets: Number(derived.sets ?? 1),
+      reps: Number(derived.reps ?? 1),
+      load: derived.load ?? null,
+      load_percent: derived.load_percent ?? null,
+      rpe: derived.rpe ?? null,
+      rest_seconds: nullableNumber(derived.rest_seconds),
+    };
+  });
 }
 
 function saveSession() {

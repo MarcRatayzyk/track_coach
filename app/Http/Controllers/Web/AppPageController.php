@@ -327,7 +327,6 @@ class AppPageController extends Controller
 
         return Inertia::render('ProgramBuilderPage', [
             'athletes' => $athletes,
-            'starterPrograms' => \App\Support\StarterProgramLibrary::catalog(),
             'existingBlocks' => ProgramBlockPresenter::existingBlocksList($existingBlocks),
             'activeBlock' => $activeBlock,
             'dayTableLayouts' => $dayTableLayouts,

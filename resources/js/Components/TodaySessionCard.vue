@@ -3,11 +3,13 @@ import { Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
+  applySchemeStepToLine,
   createSessionItem,
   dayToSessionPayload,
   expandValidatedSetsToItems,
   hydrateExerciseLine,
   itemSectionTitle,
+  plannedSetsForLine,
   sessionToDay,
   snapshotValidatedSet,
   validatedSetsFromLoggedItems,
@@ -46,7 +48,7 @@ function itemKey(item) {
 }
 
 function withSetTracking(item, { plannedSets = null, validatedSets = [] } = {}) {
-  const planned = Math.max(1, Number(plannedSets ?? item?.line?.sets ?? 1));
+  const planned = Math.max(1, Number(plannedSets ?? plannedSetsForLine(item?.line) ?? 1));
   return {
     ...item,
     plannedSets: planned,
@@ -109,7 +111,7 @@ const programCalendarHref = computed(() => {
 const hasLoggedToday = computed(() => Boolean(props.todayLoggedSession?.id));
 
 function totalSetsFor(item) {
-  return Math.max(1, Number(item?.plannedSets ?? item?.line?.sets ?? 1));
+  return Math.max(1, Number(item?.plannedSets ?? plannedSetsForLine(item?.line) ?? 1));
 }
 
 function getValidatedSetCount(item) {
@@ -159,7 +161,7 @@ function mergeLoggedOntoPlanned(plannedRows, loggedItems) {
     usedKeys.add(key);
     const validatedSets = validatedSetsFromLoggedItems(loggedGroup);
     const tracked = withSetTracking(item, {
-      plannedSets: item.line.sets,
+      plannedSets: plannedSetsForLine(item.line),
       validatedSets,
     });
     const noteFromLogged = [...loggedGroup]
@@ -174,7 +176,10 @@ function mergeLoggedOntoPlanned(plannedRows, loggedItems) {
       tracked.line.sets = tracked.plannedSets;
       if (validatedSets.length < tracked.plannedSets) {
         tracked.line.rpe = null;
+        applySchemeStepToLine(tracked.line, validatedSets.length);
       }
+    } else {
+      applySchemeStepToLine(tracked.line, 0);
     }
     return tracked;
   });
@@ -222,12 +227,13 @@ function initializeWorkItems() {
     return;
   }
 
-  workItems.value = plannedItems.map((row) =>
-    withSetTracking(
-      createSessionItem(row.section, hydrateExerciseLine({ ...row, lift: row.lift ?? mainLift.value })),
-      { plannedSets: row.sets },
-    ),
-  );
+  workItems.value = plannedItems.map((row) => {
+    const line = hydrateExerciseLine({ ...row, lift: row.lift ?? mainLift.value });
+    applySchemeStepToLine(line, 0);
+    return withSetTracking(createSessionItem(row.section, line), {
+      plannedSets: plannedSetsForLine(line),
+    });
+  });
   expandedItemKey.value = workItems.value[0] ? itemKey(workItems.value[0]) : null;
 }
 
@@ -315,6 +321,7 @@ function validateItem(key) {
     expandedItemKey.value = key;
   } else {
     item.line.rpe = null;
+    applySchemeStepToLine(item.line, nextCount);
   }
 
   saveSession({

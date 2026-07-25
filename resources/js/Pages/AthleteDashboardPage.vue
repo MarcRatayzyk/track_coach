@@ -14,7 +14,6 @@ import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
 import TodaySessionCard from '../Components/TodaySessionCard.vue';
 import WrappedStoryModal from '../Components/WrappedStoryModal.vue';
 import { WEEKDAY_LABELS } from '../utils/programBuilder';
-import { buildPrimaryTopsetBarbell } from '../utils/sessionCelebration';
 
 const props = defineProps({
   athleteName: { type: String, required: true },
@@ -111,13 +110,6 @@ const todaySessionTitle = computed(() => {
   }
 
   return label;
-});
-
-const topsetBarbell = computed(() => {
-  if (props.todaySession?.status !== 'session') {
-    return null;
-  }
-  return buildPrimaryTopsetBarbell(props.todaySession.session, props.oneRm);
 });
 
 const sessionCardMotionClass = computed(() => {
@@ -231,7 +223,6 @@ onMounted(() => {
       :athlete-id="athleteId"
       :next-competition="nextCompetition"
       :today-session-title="todaySessionTitle"
-      :topset-barbell="topsetBarbell"
       :show-check-in-button="!todayReadiness || !todayBodyWeight"
       :intro-animate="playHomeIntro"
       :intro-visible="homeIntroVisible"

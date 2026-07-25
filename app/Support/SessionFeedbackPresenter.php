@@ -10,6 +10,7 @@ use App\Models\ProgramTrainingDay;
 use App\Models\SessionFeedback;
 use App\Models\SessionFeedbackAnnotation;
 use App\Models\SessionFeedbackMedia;
+use App\Models\TrainingSession;
 use Illuminate\Support\Collection;
 
 class SessionFeedbackPresenter
@@ -21,7 +22,7 @@ class SessionFeedbackPresenter
     {
         $feedback->loadMissing([
             'athlete:id,name',
-            'programTrainingDay',
+            'programTrainingDay.exercises',
             'athleteVideos.annotations',
         ]);
 
@@ -31,6 +32,7 @@ class SessionFeedbackPresenter
             ->first();
 
         $day = $feedback->programTrainingDay;
+        $loggedItems = self::loggedItemsForFeedback($feedback);
 
         return [
             'id' => $feedback->id,
@@ -41,7 +43,11 @@ class SessionFeedbackPresenter
             'athlete_notes' => $feedback->athlete_notes,
             'status' => $feedback->status,
             'submitted_at' => $feedback->submitted_at?->toIso8601String(),
-            'videos' => $feedback->athleteVideos->map(fn (SessionFeedbackMedia $m) => self::media($m))->values()->all(),
+            'session_exercises' => self::sessionExercisesComparison($day, $loggedItems),
+            'videos' => $feedback->athleteVideos
+                ->map(fn (SessionFeedbackMedia $m) => self::media($m, $loggedItems))
+                ->values()
+                ->all(),
             'reply' => $replyMessage ? self::replyFromMessage($replyMessage) : null,
             'coach_thread_id' => MessageThread::query()
                 ->where('coach_id', $feedback->coach_id)
@@ -86,9 +92,35 @@ class SessionFeedbackPresenter
     }
 
     /**
+     * Comparaison prévu / réalisé pour tous les exercices de la séance (hors échauffement).
+     *
+     * @param  list<array<string, mixed>>  $loggedItems
+     * @return list<array<string, mixed>>
+     */
+    private static function sessionExercisesComparison(?ProgramTrainingDay $day, array $loggedItems): array
+    {
+        if ($day === null) {
+            return [];
+        }
+
+        $day->loadMissing('exercises');
+
+        return $day->exercises
+            ->filter(static fn (ProgramDayExercise $exercise): bool => $exercise->section !== ProgramDayExercise::SECTION_WARMUP)
+            ->map(fn (ProgramDayExercise $exercise) => self::seriesComparison(
+                self::seriesSnapshot($exercise),
+                $loggedItems,
+            ))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $loggedItems
      * @return array<string, mixed>
      */
-    public static function media(SessionFeedbackMedia $media): array
+    public static function media(SessionFeedbackMedia $media, array $loggedItems = []): array
     {
         $media->loadMissing('annotations');
 
@@ -98,12 +130,208 @@ class SessionFeedbackPresenter
             'url' => $media->url(),
             'original_name' => $media->original_name,
             'mime_type' => $media->mime_type,
-            'series' => self::seriesFromSnapshot($media->series_info),
+            'size_bytes' => $media->size_bytes,
+            'series' => self::seriesComparison($media->series_info, $loggedItems),
             'annotations' => $media->annotations
                 ->map(fn (SessionFeedbackAnnotation $annotation) => self::annotation($annotation))
                 ->values()
                 ->all(),
         ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function loggedItemsForFeedback(SessionFeedback $feedback): array
+    {
+        if ($feedback->athlete_id === null || $feedback->session_date === null) {
+            return [];
+        }
+
+        $session = TrainingSession::query()
+            ->where('athlete_id', $feedback->athlete_id)
+            ->whereDate('session_date', $feedback->session_date->toDateString())
+            ->first();
+
+        if ($session === null || ! is_array($session->items)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $session->items,
+            static fn ($item): bool => is_array($item),
+        ));
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $snapshot
+     * @param  list<array<string, mixed>>  $loggedItems
+     * @return array<string, mixed>|null
+     */
+    private static function seriesComparison(?array $snapshot, array $loggedItems): ?array
+    {
+        $planned = self::seriesFromSnapshot($snapshot);
+        if ($planned === null) {
+            return null;
+        }
+
+        $actualLine = self::findMatchingLoggedItem($planned, $loggedItems);
+        $actual = $actualLine !== null ? self::metricsFromLine($actualLine) : null;
+
+        return [
+            'id' => $planned['id'] ?? null,
+            'label' => $planned['label'] ?? null,
+            'section' => $planned['section'] ?? null,
+            'section_label' => $planned['section_label'] ?? null,
+            'exercise_name' => $planned['exercise_name'] ?? null,
+            'summary' => $planned['summary'] ?? null,
+            'planned' => self::metricsFromLine($planned),
+            'actual' => $actual,
+            'matches' => self::metricMatches(self::metricsFromLine($planned), $actual),
+            // Compat : anciennes clés au niveau racine = prévu
+            'sets' => $planned['sets'] ?? null,
+            'reps' => $planned['reps'] ?? null,
+            'load' => $planned['load'] ?? null,
+            'load_percent' => $planned['load_percent'] ?? null,
+            'rpe' => $planned['rpe'] ?? null,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $planned
+     * @param  list<array<string, mixed>>  $loggedItems
+     * @return array<string, mixed>|null
+     */
+    private static function findMatchingLoggedItem(array $planned, array $loggedItems): ?array
+    {
+        $plannedName = strtolower(trim((string) ($planned['exercise_name'] ?? '')));
+        $plannedSection = trim((string) ($planned['section'] ?? ''));
+
+        if ($plannedName === '') {
+            return null;
+        }
+
+        $best = null;
+        $bestScore = -1;
+
+        foreach ($loggedItems as $item) {
+            $line = self::flattenLoggedItem($item);
+            $name = strtolower(trim((string) ($line['exercise_name'] ?? '')));
+            if ($name === '' || $name !== $plannedName) {
+                continue;
+            }
+
+            $section = trim((string) ($line['section'] ?? ''));
+            $sectionScore = ($plannedSection === '' || $section === '' || $section === $plannedSection) ? 2 : 0;
+            if ($sectionScore === 0 && $plannedSection !== '') {
+                continue;
+            }
+
+            $score = $sectionScore;
+            if (TrainingLoadSupport::valuesMatch($planned['sets'] ?? null, $line['sets'] ?? null)) {
+                $score++;
+            }
+            if (TrainingLoadSupport::valuesMatch($planned['reps'] ?? null, $line['reps'] ?? null)) {
+                $score++;
+            }
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $line;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    private static function flattenLoggedItem(array $item): array
+    {
+        if (! isset($item['line']) || ! is_array($item['line'])) {
+            return $item;
+        }
+
+        return array_merge($item, $item['line']);
+    }
+
+    /**
+     * @param  array<string, mixed>  $line
+     * @return array{sets: mixed, reps: mixed, load: mixed, load_percent: mixed, rpe: mixed}
+     */
+    private static function metricsFromLine(array $line): array
+    {
+        return [
+            'sets' => $line['sets'] ?? null,
+            'reps' => $line['reps'] ?? null,
+            'load' => $line['load'] ?? null,
+            'load_percent' => $line['load_percent'] ?? null,
+            'rpe' => $line['rpe'] ?? null,
+        ];
+    }
+
+    /**
+     * @param  array{sets: mixed, reps: mixed, load: mixed, load_percent: mixed, rpe: mixed}  $planned
+     * @param  array{sets: mixed, reps: mixed, load: mixed, load_percent: mixed, rpe: mixed}|null  $actual
+     * @return array{sets: bool|null, reps: bool|null, load: bool|null, rpe: bool|null}
+     */
+    private static function metricMatches(array $planned, ?array $actual): array
+    {
+        if ($actual === null) {
+            return [
+                'sets' => null,
+                'reps' => null,
+                'load' => null,
+                'rpe' => null,
+            ];
+        }
+
+        return [
+            'sets' => self::compareMetric($planned['sets'] ?? null, $actual['sets'] ?? null),
+            'reps' => self::compareMetric($planned['reps'] ?? null, $actual['reps'] ?? null),
+            'load' => self::compareLoad($planned, $actual),
+            'rpe' => self::compareMetric($planned['rpe'] ?? null, $actual['rpe'] ?? null),
+        ];
+    }
+
+    private static function compareMetric(mixed $planned, mixed $actual): ?bool
+    {
+        $plannedEmpty = ! TrainingLoadSupport::hasNumericValue($planned);
+        $actualEmpty = ! TrainingLoadSupport::hasNumericValue($actual);
+
+        if ($plannedEmpty && $actualEmpty) {
+            return null;
+        }
+
+        if ($plannedEmpty || $actualEmpty) {
+            return false;
+        }
+
+        return TrainingLoadSupport::valuesMatch($planned, $actual);
+    }
+
+    /**
+     * @param  array{sets: mixed, reps: mixed, load: mixed, load_percent: mixed, rpe: mixed}  $planned
+     * @param  array{sets: mixed, reps: mixed, load: mixed, load_percent: mixed, rpe: mixed}  $actual
+     */
+    private static function compareLoad(array $planned, array $actual): ?bool
+    {
+        $plannedHasLoad = TrainingLoadSupport::hasNumericValue($planned['load'] ?? null)
+            || TrainingLoadSupport::hasNumericValue($planned['load_percent'] ?? null);
+        $actualHasLoad = TrainingLoadSupport::hasNumericValue($actual['load'] ?? null)
+            || TrainingLoadSupport::hasNumericValue($actual['load_percent'] ?? null);
+
+        if (! $plannedHasLoad && ! $actualHasLoad) {
+            return null;
+        }
+
+        if (! $plannedHasLoad || ! $actualHasLoad) {
+            return false;
+        }
+
+        return TrainingLoadSupport::loadsMatch($planned, $actual, [], 'squat');
     }
 
     /**
@@ -119,6 +347,8 @@ class SessionFeedbackPresenter
             'section' => $exercise->section,
             'section_label' => self::sectionLabel($exercise->section),
             'exercise_name' => self::exerciseName($exercise),
+            'set_scheme' => SetSchemeSupport::resolveScheme($exercise->set_scheme),
+            'scheme_config' => is_array($exercise->scheme_config) ? $exercise->scheme_config : null,
             'sets' => $exercise->sets,
             'reps' => $exercise->reps,
             'load' => $exercise->load,
@@ -184,6 +414,15 @@ class SessionFeedbackPresenter
 
     private static function seriesSummary(ProgramDayExercise $exercise): string
     {
+        $schemeText = SetSchemeSupport::formatPrescription([
+            'set_scheme' => $exercise->set_scheme,
+            'scheme_config' => $exercise->scheme_config,
+            'reps' => $exercise->reps,
+        ]);
+        if ($schemeText !== '') {
+            return $schemeText;
+        }
+
         $parts = [];
 
         $sets = trim((string) $exercise->sets);

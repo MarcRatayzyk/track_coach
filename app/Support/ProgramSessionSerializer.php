@@ -159,10 +159,15 @@ class ProgramSessionSerializer
      */
     private static function lineToPayload(ProgramDayExercise $line): array
     {
+        $scheme = SetSchemeSupport::resolveScheme($line->set_scheme);
+        $config = is_array($line->scheme_config) ? $line->scheme_config : null;
+
         return [
             'exercise_variant_id' => $line->exercise_variant_id,
             'exercise_name' => $line->exercise_name,
             'lift' => $line->lift,
+            'set_scheme' => $scheme,
+            'scheme_config' => $config,
             'sets' => $line->sets,
             'reps' => $line->reps,
             'load' => $line->load,
@@ -273,19 +278,23 @@ class ProgramSessionSerializer
         int $blockIndex,
         string $lift,
     ): void {
+        $normalized = SetSchemeSupport::normalizeLine($line);
+
         ProgramDayExercise::create([
             'training_day_id' => $trainingDayId,
             'block_index' => $blockIndex,
-            'lift' => $line['lift'] ?? $lift,
-            'exercise_variant_id' => $line['exercise_variant_id'] ?? null,
+            'lift' => $normalized['lift'] ?? $lift,
+            'exercise_variant_id' => $normalized['exercise_variant_id'] ?? null,
             'section' => $section,
-            'exercise_name' => $line['exercise_name'],
-            'sets' => $line['sets'],
-            'reps' => $line['reps'],
-            'load' => $line['load'] ?? null,
-            'load_percent' => $line['load_percent'] ?? null,
-            'rpe' => $line['rpe'] ?? null,
-            'rest_seconds' => $line['rest_seconds'] ?? null,
+            'set_scheme' => $normalized['set_scheme'] ?? ProgramDayExercise::SCHEME_STANDARD,
+            'scheme_config' => $normalized['scheme_config'] ?? null,
+            'exercise_name' => $normalized['exercise_name'],
+            'sets' => $normalized['sets'],
+            'reps' => $normalized['reps'],
+            'load' => $normalized['load'] ?? null,
+            'load_percent' => $normalized['load_percent'] ?? null,
+            'rpe' => $normalized['rpe'] ?? null,
+            'rest_seconds' => $normalized['rest_seconds'] ?? null,
             'sort_order' => $sortOrder,
         ]);
     }

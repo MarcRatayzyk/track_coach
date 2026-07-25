@@ -52,6 +52,22 @@ const emit = defineEmits(['toggle', 'validate', 'save-note']);
 
 const line = computed(() => props.item.line ?? {});
 
+const scheme = computed(() => line.value.set_scheme ?? 'standard');
+const isCluster = computed(() => scheme.value === 'cluster');
+const isRamp = computed(() => scheme.value === 'ramp');
+
+const clusterTarget = computed(() => {
+  if (!isCluster.value) {
+    return null;
+  }
+  const reps = line.value.scheme_config?.reps ?? line.value.reps;
+  const minutes = line.value.scheme_config?.duration_minutes;
+  if (reps == null || minutes == null) {
+    return null;
+  }
+  return `${reps} reps en ${minutes} min`;
+});
+
 const totalSets = computed(() =>
   Math.max(1, Number(props.plannedSets ?? line.value.sets ?? 1)),
 );
@@ -91,8 +107,11 @@ const validateButtonLabel = computed(() => {
   if (props.saving) {
     return 'Enregistrement…';
   }
+  if (isCluster.value) {
+    return 'Valider le cluster';
+  }
   if (totalSets.value > 1 && !fullyValidated.value) {
-    return 'Valider une série';
+    return isRamp.value ? 'Valider ce palier' : 'Valider une série';
   }
   return 'Valider la série';
 });
@@ -169,7 +188,12 @@ const hasCharge = computed(() => {
 
 const hasRpe = computed(() => line.value.rpe != null && line.value.rpe !== '');
 
-const canValidate = computed(() => hasCharge.value && hasRpe.value);
+const canValidate = computed(() => {
+  if (isCluster.value) {
+    return line.value.reps != null && line.value.reps !== '';
+  }
+  return hasCharge.value && hasRpe.value;
+});
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-white placeholder:text-slate-600';
@@ -253,18 +277,23 @@ const inputClass =
           </p>
         </div>
 
-        <p v-if="totalSets > 1" class="mb-3 text-xs font-medium text-blue-300/90">
-          Série {{ currentSetNumber }} sur {{ totalSets }}
+        <p v-if="clusterTarget" class="mb-3 rounded-lg border border-violet-500/30 bg-violet-950/20 px-2.5 py-2 text-xs font-medium text-violet-200">
+          Objectif cluster : {{ clusterTarget }}
+        </p>
+
+        <p v-else-if="totalSets > 1" class="mb-3 text-xs font-medium text-blue-300/90">
+          <template v-if="isRamp">Palier {{ currentSetNumber }} sur {{ totalSets }}</template>
+          <template v-else>Série {{ currentSetNumber }} sur {{ totalSets }}</template>
         </p>
 
         <div class="grid grid-cols-2 gap-3">
           <label class="block text-xs font-medium text-slate-400">
-            Reps
+            {{ isCluster ? 'Reps réalisées' : 'Reps' }}
             <input
               :value="line.reps ?? ''"
               type="number"
               min="1"
-              max="30"
+              max="200"
               step="1"
               inputmode="numeric"
               :class="inputClass"
@@ -272,7 +301,7 @@ const inputClass =
             />
           </label>
 
-          <div>
+          <div v-if="!isCluster">
             <p class="text-xs font-medium text-slate-400">Charge</p>
             <div class="mt-1 flex flex-wrap gap-1.5">
               <button
@@ -319,9 +348,15 @@ const inputClass =
               />
             </label>
           </div>
+          <div v-else class="text-xs text-slate-500">
+            <p class="font-medium text-slate-400">Durée prévue</p>
+            <p class="mt-2 rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-2 text-sm text-slate-200">
+              {{ line.scheme_config?.duration_minutes ?? '—' }} min
+            </p>
+          </div>
         </div>
 
-        <div class="mt-4">
+        <div v-if="!isCluster" class="mt-4">
           <OptionButtonGroup
             :model-value="line.rpe"
             :options="RPE_OPTIONS"

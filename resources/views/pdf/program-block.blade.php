@@ -53,20 +53,29 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($session['exercises'] ?? [] as $exercise)
+                            @foreach ($session['items'] ?? $session['exercises'] ?? [] as $exercise)
+                                @php
+                                    $schemeText = \App\Support\SetSchemeSupport::formatPrescription($exercise);
+                                @endphp
                                 <tr>
                                     <td>{{ $exercise['exercise_name'] ?? '—' }}</td>
-                                    <td>{{ $exercise['sets'] ?? '—' }}</td>
-                                    <td>{{ $exercise['reps'] ?? '—' }}</td>
-                                    <td>
-                                        @if (!empty($exercise['load']))
-                                            {{ $exercise['load'] }} kg
-                                        @elseif (!empty($exercise['load_percent']))
-                                            {{ $exercise['load_percent'] }} %
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
+                                    @if ($schemeText !== '')
+                                        <td colspan="3">{{ $schemeText }}</td>
+                                    @else
+                                        <td>{{ $exercise['sets'] ?? '—' }}</td>
+                                        <td>{{ $exercise['reps'] ?? '—' }}</td>
+                                        <td>
+                                            @if (!empty($exercise['load']))
+                                                {{ $exercise['load'] }} kg
+                                            @elseif (!empty($exercise['load_percent']))
+                                                {{ $exercise['load_percent'] }} %
+                                            @elseif (!empty($exercise['rpe']))
+                                                RPE {{ $exercise['rpe'] }}
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                    @endif
                                 </tr>
                             @endforeach
                         </tbody>

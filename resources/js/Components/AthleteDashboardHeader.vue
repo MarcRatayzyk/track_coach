@@ -1,7 +1,6 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import CelebrationBarbell from './CelebrationBarbell.vue';
 
 const props = defineProps({
   athleteId: {
@@ -16,15 +15,11 @@ const props = defineProps({
     type: String,
     default: null,
   },
-  topsetBarbell: {
-    type: Object,
-    default: null,
-  },
   showCheckInButton: {
     type: Boolean,
     default: false,
   },
-  /** Première visite du jour : anime titre + barre depuis le bas */
+  /** Première visite du jour : anime le titre depuis le bas */
   introAnimate: {
     type: Boolean,
     default: false,
@@ -87,10 +82,6 @@ const heroMotionClass = computed(() => {
         Aujourd'hui
         <template v-if="todaySessionTitle"> {{ todaySessionTitle }}</template>
       </h1>
-
-      <div v-if="topsetBarbell" class="mt-3 overflow-visible">
-        <CelebrationBarbell :barbell="topsetBarbell" variant="full" />
-      </div>
     </div>
   </div>
 </template>

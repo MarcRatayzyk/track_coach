@@ -14,6 +14,8 @@ import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { formatCalendarFr } from '../utils/formatDates';
 import { cleanupSource, compressVideo, formatMb, resolveUploadBlob } from '../utils/compressVideo';
 import VideoFeedbackSlider from '../Components/VideoFeedbackSlider.vue';
+import SeriesComparisonCard from '../Components/SeriesComparisonCard.vue';
+import SeriesPickerModal from '../Components/SeriesPickerModal.vue';
 import { track } from '../utils/analytics';
 
 const props = defineProps({
@@ -66,12 +68,66 @@ const submitForm = useForm({
 
 // videoSeries[i] = id d'exercice choisi pour la vidéo i ('' = aucune série).
 const videoSeries = ref([]);
+const seriesPickerIndex = ref(null);
 
 const selectedSession = computed(() =>
   props.eligibleSessions.find((s) => s.session_date === submitForm.session_date) ?? null,
 );
 
 const sessionExercises = computed(() => selectedSession.value?.exercises ?? []);
+
+const seriesPickerOpen = computed({
+  get: () => seriesPickerIndex.value !== null,
+  set: (open) => {
+    if (!open) {
+      seriesPickerIndex.value = null;
+    }
+  },
+});
+
+const seriesPickerValue = computed({
+  get: () => {
+    if (seriesPickerIndex.value === null) {
+      return '';
+    }
+    return videoSeries.value[seriesPickerIndex.value] ?? '';
+  },
+  set: (value) => {
+    if (seriesPickerIndex.value === null) {
+      return;
+    }
+    videoSeries.value[seriesPickerIndex.value] = value;
+  },
+});
+
+function openSeriesPicker(index) {
+  seriesPickerIndex.value = index;
+}
+
+function seriesLabelFor(index) {
+  const id = videoSeries.value[index];
+  if (id === '' || id === null || id === undefined) {
+    return 'Aucune série';
+  }
+  const exercise = sessionExercises.value.find((item) => Number(item.id) === Number(id));
+  if (!exercise) {
+    return 'Aucune série';
+  }
+  return exercise.exercise_name || exercise.label;
+}
+
+function seriesSummaryFor(index) {
+  const id = videoSeries.value[index];
+  if (id === '' || id === null || id === undefined) {
+    return 'Optionnel — rattacher à un exercice';
+  }
+  const exercise = sessionExercises.value.find((item) => Number(item.id) === Number(id));
+  if (!exercise) {
+    return '';
+  }
+  const parts = [exercise.section_label, exercise.summary].filter(Boolean);
+  return parts.join(' · ');
+}
 
 const replyForm = useForm({
   content: '',
@@ -688,36 +744,33 @@ function seriesPayload() {
             <div
               v-for="(video, index) in selectedVideos"
               :key="index"
-              class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3"
+              class="flex flex-col gap-1.5"
             >
-              <span class="min-w-0 flex-1 truncate text-xs text-slate-300">
+              <span class="min-w-0 truncate text-xs text-slate-300">
                 {{ video.name }}
               </span>
-              <select
-                v-model="videoSeries[index]"
-                class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white sm:w-64"
+              <button
+                type="button"
+                class="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-left transition hover:border-slate-600 hover:bg-slate-900"
+                @click="openSeriesPicker(index)"
               >
-                <option value="">Aucune série</option>
-                <option
-                  v-for="exercise in sessionExercises"
-                  :key="exercise.id"
-                  :value="exercise.id"
-                >
-                  {{ exercise.label }}{{ exercise.summary ? ` (${exercise.summary})` : '' }}
-                </option>
-              </select>
+                <span class="min-w-0">
+                  <span class="block truncate text-sm font-medium text-white">
+                    {{ seriesLabelFor(index) }}
+                  </span>
+                  <span class="mt-0.5 block truncate text-xs text-slate-500">
+                    {{ seriesSummaryFor(index) }}
+                  </span>
+                </span>
+                <span class="shrink-0 text-xs font-medium text-blue-300">Changer</span>
+              </button>
             </div>
           </div>
           <p v-if="compressionSummary && !isCompressing" class="mt-1 text-xs text-emerald-400/90">
             {{ compressionSummary }}
           </p>
           <p class="mt-2 text-xs text-slate-500">
-            <template v-if="isNative">
-              Les vidéos sont compressées automatiquement (~720p) pour un envoi plus rapide.
-            </template>
-            <template v-else>
-              La vidéo est envoyée telle quelle : privilégiez un format déjà léger pour un envoi plus rapide.
-            </template>
+            Les vidéos sont compressées automatiquement (~480p) pour un chargement plus rapide côté coach.
           </p>
           <div v-if="showProgressBar" class="mt-3">
             <div class="h-2 overflow-hidden rounded-full bg-slate-800">
@@ -755,105 +808,119 @@ function seriesPayload() {
       </form>
     </div>
 
-    <div class="mt-3 grid gap-4 lg:mt-6 lg:grid-cols-12 lg:gap-6">
-      <!-- Colonne gauche : athlète / historique -->
-      <aside class="lg:col-span-3">
-        <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl">
+    <div class="mt-3 space-y-4 lg:mt-6 lg:space-y-5">
+      <!-- Bandeau horizontal : retours -->
+      <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-3 shadow-xl sm:p-4">
+        <div class="mb-3 flex items-center justify-between gap-3">
           <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
             {{ isCoach ? 'Retours reçus' : 'Historique' }}
           </h2>
-          <ul class="mt-3 max-h-[28rem] space-y-2 overflow-y-auto">
-            <li v-for="item in feedbacks" :key="item.id">
-              <button
-                type="button"
-                class="w-full rounded-xl border px-3 py-3 text-left transition"
-                :class="
-                  activeFeedback?.id === item.id
-                    ? 'border-blue-500/60 bg-blue-600/20'
-                    : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
-                "
-                @click="selectFeedback(item.id)"
-              >
-                <p class="text-sm font-semibold text-white">
-                  <template v-if="isCoach">{{ item.athlete_name }}</template>
-                  <template v-else>{{ item.session_label }}</template>
-                </p>
-                <p class="mt-0.5 text-xs text-slate-500">
-                  {{ formatCalendarFr(item.session_date) }}
-                  · {{ item.video_count }} vidéo(s)
-                </p>
-                <span
-                  class="mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
-                  :class="
-                    item.status === 'coach_replied'
-                      ? 'bg-emerald-500/20 text-emerald-300'
-                      : 'bg-amber-500/20 text-amber-300'
-                  "
-                >
-                  {{ item.status === 'coach_replied' ? 'Répondu' : 'En attente' }}
-                </span>
-              </button>
-            </li>
-          </ul>
-          <p v-if="!feedbacks.length" class="mt-4 text-center text-sm text-slate-500">
-            Aucun retour pour le moment.
+          <p v-if="feedbacks.length" class="text-xs text-slate-500">
+            {{ feedbacks.length }} retour{{ feedbacks.length > 1 ? 's' : '' }}
           </p>
         </div>
-      </aside>
+        <div
+          v-if="feedbacks.length"
+          class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]"
+        >
+          <button
+            v-for="item in feedbacks"
+            :key="item.id"
+            type="button"
+            class="w-44 shrink-0 rounded-xl border px-3 py-2.5 text-left transition"
+            :class="
+              activeFeedback?.id === item.id
+                ? 'border-blue-500/60 bg-blue-600/20'
+                : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+            "
+            @click="selectFeedback(item.id)"
+          >
+            <p class="truncate text-sm font-semibold text-white">
+              <template v-if="isCoach">{{ item.athlete_name }}</template>
+              <template v-else>{{ item.session_label }}</template>
+            </p>
+            <p class="mt-0.5 truncate text-xs text-slate-500">
+              {{ formatCalendarFr(item.session_date) }}
+              · {{ item.video_count }} vidéo(s)
+            </p>
+            <span
+              class="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
+              :class="
+                item.status === 'coach_replied'
+                  ? 'bg-emerald-500/20 text-emerald-300'
+                  : 'bg-amber-500/20 text-amber-300'
+              "
+            >
+              {{ item.status === 'coach_replied' ? 'Répondu' : 'En attente' }}
+            </span>
+          </button>
+        </div>
+        <p v-else class="py-2 text-center text-sm text-slate-500">
+          Aucun retour pour le moment.
+        </p>
+      </section>
 
-      <!-- Colonne centrale : vidéos (slider) -->
-      <section
-        class="min-h-[20rem] rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:col-span-6 lg:min-h-[24rem] lg:p-6"
-      >
+      <!-- Contenu principal : prévu / réalisé + vidéos -->
+      <section class="min-h-[12rem] rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:p-6">
         <template v-if="activeFeedback">
+          <div
+            v-if="activeFeedback.session_exercises?.length"
+            :class="activeFeedback.videos?.length ? 'mb-5 border-b border-slate-800 pb-4' : ''"
+          >
+            <SeriesComparisonCard :exercises="activeFeedback.session_exercises" />
+          </div>
+
           <VideoFeedbackSlider
             v-if="activeFeedback.videos?.length"
             :videos="activeFeedback.videos"
           />
+
           <div
-            v-else
-            class="flex h-full min-h-[16rem] items-center justify-center text-sm text-slate-500"
+            v-else-if="!activeFeedback.session_exercises?.length"
+            class="flex min-h-[10rem] items-center justify-center text-sm text-slate-500"
           >
-            Aucune vidéo pour ce retour.
+            Aucune vidéo ni exercice programmé pour ce retour.
           </div>
         </template>
-        <div v-else class="flex h-full min-h-[20rem] items-center justify-center text-slate-500">
-          Sélectionnez un retour dans la liste.
+        <div v-else class="flex min-h-[10rem] items-center justify-center text-slate-500">
+          Sélectionnez un retour dans le bandeau.
         </div>
       </section>
 
-      <!-- Colonne droite : texte (message, réponse) -->
+      <!-- Bas : message athlète + saisie coach -->
       <section
-        class="min-h-[20rem] rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:col-span-3 lg:min-h-[24rem] lg:p-6"
+        v-if="activeFeedback"
+        class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:p-6"
       >
-        <template v-if="activeFeedback">
-          <div class="border-b border-slate-800 pb-4">
-            <h2 class="text-lg font-semibold text-white">
-              <template v-if="isCoach">{{ activeFeedback.athlete_name }}</template>
-              <template v-else>{{ activeFeedback.session_label }}</template>
-            </h2>
-            <p class="mt-1 text-sm text-slate-500">
-              Séance du {{ formatCalendarFr(activeFeedback.session_date) }}
-              · envoyé {{ formatSubmitted(activeFeedback.submitted_at) }}
-            </p>
-          </div>
+        <div class="border-b border-slate-800 pb-3">
+          <h2 class="text-lg font-semibold text-white">
+            <template v-if="isCoach">{{ activeFeedback.athlete_name }}</template>
+            <template v-else>{{ activeFeedback.session_label }}</template>
+          </h2>
+          <p class="mt-1 text-sm text-slate-500">
+            Séance du {{ formatCalendarFr(activeFeedback.session_date) }}
+            · envoyé {{ formatSubmitted(activeFeedback.submitted_at) }}
+          </p>
+        </div>
 
-          <div v-if="activeFeedback.athlete_notes" class="mt-4">
+        <div class="mt-4 grid gap-5 lg:grid-cols-2">
+          <div v-if="activeFeedback.athlete_notes">
             <h3 class="text-sm font-medium text-slate-400">Message athlète</h3>
-            <p class="mt-2 whitespace-pre-wrap rounded-lg bg-slate-950/60 p-3 text-slate-200">
+            <p class="mt-2 whitespace-pre-wrap rounded-lg bg-slate-950/60 p-3 text-sm text-slate-200">
               {{ activeFeedback.athlete_notes }}
             </p>
           </div>
+          <div v-else class="text-sm text-slate-500">Aucun message de l’athlète.</div>
 
-          <div v-if="activeFeedback.reply" class="mt-8 border-t border-slate-800 pt-6">
+          <div v-if="activeFeedback.reply">
             <h3 class="text-sm font-semibold text-emerald-400">Réponse du coach</h3>
             <p
               v-if="activeFeedback.reply.body"
-              class="mt-2 whitespace-pre-wrap text-slate-200"
+              class="mt-2 whitespace-pre-wrap text-sm text-slate-200"
             >
               {{ activeFeedback.reply.body }}
             </p>
-            <div v-if="activeFeedback.reply.audio_files?.length" class="mt-4 space-y-3">
+            <div v-if="activeFeedback.reply.audio_files?.length" class="mt-3 space-y-2">
               <audio
                 v-for="audio in activeFeedback.reply.audio_files"
                 :key="audio.id"
@@ -869,12 +936,12 @@ function seriesPayload() {
 
           <div
             v-else-if="isCoach && activeFeedback.status === 'submitted'"
-            class="mt-8 space-y-3 border-t border-slate-800 pt-6"
+            class="space-y-3"
           >
             <label class="block text-sm font-medium text-slate-300">Votre retour</label>
             <textarea
               v-model="replyForm.content"
-              rows="4"
+              rows="3"
               placeholder="Écrivez votre retour à l’athlète…"
               class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-600"
             />
@@ -890,11 +957,15 @@ function seriesPayload() {
               {{ replyForm.processing ? 'Envoi…' : 'Envoyer le retour' }}
             </button>
           </div>
-        </template>
-        <div v-else class="flex h-full min-h-[20rem] items-center justify-center text-slate-500">
-          —
         </div>
       </section>
     </div>
+
+    <SeriesPickerModal
+      v-model="seriesPickerValue"
+      v-model:open="seriesPickerOpen"
+      :exercises="sessionExercises"
+      title="Choisir une série"
+    />
   </div>
 </template>

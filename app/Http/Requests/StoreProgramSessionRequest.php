@@ -26,4 +26,9 @@ class StoreProgramSessionRequest extends FormRequest
             'weekday' => ['required', 'integer', 'min:1', 'max:7'],
         ], $this->programSessionDayRules());
     }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(fn ($validator) => $this->validateSetSchemes($validator));
+    }
 }

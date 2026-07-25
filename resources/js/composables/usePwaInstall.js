@@ -192,12 +192,21 @@ export function usePwaInstall() {
     }
 
     async function installOrGuide() {
+        const guideType = resolveGuideType();
+
+        // Sur Android, toujours afficher le guide (téléchargement APK + PWA).
+        if (guideType === 'android') {
+            installGuideType.value = 'android';
+            showInstallGuide.value = true;
+            return;
+        }
+
         if (deferredPrompt.value) {
             await install();
             return;
         }
 
-        installGuideType.value = resolveGuideType();
+        installGuideType.value = guideType;
         showInstallGuide.value = true;
     }
 

@@ -12,10 +12,6 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  starterPrograms: {
-    type: Array,
-    default: () => [],
-  },
 });
 
 const today = new Date().toISOString().slice(0, 10);
@@ -32,21 +28,6 @@ function submit() {
     preserveScroll: true,
     onSuccess: () => {
       track('program_created', { source: 'blank' });
-    },
-  });
-}
-
-const starterForm = useForm({
-  key: props.starterPrograms[0]?.key ?? '',
-  athlete_id: props.athletes[0]?.id ?? '',
-  date_start: today,
-});
-
-function createStarter() {
-  starterForm.post('/coach/program-starters', {
-    preserveScroll: true,
-    onSuccess: () => {
-      track('starter_program_used', { starter_key: starterForm.key });
     },
   });
 }
@@ -205,70 +186,6 @@ function deleteBlock(block) {
         </button>
       </div>
     </form>
-
-    <div v-if="starterPrograms.length && athletes.length" class="mt-8 border-t border-slate-800 pt-6">
-      <h3 class="text-sm font-semibold text-white">Partir d'un modèle prêt à l'emploi</h3>
-      <p class="mt-1 text-sm text-slate-400">
-        Gagne du temps : choisis une trame éprouvée, elle sera créée en brouillon que tu pourras
-        ajuster puis assigner.
-      </p>
-
-      <form class="mt-4 grid gap-4 sm:grid-cols-2" @submit.prevent="createStarter">
-        <label class="block text-sm text-slate-400 sm:col-span-2">
-          Modèle
-          <select
-            v-model="starterForm.key"
-            required
-            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-          >
-            <option v-for="starter in starterPrograms" :key="starter.key" :value="starter.key">
-              {{ starter.name }} · {{ starter.week_count }} sem.
-            </option>
-          </select>
-          <span
-            v-if="starterPrograms.find((s) => s.key === starterForm.key)?.summary"
-            class="mt-1 block text-xs text-slate-500"
-          >
-            {{ starterPrograms.find((s) => s.key === starterForm.key)?.summary }}
-          </span>
-        </label>
-        <label class="block text-sm text-slate-400">
-          Athlète
-          <select
-            v-model="starterForm.athlete_id"
-            required
-            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-          >
-            <option v-for="athlete in athletes" :key="athlete.id" :value="athlete.id">
-              {{ athlete.name }}
-            </option>
-          </select>
-        </label>
-        <label class="block text-sm text-slate-400">
-          Date de début
-          <input
-            v-model="starterForm.date_start"
-            type="date"
-            required
-            class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-          />
-        </label>
-
-        <p v-if="Object.keys(starterForm.errors).length" class="text-sm text-red-400 sm:col-span-2">
-          {{ Object.values(starterForm.errors).flat().join(' ') }}
-        </p>
-
-        <div class="sm:col-span-2">
-          <button
-            type="submit"
-            :disabled="starterForm.processing"
-            class="rounded-xl border border-blue-500/50 bg-blue-600/10 px-4 py-2 text-sm font-semibold text-blue-200 hover:bg-blue-600/20 disabled:opacity-50"
-          >
-            {{ starterForm.processing ? 'Création…' : 'Créer depuis ce modèle' }}
-          </button>
-        </div>
-      </form>
-    </div>
 
     <div v-if="existingBlocks.length" class="mt-8 border-t border-slate-800 pt-6">
       <h3 class="text-sm font-semibold text-white">Reprendre un bloc</h3>

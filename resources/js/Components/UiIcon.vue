@@ -280,5 +280,20 @@ const smsMaskStyle = maskStyle(smsIconUrl);
             d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
         />
     </svg>
+    <!-- Télécharger -->
+    <svg
+        v-else-if="name === 'download'"
+        :class="props.class"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+    >
+        <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"
+        />
+    </svg>
     <span v-else :class="['inline-block rounded bg-slate-700/60', props.class]" />
 </template>

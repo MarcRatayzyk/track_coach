@@ -17,6 +17,8 @@ export function emptyExerciseLine(name = '') {
     exercise_variant_id: null,
     exercise_name: name,
     lift: null,
+    set_scheme: 'standard',
+    scheme_config: null,
     sets: null,
     reps: null,
     load: null,
@@ -25,6 +27,155 @@ export function emptyExerciseLine(name = '') {
     rest_seconds: null,
     load_mode: null,
     athlete_note: null,
+  };
+}
+
+export const SET_SCHEME_OPTIONS = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'ramp', label: 'Ramp' },
+  { value: 'cluster', label: 'Cluster' },
+];
+
+export function createRampStep(partial = {}) {
+  return {
+    reps: partial.reps ?? 2,
+    load: partial.load ?? null,
+    load_percent: partial.load_percent ?? null,
+    rpe: partial.rpe ?? null,
+  };
+}
+
+export function emptySchemeConfig(scheme, fromLine = null) {
+  if (scheme === 'ramp') {
+    return {
+      steps: [
+        createRampStep({
+          reps: fromLine?.reps ?? 2,
+          load: fromLine?.load ?? null,
+          load_percent: fromLine?.load_percent ?? null,
+          rpe: fromLine?.rpe ?? null,
+        }),
+      ],
+    };
+  }
+  if (scheme === 'cluster') {
+    return {
+      reps: fromLine?.reps ?? 30,
+      duration_minutes: 10,
+    };
+  }
+  return null;
+}
+
+function formatStepLoad(step) {
+  if (step?.load != null && step.load !== '') {
+    return `${step.load} kg`;
+  }
+  if (step?.load_percent != null && step.load_percent !== '') {
+    return `${step.load_percent}%`;
+  }
+  if (step?.rpe != null && step.rpe !== '') {
+    return `RPE ${step.rpe}`;
+  }
+  return '—';
+}
+
+export function formatSchemePrescription(line) {
+  const scheme = line?.set_scheme ?? 'standard';
+  if (scheme === 'ramp') {
+    const steps = line?.scheme_config?.steps ?? [];
+    if (!steps.length) {
+      return null;
+    }
+    return steps.map((step) => `${step.reps ?? '—'}@${formatStepLoad(step)}`).join(' → ');
+  }
+  if (scheme === 'cluster') {
+    const reps = line?.scheme_config?.reps ?? line?.reps;
+    const minutes = line?.scheme_config?.duration_minutes;
+    if (reps == null || minutes == null) {
+      return null;
+    }
+    return `${reps} reps / ${minutes} min`;
+  }
+  return null;
+}
+
+export function plannedSetsForLine(line) {
+  const scheme = line?.set_scheme ?? 'standard';
+  if (scheme === 'ramp') {
+    const steps = line?.scheme_config?.steps ?? [];
+    return Math.max(1, steps.length || Number(line?.sets ?? 1) || 1);
+  }
+  if (scheme === 'cluster') {
+    return 1;
+  }
+  return Math.max(1, Number(line?.sets ?? 1) || 1);
+}
+
+/** Prefill line fields from the ramp step at index (mutates line). */
+export function applySchemeStepToLine(line, stepIndex) {
+  if (!line || (line.set_scheme ?? 'standard') !== 'ramp') {
+    return line;
+  }
+  const step = line.scheme_config?.steps?.[stepIndex];
+  if (!step) {
+    return line;
+  }
+  line.reps = step.reps ?? line.reps;
+  line.load = step.load != null && step.load !== '' ? step.load : null;
+  line.load_percent =
+    step.load_percent != null && step.load_percent !== '' ? step.load_percent : null;
+  line.rpe = step.rpe != null && step.rpe !== '' ? step.rpe : null;
+  line.load_mode = inferLoadMode(step) ?? 'kg';
+  return line;
+}
+
+/** Sync flat sets/reps/load fields from scheme_config before save / display. */
+export function applySchemeDerivedFields(line) {
+  if (!line) {
+    return line;
+  }
+  const scheme = line.set_scheme ?? 'standard';
+  if (scheme === 'ramp') {
+    const steps = (line.scheme_config?.steps ?? []).filter(
+      (step) =>
+        step?.reps != null &&
+        step.reps !== '' &&
+        (step.load != null && step.load !== '' ||
+          step.load_percent != null && step.load_percent !== '' ||
+          step.rpe != null && step.rpe !== ''),
+    );
+    const last = steps[steps.length - 1] ?? null;
+    return {
+      ...line,
+      set_scheme: 'ramp',
+      scheme_config: { steps },
+      sets: Math.max(1, steps.length),
+      reps: last?.reps ?? line.reps ?? 1,
+      load: last?.load ?? null,
+      load_percent: last?.load_percent ?? null,
+      rpe: last?.rpe ?? null,
+      load_mode: last ? inferLoadMode(last) : line.load_mode,
+    };
+  }
+  if (scheme === 'cluster') {
+    const reps = Number(line.scheme_config?.reps ?? line.reps ?? 1);
+    const minutes = Number(line.scheme_config?.duration_minutes ?? 1);
+    return {
+      ...line,
+      set_scheme: 'cluster',
+      scheme_config: {
+        reps: Math.max(1, Math.min(200, reps || 1)),
+        duration_minutes: Math.max(1, Math.min(60, minutes || 1)),
+      },
+      sets: 1,
+      reps: Math.max(1, Math.min(200, reps || 1)),
+    };
+  }
+  return {
+    ...line,
+    set_scheme: 'standard',
+    scheme_config: null,
   };
 }
 
@@ -81,6 +232,10 @@ export function formatPrescription(line) {
   if (!line?.exercise_name) {
     return '—';
   }
+  const schemeText = formatSchemePrescription(line);
+  if (schemeText) {
+    return `${line.exercise_name} · ${schemeText}`;
+  }
   const setsReps =
     line.sets != null && line.reps != null ? ` · ${line.sets}×${line.reps}` : '';
   const loadPart = line.load != null && line.load !== '' ? ` @ ${line.load} kg` : '';
@@ -101,6 +256,11 @@ export function formatLineRecap(line) {
   const label =
     line.exercise_name.trim() ||
     (line.lift ? defaultLiftName(line.lift) : 'Exercice');
+
+  const schemeText = formatSchemePrescription(line);
+  if (schemeText) {
+    return `${label} - ${schemeText}`;
+  }
 
   let volume = null;
   if (line.sets != null && line.reps != null) {
@@ -246,6 +406,8 @@ export function expandValidatedSetsToItems(items = []) {
         exercise_variant_id: item.line?.exercise_variant_id ?? null,
         exercise_name: item.line?.exercise_name ?? '',
         lift: item.line?.lift ?? null,
+        set_scheme: item.line?.set_scheme ?? 'standard',
+        scheme_config: item.line?.scheme_config ?? null,
         sets: group.count,
         reps: group.reps,
         load: group.load,
@@ -562,9 +724,14 @@ export function hydrateExerciseLine(line) {
   if (!line) {
     return null;
   }
+  const scheme = line.set_scheme ?? 'standard';
   return {
     ...emptyExerciseLine(''),
     ...line,
+    set_scheme: scheme,
+    scheme_config:
+      line.scheme_config ??
+      (scheme !== 'standard' ? emptySchemeConfig(scheme) : null),
     sets: line.sets ?? null,
     reps: line.reps ?? null,
     load_mode: inferLoadMode(line),
@@ -635,34 +802,50 @@ export function normalizeLineForSave(line) {
   if (!line?.exercise_name?.trim()) {
     return null;
   }
-  const note = typeof line.athlete_note === 'string' ? line.athlete_note.trim() : '';
+  const derived = applySchemeDerivedFields({ ...line });
+  const note = typeof derived.athlete_note === 'string' ? derived.athlete_note.trim() : '';
   const normalized = {
-    exercise_variant_id: line.exercise_variant_id ? Number(line.exercise_variant_id) : null,
-    exercise_name: line.exercise_name,
-    lift: line.lift,
-    sets: Number(line.sets ?? 1),
-    reps: Number(line.reps ?? 1),
+    exercise_variant_id: derived.exercise_variant_id ? Number(derived.exercise_variant_id) : null,
+    exercise_name: derived.exercise_name,
+    lift: derived.lift,
+    set_scheme: derived.set_scheme ?? 'standard',
+    scheme_config: derived.set_scheme === 'standard' ? null : derived.scheme_config ?? null,
+    sets: Number(derived.sets ?? 1),
+    reps: Number(derived.reps ?? 1),
     load: null,
     load_percent: null,
     rpe: null,
-    rest_seconds: line.rest_seconds != null && line.rest_seconds !== ''
-      ? Number(line.rest_seconds)
+    rest_seconds: derived.rest_seconds != null && derived.rest_seconds !== ''
+      ? Number(derived.rest_seconds)
       : null,
     athlete_note: note !== '' ? note : null,
   };
 
-  const mode = line.load_mode ?? inferLoadMode(line);
+  if (derived.set_scheme === 'ramp' || derived.set_scheme === 'cluster') {
+    if (derived.load != null && derived.load !== '') {
+      normalized.load = Number(derived.load);
+    }
+    if (derived.load_percent != null && derived.load_percent !== '') {
+      normalized.load_percent = Number(derived.load_percent);
+    }
+    if (derived.rpe != null && derived.rpe !== '') {
+      normalized.rpe = derived.rpe;
+    }
+    return normalized;
+  }
+
+  const mode = derived.load_mode ?? inferLoadMode(derived);
   if (mode === 'percent') {
-    normalized.load_percent = line.load_percent;
+    normalized.load_percent = derived.load_percent;
   } else if (mode === 'kg') {
     normalized.load =
-      line.load != null && line.load !== '' ? Number(line.load) : null;
+      derived.load != null && derived.load !== '' ? Number(derived.load) : null;
   } else if (mode === 'rpe') {
     // RPE-only prescription (coach)
   }
 
-  if (line.rpe != null && line.rpe !== '') {
-    normalized.rpe = line.rpe;
+  if (derived.rpe != null && derived.rpe !== '') {
+    normalized.rpe = derived.rpe;
   }
 
   return normalized;

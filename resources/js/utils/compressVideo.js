@@ -1,12 +1,8 @@
 /**
  * Préparation d'une vidéo avant envoi :
- * - natif Capacitor : compression hardware (MediaCodec) DIRECTEMENT à partir du
- *   chemin de fichier fourni par le picker natif. Aucun passage par base64 :
- *   l'ancienne approche encodait tout le fichier en base64 en RAM (+33 %), ce qui
- *   était très lent et pouvait faire planter l'app sur les grosses vidéos.
- * - web : aucun ré-encodage (le ré-encodage MediaRecorder se faisait en temps
- *   réel, donc au moins aussi long que la durée de la vidéo). On uploade
- *   directement le fichier d'origine, borné par une limite de taille.
+ * - natif Capacitor : compression hardware (MediaCodec / AVFoundation)
+ *   directement à partir du chemin picker.
+ * - web : FFmpeg.wasm via le même plugin (blob URL → MP4 ~480p).
  *
  * En cas d'échec / gain insuffisant, on renvoie la source d'origine.
  */
@@ -15,10 +11,12 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem } from '@capacitor/filesystem';
 import { NativeVideoCompressor } from 'capacitor-native-video-compressor';
 
-const SKIP_UNDER_BYTES = 20 * 1024 * 1024;
+const SKIP_UNDER_BYTES = 2 * 1024 * 1024;
 const MIN_SAVINGS_RATIO = 0.15;
 const COMPRESS_TIMEOUT_MS = 4 * 60 * 1000;
-const NATIVE_QUALITY = 'MEDIUM';
+const COMPRESS_QUALITY = 'LOW';
+
+let webCompressorReady = null;
 
 /**
  * @typedef {Object} VideoSource
@@ -26,8 +24,8 @@ const NATIVE_QUALITY = 'MEDIUM';
  * @property {number} size
  * @property {string} type
  * @property {File} [file]      Fichier web (input HTML).
- * @property {string} [path]    Chemin natif renvoyé par le picker / la compression.
- * @property {boolean} [isTemp] Fichier temporaire natif à supprimer après upload.
+ * @property {string} [path]    Chemin natif / blob URL après compression.
+ * @property {boolean} [isTemp] Fichier temporaire à supprimer après upload.
  */
 
 /**
@@ -44,42 +42,72 @@ export async function compressVideo(source, options = {}) {
     return { source, compressed: false, originalBytes, outputBytes: originalBytes };
   };
 
-  // Web / PWA : pas de compression navigateur (trop lente en temps réel) -> upload direct.
-  if (!Capacitor.isNativePlatform() || !source.path) {
-    return passthrough();
-  }
-
   // Petites vidéos : le gain ne vaut pas le temps de compression.
   if (originalBytes > 0 && originalBytes < SKIP_UNDER_BYTES) {
     return passthrough();
   }
 
   try {
-    return await compressWithNativePlugin(source, onProgress);
+    if (Capacitor.isNativePlatform() && source.path) {
+      return await compressWithPlugin(source, onProgress, { isWeb: false });
+    }
+
+    if (source.file instanceof Blob) {
+      return await compressWithPlugin(source, onProgress, { isWeb: true });
+    }
   } catch (error) {
-    console.warn('[compressVideo] native fallback to original', error);
+    console.warn('[compressVideo] fallback to original', error);
     return passthrough();
   }
+
+  return passthrough();
+}
+
+/**
+ * Initialise FFmpeg.wasm une seule fois (no-op sur natif).
+ * @returns {Promise<void>}
+ */
+async function ensureWebCompressor() {
+  if (Capacitor.isNativePlatform()) {
+    return;
+  }
+  if (!webCompressorReady) {
+    webCompressorReady = NativeVideoCompressor.initialize().then((result) => {
+      if (!result?.success) {
+        webCompressorReady = null;
+        throw new Error(result?.message || 'FFmpeg.wasm indisponible');
+      }
+    });
+  }
+  await webCompressorReady;
 }
 
 /**
  * @param {VideoSource} source
  * @param {(ratio: number) => void} onProgress
+ * @param {{ isWeb: boolean }} platform
  * @returns {Promise<{ source: VideoSource, compressed: boolean, originalBytes: number, outputBytes: number }>}
  */
-async function compressWithNativePlugin(source, onProgress) {
-  const originalBytes = source.size ?? 0;
+async function compressWithPlugin(source, onProgress, { isWeb }) {
+  const originalBytes = source.size ?? source.file?.size ?? 0;
   let listener = null;
   let timeoutId = 0;
+  let inputBlobUrl = null;
 
   onProgress(0.02);
-  const sourceUri = toNativeUri(source.path);
+
+  if (isWeb) {
+    await ensureWebCompressor();
+    inputBlobUrl = URL.createObjectURL(source.file);
+  }
+
+  const sourcePath = isWeb ? inputBlobUrl : toNativeUri(source.path);
 
   listener = await NativeVideoCompressor.addListener('onProgress', (info) => {
     if (info?.status === 'progress' && typeof info.percent === 'number') {
       const ratio = info.percent > 1 ? info.percent / 100 : info.percent;
       onProgress(Math.min(0.98, Math.max(0.02, ratio)));
-    } else if (info?.status === 'started') {
+    } else if (info?.status === 'started' || info?.status === 'loading_core') {
       onProgress(0.05);
     }
   });
@@ -87,8 +115,8 @@ async function compressWithNativePlugin(source, onProgress) {
   try {
     const result = await Promise.race([
       NativeVideoCompressor.compressVideo({
-        sourcePath: sourceUri,
-        quality: NATIVE_QUALITY,
+        sourcePath,
+        quality: COMPRESS_QUALITY,
       }),
       new Promise((_, reject) => {
         timeoutId = window.setTimeout(
@@ -99,26 +127,64 @@ async function compressWithNativePlugin(source, onProgress) {
     ]);
 
     if (!result?.success || !result.destPath) {
-      throw new Error('Compression native sans fichier de sortie');
+      throw new Error('Compression sans fichier de sortie');
     }
 
     const destPath = result.destPath;
-    const outputBytes = await nativeFileSize(destPath);
+    let outputBytes = 0;
+    let outputFile = null;
+
+    if (isWeb || destPath.startsWith('blob:')) {
+      const response = await fetch(destPath);
+      if (!response.ok) {
+        throw new Error('Impossible de lire la vidéo compressée');
+      }
+      const blob = await response.blob();
+      outputBytes = blob.size;
+      const baseName = (source.name || 'video').replace(/\.[^.]+$/, '');
+      outputFile = new File([blob], `${baseName}-480p.mp4`, { type: 'video/mp4' });
+    } else {
+      outputBytes = await nativeFileSize(destPath);
+    }
+
     const savedEnough =
       outputBytes > 1024 &&
       (originalBytes <= 0 || outputBytes <= originalBytes * (1 - MIN_SAVINGS_RATIO));
 
     if (!savedEnough) {
-      await safeDeleteAbsolutePath(destPath);
+      if (!isWeb && destPath) {
+        await safeDeleteAbsolutePath(destPath);
+      }
+      if (destPath?.startsWith('blob:')) {
+        URL.revokeObjectURL(destPath);
+      }
       onProgress(1);
       return { source, compressed: false, originalBytes, outputBytes: originalBytes };
     }
 
     const baseName = (source.name || 'video').replace(/\.[^.]+$/, '');
     onProgress(1);
+
+    if (outputFile) {
+      if (destPath?.startsWith('blob:')) {
+        URL.revokeObjectURL(destPath);
+      }
+      return {
+        source: {
+          name: outputFile.name,
+          size: outputBytes,
+          type: 'video/mp4',
+          file: outputFile,
+        },
+        compressed: true,
+        originalBytes,
+        outputBytes,
+      };
+    }
+
     return {
       source: {
-        name: `${baseName}-720p.mp4`,
+        name: `${baseName}-480p.mp4`,
         size: outputBytes,
         type: 'video/mp4',
         path: destPath,
@@ -132,6 +198,9 @@ async function compressWithNativePlugin(source, onProgress) {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
+    if (inputBlobUrl) {
+      URL.revokeObjectURL(inputBlobUrl);
+    }
     try {
       await listener?.remove();
     } catch {
@@ -142,7 +211,7 @@ async function compressWithNativePlugin(source, onProgress) {
 
 /**
  * Charge une source vidéo en Blob prêt pour l'upload.
- * Web : le File est déjà en mémoire.
+ * Web : le File est déjà en mémoire (ou blob URL après compression).
  * Natif : lecture via le pont HTTP local (convertFileSrc + fetch), SANS base64.
  * @param {VideoSource} source
  * @returns {Promise<Blob>}
@@ -153,6 +222,14 @@ export async function resolveUploadBlob(source) {
   }
   if (!source.path) {
     throw new Error('Vidéo introuvable pour l’envoi.');
+  }
+
+  if (source.path.startsWith('blob:') || source.path.startsWith('data:')) {
+    const response = await fetch(source.path);
+    if (!response.ok) {
+      throw new Error('Vidéo compressée introuvable.');
+    }
+    return response.blob();
   }
 
   const uri = toNativeUri(source.path);
@@ -180,6 +257,14 @@ export async function resolveUploadBlob(source) {
  * @returns {Promise<void>}
  */
 export async function cleanupSource(source) {
+  if (source?.path?.startsWith('blob:')) {
+    try {
+      URL.revokeObjectURL(source.path);
+    } catch {
+      // ignore
+    }
+    return;
+  }
   if (source?.isTemp && source.path) {
     await safeDeleteAbsolutePath(source.path);
   }

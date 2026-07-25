@@ -7,6 +7,9 @@ use App\Http\Requests\UpdateCoachProfileRequest;
 use App\Models\MessageThread;
 use App\Models\User;
 use App\Support\CoachProfilePresenter;
+use App\Support\DayTableLayoutPresenter;
+use App\Support\DayTableLayoutSupport;
+use App\Support\ReadinessFormSupport;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,12 +23,7 @@ class CoachProfileController extends Controller
 
         $coach->loadMissing('coachProfile');
 
-        return Inertia::render('CoachProfilePage', [
-            'coach' => CoachProfilePresenter::forCoach($coach, includeStats: true),
-            'canEdit' => true,
-            'editableProfile' => CoachProfilePresenter::editableFields($coach->coachProfile),
-            'messagingThreadId' => null,
-        ]);
+        return Inertia::render('CoachProfilePage', $this->profilePageProps($coach, canEdit: true));
     }
 
     public function show(User $coach): Response
@@ -35,6 +33,7 @@ class CoachProfileController extends Controller
 
         $coach->loadMissing('coachProfile');
         $viewer = auth()->user();
+        $canEdit = $viewer->id === $coach->id;
 
         $threadId = null;
         if ($viewer->role === 'athlete') {
@@ -45,13 +44,44 @@ class CoachProfileController extends Controller
         }
 
         return Inertia::render('CoachProfilePage', [
-            'coach' => CoachProfilePresenter::forCoach($coach, includeStats: $viewer->id === $coach->id),
-            'canEdit' => $viewer->id === $coach->id,
-            'editableProfile' => $viewer->id === $coach->id
-                ? CoachProfilePresenter::editableFields($coach->coachProfile)
-                : null,
+            ...$this->profilePageProps($coach, canEdit: $canEdit),
             'messagingThreadId' => $threadId,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function profilePageProps(User $coach, bool $canEdit): array
+    {
+        $props = [
+            'coach' => CoachProfilePresenter::forCoach($coach, includeStats: $canEdit),
+            'canEdit' => $canEdit,
+            'editableProfile' => $canEdit
+                ? CoachProfilePresenter::editableFields($coach->coachProfile)
+                : null,
+            'messagingThreadId' => null,
+            'coachReadinessForm' => null,
+            'dayTableLayouts' => [],
+            'defaultDayTableLayoutId' => null,
+        ];
+
+        if (! $canEdit) {
+            return $props;
+        }
+
+        DayTableLayoutSupport::ensureCoachHasDefaultLayout($coach);
+        $dayTableLayouts = DayTableLayoutPresenter::listForCoach($coach->id);
+
+        $props['coachReadinessForm'] = ReadinessFormSupport::formPayload(
+            ReadinessFormSupport::ensureCoachHasDefaultForm($coach),
+        );
+        $props['dayTableLayouts'] = $dayTableLayouts;
+        $props['defaultDayTableLayoutId'] = collect($dayTableLayouts)
+            ->firstWhere('is_default', true)['id']
+            ?? ($dayTableLayouts[0]['id'] ?? null);
+
+        return $props;
     }
 
     public function update(UpdateCoachProfileRequest $request): RedirectResponse

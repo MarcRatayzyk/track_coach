@@ -1,5 +1,6 @@
 <script setup>
 import UiIcon from './UiIcon.vue';
+import { track } from '../utils/analytics';
 
 defineProps({
     open: {
@@ -14,6 +15,12 @@ defineProps({
 });
 
 const emit = defineEmits(['close']);
+
+const APK_DOWNLOAD_URL = '/downloads/power-roster.apk';
+
+function trackApkDownload() {
+    track('apk_download_clicked', { source: 'install_guide' });
+}
 </script>
 
 <template>
@@ -49,8 +56,17 @@ const emit = defineEmits(['close']);
                     </button>
                 </div>
 
-                <p class="mt-3 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+                <p
+                    v-if="guideType !== 'android'"
+                    class="mt-3 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200"
+                >
                     Un simple raccourci ouvre l’app dans le navigateur. Suis bien les étapes ci-dessous pour l’installer en plein écran.
+                </p>
+                <p
+                    v-else
+                    class="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-200"
+                >
+                    Pour l’app native Android, télécharge l’APK ci-dessous. Tu peux aussi l’ajouter depuis Chrome.
                 </p>
 
                 <ol v-if="guideType === 'ios'" class="mt-4 space-y-3 text-sm text-slate-300">
@@ -80,29 +96,50 @@ const emit = defineEmits(['close']);
                     </li>
                 </ol>
 
-                <ol v-else-if="guideType === 'android'" class="mt-4 space-y-3 text-sm text-slate-300">
-                    <li class="flex gap-3">
-                        <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">1</span>
-                        <span>
-                            Dans <strong class="text-white">Chrome</strong>, accepte la proposition
-                            <strong class="text-white">Installer l’application</strong> si elle apparaît.
-                        </span>
-                    </li>
-                    <li class="flex gap-3">
-                        <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">2</span>
-                        <span>
-                            Sinon : menu <strong class="text-white">⋮</strong> →
-                            <strong class="text-white">Installer l’application</strong>
-                            (pas seulement « Ajouter à l’écran d’accueil »).
-                        </span>
-                    </li>
-                    <li class="flex gap-3">
-                        <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">3</span>
-                        <span>
-                            Supprime l’ancien raccourci si besoin, puis réinstalle pour ouvrir sans barre d’adresse.
-                        </span>
-                    </li>
-                </ol>
+                <div v-else-if="guideType === 'android'" class="mt-4 space-y-4">
+                    <a
+                        :href="APK_DOWNLOAD_URL"
+                        download="power-roster.apk"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-600/25"
+                        @click="trackApkDownload"
+                    >
+                        <UiIcon name="download" class="h-4 w-4" />
+                        Télécharger l’app Android (APK)
+                    </a>
+                    <p class="text-xs leading-relaxed text-slate-400">
+                        Après le téléchargement, ouvre le fichier et autorise l’installation depuis
+                        cette source si Android le demande.
+                    </p>
+
+                    <div class="border-t border-slate-700/80 pt-4">
+                        <p class="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Ou installer via le navigateur
+                        </p>
+                        <ol class="space-y-3 text-sm text-slate-300">
+                            <li class="flex gap-3">
+                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">1</span>
+                                <span>
+                                    Dans <strong class="text-white">Chrome</strong>, accepte la proposition
+                                    <strong class="text-white">Installer l’application</strong> si elle apparaît.
+                                </span>
+                            </li>
+                            <li class="flex gap-3">
+                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">2</span>
+                                <span>
+                                    Sinon : menu <strong class="text-white">⋮</strong> →
+                                    <strong class="text-white">Installer l’application</strong>
+                                    (pas seulement « Ajouter à l’écran d’accueil »).
+                                </span>
+                            </li>
+                            <li class="flex gap-3">
+                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">3</span>
+                                <span>
+                                    Supprime l’ancien raccourci si besoin, puis réinstalle pour ouvrir sans barre d’adresse.
+                                </span>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
 
                 <ol v-else class="mt-4 space-y-3 text-sm text-slate-300">
                     <li class="flex gap-3">

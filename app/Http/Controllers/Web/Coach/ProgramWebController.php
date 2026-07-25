@@ -7,7 +7,6 @@ use App\Actions\BulkAssignProgramTemplateAction;
 use App\Actions\BulkUpsertProgramSessionsAction;
 use App\Actions\ClearProgramSessionAction;
 use App\Actions\CreateProgramBlockAction;
-use App\Actions\CreateStarterProgramAction;
 use App\Actions\DeleteProgramBlockAction;
 use App\Actions\DuplicateProgramTemplateAction;
 use App\Actions\UpdateProgramBlockWarmupAction;
@@ -18,10 +17,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClearProgramSessionRequest;
 use App\Http\Requests\StoreProgramBlockRequest;
 use App\Http\Requests\StoreProgramSessionRequest;
-use App\Http\Requests\StoreStarterProgramRequest;
 use App\Http\Requests\UpdateProgramBlockWarmupRequest;
 use App\Models\AthleteProgramAssignment;
-use App\Support\StarterProgramLibrary;
 use Illuminate\Http\RedirectResponse;
 
 class ProgramWebController extends Controller
@@ -106,30 +103,6 @@ class ProgramWebController extends Controller
             ->with('success', $count === 1
                 ? 'Programme assigné à 1 athlète.'
                 : "Programme assigné à {$count} athlètes.");
-    }
-
-    public function storeStarter(
-        StoreStarterProgramRequest $request,
-        CreateStarterProgramAction $action,
-    ): RedirectResponse {
-        $definition = StarterProgramLibrary::find($request->string('key')->toString());
-
-        if ($definition === null) {
-            return redirect()
-                ->route('program.builder')
-                ->with('error', 'Modèle de programme introuvable.');
-        }
-
-        $assignment = $action->execute(
-            $definition,
-            $request->user(),
-            $request->integer('athlete_id'),
-            $request->date('date_start'),
-        );
-
-        return redirect()
-            ->route('program.builder', $this->builderRouteParams($assignment->id))
-            ->with('success', 'Programme de départ créé. Personnalise-le puis assigne-le.');
     }
 
     public function assignBlock(

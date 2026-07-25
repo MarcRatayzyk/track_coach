@@ -49,6 +49,8 @@ class UpsertTrainingSessionRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            $this->validateSetSchemes($validator);
+
             $items = $this->input('items', []);
             $notes = trim((string) $this->input('notes', ''));
 

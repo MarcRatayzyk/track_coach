@@ -43,6 +43,8 @@ export function sessionToClipboardPayload(session) {
       exercise_variant_id: item.line.exercise_variant_id,
       exercise_name: item.line.exercise_name,
       lift: item.line.lift,
+      set_scheme: item.line.set_scheme ?? 'standard',
+      scheme_config: item.line.scheme_config ?? null,
       sets: item.line.sets,
       reps: item.line.reps,
       load: item.line.load,
@@ -221,6 +223,25 @@ function incrementClipboardItem(item, options) {
 
   if (rpe !== 0 && hasNumericValue(item.rpe)) {
     next.rpe = roundRpe(Number(item.rpe) + rpe);
+  }
+
+  if ((item.set_scheme ?? 'standard') === 'ramp' && Array.isArray(item.scheme_config?.steps)) {
+    next.scheme_config = {
+      ...item.scheme_config,
+      steps: item.scheme_config.steps.map((step) => {
+        const stepped = { ...step };
+        if (kg !== 0 && hasNumericValue(step.load)) {
+          stepped.load = roundLoad(Number(step.load) + kg);
+        }
+        if (percent !== 0 && hasNumericValue(step.load_percent)) {
+          stepped.load_percent = roundPercent(Number(step.load_percent) + percent);
+        }
+        if (rpe !== 0 && hasNumericValue(step.rpe)) {
+          stepped.rpe = roundRpe(Number(step.rpe) + rpe);
+        }
+        return stepped;
+      }),
+    };
   }
 
   return next;

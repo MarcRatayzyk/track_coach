@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import ExerciseVariantStrip from './ExerciseVariantStrip.vue';
 import LoadModePicker from './LoadModePicker.vue';
 import OptionButtonGroup from './OptionButtonGroup.vue';
+import SetSchemeEditor from './SetSchemeEditor.vue';
 import { SET_OPTIONS, REP_OPTIONS, formatLineRecap } from '../utils/programBuilder';
 
 const line = defineModel({ type: Object, required: true });
@@ -38,6 +39,7 @@ const accentTitle = {
   zinc: 'text-slate-300',
 };
 
+const scheme = computed(() => line.value?.set_scheme ?? 'standard');
 const recap = computed(() => formatLineRecap(line.value));
 
 const recapText = computed(
@@ -80,7 +82,11 @@ function updateField(field, value) {
       @select="onExerciseSelected"
     />
 
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+    <div class="mt-4">
+      <SetSchemeEditor v-model="line" />
+    </div>
+
+    <div v-if="scheme === 'standard'" class="mt-4 grid gap-4 sm:grid-cols-2">
       <OptionButtonGroup
         :model-value="line.sets"
         :options="SET_OPTIONS"
@@ -97,7 +103,7 @@ function updateField(field, value) {
       />
     </div>
 
-    <LoadModePicker v-model="line" />
+    <LoadModePicker v-if="scheme === 'standard' || scheme === 'cluster'" v-model="line" />
 
     <div v-if="!embedded" class="mt-4 rounded-lg border-2 border-blue-500/40 bg-blue-950/40 px-3 py-2.5">
       <p class="text-xs font-medium uppercase tracking-wide text-blue-300">Récap</p>

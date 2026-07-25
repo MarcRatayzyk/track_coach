@@ -28,6 +28,7 @@ const form = useForm({
   name: '',
   lift: 'general',
   category: 'accessory',
+  movement_pattern: '',
 });
 
 const liftOptions = [
@@ -42,13 +43,28 @@ const categoryOptions = [
   { value: 'accessory', label: 'Accessoire' },
 ];
 
+const muscleOptions = [
+  { value: 'Pectoraux', label: 'Pectoraux' },
+  { value: 'Épaules', label: 'Épaules' },
+  { value: 'Dos', label: 'Dos' },
+  { value: 'Biceps', label: 'Biceps' },
+  { value: 'Triceps', label: 'Triceps' },
+  { value: 'Quadriceps', label: 'Quadriceps' },
+  { value: 'Ischio-jambiers', label: 'Ischio-jambiers' },
+  { value: 'Fessiers', label: 'Fessiers' },
+  { value: 'Mollets', label: 'Mollets' },
+  { value: 'Abdominaux', label: 'Abdominaux' },
+  { value: 'Corps entier', label: 'Corps entier' },
+];
+
 const liftLabelByValue = Object.fromEntries(liftOptions.map((option) => [option.value, option.label]));
 const categoryLabelByValue = Object.fromEntries(categoryOptions.map((option) => [option.value, option.label]));
 
 function exerciseMeta(exercise) {
   const lift = liftLabelByValue[exercise.lift] ?? exercise.lift;
   const category = categoryLabelByValue[exercise.category] ?? exercise.category;
-  return `${lift} · ${category}`;
+  const muscle = exercise.movement_pattern ? String(exercise.movement_pattern) : null;
+  return [lift, category, muscle].filter(Boolean).join(' · ');
 }
 
 function matchesSearch(exercise) {
@@ -87,6 +103,7 @@ function startEdit(exercise) {
   form.name = exercise.name;
   form.lift = exercise.lift;
   form.category = exercise.category;
+  form.movement_pattern = exercise.movement_pattern ?? '';
 }
 
 function submit() {
@@ -157,7 +174,7 @@ function close() {
         </div>
 
         <div class="tc-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-          <form class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" @submit.prevent="submit">
+          <form class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5" @submit.prevent="submit">
             <label class="sm:col-span-2 block text-sm lg:col-span-2">
               <span class="text-slate-300">Nom</span>
               <input
@@ -187,7 +204,23 @@ function close() {
               </select>
             </label>
 
-            <div class="sm:col-span-2 flex flex-wrap gap-2 lg:col-span-4">
+            <label class="block text-sm">
+              <span class="text-slate-300">Muscles</span>
+              <select
+                v-model="form.movement_pattern"
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+              >
+                <option value="">—</option>
+                <option v-for="option in muscleOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+              <span v-if="form.errors.movement_pattern" class="text-xs text-red-400">
+                {{ form.errors.movement_pattern }}
+              </span>
+            </label>
+
+            <div class="sm:col-span-2 flex flex-wrap gap-2 lg:col-span-5">
               <button
                 type="submit"
                 :disabled="form.processing"

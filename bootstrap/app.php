@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnableCrossOriginIsolation;
 use App\Http\Middleware\EnsureEmailIsVerifiedUnlessManual;
 use App\Http\Middleware\EnsureUserIsCoach;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleInertiaRequests::class,
+            EnableCrossOriginIsolation::class,
         ]);
         $middleware->alias([
             'coach' => EnsureUserIsCoach::class,

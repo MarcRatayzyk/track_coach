@@ -158,8 +158,6 @@ Route::middleware(['auth', 'verified', 'coach'])->group(function (): void {
         ->name('coach.program-blocks.duplicate');
     Route::post('/coach/program-blocks/{assignment}/bulk-assign', [ProgramWebController::class, 'bulkAssignBlock'])
         ->name('coach.program-blocks.bulk-assign');
-    Route::post('/coach/program-starters', [ProgramWebController::class, 'storeStarter'])
-        ->name('coach.program-starters.store');
     Route::put('/coach/program-blocks/{assignment}/warmup', [ProgramWebController::class, 'updateWarmup'])
         ->name('coach.program-blocks.warmup.update');
     Route::put('/coach/program-blocks/{assignment}/sessions', [ProgramWebController::class, 'upsertSession'])

@@ -124,6 +124,8 @@ class TrainingLoadSupport
             'exercise_variant_id' => $line->exercise_variant_id,
             'exercise_name' => $line->exercise_name,
             'lift' => $line->lift,
+            'set_scheme' => SetSchemeSupport::resolveScheme($line->set_scheme),
+            'scheme_config' => is_array($line->scheme_config) ? $line->scheme_config : null,
             'sets' => $line->sets,
             'reps' => $line->reps,
             'load' => $line->load,

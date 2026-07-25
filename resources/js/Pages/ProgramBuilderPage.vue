@@ -77,14 +77,6 @@ const props = defineProps({
 
   },
 
-  starterPrograms: {
-
-    type: Array,
-
-    default: () => [],
-
-  },
-
   activeBlock: {
 
     type: Object,
@@ -945,7 +937,6 @@ function clearClipboard() {
       v-if="!showCalendar && activeTab === 'calendar'"
       :athletes="athletes"
       :existing-blocks="existingBlocks"
-      :starter-programs="starterPrograms"
     />
 
     <BlockSetupTableCard

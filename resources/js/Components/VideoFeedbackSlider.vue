@@ -11,34 +11,6 @@ const currentIndex = ref(0);
 const total = computed(() => props.videos.length);
 const hasMultiple = computed(() => total.value > 1);
 const currentVideo = computed(() => props.videos[currentIndex.value] ?? null);
-const currentSeries = computed(() => currentVideo.value?.series ?? null);
-
-const loadLabel = computed(() => {
-  const series = currentSeries.value;
-  if (!series) {
-    return null;
-  }
-  if (series.load !== null && series.load !== undefined && series.load !== '') {
-    return `${series.load} kg`;
-  }
-  if (series.load_percent !== null && series.load_percent !== undefined && series.load_percent !== '') {
-    return `${series.load_percent} %`;
-  }
-  return null;
-});
-
-const metrics = computed(() => {
-  const series = currentSeries.value;
-  if (!series) {
-    return [];
-  }
-  return [
-    { label: 'Séries', value: series.sets ?? '—' },
-    { label: 'Reps', value: series.reps ?? '—' },
-    { label: 'Charge', value: loadLabel.value ?? '—' },
-    { label: 'RPE', value: series.rpe ?? '—' },
-  ];
-});
 
 function goTo(index) {
   if (index < 0 || index >= total.value) {
@@ -73,6 +45,15 @@ watch(
         <span v-if="hasMultiple" class="ml-1 text-slate-500">
           ({{ currentIndex + 1 }}/{{ total }})
         </span>
+        <span
+          v-if="currentVideo?.series?.exercise_name"
+          class="ml-2 font-normal normal-case text-slate-500"
+        >
+          · {{ currentVideo.series.exercise_name }}
+          <template v-if="currentVideo.series.section_label">
+            — {{ currentVideo.series.section_label }}
+          </template>
+        </span>
       </h3>
       <div v-if="hasMultiple" class="flex items-center gap-2">
         <button
@@ -97,30 +78,6 @@ watch(
     </div>
 
     <VideoAnnotator v-if="currentVideo" :key="currentVideo.id" :video="currentVideo" />
-
-    <div
-      v-if="currentSeries"
-      class="rounded-xl border border-blue-500/30 bg-blue-950/20 p-4"
-    >
-      <p class="text-sm font-semibold text-white">
-        {{ currentSeries.exercise_name || 'Série' }}
-        <span v-if="currentSeries.section_label" class="text-slate-400">
-          — {{ currentSeries.section_label }}
-        </span>
-      </p>
-      <dl class="mt-3 grid grid-cols-4 gap-2 text-center">
-        <div
-          v-for="metric in metrics"
-          :key="metric.label"
-          class="rounded-lg bg-slate-950/60 px-2 py-2"
-        >
-          <dt class="text-[10px] font-medium uppercase tracking-wide text-slate-500">
-            {{ metric.label }}
-          </dt>
-          <dd class="mt-1 text-sm font-semibold text-white">{{ metric.value }}</dd>
-        </div>
-      </dl>
-    </div>
 
     <div v-if="hasMultiple" class="flex items-center justify-center gap-1.5">
       <button

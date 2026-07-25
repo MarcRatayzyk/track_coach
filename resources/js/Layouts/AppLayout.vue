@@ -21,12 +21,47 @@ const isMobileMenuOpen = ref(false);
 const { isLight, toggleTheme } = useTheme();
 const { showInstallGuide, installGuideType, closeInstallGuide } = usePwaInstall();
 const { isNative } = useNativeApp();
+const isKeyboardOpen = ref(false);
 
 const isCoach = computed(() => user.value?.role === 'coach');
 const messagingInbox = computed(() => page.props.messagingInbox ?? null);
 let messagingPollTimer = null;
 const subscribedThreadChannels = [];
 let userEchoChannel = null;
+let viewportCleanup = null;
+
+function syncKeyboardOpen() {
+    if (typeof window === 'undefined' || !window.visualViewport) {
+        isKeyboardOpen.value = false;
+        return;
+    }
+
+    const viewport = window.visualViewport;
+    // Sur Android/Capacitor, le clavier réduit le visualViewport ; le fixed bottom remonte alors.
+    const obscured = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+    isKeyboardOpen.value = obscured > 120;
+}
+
+function bindKeyboardListeners() {
+    if (typeof window === 'undefined' || !window.visualViewport) {
+        return;
+    }
+
+    const viewport = window.visualViewport;
+    const onChange = () => syncKeyboardOpen();
+    viewport.addEventListener('resize', onChange);
+    viewport.addEventListener('scroll', onChange);
+    window.addEventListener('focusin', onChange);
+    window.addEventListener('focusout', onChange);
+    syncKeyboardOpen();
+
+    viewportCleanup = () => {
+        viewport.removeEventListener('resize', onChange);
+        viewport.removeEventListener('scroll', onChange);
+        window.removeEventListener('focusin', onChange);
+        window.removeEventListener('focusout', onChange);
+    };
+}
 
 function reloadMessagingInbox() {
     router.reload({
@@ -174,7 +209,10 @@ const sidebarClasses = computed(() =>
 );
 
 const contentPaddingClasses = computed(() => {
-    const mobile = 'pl-0 tc-app-content lg:pb-0';
+    // Quand le clavier est ouvert, on retire le padding bas réservé à la nav (masquée).
+    const mobile = isKeyboardOpen.value
+        ? 'pl-0 tc-app-content tc-app-content--keyboard lg:pb-0'
+        : 'pl-0 tc-app-content lg:pb-0';
 
     if (isSidebarCollapsed.value) {
         return `${mobile} lg:pl-20`;
@@ -218,10 +256,15 @@ onMounted(() => {
 
     isSidebarCollapsed.value = window.localStorage.getItem('tc-sidebar-collapsed') === 'true';
     setupMessagingRealtime();
+    bindKeyboardListeners();
 });
 
 onUnmounted(() => {
     leaveMessagingChannels();
+    if (viewportCleanup) {
+        viewportCleanup();
+        viewportCleanup = null;
+    }
 });
 
 watch(messagingInbox, () => {
@@ -453,7 +496,9 @@ watch(() => page.url, () => {
         </aside>
 
         <nav
+            v-show="!isKeyboardOpen"
             class="mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-slate-800/90 bg-slate-900/95 backdrop-blur-sm lg:hidden"
+            :aria-hidden="isKeyboardOpen ? 'true' : undefined"
         >
             <div class="flex items-stretch justify-around px-1 pt-1">
                 <Link
