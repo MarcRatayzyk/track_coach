@@ -4,7 +4,10 @@ namespace App\Http\Requests;
 
 use App\Models\SessionFeedback;
 use App\Models\SessionFeedbackMedia;
+use App\Support\FeedbackFrequencySupport;
+use App\Support\SessionFeedbackPresenter;
 use App\Support\VideoUploadDisk;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -47,15 +50,16 @@ class StoreSessionFeedbackRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             $notes = trim((string) $this->input('athlete_notes', ''));
+            $hasLoggedNotes = $this->hasLoggedSessionNotes();
 
             if (VideoUploadDisk::usesDirectUpload()) {
                 $ids = array_values(array_map('intval', (array) $this->input('video_upload_ids', [])));
                 $videoCount = count($ids);
 
-                if ($notes === '' && $videoCount === 0) {
+                if ($notes === '' && $videoCount === 0 && ! $hasLoggedNotes) {
                     $validator->errors()->add(
                         'athlete_notes',
-                        'Ajoutez un message ou au moins une vidéo.',
+                        'Ajoutez un message, des notes de séance ou au moins une vidéo.',
                     );
                 }
 
@@ -86,13 +90,46 @@ class StoreSessionFeedbackRequest extends FormRequest
 
             $videoCount = count($this->file('videos', []));
 
-            if ($notes === '' && $videoCount === 0) {
+            if ($notes === '' && $videoCount === 0 && ! $hasLoggedNotes) {
                 $validator->errors()->add(
                     'athlete_notes',
-                    'Ajoutez un message ou au moins une vidéo.',
+                    'Ajoutez un message, des notes de séance ou au moins une vidéo.',
                 );
             }
         });
+    }
+
+    private function hasLoggedSessionNotes(): bool
+    {
+        $user = $this->user();
+        $sessionDate = $this->input('session_date');
+        if ($user === null || ! is_string($sessionDate) || $sessionDate === '') {
+            return false;
+        }
+
+        try {
+            $date = Carbon::parse($sessionDate)->startOfDay();
+        } catch (\Throwable) {
+            return false;
+        }
+
+        if (FeedbackFrequencySupport::isWeekly($user)) {
+            [$weekStart, $weekEnd] = FeedbackFrequencySupport::weekBounds($date);
+            $notes = SessionFeedbackPresenter::loggedNotesForAthleteBetween(
+                $user->id,
+                $weekStart->toDateString(),
+                $weekEnd->toDateString(),
+            );
+        } else {
+            $dateString = $date->toDateString();
+            $notes = SessionFeedbackPresenter::loggedNotesForAthleteBetween(
+                $user->id,
+                $dateString,
+                $dateString,
+            );
+        }
+
+        return $notes !== [];
     }
 
     /**

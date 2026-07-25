@@ -22,6 +22,8 @@ const { isLight, toggleTheme } = useTheme();
 const { showInstallGuide, installGuideType, closeInstallGuide } = usePwaInstall();
 const { isNative } = useNativeApp();
 const isKeyboardOpen = ref(false);
+let baselineViewportHeight = 0;
+let focusOutTimer = 0;
 
 const isCoach = computed(() => user.value?.role === 'coach');
 const messagingInbox = computed(() => page.props.messagingInbox ?? null);
@@ -30,36 +32,114 @@ const subscribedThreadChannels = [];
 let userEchoChannel = null;
 let viewportCleanup = null;
 
+function isEditableTarget(target) {
+    if (!target || !(target instanceof Element)) {
+        return false;
+    }
+    const tag = target.tagName;
+    if (tag === 'TEXTAREA') {
+        return true;
+    }
+    if (tag === 'INPUT') {
+        const type = (target.getAttribute('type') || 'text').toLowerCase();
+        return !['button', 'checkbox', 'radio', 'file', 'submit', 'reset', 'range', 'color', 'hidden'].includes(type);
+    }
+    return Boolean(target.isContentEditable);
+}
+
+function captureBaselineViewport() {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    const height = window.visualViewport?.height ?? window.innerHeight;
+    if (height > 0 && !isKeyboardOpen.value) {
+        baselineViewportHeight = Math.max(baselineViewportHeight, height);
+    }
+    if (baselineViewportHeight <= 0 && height > 0) {
+        baselineViewportHeight = height;
+    }
+}
+
 function syncKeyboardOpen() {
-    if (typeof window === 'undefined' || !window.visualViewport) {
+    if (typeof window === 'undefined') {
         isKeyboardOpen.value = false;
         return;
     }
 
     const viewport = window.visualViewport;
-    // Sur Android/Capacitor, le clavier réduit le visualViewport ; le fixed bottom remonte alors.
-    const obscured = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
-    isKeyboardOpen.value = obscured > 120;
+    const viewportHeight = viewport?.height ?? window.innerHeight;
+    if (baselineViewportHeight <= 0) {
+        captureBaselineViewport();
+    }
+
+    // Sur Capacitor/Android, innerHeight et visualViewport peuvent rétrécir ensemble :
+    // on compare donc à une hauteur de référence capturée hors clavier.
+    const shrinkFromBaseline = Math.max(0, baselineViewportHeight - viewportHeight);
+    const obscuredLegacy = viewport
+        ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+        : 0;
+    const active = typeof document !== 'undefined' ? document.activeElement : null;
+    const editing = isEditableTarget(active);
+
+    // Avec adjustPan, le viewport ne rétrécit pas toujours : on se base aussi sur le focus.
+    isKeyboardOpen.value =
+        editing ||
+        shrinkFromBaseline > 100 ||
+        obscuredLegacy > 100;
 }
 
 function bindKeyboardListeners() {
-    if (typeof window === 'undefined' || !window.visualViewport) {
+    if (typeof window === 'undefined') {
         return;
     }
 
-    const viewport = window.visualViewport;
+    captureBaselineViewport();
+
     const onChange = () => syncKeyboardOpen();
-    viewport.addEventListener('resize', onChange);
-    viewport.addEventListener('scroll', onChange);
-    window.addEventListener('focusin', onChange);
-    window.addEventListener('focusout', onChange);
+    const onFocusIn = (event) => {
+        window.clearTimeout(focusOutTimer);
+        if (isEditableTarget(event.target)) {
+            // Masque immédiatement la nav (évite le flash au-dessus du clavier).
+            isKeyboardOpen.value = true;
+        }
+        window.setTimeout(syncKeyboardOpen, 50);
+        window.setTimeout(syncKeyboardOpen, 280);
+    };
+    const onFocusOut = () => {
+        window.clearTimeout(focusOutTimer);
+        focusOutTimer = window.setTimeout(() => {
+            syncKeyboardOpen();
+            if (!isKeyboardOpen.value) {
+                captureBaselineViewport();
+            }
+        }, 180);
+    };
+    const onOrientation = () => {
+        isKeyboardOpen.value = false;
+        baselineViewportHeight = 0;
+        window.setTimeout(() => {
+            captureBaselineViewport();
+            syncKeyboardOpen();
+        }, 350);
+    };
+
+    const viewport = window.visualViewport;
+    viewport?.addEventListener('resize', onChange);
+    viewport?.addEventListener('scroll', onChange);
+    window.addEventListener('resize', onChange);
+    window.addEventListener('focusin', onFocusIn);
+    window.addEventListener('focusout', onFocusOut);
+    window.addEventListener('orientationchange', onOrientation);
     syncKeyboardOpen();
 
     viewportCleanup = () => {
-        viewport.removeEventListener('resize', onChange);
-        viewport.removeEventListener('scroll', onChange);
-        window.removeEventListener('focusin', onChange);
-        window.removeEventListener('focusout', onChange);
+        viewport?.removeEventListener('resize', onChange);
+        viewport?.removeEventListener('scroll', onChange);
+        window.removeEventListener('resize', onChange);
+        window.removeEventListener('focusin', onFocusIn);
+        window.removeEventListener('focusout', onFocusOut);
+        window.removeEventListener('orientationchange', onOrientation);
+        window.clearTimeout(focusOutTimer);
     };
 }
 

@@ -31,4 +31,19 @@ return [
         'ui_host' => env('POSTHOG_UI_HOST', 'https://eu.posthog.com'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Android APK download
+    |--------------------------------------------------------------------------
+    |
+    | Fallback when public/downloads/power-roster.apk is absent (production).
+    | Defaults to the latest GitHub Release asset.
+    |
+    */
+
+    'android_apk_url' => env(
+        'ANDROID_APK_URL',
+        'https://github.com/MarcRatayzyk/track_coach/releases/latest/download/power-roster.apk',
+    ),
+
 ];

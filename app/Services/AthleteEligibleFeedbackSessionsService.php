@@ -72,6 +72,11 @@ class AthleteEligibleFeedbackSessionsService
                 'program_training_day_id' => $trainingDay->id,
                 'session_label' => SessionFeedbackPresenter::sessionLabel($trainingDay),
                 'exercises' => $this->exercisesFor($trainingDay),
+                'logged_notes' => SessionFeedbackPresenter::loggedNotesForAthleteBetween(
+                    $athlete->id,
+                    $dateString,
+                    $dateString,
+                ),
             ];
         }
 
@@ -145,6 +150,11 @@ class AthleteEligibleFeedbackSessionsService
                     $weekEndBound->locale('fr')->isoFormat('D MMM YYYY'),
                 ),
                 'exercises' => $this->exercisesFor($latestTrainingDay),
+                'logged_notes' => SessionFeedbackPresenter::loggedNotesForAthleteBetween(
+                    $athlete->id,
+                    $weekStartBound->toDateString(),
+                    $weekEndBound->toDateString(),
+                ),
             ];
         }
 

@@ -79,6 +79,8 @@ const selectedSession = computed(() =>
 
 const sessionExercises = computed(() => selectedSession.value?.exercises ?? []);
 
+const selectedSessionLoggedNotes = computed(() => selectedSession.value?.logged_notes ?? []);
+
 const seriesPickerOpen = computed({
   get: () => seriesPickerIndex.value !== null,
   set: (open) => {
@@ -151,13 +153,6 @@ const filterOptions = [
   { value: 'pending', label: 'En attente' },
   { value: 'all', label: 'Tous' },
 ];
-
-const athleteDescription = computed(() => {
-  if (isWeekly.value) {
-    return 'Envoyez un message et, si besoin, une vidéo pour votre retour hebdomadaire.';
-  }
-  return 'Envoyez un message et, si besoin, une vidéo pour chaque séance programme réalisée.';
-});
 
 const maxVideoMbLabel = computed(() =>
   Math.max(1, Math.floor(MAX_VIDEO_BYTES.value / (1024 * 1024))),
@@ -693,13 +688,8 @@ function seriesPayload() {
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold text-white">Retours de séance</h1>
-        <p class="mt-2 max-w-2xl text-slate-400">
-          <template v-if="isCoach">
-            Consultez les vidéos et commentaires des athlètes, puis répondez via la messagerie.
-          </template>
-          <template v-else>
-            {{ athleteDescription }}
-          </template>
+        <p v-if="isCoach" class="mt-2 max-w-2xl text-slate-400">
+          Consultez les vidéos et commentaires des athlètes, puis répondez via la messagerie.
         </p>
       </div>
       <div v-if="isCoach" class="flex gap-2">
@@ -767,6 +757,26 @@ function seriesPayload() {
             placeholder="Comment s’est passée la séance ?"
             class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-600"
           />
+          <div
+            v-if="selectedSessionLoggedNotes.length"
+            class="mt-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3"
+          >
+            <p class="text-xs font-medium text-slate-400">Notes prises pendant la séance</p>
+            <ul class="mt-2 space-y-1.5">
+              <li
+                v-for="(entry, index) in selectedSessionLoggedNotes"
+                :key="`${entry.exercise_name}-${index}`"
+                class="text-sm text-slate-200"
+              >
+                <span class="font-medium text-slate-100">{{ entry.exercise_name }}</span>
+                <span class="text-slate-500"> — </span>
+                <span class="whitespace-pre-wrap text-slate-300">{{ entry.note }}</span>
+              </li>
+            </ul>
+            <p class="mt-2 text-[11px] text-slate-500">
+              Ces notes seront incluses automatiquement dans le retour.
+            </p>
+          </div>
           <p v-if="submitForm.errors.athlete_notes" class="mt-1 text-sm text-red-400">
             {{ submitForm.errors.athlete_notes }}
           </p>
@@ -836,9 +846,6 @@ function seriesPayload() {
           </p>
           <p v-if="compressionSummary && !isCompressing" class="mt-1 text-xs text-emerald-400/90">
             {{ compressionSummary }}
-          </p>
-          <p class="mt-2 text-xs text-slate-500">
-            Vous pouvez rogner chaque vidéo pour ne garder que le lift. Ensuite elles sont compressées (~480p) pour un chargement plus rapide côté coach.
           </p>
           <div v-if="showProgressBar" class="mt-3">
             <div class="h-2 overflow-hidden rounded-full bg-slate-800">
@@ -977,6 +984,23 @@ function seriesPayload() {
             <p class="mt-2 whitespace-pre-wrap rounded-lg bg-slate-950/60 p-3 text-sm text-slate-200">
               {{ activeFeedback.athlete_notes }}
             </p>
+          </div>
+          <div
+            v-else-if="activeFeedback.session_logged_notes?.length"
+            class="rounded-lg bg-slate-950/60 p-3"
+          >
+            <h3 class="text-sm font-medium text-slate-400">Notes de séance</h3>
+            <ul class="mt-2 space-y-1.5">
+              <li
+                v-for="(entry, index) in activeFeedback.session_logged_notes"
+                :key="`${entry.exercise_name}-${index}`"
+                class="text-sm text-slate-200"
+              >
+                <span class="font-medium text-white">{{ entry.exercise_name }}</span>
+                <span class="text-slate-500"> — </span>
+                <span class="whitespace-pre-wrap text-slate-300">{{ entry.note }}</span>
+              </li>
+            </ul>
           </div>
           <div v-else class="text-sm text-slate-500">Aucun message de l’athlète.</div>
 

@@ -64,13 +64,16 @@ class StoreSessionFeedbackAction
         }
 
         return DB::transaction(function () use ($athlete, $date, $athleteNotes, $videos, $videoUploadIds, $videoSeries, $resolved): SessionFeedback {
+            $loggedNotes = $this->loggedNotesForFeedback($athlete, $date);
+            $mergedNotes = SessionFeedbackPresenter::mergeAthleteNotesWithLogged($athleteNotes, $loggedNotes);
+
             $feedback = SessionFeedback::query()->create([
                 'coach_id' => $resolved['coach']->id,
                 'athlete_id' => $athlete->id,
                 'athlete_program_assignment_id' => $resolved['assignment']->id,
                 'program_training_day_id' => $resolved['training_day']->id,
                 'session_date' => $date->toDateString(),
-                'athlete_notes' => $athleteNotes,
+                'athlete_notes' => $mergedNotes,
                 'status' => SessionFeedback::STATUS_SUBMITTED,
                 'submitted_at' => now(),
             ]);
@@ -135,6 +138,30 @@ class StoreSessionFeedbackAction
         }
 
         return $result;
+    }
+
+    /**
+     * @return list<array{exercise_name: string, note: string, session_date: string|null}>
+     */
+    private function loggedNotesForFeedback(User $athlete, Carbon $date): array
+    {
+        if (FeedbackFrequencySupport::isWeekly($athlete)) {
+            [$weekStart, $weekEnd] = FeedbackFrequencySupport::weekBounds($date);
+
+            return SessionFeedbackPresenter::loggedNotesForAthleteBetween(
+                $athlete->id,
+                $weekStart->toDateString(),
+                $weekEnd->toDateString(),
+            );
+        }
+
+        $dateString = $date->toDateString();
+
+        return SessionFeedbackPresenter::loggedNotesForAthleteBetween(
+            $athlete->id,
+            $dateString,
+            $dateString,
+        );
     }
 
     private function linkDashboardTask(SessionFeedback $feedback, User $athlete, Carbon $date): void

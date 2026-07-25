@@ -11,6 +11,7 @@ use App\Models\SessionFeedback;
 use App\Models\SessionFeedbackAnnotation;
 use App\Models\SessionFeedbackMedia;
 use App\Models\TrainingSession;
+use App\Support\FeedbackFrequencySupport;
 use Illuminate\Support\Collection;
 
 class SessionFeedbackPresenter
@@ -33,14 +34,34 @@ class SessionFeedbackPresenter
 
         $day = $feedback->programTrainingDay;
         $loggedItems = self::loggedItemsForFeedback($feedback);
+        $sessionDate = $feedback->session_date?->toDateString();
+        $loggedNotes = [];
+        if ($feedback->athlete_id && $sessionDate) {
+            $athlete = $feedback->athlete;
+            if ($athlete !== null && FeedbackFrequencySupport::isWeekly($athlete)) {
+                [$weekStart, $weekEnd] = FeedbackFrequencySupport::weekBounds($feedback->session_date);
+                $loggedNotes = self::loggedNotesForAthleteBetween(
+                    $feedback->athlete_id,
+                    $weekStart->toDateString(),
+                    $weekEnd->toDateString(),
+                );
+            } else {
+                $loggedNotes = self::loggedNotesForAthleteBetween(
+                    $feedback->athlete_id,
+                    $sessionDate,
+                    $sessionDate,
+                );
+            }
+        }
 
         return [
             'id' => $feedback->id,
             'athlete_id' => $feedback->athlete_id,
             'athlete_name' => $feedback->athlete?->name,
-            'session_date' => $feedback->session_date?->toDateString(),
+            'session_date' => $sessionDate,
             'session_label' => self::sessionLabel($day),
             'athlete_notes' => $feedback->athlete_notes,
+            'session_logged_notes' => $loggedNotes,
             'status' => $feedback->status,
             'submitted_at' => $feedback->submitted_at?->toIso8601String(),
             'session_exercises' => self::sessionExercisesComparison($day, $loggedItems),
@@ -161,6 +182,115 @@ class SessionFeedbackPresenter
             $session->items,
             static fn ($item): bool => is_array($item),
         ));
+    }
+
+    /**
+     * Notes athlète prises pendant une ou plusieurs séances loguées.
+     *
+     * @return list<array{exercise_name: string, note: string, session_date: string|null}>
+     */
+    public static function loggedNotesForAthleteBetween(int $athleteId, string $fromDate, string $toDate): array
+    {
+        $sessions = TrainingSession::query()
+            ->where('athlete_id', $athleteId)
+            ->whereDate('session_date', '>=', $fromDate)
+            ->whereDate('session_date', '<=', $toDate)
+            ->orderBy('session_date')
+            ->get();
+
+        $notes = [];
+        foreach ($sessions as $session) {
+            $date = $session->session_date?->toDateString();
+            $items = is_array($session->items) ? $session->items : [];
+            foreach (self::loggedNotesFromItems($items, $date) as $note) {
+                $notes[] = $note;
+            }
+
+            $sessionNote = trim((string) ($session->notes ?? ''));
+            if ($sessionNote !== '') {
+                $notes[] = [
+                    'exercise_name' => $session->session_label ?: 'Séance',
+                    'note' => $sessionNote,
+                    'session_date' => $date,
+                ];
+            }
+        }
+
+        return $notes;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $loggedItems
+     * @return list<array{exercise_name: string, note: string, session_date: string|null}>
+     */
+    public static function loggedNotesFromItems(array $loggedItems, ?string $sessionDate = null): array
+    {
+        $notes = [];
+        foreach ($loggedItems as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $line = self::flattenLoggedItem($item);
+            $note = trim((string) ($line['athlete_note'] ?? ''));
+            if ($note === '') {
+                continue;
+            }
+            $name = trim((string) ($line['exercise_name'] ?? ''));
+            $notes[] = [
+                'exercise_name' => $name !== '' ? $name : 'Exercice',
+                'note' => $note,
+                'session_date' => $sessionDate,
+            ];
+        }
+
+        return $notes;
+    }
+
+    /**
+     * @param  list<array{exercise_name: string, note: string, session_date?: string|null}>  $notes
+     */
+    public static function formatLoggedNotesBlock(array $notes): string
+    {
+        if ($notes === []) {
+            return '';
+        }
+
+        $lines = [];
+        foreach ($notes as $entry) {
+            $name = trim((string) ($entry['exercise_name'] ?? 'Exercice'));
+            $note = trim((string) ($entry['note'] ?? ''));
+            if ($note === '') {
+                continue;
+            }
+            $lines[] = "{$name} : {$note}";
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Fusionne le message libre et les notes de séance (sans doublon).
+     *
+     * @param  list<array{exercise_name: string, note: string, session_date?: string|null}>  $loggedNotes
+     */
+    public static function mergeAthleteNotesWithLogged(?string $athleteNotes, array $loggedNotes): ?string
+    {
+        $message = trim((string) $athleteNotes);
+        $block = self::formatLoggedNotesBlock($loggedNotes);
+
+        if ($block === '') {
+            return $message !== '' ? $message : null;
+        }
+
+        if ($message === '') {
+            return "Notes de séance :\n{$block}";
+        }
+
+        if (str_contains($message, $block)) {
+            return $message;
+        }
+
+        return "{$message}\n\nNotes de séance :\n{$block}";
     }
 
     /**

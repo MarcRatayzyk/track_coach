@@ -16,7 +16,8 @@ defineProps({
 
 const emit = defineEmits(['close']);
 
-const APK_DOWNLOAD_URL = '/downloads/power-roster.apk';
+const APK_DOWNLOAD_URL =
+    'https://github.com/MarcRatayzyk/track_coach/releases/latest/download/power-roster.apk';
 
 function trackApkDownload() {
     track('apk_download_clicked', { source: 'install_guide' });
@@ -99,7 +100,6 @@ function trackApkDownload() {
                 <div v-else-if="guideType === 'android'" class="mt-4 space-y-4">
                     <a
                         :href="APK_DOWNLOAD_URL"
-                        download="power-roster.apk"
                         class="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-600/25"
                         @click="trackApkDownload"
                     >

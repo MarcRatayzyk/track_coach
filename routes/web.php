@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\ForgotPasswordController;
 use App\Http\Controllers\Web\ResetPasswordController;
 use App\Http\Controllers\Web\AccountSetupController;
 use App\Http\Controllers\Web\AccountPrivacyController;
+use App\Http\Controllers\Web\ApkDownloadController;
 use App\Http\Controllers\Web\AppPageController;
 use App\Http\Controllers\Web\AthleteCompetitionController;
 use App\Http\Controllers\Web\AthleteBodyWeightController;
@@ -33,6 +34,9 @@ use App\Http\Controllers\Web\SessionFeedbackWebController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
+
+Route::get('/downloads/power-roster.apk', ApkDownloadController::class)
+    ->name('downloads.apk');
 
 Route::inertia('/confidentialite', 'PrivacyPolicyPage')->name('privacy');
 

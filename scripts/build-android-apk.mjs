@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 const androidDir = join(process.cwd(), 'android');
 const gradlew = join(androidDir, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew');
@@ -44,12 +44,25 @@ function runGradle(args) {
     return spawnSync(gradlew, args, { cwd: androidDir, env, stdio: 'inherit' });
 }
 
-const stop = runGradle(['--stop']);
+runGradle(['--stop']);
 const build = runGradle(['assembleDebug']);
 
 if (build.status !== 0) {
     process.exit(build.status ?? 1);
 }
 
+const builtApk = join(androidDir, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
+const publicApk = join(process.cwd(), 'public', 'downloads', 'power-roster.apk');
+
+if (!existsSync(builtApk)) {
+    console.error(`APK introuvable : ${builtApk}`);
+    process.exit(1);
+}
+
+mkdirSync(dirname(publicApk), { recursive: true });
+copyFileSync(builtApk, publicApk);
+
 console.log('\nAPK debug generated at:');
 console.log('android/app/build/outputs/apk/debug/app-debug.apk');
+console.log('Copied for web download:');
+console.log('public/downloads/power-roster.apk');
