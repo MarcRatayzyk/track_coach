@@ -16,6 +16,7 @@ import { cleanupSource, compressVideo, formatMb, resolveUploadBlob } from '../ut
 import VideoFeedbackSlider from '../Components/VideoFeedbackSlider.vue';
 import SeriesComparisonCard from '../Components/SeriesComparisonCard.vue';
 import SeriesPickerModal from '../Components/SeriesPickerModal.vue';
+import VideoTrimModal from '../Components/VideoTrimModal.vue';
 import { track } from '../utils/analytics';
 
 const props = defineProps({
@@ -40,6 +41,8 @@ const showSubmitForm = ref(false);
 const selectedVideos = ref([]);
 const isCompressing = ref(false);
 const compressionSummary = ref('');
+const trimSummary = ref('');
+const trimQueueIndex = ref(null);
 const videoInputRef = useTemplateRef('videoInput');
 // Barre de progression unifiée (compression + upload) sur 0..100.
 const pipelineProgress = ref(0);
@@ -83,6 +86,17 @@ const seriesPickerOpen = computed({
       seriesPickerIndex.value = null;
     }
   },
+});
+
+const trimModalOpen = computed(
+  () => trimQueueIndex.value !== null && Boolean(selectedVideos.value[trimQueueIndex.value]),
+);
+
+const trimModalSource = computed(() => {
+  if (trimQueueIndex.value === null) {
+    return null;
+  }
+  return selectedVideos.value[trimQueueIndex.value] ?? null;
 });
 
 const seriesPickerValue = computed({
@@ -167,7 +181,11 @@ const statusLine = computed(() => {
 });
 
 const submitBusy = computed(
-  () => submitForm.processing || isUploading.value || isCompressing.value,
+  () =>
+    submitForm.processing ||
+    isUploading.value ||
+    isCompressing.value ||
+    trimQueueIndex.value !== null,
 );
 
 function feedbackUrl(id) {
@@ -244,8 +262,53 @@ function applySelectedVideos(sources) {
   selectedVideos.value = sources;
   videoSeries.value = sources.map(() => '');
   compressionSummary.value = '';
+  trimSummary.value = '';
   pipelineProgress.value = 0;
   uploadStatus.value = '';
+  startTrimQueue();
+}
+
+function startTrimQueue() {
+  if (!selectedVideos.value.length) {
+    trimQueueIndex.value = null;
+    return;
+  }
+  trimQueueIndex.value = 0;
+}
+
+function advanceTrimQueue() {
+  if (trimQueueIndex.value === null) {
+    return;
+  }
+  const next = trimQueueIndex.value + 1;
+  if (next >= selectedVideos.value.length) {
+    trimQueueIndex.value = null;
+    return;
+  }
+  trimQueueIndex.value = next;
+}
+
+function onTrimConfirm(result) {
+  const index = trimQueueIndex.value;
+  if (index === null) {
+    return;
+  }
+  if (result?.trimmed && result.source) {
+    selectedVideos.value[index] = result.source;
+    const parts = trimSummary.value ? trimSummary.value.split(' · ').filter(Boolean) : [];
+    parts.push(`${formatMb(result.originalBytes)} → ${formatMb(result.outputBytes)} (rogné)`);
+    trimSummary.value = parts.join(' · ');
+  }
+  advanceTrimQueue();
+}
+
+function onTrimUseFull() {
+  advanceTrimQueue();
+}
+
+function onTrimCancel() {
+  trimQueueIndex.value = null;
+  clearSelectedVideos();
 }
 
 // Web / PWA : input HTML classique -> on transporte le File tel quel.
@@ -285,6 +348,8 @@ function resetSelectionState() {
   selectedVideos.value = [];
   videoSeries.value = [];
   compressionSummary.value = '';
+  trimSummary.value = '';
+  trimQueueIndex.value = null;
   pipelineProgress.value = 0;
   uploadStatus.value = '';
   if (videoInputRef.value) {
@@ -766,11 +831,14 @@ function seriesPayload() {
               </button>
             </div>
           </div>
+          <p v-if="trimSummary" class="mt-1 text-xs text-sky-400/90">
+            Rogné : {{ trimSummary }}
+          </p>
           <p v-if="compressionSummary && !isCompressing" class="mt-1 text-xs text-emerald-400/90">
             {{ compressionSummary }}
           </p>
           <p class="mt-2 text-xs text-slate-500">
-            Les vidéos sont compressées automatiquement (~480p) pour un chargement plus rapide côté coach.
+            Vous pouvez rogner chaque vidéo pour ne garder que le lift. Ensuite elles sont compressées (~480p) pour un chargement plus rapide côté coach.
           </p>
           <div v-if="showProgressBar" class="mt-3">
             <div class="h-2 overflow-hidden rounded-full bg-slate-800">
@@ -966,6 +1034,16 @@ function seriesPayload() {
       v-model:open="seriesPickerOpen"
       :exercises="sessionExercises"
       title="Choisir une série"
+    />
+
+    <VideoTrimModal
+      :open="trimModalOpen"
+      :source="trimModalSource"
+      :index="trimQueueIndex ?? 0"
+      :total="selectedVideos.length"
+      @confirm="onTrimConfirm"
+      @use-full="onTrimUseFull"
+      @cancel="onTrimCancel"
     />
   </div>
 </template>
