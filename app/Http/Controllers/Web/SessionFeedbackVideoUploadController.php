@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\PurgeOrphanSessionFeedbackUploadsAction;
+use App\Actions\OptimizeFeedbackVideoForPlaybackAction;
 use App\Http\Controllers\Controller;
 use App\Models\SessionFeedback;
 use App\Models\SessionFeedbackMedia;
@@ -101,8 +102,11 @@ class SessionFeedbackVideoUploadController extends Controller
         ]);
     }
 
-    public function complete(Request $request, SessionFeedbackMedia $media): JsonResponse
-    {
+    public function complete(
+        Request $request,
+        SessionFeedbackMedia $media,
+        OptimizeFeedbackVideoForPlaybackAction $optimize,
+    ): JsonResponse {
         $this->authorize('create', SessionFeedback::class);
 
         if ((int) $media->uploaded_by !== (int) $request->user()->id) {
@@ -137,9 +141,11 @@ class SessionFeedbackVideoUploadController extends Controller
             'size_bytes' => $size > 0 ? $size : $media->size_bytes,
         ]);
 
+        $optimize->execute($media->fresh());
+
         return response()->json([
             'id' => $media->id,
-            'status' => $media->status,
+            'status' => $media->fresh()->status,
         ]);
     }
 }

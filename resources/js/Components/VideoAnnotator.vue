@@ -12,9 +12,12 @@ const currentMs = ref(0);
 const localAnnotations = ref([...(props.video.annotations ?? [])]);
 const activeAnnotationId = ref(null);
 
-const started = ref(false);
+const playing = ref(false);
 const isBuffering = ref(false);
+const showBufferOverlay = ref(false);
 const bufferPercent = ref(0);
+const hasFirstFrame = ref(false);
+let bufferOverlayTimer = 0;
 
 const sizeLabel = computed(() => {
   const bytes = props.video?.size_bytes;
@@ -35,13 +38,44 @@ function formatTime(ms) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-function startPlayback() {
-  if (started.value) {
+function scheduleBufferOverlay() {
+  clearTimeout(bufferOverlayTimer);
+  if (!isBuffering.value || hasFirstFrame.value) {
+    showBufferOverlay.value = false;
     return;
   }
-  started.value = true;
-  isBuffering.value = true;
-  bufferPercent.value = 0;
+  bufferOverlayTimer = window.setTimeout(() => {
+    if (isBuffering.value && !hasFirstFrame.value) {
+      showBufferOverlay.value = true;
+    }
+  }, 400);
+}
+
+function markReady() {
+  isBuffering.value = false;
+  hasFirstFrame.value = true;
+  showBufferOverlay.value = false;
+  clearTimeout(bufferOverlayTimer);
+  onProgress();
+}
+
+function startPlayback() {
+  if (playing.value) {
+    return;
+  }
+  playing.value = true;
+  if (!hasFirstFrame.value) {
+    isBuffering.value = true;
+    scheduleBufferOverlay();
+  }
+  nextTick(() => {
+    const el = videoEl.value;
+    if (!el) {
+      return;
+    }
+    el.muted = false;
+    el.play?.().catch(() => {});
+  });
 }
 
 function onTimeUpdate() {
@@ -70,12 +104,19 @@ function onProgress() {
 }
 
 function onWaiting() {
+  if (!playing.value) {
+    return;
+  }
   isBuffering.value = true;
+  scheduleBufferOverlay();
 }
 
 function onCanPlay() {
-  isBuffering.value = false;
-  onProgress();
+  markReady();
+}
+
+function onLoadedData() {
+  markReady();
 }
 
 function resizeCanvas() {
@@ -134,7 +175,7 @@ function drawShape(ctx, shape, width, height) {
 
 async function seekTo(annotation) {
   activeAnnotationId.value = annotation.id;
-  if (!started.value) {
+  if (!playing.value) {
     startPlayback();
     await nextTick();
   }
@@ -154,13 +195,20 @@ async function seekTo(annotation) {
   videoEl.value?.addEventListener('loadedmetadata', onMeta);
 }
 
+function resetState() {
+  playing.value = false;
+  isBuffering.value = false;
+  showBufferOverlay.value = false;
+  bufferPercent.value = 0;
+  hasFirstFrame.value = false;
+  currentMs.value = 0;
+  clearTimeout(bufferOverlayTimer);
+}
+
 watch(
   () => props.video.id,
   () => {
-    started.value = false;
-    isBuffering.value = false;
-    bufferPercent.value = 0;
-    currentMs.value = 0;
+    resetState();
     localAnnotations.value = [...(props.video.annotations ?? [])];
   },
 );
@@ -179,15 +227,38 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', resizeCanvas);
+  clearTimeout(bufferOverlayTimer);
 });
 </script>
 
 <template>
-  <div class="space-y-4 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-    <div class="relative mx-auto w-fit max-w-full">
+  <div class="space-y-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3 sm:p-4">
+    <div class="relative mx-auto w-fit max-w-full overflow-hidden rounded-lg bg-black">
+      <video
+        ref="videoEl"
+        :src="video.url"
+        :controls="playing"
+        playsinline
+        preload="auto"
+        muted
+        class="mx-auto block max-h-[50vh] w-auto max-w-full bg-black"
+        @timeupdate="onTimeUpdate"
+        @loadedmetadata="onLoadedMetadata"
+        @loadeddata="onLoadedData"
+        @progress="onProgress"
+        @waiting="onWaiting"
+        @canplay="onCanPlay"
+        @playing="onCanPlay"
+      />
+      <canvas
+        v-if="playing"
+        ref="canvasEl"
+        class="pointer-events-none absolute inset-0 h-full w-full"
+      />
+
       <div
-        v-if="!started"
-        class="flex min-h-[220px] w-full min-w-[280px] max-w-full flex-col items-center justify-center gap-3 rounded-lg bg-black px-6 py-10 sm:min-h-[280px]"
+        v-if="!playing"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/75 px-6"
       >
         <button
           type="button"
@@ -197,41 +268,34 @@ onUnmounted(() => {
           <span aria-hidden="true">&#9654;</span>
           Lire la vidéo
         </button>
-        <p v-if="sizeLabel" class="text-xs text-slate-400">{{ sizeLabel }}</p>
+        <p v-if="sizeLabel || bufferPercent > 0" class="text-xs text-slate-300">
+          <span v-if="sizeLabel">{{ sizeLabel }}</span>
+          <span v-if="bufferPercent > 0" class="text-slate-400">
+            <span v-if="sizeLabel"> · </span>préchargé {{ bufferPercent }} %
+          </span>
+        </p>
+        <a
+          :href="video.url"
+          target="_blank"
+          rel="noopener"
+          class="text-xs font-medium text-blue-400 hover:text-blue-300"
+        >
+          Ouvrir dans un nouvel onglet
+        </a>
       </div>
 
-      <template v-else>
-        <video
-          ref="videoEl"
-          :src="video.url"
-          controls
-          preload="auto"
-          autoplay
-          class="mx-auto block max-h-[55vh] w-auto max-w-full rounded-lg bg-black"
-          @timeupdate="onTimeUpdate"
-          @loadedmetadata="onLoadedMetadata"
-          @progress="onProgress"
-          @waiting="onWaiting"
-          @canplay="onCanPlay"
-          @playing="onCanPlay"
-        />
-        <canvas
-          ref="canvasEl"
-          class="pointer-events-none absolute inset-0 h-full w-full rounded-lg"
-        />
+      <div
+        v-if="playing && showBufferOverlay"
+        class="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-black/70 px-3 py-2"
+      >
         <div
-          v-if="isBuffering"
-          class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-black/60"
-        >
-          <div
-            class="h-8 w-8 animate-spin rounded-full border-2 border-slate-500 border-t-blue-400"
-            aria-hidden="true"
-          />
-          <p class="text-xs text-slate-300">
-            Chargement{{ bufferPercent > 0 ? ` ${bufferPercent} %` : '…' }}
-          </p>
-        </div>
-      </template>
+          class="h-4 w-4 animate-spin rounded-full border-2 border-slate-500 border-t-blue-400"
+          aria-hidden="true"
+        />
+        <p class="text-xs text-slate-300">
+          Chargement{{ bufferPercent > 0 ? ` ${bufferPercent} %` : '…' }}
+        </p>
+      </div>
     </div>
 
     <div v-if="localAnnotations.length">

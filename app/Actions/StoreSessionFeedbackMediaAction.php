@@ -13,6 +13,11 @@ use Illuminate\Validation\ValidationException;
 
 class StoreSessionFeedbackMediaAction
 {
+    public function __construct(
+        private readonly OptimizeFeedbackVideoForPlaybackAction $optimize,
+    ) {
+    }
+
     /**
      * @param  list<UploadedFile>  $files
      * @param  array<int, array{exercise_id:int, snapshot:array<string, mixed>}>  $seriesByPosition
@@ -113,7 +118,7 @@ class StoreSessionFeedbackMediaAction
 
             $series = $seriesByPosition[$index] ?? null;
 
-            $stored[] = SessionFeedbackMedia::query()->create([
+            $stored[] = $media = SessionFeedbackMedia::query()->create([
                 'session_feedback_id' => $feedback->id,
                 'uploaded_by' => $uploadedBy,
                 'kind' => $kind,
@@ -127,6 +132,10 @@ class StoreSessionFeedbackMediaAction
                 'program_day_exercise_id' => $series['exercise_id'] ?? null,
                 'series_info' => $series['snapshot'] ?? null,
             ]);
+
+            if ($kind === SessionFeedbackMedia::KIND_VIDEO) {
+                $this->optimize->execute($media);
+            }
         }
 
         return $stored;
