@@ -28,6 +28,9 @@ class ResetPasswordController extends Controller
             'token' => ['required', 'string'],
             'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', PasswordRule::min(8)],
+        ], [
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+            'password.min' => 'Le mot de passe doit contenir au moins :min caractères.',
         ]);
 
         $status = Password::reset(

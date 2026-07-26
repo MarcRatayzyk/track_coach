@@ -51,6 +51,7 @@ const trainingYearOptions = [
 ];
 
 const form = useForm({
+    email: props.user.email ?? '',
     password: '',
     password_confirmation: '',
     years_training: null,
@@ -71,6 +72,8 @@ const form = useForm({
     club_gym: '',
 });
 
+const needsEmail = computed(() => props.role === 'athlete' && (props.user.needs_email || !props.user.email));
+
 const categoryOptions = computed(() => weightCategoriesForSex(form.sex));
 
 const currentStep = computed(() => athleteSteps[stepIndex.value] ?? athleteSteps[0]);
@@ -79,7 +82,8 @@ const isLastStep = computed(() => stepIndex.value >= athleteSteps.length - 1);
 
 const canGoNext = computed(() => {
     if (currentStep.value.id === 'welcome') {
-        return form.password.length >= 8 && form.password === form.password_confirmation;
+        const emailOk = !needsEmail.value || form.email.trim().length > 3;
+        return emailOk && form.password.length >= 8 && form.password === form.password_confirmation;
     }
     return true;
 });
@@ -198,7 +202,19 @@ const inputClass =
 
                     <div class="mt-6 space-y-4">
                         <template v-if="currentStep.id === 'welcome'">
-                            <p class="text-sm text-slate-500">E-mail de connexion : {{ user.email }}</p>
+                            <label v-if="needsEmail" class="block text-sm font-medium text-slate-400">
+                                Adresse e-mail (identifiant de connexion)
+                                <input
+                                    v-model="form.email"
+                                    type="email"
+                                    required
+                                    autocomplete="email"
+                                    :class="inputClass"
+                                    placeholder="ton@email.fr"
+                                />
+                            </label>
+                            <p v-else class="text-sm text-slate-500">E-mail de connexion : {{ user.email }}</p>
+                            <p v-if="form.errors.email" class="text-sm text-red-400">{{ form.errors.email }}</p>
                             <label class="block text-sm font-medium text-slate-400">
                                 Mot de passe
                                 <input v-model="form.password" type="password" required autocomplete="new-password" :class="inputClass" />

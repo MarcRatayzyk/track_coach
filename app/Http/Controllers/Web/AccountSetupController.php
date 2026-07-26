@@ -40,7 +40,8 @@ class AccountSetupController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $user->email,
+                'email' => $user->displayEmail(),
+                'needs_email' => $user->hasPendingEmail(),
             ],
             'role' => $user->role,
             'submitUrl' => AccountSetupUrlGenerator::signedUpdateUrl($user),
@@ -73,7 +74,10 @@ class AccountSetupController extends Controller
         ])->save();
 
         if ($user->role === 'athlete') {
-            $user->forceFill(['email_verified_at' => now()])->save();
+            $user->forceFill([
+                'email' => $validated['email'],
+                'email_verified_at' => now(),
+            ])->save();
             $user->profile()->updateOrCreate(
                 ['user_id' => $user->id],
                 AthleteProfileSupport::attributesFromValidated($validated),

@@ -94,7 +94,7 @@ class CoachAthleteRosterService
                 return [
                     'id' => $athlete->id,
                     'name' => $athlete->name,
-                    'email' => $athlete->email,
+                    'email' => $athlete->displayEmail(),
                     'is_pending_activation' => $athlete->initial_setup_completed_at === null,
                     'weight_category' => $weightCategory,
                     'weight_category_label' => IpfWeightCategorySupport::labelForCategory($weightCategory),

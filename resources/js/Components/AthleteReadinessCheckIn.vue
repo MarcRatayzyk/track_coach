@@ -88,7 +88,7 @@ function submitBodyWeight() {
     :class="compact ? 'p-3' : 'flex h-full flex-col p-4'"
   >
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-sm font-semibold text-white">Readiness</h2>
+      <h2 class="text-sm font-semibold text-white">Facteurs externes</h2>
       <div
         class="rounded-lg border border-emerald-500/30 bg-emerald-950/20 px-2.5 py-1.5 text-center"
       >

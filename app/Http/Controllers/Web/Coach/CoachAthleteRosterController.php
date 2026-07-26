@@ -27,7 +27,7 @@ class CoachAthleteRosterController extends Controller
 
         $athlete = User::query()->create([
             'name' => $displayName,
-            'email' => $request->validated('email'),
+            'email' => User::pendingAthleteEmail(),
             'password' => Str::password(48),
             'role' => 'athlete',
             'initial_setup_completed_at' => null,
@@ -40,19 +40,14 @@ class CoachAthleteRosterController extends Controller
 
         $coach->athletes()->attach($athlete->id, ['status' => 'active']);
 
-        $fields = $request->validated('fields') ?? null;
-        $fields = is_array($fields)
-            ? ReadinessFormSupport::normalizeFields($fields)
-            : null;
-        ReadinessFormSupport::copyToAthlete($athlete, $coach, $fields);
+        ReadinessFormSupport::copyToAthlete($athlete, $coach);
 
         $setupUrl = AccountSetupUrlGenerator::signedSetupUrl($athlete);
 
         $emailSent = ActivationDelivery::sendAthleteInvitation($athlete, $coach, $setupUrl);
 
-        return redirect()
-            ->route('athletes.index')
-            ->with('success', ActivationDelivery::athleteInvitationSuccessMessage($athlete->email, $emailSent))
+        return back()
+            ->with('success', ActivationDelivery::athleteInvitationSuccessMessage($athlete->name, $emailSent, true))
             ->with('first_login_url', $setupUrl)
             ->with('invited_athlete_id', $athlete->id);
     }
@@ -72,9 +67,10 @@ class CoachAthleteRosterController extends Controller
 
         $emailSent = ActivationDelivery::sendAthleteInvitation($athlete, $coach, $setupUrl);
 
-        return redirect()
-            ->route('athletes.index')
-            ->with('success', ActivationDelivery::athleteResendSuccessMessage($athlete->email, $emailSent))
+        $label = $athlete->displayEmail() ?? $athlete->name;
+
+        return back()
+            ->with('success', ActivationDelivery::athleteResendSuccessMessage($label, $emailSent, $athlete->hasPendingEmail()))
             ->with('first_login_url', $setupUrl)
             ->with('invited_athlete_id', $athlete->id);
     }

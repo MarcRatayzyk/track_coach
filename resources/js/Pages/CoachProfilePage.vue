@@ -280,7 +280,7 @@ function submitProfile() {
             <div class="min-w-0">
               <p class="text-sm font-medium text-white">Questionnaires quotidiens</p>
               <p class="mt-0.5 text-xs text-slate-400">
-                Formulaire readiness par défaut
+                Formulaire facteurs externes par défaut
                 <span class="text-slate-500">({{ readinessFieldCount }} champs)</span>
               </p>
             </div>
@@ -397,7 +397,7 @@ function submitProfile() {
       v-if="canEdit"
       :open="showReadinessBuilder"
       mode="template"
-      title="Formulaire readiness par défaut"
+      title="Formulaire facteurs externes par défaut"
       :initial-fields="coachReadinessForm?.fields ?? []"
       @close="showReadinessBuilder = false"
     />

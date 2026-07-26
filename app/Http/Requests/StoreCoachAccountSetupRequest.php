@@ -28,4 +28,15 @@ class StoreCoachAccountSetupRequest extends FormRequest
             'club_gym' => ['nullable', 'string', 'max:120'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+            'password.min' => 'Le mot de passe doit contenir au moins :min caractères.',
+        ];
+    }
 }

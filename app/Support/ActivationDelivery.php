@@ -27,7 +27,7 @@ class ActivationDelivery
      */
     public static function sendAthleteInvitation(User $athlete, User $coach, string $setupUrl): ?bool
     {
-        if (self::usesManualLinks()) {
+        if (self::usesManualLinks() || $athlete->hasPendingEmail()) {
             return null;
         }
 
@@ -52,25 +52,25 @@ class ActivationDelivery
         );
     }
 
-    public static function athleteInvitationSuccessMessage(string $email, ?bool $emailSent): string
+    public static function athleteInvitationSuccessMessage(string $label, ?bool $emailSent, bool $emailPending = false): string
     {
-        if (self::usesManualLinks()) {
-            return "Athlète ajouté. Copie le lien d’activation et transmets-le à {$email} (WhatsApp, SMS…).";
+        if (self::usesManualLinks() || $emailPending) {
+            return "Athlète ajouté. Copie le lien d’activation et transmets-le à {$label} (WhatsApp, SMS…).";
         }
 
         return $emailSent
-            ? "Invitation envoyée par e-mail à {$email}. L’athlète pourra choisir son mot de passe et compléter son profil à la première visite."
+            ? "Invitation envoyée par e-mail à {$label}. L’athlète pourra choisir son mot de passe et compléter son profil à la première visite."
             : "Athlète ajouté, mais l’e-mail d’invitation n’a pas pu être envoyé. Utilise « Renvoyer l’invitation » ou partage le lien d’activation ci-dessous.";
     }
 
-    public static function athleteResendSuccessMessage(string $email, ?bool $emailSent): string
+    public static function athleteResendSuccessMessage(string $label, ?bool $emailSent, bool $emailPending = false): string
     {
-        if (self::usesManualLinks()) {
-            return "Lien d’activation régénéré pour {$email}. Copie-le et transmets-le à l’athlète.";
+        if (self::usesManualLinks() || $emailPending) {
+            return "Lien d’activation régénéré pour {$label}. Copie-le et transmets-le à l’athlète.";
         }
 
         return $emailSent
-            ? "Invitation renvoyée à {$email}."
+            ? "Invitation renvoyée à {$label}."
             : "Impossible de renvoyer l’e-mail. Partage le lien d’activation ci-dessous.";
     }
 }

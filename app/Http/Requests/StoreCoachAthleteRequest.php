@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Models\AthleteProfile;
-use App\Support\ReadinessFormSupport;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,19 +18,15 @@ class StoreCoachAthleteRequest extends FormRequest
      */
     public function rules(): array
     {
-        $fieldRules = ReadinessFormSupport::fieldsValidationRules();
-        $fieldRules['fields'] = ['sometimes', 'array', 'min:1', 'max:30'];
-
-        return array_merge([
+        return [
             'first_name' => ['required', 'string', 'max:120'],
             'last_name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'feedback_frequency' => [
                 'required',
                 'string',
                 Rule::in([AthleteProfile::FREQUENCY_DAILY, AthleteProfile::FREQUENCY_WEEKLY]),
             ],
-        ], $fieldRules);
+        ];
     }
 
     /**
@@ -40,7 +35,8 @@ class StoreCoachAthleteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+            'feedback_frequency.required' => 'Choisis le type de coaching.',
+            'feedback_frequency.in' => 'Choisis un type de coaching valide.',
         ];
     }
 }

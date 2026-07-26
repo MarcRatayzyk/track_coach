@@ -35,7 +35,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: 'Formulaire readiness',
+    default: 'Formulaire facteurs externes',
   },
 });
 

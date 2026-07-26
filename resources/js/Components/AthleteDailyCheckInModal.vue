@@ -139,7 +139,7 @@ function submitAll() {
           v-if="needsReadiness"
           class="mt-4 rounded-xl border border-slate-800 bg-slate-950/40 p-3"
         >
-          <h3 class="text-sm font-semibold text-white">Indicateurs du jour</h3>
+          <h3 class="text-sm font-semibold text-white">Facteurs externes</h3>
           <div class="mt-3">
             <ReadinessDynamicFields
               v-model="readinessForm.values"

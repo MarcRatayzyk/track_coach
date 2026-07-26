@@ -20,7 +20,7 @@ class CoachReadinessFormController extends Controller
         $form = ReadinessFormSupport::ensureCoachHasDefaultForm($coach);
         $form->update(['fields' => $fields]);
 
-        return back()->with('success', 'Formulaire readiness par défaut mis à jour.');
+        return back()->with('success', 'Formulaire facteurs externes par défaut mis à jour.');
     }
 
     public function updateAthleteForm(UpdateAthleteReadinessFormRequest $request, User $athlete): RedirectResponse
@@ -32,6 +32,6 @@ class CoachReadinessFormController extends Controller
             ['fields' => $fields],
         );
 
-        return back()->with('success', 'Formulaire readiness de l\'athlète mis à jour.');
+        return back()->with('success', 'Formulaire facteurs externes de l\'athlète mis à jour.');
     }
 }

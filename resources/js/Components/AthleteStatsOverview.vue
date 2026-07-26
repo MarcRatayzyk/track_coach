@@ -169,7 +169,7 @@ const filteredBodyWeight = computed(() =>
 
     <div class="mt-3 grid min-w-0 gap-4 lg:grid-cols-2">
       <article class="min-w-0 overflow-hidden">
-        <h3 class="mb-3 text-sm font-semibold text-white">Readiness</h3>
+        <h3 class="mb-3 text-sm font-semibold text-white">Facteurs externes</h3>
         <div v-if="filteredReadiness.length || (readinessForm?.fields?.length)" class="min-w-0 overflow-x-auto">
           <ReadinessWeekTable
             :fields="readinessForm?.fields ?? []"
@@ -177,7 +177,7 @@ const filteredBodyWeight = computed(() =>
             embedded
           />
         </div>
-        <p v-else class="text-sm text-slate-500">Aucune saisie readiness sur cette période.</p>
+        <p v-else class="text-sm text-slate-500">Aucune saisie de facteurs externes sur cette période.</p>
       </article>
 
       <article class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">

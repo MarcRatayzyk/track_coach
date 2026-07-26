@@ -755,7 +755,7 @@ onMounted(() => {
           class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2"
         >
           <p class="text-xs text-slate-400">
-            Formulaire readiness de cet athlète
+            Formulaire facteurs externes de cet athlète
             <span class="text-slate-500">
               ({{ readinessForm?.fields?.length ?? 0 }} champs)
             </span>
@@ -1081,7 +1081,7 @@ onMounted(() => {
       :open="showReadinessBuilder"
       mode="athlete"
       :athlete-id="athlete.id"
-      title="Formulaire readiness de l'athlète"
+      title="Formulaire facteurs externes de l'athlète"
       :initial-fields="readinessForm?.fields ?? []"
       @close="showReadinessBuilder = false"
     />

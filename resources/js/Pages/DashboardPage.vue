@@ -8,7 +8,7 @@ export default {
 
 <script setup>
 import { Link, router } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
 import CoachDashboardCalendar from '../Components/CoachDashboardCalendar.vue';
 import CoachOnboardingTour from '../Components/CoachOnboardingTour.vue';
@@ -202,19 +202,26 @@ function openAddAthleteModal() {
 }
 
 function onAthleteInvited() {
-  router.reload({
-    only: [
-      'athleteCount',
-      'feedback',
-      'stats',
-      'alerts',
-      'recentThreads',
-      'competitionSummary',
-      'upcomingCompetitions',
-      'monthlyReadinessAwards',
-    ],
-  });
+  // La popup reste ouverte avec le lien d’activation.
 }
+
+watch(showAddAthleteModal, (open) => {
+  if (!open) {
+    router.reload({
+      preserveScroll: true,
+      only: [
+        'athleteCount',
+        'feedback',
+        'stats',
+        'alerts',
+        'recentThreads',
+        'competitionSummary',
+        'upcomingCompetitions',
+        'monthlyReadinessAwards',
+      ],
+    });
+  }
+});
 
 onMounted(() => {
   if (!hasAthletes.value && !isCoachOnboardingDone()) {
@@ -237,7 +244,6 @@ onMounted(() => {
     />
     <CoachAddAthleteModal
       v-model="showAddAthleteModal"
-      :coach-readiness-form="coachReadinessForm"
       @invited="onAthleteInvited"
     />
 

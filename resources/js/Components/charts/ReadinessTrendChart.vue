@@ -27,7 +27,7 @@ const chartData = computed(() => {
     labels,
     datasets: [
       {
-        label: 'Readiness',
+        label: 'Facteurs externes',
         data: sortedEntries.value.map((entry) => entry.score),
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.15)',

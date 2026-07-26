@@ -31,6 +31,10 @@ class StoreCoachRegistrationRequest extends FormRequest
     {
         return [
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+            'password.min' => 'Le mot de passe doit contenir au moins :min caractères.',
+            'password.mixed' => 'Le mot de passe doit contenir au moins une majuscule et une minuscule.',
+            'password.numbers' => 'Le mot de passe doit contenir au moins un chiffre.',
         ];
     }
 }

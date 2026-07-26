@@ -13,6 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyCoachEmailNotification;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmailContract
@@ -140,6 +141,21 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function dayTableLayouts(): HasMany
     {
         return $this->hasMany(DayTableLayout::class, 'coach_id');
+    }
+
+    public static function pendingAthleteEmail(): string
+    {
+        return 'pending+'.(string) Str::uuid().'@athletes.pending.local';
+    }
+
+    public function hasPendingEmail(): bool
+    {
+        return str_ends_with((string) $this->email, '@athletes.pending.local');
+    }
+
+    public function displayEmail(): ?string
+    {
+        return $this->hasPendingEmail() ? null : $this->email;
     }
 
     public function sendPasswordResetNotification($token): void

@@ -8,7 +8,7 @@ export default {
 
 <script setup>
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
 import ReadinessFormBuilderModal from '../Components/ReadinessFormBuilderModal.vue';
 import UiIcon from '../Components/UiIcon.vue';
@@ -217,6 +217,19 @@ function programHref(row) {
   return `/program-builder`;
 }
 
+function onAthleteInvited() {
+  // La popup reste ouverte avec le lien ; la liste se rafraîchit à la fermeture.
+}
+
+watch(showModal, (open) => {
+  if (!open) {
+    router.reload({
+      preserveScroll: true,
+      only: ['athletes', 'coachReadinessForm'],
+    });
+  }
+});
+
 function openModal() {
   showModal.value = true;
 }
@@ -271,7 +284,7 @@ function confirmRemove(row) {
           class="rounded-xl border border-slate-600 px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-slate-800"
           @click="showDefaultReadinessBuilder = true"
         >
-          Formulaire readiness
+          Formulaire facteurs externes
         </button>
         <button
           type="button"
@@ -481,7 +494,10 @@ function confirmRemove(row) {
                     >
                       En attente
                     </span>
-                    <p class="truncate text-xs text-slate-500">{{ row.email }}</p>
+                    <p v-if="row.email" class="truncate text-xs text-slate-500">{{ row.email }}</p>
+                    <p v-else-if="row.is_pending_activation" class="truncate text-xs text-slate-500">
+                      E-mail à renseigner par l’athlète
+                    </p>
                   </div>
                 </div>
               </td>
@@ -583,14 +599,13 @@ function confirmRemove(row) {
 
     <CoachAddAthleteModal
       v-model="showModal"
-      :coach-readiness-form="coachReadinessForm"
-      @invited="() => router.reload({ preserveScroll: true })"
+      @invited="onAthleteInvited"
     />
 
     <ReadinessFormBuilderModal
       :open="showDefaultReadinessBuilder"
       mode="template"
-      title="Formulaire readiness par défaut"
+      title="Formulaire facteurs externes par défaut"
       :initial-fields="coachReadinessForm?.fields ?? []"
       @close="showDefaultReadinessBuilder = false"
     />
