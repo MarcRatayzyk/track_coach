@@ -4,6 +4,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import InstallAppButton from '../Components/InstallAppButton.vue';
 import InstallAppGuideModal from '../Components/InstallAppGuideModal.vue';
 import AppLogo from '../Components/AppLogo.vue';
+import BugReportModal from '../Components/BugReportModal.vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import UiIcon from '../Components/UiIcon.vue';
 import { useNativeApp } from '../composables/useNativeApp';
@@ -18,6 +19,7 @@ const sidebarProfile = computed(() => page.props.auth?.sidebarProfile ?? null);
 const flash = computed(() => page.props.flash ?? {});
 const isSidebarCollapsed = ref(false);
 const isMobileMenuOpen = ref(false);
+const showBugReportModal = ref(false);
 const { isLight, toggleTheme } = useTheme();
 const { showInstallGuide, installGuideType, closeInstallGuide } = usePwaInstall();
 const { isNative } = useNativeApp();
@@ -422,6 +424,15 @@ watch(() => page.url, () => {
                 <span>{{ isLight ? 'Thème sombre' : 'Thème clair' }}</span>
             </button>
 
+            <button
+                type="button"
+                class="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition hover:bg-slate-800/60"
+                @click="showBugReportModal = true; closeMobileMenu()"
+            >
+                <UiIcon name="alert" class="h-4 w-4 text-blue-400" />
+                <span>Signaler un problème</span>
+            </button>
+
             <Link
                 href="/account/privacy"
                 class="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition hover:bg-slate-800/60"
@@ -550,6 +561,17 @@ watch(() => page.url, () => {
                     <span v-if="!isSidebarCollapsed">{{ isLight ? 'Thème sombre' : 'Thème clair' }}</span>
                 </button>
 
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
+                    :class="isSidebarCollapsed ? 'px-2' : ''"
+                    :title="isSidebarCollapsed ? 'Signaler un problème' : undefined"
+                    @click="showBugReportModal = true"
+                >
+                    <UiIcon name="alert" class="h-4 w-4" />
+                    <span v-if="!isSidebarCollapsed">Signaler un problème</span>
+                </button>
+
                 <Link
                     href="/account/privacy"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
@@ -638,5 +660,7 @@ watch(() => page.url, () => {
             :guide-type="installGuideType"
             @close="closeInstallGuide"
         />
+
+        <BugReportModal v-model="showBugReportModal" />
     </div>
 </template>

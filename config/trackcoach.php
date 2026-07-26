@@ -46,4 +46,15 @@ return [
         'https://github.com/MarcRatayzyk/track_coach/releases/latest/download/power-roster.apk',
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Support / bug reports
+    |--------------------------------------------------------------------------
+    |
+    | Destination inbox for in-app bug and feedback reports.
+    |
+    */
+
+    'support_email' => env('SUPPORT_EMAIL', 'marc.rzyk@gmail.com'),
+
 ];

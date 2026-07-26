@@ -11,6 +11,7 @@ use App\Http\Controllers\Web\AppPageController;
 use App\Http\Controllers\Web\AthleteCompetitionController;
 use App\Http\Controllers\Web\AthleteBodyWeightController;
 use App\Http\Controllers\Web\AthleteReadinessController;
+use App\Http\Controllers\Web\BugReportController;
 use App\Http\Controllers\Web\Coach\AthleteDataWebController;
 use App\Http\Controllers\Web\Coach\AthleteProgramHistoryController;
 use App\Http\Controllers\Web\Coach\ProgramPdfExportController;
@@ -121,6 +122,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/account/privacy', [AccountPrivacyController::class, 'show'])->name('account.privacy');
     Route::get('/account/data-export', [AccountPrivacyController::class, 'export'])->name('account.data-export');
     Route::delete('/account', [AccountPrivacyController::class, 'destroy'])->name('account.destroy');
+
+    Route::post('/support/bug-report', [BugReportController::class, 'store'])
+        ->middleware('throttle:5,1')
+        ->name('support.bug-report.store');
 
     Route::get('/messaging', [AppPageController::class, 'messaging'])->name('messaging');
     Route::post('/coach/threads/{thread}/messages', [MessageWebController::class, 'storeMessage'])

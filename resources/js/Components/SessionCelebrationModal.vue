@@ -1,9 +1,7 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
 import CelebrationBarbell from './CelebrationBarbell.vue';
-import UiIcon from './UiIcon.vue';
 
-const props = defineProps({
+defineProps({
   open: {
     type: Boolean,
     default: false,
@@ -16,70 +14,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-const shareFeedback = ref('');
-
-const shareUrl = computed(() => {
-  if (typeof window === 'undefined') {
-    return '';
-  }
-  return `${window.location.origin}/athlete/dashboard`;
-});
-
-watch(
-  () => props.open,
-  (isOpen) => {
-    if (isOpen) {
-      shareFeedback.value = '';
-    }
-  },
-);
-
 function close() {
   emit('close');
-}
-
-async function copyShareText() {
-  if (!props.celebration?.shareText || typeof navigator === 'undefined') {
-    return;
-  }
-
-  try {
-    await navigator.clipboard.writeText(props.celebration.shareText);
-    shareFeedback.value = 'Texte copié.';
-  } catch (_error) {
-    shareFeedback.value = 'Copie impossible sur cet appareil.';
-  }
-}
-
-async function nativeShare() {
-  if (!props.celebration || typeof navigator === 'undefined') {
-    return;
-  }
-
-  const shareData = {
-    title: props.celebration.sessionTitle,
-    text: props.celebration.shareText,
-    url: shareUrl.value,
-  };
-
-  try {
-    if (navigator.share) {
-      await navigator.share(shareData);
-      shareFeedback.value = 'Partage envoyé.';
-      return;
-    }
-
-    await copyShareText();
-  } catch (_error) {
-    if (_error?.name !== 'AbortError') {
-      shareFeedback.value = 'Partage non disponible.';
-    }
-  }
-}
-
-async function shareForInstagram() {
-  await copyShareText();
-  shareFeedback.value = 'Texte copié — colle-le dans ta story Instagram.';
 }
 </script>
 
@@ -207,35 +143,13 @@ async function shareForInstagram() {
                 </div>
               </div>
 
-              <div class="mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-8">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-500"
-                  @click="nativeShare"
-                >
-                  <UiIcon name="share" class="h-4 w-4" />
-                  Partager
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl border border-pink-500/40 bg-pink-500/10 px-5 py-3 text-sm font-semibold text-pink-100 transition hover:bg-pink-500/20"
-                  @click="shareForInstagram"
-                >
-                  <span class="text-base leading-none">📸</span>
-                  Instagram
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-900/80 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-slate-500"
-                  @click="copyShareText"
-                >
-                  Copier
-                </button>
-              </div>
-
-              <p v-if="shareFeedback" class="mt-4 text-sm text-red-300">
-                {{ shareFeedback }}
-              </p>
+              <button
+                type="button"
+                class="mt-6 inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-500 sm:mt-8"
+                @click="close"
+              >
+                Continuer
+              </button>
             </div>
           </Transition>
         </div>

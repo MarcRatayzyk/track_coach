@@ -163,14 +163,6 @@ export function buildSessionCelebrationPayload({
   const repsLabel = totalReps > 0 ? `${totalReps}` : '—';
   const adherenceLabel = adherence.percentage != null ? `${adherence.percentage}%` : '—';
 
-  const shareText = [
-    `✅ ${sessionTitle}`,
-    topsetSubtitle,
-    `Adhérence ${adherenceLabel} · ${tonnageLabel} · ${totalReps > 0 ? `${totalReps} reps` : '—'}`,
-    '',
-    'Power Roster',
-  ].join('\n');
-
   return {
     sessionTitle,
     topsetSubtitle,
@@ -183,6 +175,5 @@ export function buildSessionCelebrationPayload({
     repsLabel,
     adherence,
     adherenceLabel,
-    shareText,
   };
 }
