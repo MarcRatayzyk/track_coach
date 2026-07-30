@@ -3,7 +3,8 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "node scripts/generate-pwa-icons.mjs && vite build",
+        "icons": "node scripts/generate-pwa-icons.mjs",
+        "build": "vite build",
         "cap:sync": "npx cap sync android && node scripts/generate-android-icons.mjs",
         "cap:open": "npx cap open android",
         "android:build": "npm run cap:sync && npx cap open android",
