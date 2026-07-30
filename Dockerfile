@@ -3,7 +3,7 @@ FROM php:8.3-cli
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libpq-dev libonig-dev \
     nodejs npm \
-    && docker-php-ext-install pdo pdo_pgsql mbstring \
+    && docker-php-ext-install pdo pdo_pgsql mbstring bcmath \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/php-overrides.ini /usr/local/etc/php/conf.d/99-track-coach.ini
