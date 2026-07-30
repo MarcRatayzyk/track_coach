@@ -67,7 +67,7 @@ class SessionFeedbackVideoUploadController extends Controller
             ->count();
 
         if ($pendingCount >= VideoUploadDisk::MAX_FILES) {
-            // Tentative précédente abandonnée : libère les slots pour réessayer.
+            // Libère le plus ancien orphelin pour ce nouvel upload (sans tout effacer).
             $purgeOrphans->makeRoomForUser($userId, VideoUploadDisk::MAX_FILES);
         }
 

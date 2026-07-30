@@ -36,13 +36,15 @@ class PurgeOrphanSessionFeedbackUploadsAction
     }
 
     /**
-     * If the user is still at the pending/uploaded cap, drop the oldest orphans
-     * so a new upload session can start (previous attempt was abandoned).
+     * Libère au moins un slot orphelin (pending/uploaded/failed) pour un nouvel upload.
+     * Ne supprime que les plus anciens — jamais toute la batch en cours.
      *
      * @return int Number of deleted rows
      */
     public function makeRoomForUser(int $userId, int $maxFiles): int
     {
+        $maxFiles = max(1, $maxFiles);
+
         $orphans = SessionFeedbackMedia::query()
             ->where('uploaded_by', $userId)
             ->whereNull('session_feedback_id')
@@ -53,14 +55,16 @@ class PurgeOrphanSessionFeedbackUploadsAction
                 SessionFeedbackMedia::STATUS_FAILED,
             ])
             ->orderBy('created_at')
+            ->orderBy('id')
             ->get();
 
-        if ($orphans->count() < $maxFiles) {
+        // Besoin d'1 place pour le prochain fichier : ne retirer que le surplus.
+        $toRemove = $orphans->count() - $maxFiles + 1;
+        if ($toRemove <= 0) {
             return 0;
         }
 
-        // Previous batch abandoned: clear all orphans so the athlete can retry.
-        return $this->deleteMediaCollection($orphans);
+        return $this->deleteMediaCollection($orphans->take($toRemove));
     }
 
     /**
