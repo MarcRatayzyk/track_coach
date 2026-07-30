@@ -1,7 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
-import AthleteKPIBar from './AthleteKPIBar.vue';
 import ReviewCard from './ReviewCard.vue';
 import SessionAnalysisPanel from './SessionAnalysisPanel.vue';
 import AthleteReplyPanel from './AthleteReplyPanel.vue';
@@ -74,8 +73,6 @@ function urgencyFor(item) {
         Suivez vos retours, la séance réalisée et la réponse de votre coach.
       </p>
     </div>
-
-    <AthleteKPIBar :feedbacks="feedbacks" />
 
     <div
       class="flex rounded-[14px] border border-slate-800 bg-slate-950/50 p-1"

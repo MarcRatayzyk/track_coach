@@ -224,40 +224,48 @@ function isAllowedVideo(source) {
 }
 
 function applySelectedVideos(sources) {
-  const errors = [];
-  if (sources.length > MAX_VIDEOS.value) {
-    errors.push(`Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
-  }
-  if (sources.some((s) => !isAllowedVideo(s))) {
-    errors.push('Format vidéo non pris en charge (MP4, MOV, WebM, 3GP…).');
-  }
-  if (sources.some((s) => (s.size ?? 0) > MAX_VIDEO_BYTES.value)) {
-    errors.push(`Chaque vidéo ne doit pas dépasser ${maxVideoMbLabel.value} Mo.`);
-  }
-
-  if (errors.length) {
-    submitForm.setError('videos', errors[0]);
-    resetSelectionState();
+  const remaining = Math.max(0, MAX_VIDEOS.value - selectedVideos.value.length);
+  if (remaining <= 0) {
+    submitForm.setError('videos', `Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
     return;
   }
 
-  submitForm.clearErrors('videos');
-  submitForm.clearErrors('video_upload_ids');
-  selectedVideos.value = sources;
-  videoSeries.value = sources.map(() => '');
+  const incoming = sources.slice(0, remaining);
+  if (!incoming.length) {
+    return;
+  }
+
+  if (incoming.some((s) => !isAllowedVideo(s))) {
+    submitForm.setError('videos', 'Format vidéo non pris en charge (MP4, MOV, WebM, 3GP…).');
+    return;
+  }
+  if (incoming.some((s) => (s.size ?? 0) > MAX_VIDEO_BYTES.value)) {
+    submitForm.setError('videos', `Chaque vidéo ne doit pas dépasser ${maxVideoMbLabel.value} Mo.`);
+    return;
+  }
+
+  if (sources.length > remaining) {
+    submitForm.setError('videos', `Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
+  } else {
+    submitForm.clearErrors('videos');
+    submitForm.clearErrors('video_upload_ids');
+  }
+
+  const startIndex = selectedVideos.value.length;
+  selectedVideos.value = [...selectedVideos.value, ...incoming];
+  videoSeries.value = [...videoSeries.value, ...incoming.map(() => '')];
   compressionSummary.value = '';
-  trimSummary.value = '';
   pipelineProgress.value = 0;
   uploadStatus.value = '';
-  startTrimQueue();
+  startTrimQueue(startIndex);
 }
 
-function startTrimQueue() {
-  if (!selectedVideos.value.length) {
+function startTrimQueue(fromIndex = 0) {
+  if (!selectedVideos.value.length || fromIndex >= selectedVideos.value.length) {
     trimQueueIndex.value = null;
     return;
   }
-  trimQueueIndex.value = 0;
+  trimQueueIndex.value = fromIndex;
 }
 
 function advanceTrimQueue() {
@@ -304,10 +312,17 @@ function onVideoChange(event) {
     file: f,
   }));
   applySelectedVideos(sources);
+  if (event.target) {
+    event.target.value = '';
+  }
 }
 
 // Natif : picker qui renvoie un chemin de fichier (aucun chargement mémoire).
 async function pickNativeVideos() {
+  if (selectedVideos.value.length >= MAX_VIDEOS.value) {
+    submitForm.setError('videos', `Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
+    return;
+  }
   try {
     const result = await FilePicker.pickVideos({ readData: false });
     const sources = (result?.files ?? []).map((f) => ({
@@ -327,6 +342,18 @@ async function pickNativeVideos() {
     }
   }
 }
+
+function openVideoPicker() {
+  if (isNative) {
+    pickNativeVideos();
+    return;
+  }
+  videoInputRef.value?.click();
+}
+
+const canAddVideo = computed(
+  () => selectedVideos.value.length < MAX_VIDEOS.value && !submitBusy.value,
+);
 
 function resetSelectionState() {
   selectedVideos.value = [];
@@ -752,27 +779,25 @@ function seriesPayload() {
             <label class="block text-sm font-medium text-slate-300">
               Vidéos (optionnel, 1 à {{ MAX_VIDEOS }}, max {{ maxVideoMbLabel }} Mo)
             </label>
-            <button
-              v-if="isNative"
-              type="button"
-              :disabled="submitBusy"
-              class="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-              @click="pickNativeVideos"
-            >
-              {{ selectedVideos.length ? 'Changer les vidéos' : 'Choisir des vidéos' }}
-            </button>
             <input
-              v-else
               ref="videoInput"
               type="file"
               accept="video/*"
               multiple
-              :disabled="submitBusy"
-              class="mt-1 w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white disabled:opacity-50"
+              class="hidden"
+              :disabled="submitBusy || !canAddVideo"
               @change="onVideoChange"
             />
+            <button
+              type="button"
+              :disabled="!canAddVideo"
+              class="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+              @click="openVideoPicker"
+            >
+              Ajouter une vidéo
+            </button>
             <p v-if="selectedVideos.length" class="mt-2 text-xs text-slate-500">
-              {{ selectedVideos.length }} fichier{{ selectedVideos.length > 1 ? 's' : '' }} sélectionné{{ selectedVideos.length > 1 ? 's' : '' }}
+              {{ selectedVideos.length }} / {{ MAX_VIDEOS }} vidéo{{ selectedVideos.length > 1 ? 's' : '' }}
             </p>
             <div
               v-if="selectedVideos.length && sessionExercises.length"

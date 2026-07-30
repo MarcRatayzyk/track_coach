@@ -23,6 +23,10 @@ let ffmpegReady = null;
  * @returns {Promise<void>}
  */
 export function preloadTrimEngine() {
+  // FFmpeg.wasm dans Capacitor provoque souvent un OOM / crash.
+  if (Capacitor.isNativePlatform()) {
+    return Promise.resolve();
+  }
   return ensureFfmpeg().then(() => undefined).catch(() => undefined);
 }
 
@@ -127,8 +131,15 @@ export async function trimVideo(source, options = {}) {
         };
       }
     } catch (error) {
-      console.warn('[trimVideo] MediaRecorder indisponible, fallback FFmpeg', error);
+      console.warn('[trimVideo] MediaRecorder indisponible', error);
     }
+  }
+
+  // Natif : pas de FFmpeg.wasm (crash fréquent) — l’UI propose « envoyer toute la vidéo ».
+  if (Capacitor.isNativePlatform()) {
+    throw new Error(
+      'Rognage indisponible sur mobile. Utilisez « Envoyer toute la vidéo », ou rognez avant l’import.',
+    );
   }
 
   return trimWithFfmpeg(source, range, onProgress, originalBytes);

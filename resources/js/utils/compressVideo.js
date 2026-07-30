@@ -48,8 +48,13 @@ export async function compressVideo(source, options = {}) {
   }
 
   try {
-    if (Capacitor.isNativePlatform() && source.path) {
-      return await compressWithPlugin(source, onProgress, { isWeb: false });
+    // Natif : compression hardware uniquement (chemin fichier).
+    // Jamais FFmpeg.wasm dans le WebView Capacitor — OOM / crash app.
+    if (Capacitor.isNativePlatform()) {
+      if (source.path) {
+        return await compressWithPlugin(source, onProgress, { isWeb: false });
+      }
+      return passthrough();
     }
 
     if (source.file instanceof Blob) {
