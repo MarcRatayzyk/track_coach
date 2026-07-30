@@ -111,7 +111,7 @@ function openPortal() {
                         <span v-if="sharedBilling?.seatLimit != null">
                             · plafond {{ sharedBilling.seatLimit }}
                         </span>
-                        <span v-else-if="sharedBilling?.status === 'trial'"> · illimité pendant l’essai</span>
+                        <span v-else-if="sharedBilling?.status === 'subscribed'"> · illimité</span>
                     </p>
                 </div>
                 <button

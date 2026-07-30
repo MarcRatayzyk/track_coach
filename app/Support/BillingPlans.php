@@ -106,7 +106,7 @@ class BillingPlans
         }
 
         if ($coach->onGenericTrial()) {
-            return self::SCALE;
+            return self::STARTER;
         }
 
         $subscription = $coach->subscription('default');

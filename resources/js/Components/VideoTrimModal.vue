@@ -2,7 +2,12 @@
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import UiIcon from './UiIcon.vue';
 import { formatMb } from '../utils/compressVideo';
-import { getVideoPreviewUrl, normalizeTrimRange, trimVideo } from '../utils/trimVideo';
+import {
+  getVideoPreviewUrl,
+  normalizeTrimRange,
+  preloadTrimEngine,
+  trimVideo,
+} from '../utils/trimVideo';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -14,6 +19,7 @@ const props = defineProps({
 const emit = defineEmits(['confirm', 'use-full', 'cancel']);
 
 const videoEl = ref(null);
+const stripEl = ref(null);
 const previewUrl = ref(null);
 const ownsPreviewUrl = ref(false);
 const duration = ref(0);
@@ -25,12 +31,21 @@ const trimming = ref(false);
 const trimProgress = ref(0);
 const errorMessage = ref('');
 const metadataReady = ref(false);
+const thumbnails = ref([]);
+const thumbsLoading = ref(false);
+
+/** @type {'start'|'end'|'move'|null} */
+const dragMode = ref(null);
+const dragOriginX = ref(0);
+const dragStartAtPointer = ref(0);
+const dragEndAtPointer = ref(0);
 
 let selectionStopTimer = 0;
+let thumbToken = 0;
 
 const title = computed(() => {
   if (props.total > 1) {
-    return `Rogner la vidéo ${props.index + 1}/${props.total}`;
+    return `Rogner ${props.index + 1}/${props.total}`;
   }
   return 'Rogner la vidéo';
 });
@@ -56,6 +71,16 @@ const isFullSelection = computed(() => {
   }
   return startSec.value <= 0.05 && endSec.value >= duration.value - 0.05;
 });
+
+const startPct = computed(() =>
+  duration.value > 0 ? (startSec.value / duration.value) * 100 : 0,
+);
+const endPct = computed(() =>
+  duration.value > 0 ? (endSec.value / duration.value) * 100 : 100,
+);
+const playheadPct = computed(() =>
+  duration.value > 0 ? (currentSec.value / duration.value) * 100 : 0,
+);
 
 function formatTime(sec) {
   const total = Math.max(0, Math.floor(Number(sec) || 0));
@@ -87,6 +112,10 @@ function resetState() {
   startSec.value = 0;
   endSec.value = 0;
   currentSec.value = 0;
+  thumbnails.value = [];
+  thumbsLoading.value = false;
+  dragMode.value = null;
+  thumbToken += 1;
   if (videoEl.value) {
     try {
       videoEl.value.pause();
@@ -102,6 +131,7 @@ function loadPreview() {
   if (!props.source) {
     return;
   }
+  preloadTrimEngine();
   const url = getVideoPreviewUrl(props.source);
   previewUrl.value = url;
   ownsPreviewUrl.value =
@@ -124,6 +154,82 @@ function onLoadedMetadata() {
   currentSec.value = 0;
   metadataReady.value = true;
   errorMessage.value = '';
+  buildFilmstrip(el, d);
+}
+
+async function buildFilmstrip(el, d) {
+  const token = ++thumbToken;
+  thumbsLoading.value = true;
+  const count = d > 45 ? 12 : d > 20 ? 10 : 8;
+  const canvas = document.createElement('canvas');
+  const w = 72;
+  const h = 96;
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d', { alpha: false });
+  if (!ctx) {
+    thumbsLoading.value = false;
+    return;
+  }
+
+  const frames = [];
+  const prevTime = el.currentTime;
+
+  try {
+    for (let i = 0; i < count; i += 1) {
+      if (token !== thumbToken) {
+        return;
+      }
+      const t = count === 1 ? 0 : (i / (count - 1)) * Math.max(0, d - 0.05);
+      // eslint-disable-next-line no-await-in-loop -- seek séquentiel pour le filmstrip
+      await seekQuiet(el, t);
+      if (token !== thumbToken) {
+        return;
+      }
+      try {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, w, h);
+        const vw = el.videoWidth || w;
+        const vh = el.videoHeight || h;
+        const scale = Math.max(w / vw, h / vh);
+        const dw = vw * scale;
+        const dh = vh * scale;
+        ctx.drawImage(el, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        frames.push(canvas.toDataURL('image/jpeg', 0.55));
+      } catch {
+        frames.push('');
+      }
+    }
+    if (token === thumbToken) {
+      thumbnails.value = frames;
+    }
+  } finally {
+    if (token === thumbToken) {
+      thumbsLoading.value = false;
+      try {
+        el.currentTime = prevTime || 0;
+      } catch {
+        // ignore
+      }
+    }
+  }
+}
+
+function seekQuiet(el, time) {
+  return new Promise((resolve) => {
+    const done = () => {
+      el.removeEventListener('seeked', done);
+      resolve();
+    };
+    el.addEventListener('seeked', done);
+    try {
+      el.currentTime = Math.min(Math.max(0, time), duration.value || time);
+    } catch {
+      resolve();
+      return;
+    }
+    window.setTimeout(done, 450);
+  });
 }
 
 function onTimeUpdate() {
@@ -147,16 +253,6 @@ function clampEnd(value) {
   endSec.value = Math.max(minEnd, Math.min(duration.value, value));
 }
 
-function onStartInput(event) {
-  clampStart(Number(event.target.value));
-  seekPreview(startSec.value);
-}
-
-function onEndInput(event) {
-  clampEnd(Number(event.target.value));
-  seekPreview(Math.max(startSec.value, endSec.value - 0.01));
-}
-
 function seekPreview(sec) {
   const el = videoEl.value;
   if (!el || !metadataReady.value) {
@@ -164,6 +260,7 @@ function seekPreview(sec) {
   }
   try {
     el.currentTime = Math.min(Math.max(0, sec), duration.value || sec);
+    currentSec.value = el.currentTime;
   } catch {
     // ignore seek errors while loading
   }
@@ -191,12 +288,82 @@ async function playSelection() {
     await el.play();
   } catch {
     playingSelection.value = false;
+  }
+}
+
+function clientXToTime(clientX) {
+  const strip = stripEl.value;
+  if (!strip || duration.value <= 0) {
+    return 0;
+  }
+  const rect = strip.getBoundingClientRect();
+  const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+  return ratio * duration.value;
+}
+
+function onHandlePointerDown(mode, event) {
+  if (trimming.value || !metadataReady.value) {
     return;
   }
-  const remainMs = Math.max(200, (endSec.value - startSec.value) * 1000);
-  selectionStopTimer = window.setTimeout(() => {
-    stopSelectionPlayback();
-  }, remainMs + 80);
+  stopSelectionPlayback();
+  dragMode.value = mode;
+  dragOriginX.value = event.clientX;
+  dragStartAtPointer.value = startSec.value;
+  dragEndAtPointer.value = endSec.value;
+  event.currentTarget.setPointerCapture?.(event.pointerId);
+}
+
+function onStripPointerDown(event) {
+  if (trimming.value || !metadataReady.value || dragMode.value) {
+    return;
+  }
+  // Ignore if clicking a handle (handled separately)
+  if (event.target?.closest?.('[data-trim-handle]')) {
+    return;
+  }
+  stopSelectionPlayback();
+  const t = clientXToTime(event.clientX);
+  // Drag middle of selection, or set playhead outside
+  if (t >= startSec.value && t <= endSec.value) {
+    dragMode.value = 'move';
+    dragOriginX.value = event.clientX;
+    dragStartAtPointer.value = startSec.value;
+    dragEndAtPointer.value = endSec.value;
+    stripEl.value?.setPointerCapture?.(event.pointerId);
+  } else {
+    seekPreview(Math.min(Math.max(t, startSec.value), endSec.value));
+  }
+}
+
+function onStripPointerMove(event) {
+  if (!dragMode.value || duration.value <= 0) {
+    return;
+  }
+  const strip = stripEl.value;
+  if (!strip) {
+    return;
+  }
+  const rect = strip.getBoundingClientRect();
+  const deltaSec = ((event.clientX - dragOriginX.value) / rect.width) * duration.value;
+
+  if (dragMode.value === 'start') {
+    clampStart(dragStartAtPointer.value + deltaSec);
+    seekPreview(startSec.value);
+  } else if (dragMode.value === 'end') {
+    clampEnd(dragEndAtPointer.value + deltaSec);
+    seekPreview(Math.max(startSec.value, endSec.value - 0.01));
+  } else if (dragMode.value === 'move') {
+    const len = dragEndAtPointer.value - dragStartAtPointer.value;
+    let nextStart = dragStartAtPointer.value + deltaSec;
+    nextStart = Math.min(Math.max(0, nextStart), duration.value - len);
+    startSec.value = nextStart;
+    endSec.value = nextStart + len;
+    seekPreview(startSec.value);
+  }
+}
+
+function onStripPointerUp() {
+  dragMode.value = null;
 }
 
 async function confirmTrim() {
@@ -218,6 +385,7 @@ async function confirmTrim() {
     const result = await trimVideo(props.source, {
       startSec: startSec.value,
       endSec: endSec.value,
+      videoEl: videoEl.value,
       onProgress: (ratio) => {
         trimProgress.value = Math.round(Math.min(100, Math.max(0, ratio * 100)));
       },
@@ -265,6 +433,7 @@ watch(
 onUnmounted(() => {
   stopSelectionPlayback();
   revokePreview();
+  thumbToken += 1;
 });
 </script>
 
@@ -279,21 +448,18 @@ onUnmounted(() => {
     >
       <button
         type="button"
-        class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+        class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm"
         aria-label="Fermer"
         :disabled="trimming"
         @click="cancel"
       />
 
       <div
-        class="relative z-10 flex max-h-[min(92vh,40rem)] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-700/80 bg-slate-900 shadow-2xl shadow-black/50 sm:mx-4 sm:max-w-lg sm:rounded-3xl"
+        class="relative z-10 flex max-h-[min(96vh,44rem)] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-700/80 bg-slate-950 shadow-2xl shadow-black/50 sm:mx-4 sm:max-w-lg sm:rounded-3xl"
       >
-        <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-800 px-5 pb-3 pt-4">
+        <div class="flex shrink-0 items-center justify-between gap-3 px-5 pb-2 pt-4">
           <div class="min-w-0">
-            <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-              Avant envoi
-            </p>
-            <h2 class="mt-0.5 truncate text-base font-semibold text-white">
+            <h2 class="truncate text-base font-semibold text-white">
               {{ title }}
             </h2>
             <p class="mt-0.5 truncate text-xs text-slate-500">
@@ -312,73 +478,150 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          <div class="overflow-hidden rounded-2xl bg-black">
+        <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-1">
+          <!-- Aperçu vidéo plein cadre -->
+          <div class="relative overflow-hidden rounded-2xl bg-black">
             <video
               v-if="previewUrl"
               ref="videoEl"
               :src="previewUrl"
               playsinline
-              preload="metadata"
-              class="mx-auto max-h-56 w-full object-contain"
+              preload="auto"
+              class="mx-auto max-h-[min(52vh,28rem)] w-full object-contain"
               @loadedmetadata="onLoadedMetadata"
               @timeupdate="onTimeUpdate"
               @ended="stopSelectionPlayback"
+              @click="playingSelection ? stopSelectionPlayback() : playSelection()"
             />
+            <button
+              v-if="metadataReady && !trimming"
+              type="button"
+              class="absolute bottom-3 left-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition hover:bg-black/70"
+              :aria-label="playingSelection ? 'Pause' : 'Lire le clip'"
+              @click.stop="playingSelection ? stopSelectionPlayback() : playSelection()"
+            >
+              <svg
+                v-if="playingSelection"
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M6.75 5.25h3v13.5h-3V5.25zm7.5 0h3v13.5h-3V5.25z" />
+              </svg>
+              <svg
+                v-else
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M8.25 5.25v13.5l11.25-6.75L8.25 5.25z" />
+              </svg>
+            </button>
+            <div
+              v-if="metadataReady"
+              class="pointer-events-none absolute bottom-3 right-3 rounded-lg bg-black/55 px-2 py-1 text-[11px] font-medium tabular-nums text-white backdrop-blur-sm"
+            >
+              {{ formatTime(currentSec) }}
+            </div>
           </div>
 
-          <div v-if="metadataReady" class="mt-4 space-y-3">
-            <div class="flex items-center justify-between text-xs text-slate-400">
-              <span>Début {{ formatTime(startSec) }}</span>
-              <span class="font-medium text-slate-200">
-                Clip {{ formatTime(selectionDuration) }}
-              </span>
-              <span>Fin {{ formatTime(endSec) }}</span>
+          <!-- Timeline style CapCut -->
+          <div v-if="metadataReady" class="mt-4 space-y-2">
+            <div class="flex items-center justify-between text-xs tabular-nums text-slate-400">
+              <span>{{ formatTime(startSec) }}</span>
+              <span class="font-semibold text-sky-300">Clip {{ formatTime(selectionDuration) }}</span>
+              <span>{{ formatTime(endSec) }}</span>
             </div>
 
-            <div class="space-y-2">
-              <label class="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                Début
-              </label>
-              <input
-                type="range"
-                min="0"
-                :max="duration"
-                step="0.05"
-                :value="startSec"
-                :disabled="trimming"
-                class="w-full accent-blue-500"
-                @input="onStartInput"
-              />
-              <label class="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                Fin
-              </label>
-              <input
-                type="range"
-                min="0"
-                :max="duration"
-                step="0.05"
-                :value="endSec"
-                :disabled="trimming"
-                class="w-full accent-blue-500"
-                @input="onEndInput"
-              />
-            </div>
-
-            <button
-              type="button"
-              class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 disabled:opacity-50"
-              :disabled="!canConfirm || trimming"
-              @click="playSelection"
+            <div
+              ref="stripEl"
+              class="relative select-none touch-none overflow-hidden rounded-xl bg-slate-900 ring-1 ring-slate-700"
+              style="height: 4.5rem"
+              @pointerdown="onStripPointerDown"
+              @pointermove="onStripPointerMove"
+              @pointerup="onStripPointerUp"
+              @pointercancel="onStripPointerUp"
             >
-              {{ playingSelection ? 'Lecture…' : 'Prévisualiser le clip' }}
-            </button>
+              <!-- Filmstrip -->
+              <div class="absolute inset-0 flex">
+                <div
+                  v-for="(thumb, i) in thumbnails"
+                  :key="i"
+                  class="h-full flex-1 bg-slate-800 bg-cover bg-center"
+                  :style="thumb ? { backgroundImage: `url(${thumb})` } : undefined"
+                />
+                <div
+                  v-if="thumbsLoading && thumbnails.length === 0"
+                  class="flex h-full w-full items-center justify-center text-[11px] text-slate-500"
+                >
+                  Aperçu…
+                </div>
+              </div>
+
+              <!-- Zones hors sélection -->
+              <div
+                class="pointer-events-none absolute inset-y-0 left-0 bg-slate-950/70"
+                :style="{ width: `${startPct}%` }"
+              />
+              <div
+                class="pointer-events-none absolute inset-y-0 right-0 bg-slate-950/70"
+                :style="{ width: `${100 - endPct}%` }"
+              />
+
+              <!-- Fenêtre sélection -->
+              <div
+                class="pointer-events-none absolute inset-y-0 border-y-2 border-sky-400"
+                :style="{ left: `${startPct}%`, width: `${endPct - startPct}%` }"
+              />
+
+              <!-- Playhead -->
+              <div
+                class="pointer-events-none absolute inset-y-0 z-10 w-0.5 bg-white shadow"
+                :style="{ left: `${playheadPct}%` }"
+              />
+
+              <!-- Poignée début -->
+              <button
+                type="button"
+                data-trim-handle="start"
+                class="absolute inset-y-0 z-20 flex w-5 -translate-x-1/2 cursor-ew-resize items-center justify-center touch-none"
+                :style="{ left: `${startPct}%` }"
+                :disabled="trimming"
+                aria-label="Début du clip"
+                @pointerdown.stop="onHandlePointerDown('start', $event)"
+                @pointermove="onStripPointerMove"
+                @pointerup="onStripPointerUp"
+              >
+                <span class="h-full w-1.5 rounded-full bg-sky-400 shadow-lg shadow-sky-500/40" />
+              </button>
+
+              <!-- Poignée fin -->
+              <button
+                type="button"
+                data-trim-handle="end"
+                class="absolute inset-y-0 z-20 flex w-5 -translate-x-1/2 cursor-ew-resize items-center justify-center touch-none"
+                :style="{ left: `${endPct}%` }"
+                :disabled="trimming"
+                aria-label="Fin du clip"
+                @pointerdown.stop="onHandlePointerDown('end', $event)"
+                @pointermove="onStripPointerMove"
+                @pointerup="onStripPointerUp"
+              >
+                <span class="h-full w-1.5 rounded-full bg-sky-400 shadow-lg shadow-sky-500/40" />
+              </button>
+            </div>
+
+            <p class="text-center text-[11px] text-slate-500">
+              Glissez les poignées pour couper · touchez la vidéo pour lire
+            </p>
           </div>
 
           <div v-if="trimming" class="mt-4">
             <div class="h-2 overflow-hidden rounded-full bg-slate-800">
               <div
-                class="h-full rounded-full bg-blue-500 transition-all duration-200"
+                class="h-full rounded-full bg-sky-500 transition-all duration-200"
                 :style="{ width: `${trimProgress}%` }"
               />
             </div>
@@ -393,7 +636,7 @@ onUnmounted(() => {
         <div class="shrink-0 space-y-2 border-t border-slate-800 px-5 py-4">
           <button
             type="button"
-            class="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-50"
+            class="w-full rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:opacity-50"
             :disabled="!canConfirm || trimming"
             @click="confirmTrim"
           >

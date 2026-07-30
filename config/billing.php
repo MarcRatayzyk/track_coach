@@ -10,6 +10,9 @@ return [
 
     'trial_days' => (int) env('BILLING_TRIAL_DAYS', 14),
 
+    /** Max active athletes during the free trial (Starter tier). */
+    'trial_max_athletes' => (int) env('BILLING_TRIAL_MAX_ATHLETES', 15),
+
     'demo_hours' => (int) env('BILLING_DEMO_HOURS', 48),
 
     /*

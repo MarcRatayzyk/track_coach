@@ -27,8 +27,8 @@ const links = [
         >
             <a href="/" class="flex min-w-0 items-center gap-2.5" aria-label="Power Roster — Accueil">
                 <AppLogo
-                    mark-class="h-9 w-9 sm:h-10 sm:w-10"
-                    wordmark-class="truncate text-[15px] font-bold tracking-tight text-white sm:text-lg"
+                    mark-class="h-14 w-14 sm:h-16 sm:w-16"
+                    wordmark-class="truncate text-lg font-bold tracking-tight text-white sm:text-2xl"
                 />
             </a>
 

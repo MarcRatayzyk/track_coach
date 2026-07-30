@@ -83,7 +83,7 @@ function select(i) {
         class="relative z-10 scroll-mt-24 px-5 py-20 sm:px-8 lg:px-10 lg:py-28"
         aria-labelledby="demo-heading"
     >
-        <div class="mx-auto w-full max-w-[1280px]">
+        <div class="mx-auto w-full max-w-[960px]">
             <FadeIn class-name="text-center">
                 <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-400">Démonstration</p>
                 <h2
@@ -123,28 +123,28 @@ function select(i) {
             </FadeIn>
 
             <FadeIn :delay="0.15" class-name="mt-8">
-                <div class="grid items-start gap-8 lg:grid-cols-[280px_1fr]">
-                    <div class="lp-glass rounded-[22px] p-6 sm:p-7">
+                <div class="mx-auto grid max-w-3xl items-start gap-6 lg:max-w-none lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
+                    <div class="lp-glass rounded-[20px] p-5 sm:p-6">
                         <p class="text-xs font-semibold uppercase tracking-wider text-blue-400">
                             {{ screens[active].label }}
                         </p>
-                        <h3 class="mt-2 text-2xl font-black tracking-tight text-white">
+                        <h3 class="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">
                             {{ screens[active].title }}
                         </h3>
-                        <p class="mt-3 text-[15px] leading-relaxed text-slate-400">
+                        <p class="mt-3 text-sm leading-relaxed text-slate-400 sm:text-[15px]">
                             {{ screens[active].description }}
                         </p>
                         <a
                             href="/demo"
-                            class="lp-btn-primary mt-7 inline-flex px-6 py-3 text-sm"
+                            class="lp-btn-primary mt-6 inline-flex px-5 py-2.5 text-sm"
                         >
                             Ouvrir la sandbox démo
                         </a>
                     </div>
 
-                    <div class="relative">
+                    <div class="relative mx-auto w-full max-w-[560px] lg:mx-0 lg:max-w-[520px]">
                         <div
-                            class="pointer-events-none absolute -inset-4 rounded-[28px] bg-blue-500/10 blur-3xl"
+                            class="pointer-events-none absolute -inset-3 rounded-[24px] bg-blue-500/10 blur-2xl"
                             aria-hidden="true"
                         />
                         <div
@@ -163,35 +163,6 @@ function select(i) {
                     </div>
                 </div>
             </FadeIn>
-
-            <!-- Bento secondary screens -->
-            <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <FadeIn
-                    v-for="(screen, i) in screens.filter((s) => s.id !== screens[active].id).slice(0, 4)"
-                    :key="screen.id + '-thumb'"
-                    :delay="0.05 * i"
-                    class-name="group cursor-pointer"
-                >
-                    <button
-                        type="button"
-                        class="w-full text-left"
-                        @click="select(screens.findIndex((s) => s.id === screen.id))"
-                    >
-                        <div class="lp-glass lp-glass-hover overflow-hidden rounded-[18px]">
-                            <img
-                                :src="screen.src"
-                                :alt="screen.alt"
-                                loading="lazy"
-                                decoding="async"
-                                class="aspect-[16/10] w-full object-cover object-top transition duration-500 group-hover:scale-[1.03]"
-                            />
-                            <div class="border-t border-white/[0.06] px-3.5 py-2.5">
-                                <p class="text-sm font-semibold text-white">{{ screen.label }}</p>
-                            </div>
-                        </div>
-                    </button>
-                </FadeIn>
-            </div>
         </div>
     </section>
 </template>

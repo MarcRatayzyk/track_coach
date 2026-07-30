@@ -4,7 +4,8 @@
     "scripts": {
         "dev": "vite",
         "icons": "node scripts/generate-pwa-icons.mjs",
-        "build": "vite build",
+        "build": "node scripts/sync-ffmpeg-core.mjs && vite build",
+        "postinstall": "node scripts/sync-ffmpeg-core.mjs",
         "cap:sync": "npx cap sync android && node scripts/generate-android-icons.mjs",
         "cap:open": "npx cap open android",
         "android:build": "npm run cap:sync && npx cap open android",
@@ -26,6 +27,7 @@
         "@capacitor/splash-screen": "^8.0.1",
         "@capacitor/status-bar": "^8.0.2",
         "@capawesome/capacitor-file-picker": "^8.0.0",
+        "@ffmpeg/core": "^0.12.6",
         "@ffmpeg/ffmpeg": "^0.12.15",
         "@ffmpeg/util": "^0.12.2",
         "@inertiajs/vue3": "^1.2.0",

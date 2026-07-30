@@ -10,18 +10,18 @@ defineProps({
   /** Taille du pictogramme (classes Tailwind) */
   markClass: {
     type: String,
-    default: 'h-9 w-9',
+    default: 'h-14 w-14',
   },
   /** Classes du texte */
   wordmarkClass: {
     type: String,
-    default: 'text-base font-bold tracking-tight text-white',
+    default: 'text-xl font-bold tracking-tight text-white',
   },
 });
 </script>
 
 <template>
-  <span class="inline-flex min-w-0 items-center gap-2.5">
+  <span class="inline-flex min-w-0 items-center gap-3.5">
     <img
       :src="logoUrl"
       alt=""

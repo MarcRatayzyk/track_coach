@@ -8,7 +8,6 @@ import FeaturesSection from '../Components/Landing/FeaturesSection.vue';
 import DemoSection from '../Components/Landing/DemoSection.vue';
 import BenefitsSection from '../Components/Landing/BenefitsSection.vue';
 import StatsSection from '../Components/Landing/StatsSection.vue';
-import TestimonialsSection from '../Components/Landing/TestimonialsSection.vue';
 import ComparisonSection from '../Components/Landing/ComparisonSection.vue';
 import FaqSection from '../Components/Landing/FaqSection.vue';
 import PricingSection from '../Components/Landing/PricingSection.vue';
@@ -44,7 +43,6 @@ import LandingFooter from '../Components/Landing/LandingFooter.vue';
             <DemoSection />
             <BenefitsSection />
             <StatsSection />
-            <TestimonialsSection />
             <ComparisonSection />
             <PricingSection />
             <FaqSection />

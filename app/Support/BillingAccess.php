@@ -69,7 +69,7 @@ class BillingAccess
         }
 
         if ($coach->onGenericTrial()) {
-            return null;
+            return (int) config('billing.trial_max_athletes', 15);
         }
 
         $planKey = BillingPlans::currentPlanKey($coach);

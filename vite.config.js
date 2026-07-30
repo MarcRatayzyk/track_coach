@@ -29,7 +29,9 @@ export default defineConfig({
         exclude: [
             '@ffmpeg/ffmpeg',
             '@ffmpeg/util',
+            '@ffmpeg/core',
             'capacitor-native-video-compressor',
         ],
     },
+    assetsInclude: ['**/*.wasm'],
 });

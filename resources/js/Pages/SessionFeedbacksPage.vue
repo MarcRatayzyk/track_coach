@@ -39,7 +39,7 @@ const isCoach = computed(() => props.role === 'coach');
 const isWeekly = computed(() => props.feedbackFrequency === 'weekly');
 const usesDirectUpload = computed(() => props.uploadLimits?.driver === 's3');
 const isNative = Capacitor.isNativePlatform();
-const showSubmitForm = ref(false);
+const athleteTab = ref(props.activeFeedback ? 'history' : 'submit');
 // selectedVideos : liste de VideoSource ({ name, size, type, file? | path? }).
 const selectedVideos = ref([]);
 const isCompressing = ref(false);
@@ -546,7 +546,7 @@ async function submitFeedback() {
         });
         submitForm.reset();
         clearSelectedVideos();
-        showSubmitForm.value = false;
+        athleteTab.value = 'history';
         uploadStatus.value = '';
       },
       onError: (errors) => {
@@ -593,7 +593,7 @@ async function submitFeedback() {
           });
           submitForm.reset();
           clearSelectedVideos();
-          showSubmitForm.value = false;
+          athleteTab.value = 'history';
           resolve();
         },
         onError: (errors) => {
@@ -682,16 +682,13 @@ function seriesPayload() {
 
   <AthleteReviewsWorkspace
     v-else
+    v-model:tab="athleteTab"
     :feedbacks="feedbacks"
     :active-feedback="activeFeedback"
     :can-submit="eligibleSessions.length > 0"
-    :submit-label="isWeekly ? 'Nouveau retour hebdo' : 'Nouveau retour'"
-    :show-submit-form="showSubmitForm"
-    @toggle-submit="showSubmitForm = !showSubmitForm"
   >
     <template #submit-form>
       <div
-        v-if="showSubmitForm"
         class="rounded-[18px] border border-blue-500/30 bg-slate-900/60 p-4 shadow-xl lg:p-6"
       >
         <h2 class="text-base font-semibold text-white">

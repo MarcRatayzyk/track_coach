@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Cashier\Checkout;
 use Laravel\Cashier\Exceptions\IncompletePayment;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Throwable;
@@ -136,11 +137,13 @@ class BillingController extends Controller
                     ->with('success', 'Abonnement mis à jour.');
             }
 
-            return $user->newSubscription('default', $priceId)
-                ->checkout([
+            return $this->redirectToCheckout(
+                $request,
+                $user->newSubscription('default', $priceId)->checkout([
                     'success_url' => route('billing.success').'?session_id={CHECKOUT_SESSION_ID}',
                     'cancel_url' => route('billing.index'),
-                ]);
+                ]),
+            );
         } catch (IncompletePayment $exception) {
             return redirect()->route(
                 'cashier.payment',
@@ -149,10 +152,29 @@ class BillingController extends Controller
         } catch (Throwable $exception) {
             report($exception);
 
+            $message = 'Impossible de démarrer le paiement Stripe. Réessaie ou contacte le support.';
+            if (config('app.debug')) {
+                $message .= ' ('.$exception->getMessage().')';
+            }
+
             return redirect()
                 ->route('billing.index')
-                ->with('error', 'Impossible de démarrer le paiement Stripe. Réessaie ou contacte le support.');
+                ->with('error', $message);
         }
+    }
+
+    /**
+     * Inertia XHR cannot follow external 303s to Stripe — use Inertia::location.
+     */
+    private function redirectToCheckout(Request $request, Checkout $checkout): SymfonyResponse|RedirectResponse
+    {
+        $url = $checkout->asStripeCheckoutSession()->url;
+
+        if ($request->header('X-Inertia')) {
+            return Inertia::location($url);
+        }
+
+        return $checkout->redirect();
     }
 
     public function success(Request $request): RedirectResponse

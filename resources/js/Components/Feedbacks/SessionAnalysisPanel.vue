@@ -174,7 +174,11 @@ watch(
     <EmptyState
       v-else
       title="Sélectionnez un retour"
-      description="Choisissez un athlète à gauche pour analyser la séance, les vidéos et répondre."
+      :description="
+        mode === 'athlete'
+          ? 'Choisissez un retour dans la liste pour voir la séance et la réponse du coach.'
+          : 'Choisissez un athlète à gauche pour analyser la séance, les vidéos et répondre.'
+      "
       class="m-4 !min-h-[16rem] flex-1"
     />
   </section>

@@ -1,7 +1,7 @@
 /**
- * Rognage vidéo côté client (FFmpeg.wasm) avant compression / envoi.
- * - Essai rapide : stream copy (-c copy)
- * - Fallback : réencodage léger (libx264 ultrafast)
+ * Rognage vidéo côté client avant compression / envoi.
+ * 1) MediaRecorder (rapide) si MP4 supporté
+ * 2) FFmpeg.wasm : stream copy, puis réencodage léger
  */
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -9,7 +9,7 @@ import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { Capacitor } from '@capacitor/core';
 import { resolveUploadBlob } from './compressVideo';
 
-const FFMPEG_CORE_BASE = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+const FFMPEG_CORE_BASE = `${typeof window !== 'undefined' ? window.location.origin : ''}/ffmpeg`;
 const TRIM_TIMEOUT_MS = 4 * 60 * 1000;
 const MIN_DURATION_SEC = 0.5;
 
@@ -17,6 +17,14 @@ const MIN_DURATION_SEC = 0.5;
 let ffmpegInstance = null;
 /** @type {Promise<FFmpeg>|null} */
 let ffmpegReady = null;
+
+/**
+ * Précharge FFmpeg pendant que l'athlète ajuste le clip (évite l'attente au confirm).
+ * @returns {Promise<void>}
+ */
+export function preloadTrimEngine() {
+  return ensureFfmpeg().then(() => undefined).catch(() => undefined);
+}
 
 /**
  * @returns {Promise<FFmpeg>}
@@ -93,7 +101,7 @@ export function normalizeTrimRange(startSec, endSec, durationSec = Infinity) {
 
 /**
  * @param {{ name?: string, size?: number, type?: string, file?: Blob, path?: string }} source
- * @param {{ startSec: number, endSec: number, onProgress?: (ratio: number) => void }} options
+ * @param {{ startSec: number, endSec: number, onProgress?: (ratio: number) => void, videoEl?: HTMLVideoElement|null }} options
  * @returns {Promise<{ source: object, trimmed: boolean, originalBytes: number, outputBytes: number }>}
  */
 export async function trimVideo(source, options = {}) {
@@ -106,6 +114,224 @@ export async function trimVideo(source, options = {}) {
 
   onProgress(0.02);
 
+  // Chemin rapide : enregistrement direct de la sélection (style CapCut), MP4 seulement.
+  if (options.videoEl instanceof HTMLVideoElement) {
+    try {
+      const recorded = await trimViaPlayback(options.videoEl, range, onProgress);
+      if (recorded) {
+        return {
+          source: recorded,
+          trimmed: true,
+          originalBytes: originalBytes || recorded.size,
+          outputBytes: recorded.size,
+        };
+      }
+    } catch (error) {
+      console.warn('[trimVideo] MediaRecorder indisponible, fallback FFmpeg', error);
+    }
+  }
+
+  return trimWithFfmpeg(source, range, onProgress, originalBytes);
+}
+
+/**
+ * @param {HTMLVideoElement} videoEl
+ * @param {{ startSec: number, endSec: number }} range
+ * @param {(ratio: number) => void} onProgress
+ * @returns {Promise<{ name: string, size: number, type: string, file: File }|null>}
+ */
+async function trimViaPlayback(videoEl, range, onProgress) {
+  const capture =
+    typeof videoEl.captureStream === 'function'
+      ? videoEl.captureStream.bind(videoEl)
+      : typeof videoEl.mozCaptureStream === 'function'
+        ? videoEl.mozCaptureStream.bind(videoEl)
+        : null;
+
+  if (!capture) {
+    return null;
+  }
+
+  const mime = pickRecorderMime();
+  if (!mime) {
+    return null;
+  }
+
+  const duration = Math.max(0.5, range.endSec - range.startSec);
+  const prevMuted = videoEl.muted;
+  const prevVolume = videoEl.volume;
+  const prevRate = videoEl.playbackRate;
+
+  const chunks = [];
+  let stream;
+  /** @type {MediaRecorder|null} */
+  let recorder = null;
+
+  try {
+    videoEl.pause();
+    videoEl.playbackRate = 1;
+    // Nécessaire pour capturer l'audio sur la plupart des navigateurs.
+    videoEl.muted = false;
+    videoEl.volume = 0.001;
+
+    await seekVideo(videoEl, range.startSec);
+    onProgress(0.08);
+
+    stream = capture();
+    if (!stream || stream.getVideoTracks().length === 0) {
+      return null;
+    }
+
+    recorder = new MediaRecorder(stream, {
+      mimeType: mime,
+      videoBitsPerSecond: 2_500_000,
+    });
+
+    recorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    };
+
+    const stopped = new Promise((resolve, reject) => {
+      recorder.onstop = () => resolve(undefined);
+      recorder.onerror = () => reject(new Error('Échec enregistrement clip'));
+    });
+
+    recorder.start(200);
+    await videoEl.play();
+
+    await waitUntilTime(videoEl, range.endSec, duration, (ratio) => {
+      onProgress(0.08 + ratio * 0.85);
+    });
+
+    videoEl.pause();
+    if (recorder.state !== 'inactive') {
+      recorder.stop();
+    }
+    await stopped;
+
+    const blob = new Blob(chunks, { type: mime.split(';')[0] });
+    if (blob.size < 1024) {
+      return null;
+    }
+
+    const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+    const type = mime.includes('mp4') ? 'video/mp4' : 'video/webm';
+    const file = new File([blob], `clip-${Date.now()}.${ext}`, { type });
+    onProgress(1);
+
+    return {
+      name: file.name,
+      size: file.size,
+      type,
+      file,
+    };
+  } finally {
+    try {
+      videoEl.pause();
+    } catch {
+      // ignore
+    }
+    videoEl.muted = prevMuted;
+    videoEl.volume = prevVolume;
+    videoEl.playbackRate = prevRate;
+    stream?.getTracks?.().forEach((track) => {
+      try {
+        track.stop();
+      } catch {
+        // ignore
+      }
+    });
+  }
+}
+
+/**
+ * @returns {string|null} mime MP4 uniquement (compat lecture coach iOS)
+ */
+function pickRecorderMime() {
+  if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') {
+    return null;
+  }
+  const candidates = [
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4;codecs=avc1.4D401E,mp4a.40.2',
+    'video/mp4',
+  ];
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || null;
+}
+
+/**
+ * @param {HTMLVideoElement} video
+ * @param {number} time
+ * @returns {Promise<void>}
+ */
+function seekVideo(video, time) {
+  return new Promise((resolve, reject) => {
+    const onSeeked = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = () => {
+      cleanup();
+      reject(new Error('Seek impossible'));
+    };
+    const cleanup = () => {
+      video.removeEventListener('seeked', onSeeked);
+      video.removeEventListener('error', onError);
+    };
+    video.addEventListener('seeked', onSeeked, { once: true });
+    video.addEventListener('error', onError, { once: true });
+    try {
+      video.currentTime = Math.max(0, time);
+    } catch (error) {
+      cleanup();
+      reject(error);
+    }
+    // Certains WebViews ne déclenchent pas seeked si déjà à la position.
+    window.setTimeout(() => {
+      if (Math.abs(video.currentTime - time) < 0.35) {
+        cleanup();
+        resolve();
+      }
+    }, 700);
+  });
+}
+
+/**
+ * @param {HTMLVideoElement} video
+ * @param {number} endSec
+ * @param {number} duration
+ * @param {(ratio: number) => void} onProgress
+ * @returns {Promise<void>}
+ */
+function waitUntilTime(video, endSec, duration, onProgress) {
+  const started = performance.now();
+  const hardStopAt = started + (duration + 2) * 1000;
+
+  return new Promise((resolve) => {
+    const tick = () => {
+      const t = video.currentTime;
+      const ratio = Math.min(1, Math.max(0, (t - (endSec - duration)) / duration));
+      onProgress(ratio);
+
+      if (t >= endSec - 0.04 || performance.now() >= hardStopAt || video.ended) {
+        resolve();
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+/**
+ * @param {{ name?: string, size?: number, type?: string, file?: Blob, path?: string }} source
+ * @param {{ startSec: number, endSec: number }} range
+ * @param {(ratio: number) => void} onProgress
+ * @param {number} originalBytes
+ */
+async function trimWithFfmpeg(source, range, onProgress, originalBytes) {
   let inputBlob;
   try {
     inputBlob = source.file instanceof Blob ? source.file : await resolveUploadBlob(source);
@@ -121,6 +347,7 @@ export async function trimVideo(source, options = {}) {
   const inputUrl = URL.createObjectURL(inputBlob);
   const inputName = 'input' + guessExtension(source.name, source.type || inputBlob.type);
   const outputName = 'output.mp4';
+  const clipDuration = Math.max(MIN_DURATION_SEC, range.endSec - range.startSec);
 
   let timeoutId = 0;
   /** @type {((info: { progress: number }) => void)|null} */
@@ -136,26 +363,26 @@ export async function trimVideo(source, options = {}) {
     clearTimeout(timeoutId);
     timeoutId = 0;
 
-    onProgress(0.08);
+    onProgress(0.1);
 
     progressHandler = ({ progress }) => {
       if (typeof progress === 'number' && Number.isFinite(progress)) {
-        onProgress(Math.min(0.95, Math.max(0.08, progress)));
+        onProgress(Math.min(0.95, Math.max(0.1, 0.1 + progress * 0.85)));
       }
     };
     ffmpeg.on('progress', progressHandler);
 
     await ffmpeg.writeFile(inputName, await fetchFile(inputUrl));
-    onProgress(0.12);
+    onProgress(0.15);
 
     const startStr = formatFfmpegTime(range.startSec);
-    const endStr = formatFfmpegTime(range.endSec);
+    const durationStr = formatFfmpegTime(clipDuration);
 
     let ok = await runTrim(ffmpeg, {
       inputName,
       outputName,
       startStr,
-      endStr,
+      durationStr,
       reencode: false,
     });
 
@@ -165,7 +392,7 @@ export async function trimVideo(source, options = {}) {
         inputName,
         outputName,
         startStr,
-        endStr,
+        durationStr,
         reencode: true,
       });
     }
@@ -218,15 +445,16 @@ export async function trimVideo(source, options = {}) {
 
 /**
  * @param {FFmpeg} ffmpeg
- * @param {{ inputName: string, outputName: string, startStr: string, endStr: string, reencode: boolean }} opts
+ * @param {{ inputName: string, outputName: string, startStr: string, durationStr: string, reencode: boolean }} opts
  * @returns {Promise<boolean>}
  */
-async function runTrim(ffmpeg, { inputName, outputName, startStr, endStr, reencode }) {
+async function runTrim(ffmpeg, { inputName, outputName, startStr, durationStr, reencode }) {
+  // -ss avant -i = seek rapide ; -t = durée du clip.
   const args = reencode
     ? [
         '-ss', startStr,
-        '-to', endStr,
         '-i', inputName,
+        '-t', durationStr,
         '-c:v', 'libx264',
         '-preset', 'ultrafast',
         '-crf', '28',
@@ -238,8 +466,8 @@ async function runTrim(ffmpeg, { inputName, outputName, startStr, endStr, reenco
       ]
     : [
         '-ss', startStr,
-        '-to', endStr,
         '-i', inputName,
+        '-t', durationStr,
         '-c', 'copy',
         '-movflags', '+faststart',
         '-avoid_negative_ts', 'make_zero',

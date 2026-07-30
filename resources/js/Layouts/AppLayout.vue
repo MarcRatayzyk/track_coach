@@ -218,6 +218,11 @@ const coachNav = [
 
 const billing = computed(() => page.props.billing ?? null);
 const isDemoAccount = computed(() => Boolean(user.value?.is_demo || billing.value?.isDemo));
+const BILLING_BANNER_DISMISS_KEY = 'tc-billing-banner-dismissed';
+const billingBannerDismissed = ref(
+    typeof window !== 'undefined' && window.localStorage.getItem(BILLING_BANNER_DISMISS_KEY) === '1',
+);
+
 const demoExpiresLabel = computed(() => {
     if (!billing.value?.demoExpiresAt) {
         return null;
@@ -239,6 +244,24 @@ const trialBannerLabel = computed(() => {
     return new Date(billing.value.trialEndsAt).toLocaleDateString('fr-FR');
 });
 
+const showBillingBanner = computed(
+    () => !billingBannerDismissed.value && (isDemoAccount.value || Boolean(trialBannerLabel.value)),
+);
+
+function dismissBillingBanner() {
+    billingBannerDismissed.value = true;
+    if (typeof window !== 'undefined') {
+        window.localStorage.setItem(BILLING_BANNER_DISMISS_KEY, '1');
+    }
+}
+
+const flashErrorDismissed = ref(false);
+watch(
+    () => page.props.flash?.error,
+    () => {
+        flashErrorDismissed.value = false;
+    },
+);
 const navItems = computed(() => {
     if (!user.value) {
         return [];
@@ -375,41 +398,51 @@ watch(() => page.url, () => {
 <template>
     <div class="h-screen overflow-hidden bg-slate-950 text-slate-200">
         <div
-            v-if="isDemoAccount || trialBannerLabel"
-            class="fixed inset-x-0 top-0 z-[45] border-b px-4 py-2 text-center text-xs sm:text-sm lg:left-64"
+            v-if="showBillingBanner"
+            class="fixed inset-x-0 top-0 z-[45] flex items-center justify-center gap-3 border-b px-4 py-2 text-center text-xs sm:text-sm lg:left-64"
             :class="
                 isDemoAccount
                     ? 'border-amber-500/30 bg-amber-950/90 text-amber-100'
                     : 'border-blue-500/30 bg-blue-950/90 text-blue-100'
             "
         >
-            <template v-if="isDemoAccount">
-                Compte démo sandbox
-                <span v-if="demoExpiresLabel"> — expire le {{ demoExpiresLabel }}</span>
-                ·
-                <Link href="/register" class="font-semibold underline hover:no-underline">
-                    Créer un vrai compte
-                </Link>
-            </template>
-            <template v-else>
-                Essai gratuit jusqu’au {{ trialBannerLabel }} ·
-                <Link href="/billing" class="font-semibold underline hover:no-underline">
-                    Voir les offres
-                </Link>
-            </template>
+            <div class="min-w-0 flex-1 px-6">
+                <template v-if="isDemoAccount">
+                    Compte démo sandbox
+                    <span v-if="demoExpiresLabel"> — expire le {{ demoExpiresLabel }}</span>
+                    ·
+                    <Link href="/register" class="font-semibold underline hover:no-underline">
+                        Créer un vrai compte
+                    </Link>
+                </template>
+                <template v-else>
+                    Essai gratuit jusqu’au {{ trialBannerLabel }} ·
+                    <Link href="/billing" class="font-semibold underline hover:no-underline">
+                        Voir les offres
+                    </Link>
+                </template>
+            </div>
+            <button
+                type="button"
+                class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-current/80 transition hover:bg-white/10 hover:text-white"
+                aria-label="Fermer le bandeau"
+                @click="dismissBillingBanner"
+            >
+                <UiIcon name="x-mark" class="h-4 w-4" />
+            </button>
         </div>
 
         <header
             class="tc-app-mobile-header fixed inset-x-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800/90 bg-slate-900/95 px-4 py-2 backdrop-blur-sm lg:hidden"
-            :class="isDemoAccount || trialBannerLabel ? 'top-9' : 'top-0'"
+            :class="showBillingBanner ? 'top-9' : 'top-0'"
         >
             <Link
                 :href="isCoach ? '/dashboard' : '/athlete/dashboard'"
                 class="flex min-w-0 items-center gap-2"
             >
                 <AppLogo
-                    mark-class="h-9 w-9"
-                    wordmark-class="truncate text-sm font-bold text-white"
+                    mark-class="h-12 w-12"
+                    wordmark-class="truncate text-base font-bold text-white"
                 />
             </Link>
 
@@ -499,8 +532,8 @@ watch(() => page.url, () => {
                     class="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2.5 transition hover:border-blue-500/50 hover:bg-slate-800/70"
                 >
                     <AppLogo
-                        mark-class="h-9 w-9"
-                        wordmark-class="truncate text-base font-bold tracking-tight text-white"
+                        mark-class="h-14 w-14"
+                        wordmark-class="truncate text-xl font-bold tracking-tight text-white"
                     />
                 </Link>
             </div>
@@ -649,10 +682,20 @@ watch(() => page.url, () => {
                 {{ flash.success }}
             </div>
             <div
-                v-if="flash.error"
-                class="border-b border-red-900/50 bg-red-950/40 px-4 py-2.5 text-sm text-red-100 lg:px-8"
+                v-if="flash.error && !flashErrorDismissed"
+                class="relative z-50 border-b border-red-900/50 bg-red-950/90 px-4 py-2.5 text-sm text-red-100 lg:px-8"
             >
-                {{ flash.error }}
+                <div class="flex items-start justify-between gap-3">
+                    <p class="min-w-0 flex-1">{{ flash.error }}</p>
+                    <button
+                        type="button"
+                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-red-200/80 transition hover:bg-red-900/50 hover:text-white"
+                        aria-label="Fermer"
+                        @click="flashErrorDismissed = true"
+                    >
+                        <UiIcon name="x-mark" class="h-4 w-4" />
+                    </button>
+                </div>
             </div>
 
             <main
