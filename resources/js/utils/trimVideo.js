@@ -118,7 +118,15 @@ export async function trimVideo(source, options = {}) {
 
   onProgress(0.02);
 
-  // Chemin rapide : enregistrement direct de la sélection (style CapCut), MP4 seulement.
+  // Natif : ne pas passer par MediaRecorder (captureStream = images hachées / frames perdues
+  // dans le WebView Capacitor). FFmpeg.wasm est aussi exclus (OOM).
+  if (Capacitor.isNativePlatform()) {
+    throw new Error(
+      'Rognage indisponible sur mobile. Utilisez « Envoyer toute la vidéo », ou rognez avant l’import.',
+    );
+  }
+
+  // Chemin rapide web : enregistrement de la sélection (MP4).
   if (options.videoEl instanceof HTMLVideoElement) {
     try {
       const recorded = await trimViaPlayback(options.videoEl, range, onProgress);
@@ -133,13 +141,6 @@ export async function trimVideo(source, options = {}) {
     } catch (error) {
       console.warn('[trimVideo] MediaRecorder indisponible', error);
     }
-  }
-
-  // Natif : pas de FFmpeg.wasm (crash fréquent) — l’UI propose « envoyer toute la vidéo ».
-  if (Capacitor.isNativePlatform()) {
-    throw new Error(
-      'Rognage indisponible sur mobile. Utilisez « Envoyer toute la vidéo », ou rognez avant l’import.',
-    );
   }
 
   return trimWithFfmpeg(source, range, onProgress, originalBytes);
@@ -195,7 +196,8 @@ async function trimViaPlayback(videoEl, range, onProgress) {
 
     recorder = new MediaRecorder(stream, {
       mimeType: mime,
-      videoBitsPerSecond: 2_500_000,
+      videoBitsPerSecond: 8_000_000,
+      audioBitsPerSecond: 128_000,
     });
 
     recorder.ondataavailable = (event) => {
@@ -209,7 +211,8 @@ async function trimViaPlayback(videoEl, range, onProgress) {
       recorder.onerror = () => reject(new Error('Échec enregistrement clip'));
     });
 
-    recorder.start(200);
+    // Sans timeslice : un seul segment bien formé (évite les coupures / GOP cassés).
+    recorder.start();
     await videoEl.play();
 
     await waitUntilTime(videoEl, range.endSec, duration, (ratio) => {

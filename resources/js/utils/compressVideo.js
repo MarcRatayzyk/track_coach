@@ -2,7 +2,7 @@
  * Préparation d'une vidéo avant envoi :
  * - natif Capacitor : compression hardware (MediaCodec / AVFoundation)
  *   directement à partir du chemin picker.
- * - web : FFmpeg.wasm via le même plugin (blob URL → MP4 ~480p).
+ * - web : FFmpeg.wasm via le même plugin (blob URL → MP4 ~720p).
  *
  * En cas d'échec / gain insuffisant, on renvoie la source d'origine.
  */
@@ -12,9 +12,10 @@ import { Filesystem } from '@capacitor/filesystem';
 import { NativeVideoCompressor } from 'capacitor-native-video-compressor';
 
 const SKIP_UNDER_BYTES = 2 * 1024 * 1024;
-const MIN_SAVINGS_RATIO = 0.15;
+const MIN_SAVINGS_RATIO = 0.12;
 const COMPRESS_TIMEOUT_MS = 4 * 60 * 1000;
-const COMPRESS_QUALITY = 'LOW';
+// HIGH = ~720p. Ne pas utiliser LOW : sur Android le plugin le mappe en VERY_LOW (qualité inutilisable).
+const COMPRESS_QUALITY = 'HIGH';
 
 let webCompressorReady = null;
 
@@ -147,7 +148,7 @@ async function compressWithPlugin(source, onProgress, { isWeb }) {
       const blob = await response.blob();
       outputBytes = blob.size;
       const baseName = (source.name || 'video').replace(/\.[^.]+$/, '');
-      outputFile = new File([blob], `${baseName}-480p.mp4`, { type: 'video/mp4' });
+      outputFile = new File([blob], `${baseName}-720p.mp4`, { type: 'video/mp4' });
     } else {
       outputBytes = await nativeFileSize(destPath);
     }
@@ -189,7 +190,7 @@ async function compressWithPlugin(source, onProgress, { isWeb }) {
 
     return {
       source: {
-        name: `${baseName}-480p.mp4`,
+        name: `${baseName}-720p.mp4`,
         size: outputBytes,
         type: 'video/mp4',
         path: destPath,
