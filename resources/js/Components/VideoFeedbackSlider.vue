@@ -27,6 +27,16 @@ function next() {
   goTo(currentIndex.value + 1);
 }
 
+function onKeydown(event) {
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    prev();
+  } else if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    next();
+  }
+}
+
 watch(
   () => props.videos,
   () => {
@@ -38,7 +48,12 @@ watch(
 </script>
 
 <template>
-  <div v-if="total" class="space-y-4">
+  <div
+    v-if="total"
+    class="space-y-4"
+    tabindex="0"
+    @keydown="onKeydown"
+  >
     <div class="flex items-center justify-between gap-3">
       <h3 class="text-sm font-medium text-slate-400">
         Vidéos
@@ -59,7 +74,7 @@ watch(
         <button
           type="button"
           :disabled="currentIndex === 0"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 text-slate-300 transition hover:bg-slate-800 disabled:opacity-40"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 text-slate-300 transition duration-200 hover:bg-slate-800 disabled:opacity-40"
           aria-label="Vidéo précédente"
           @click="prev"
         >
@@ -68,7 +83,7 @@ watch(
         <button
           type="button"
           :disabled="currentIndex === total - 1"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 text-slate-300 transition hover:bg-slate-800 disabled:opacity-40"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 text-slate-300 transition duration-200 hover:bg-slate-800 disabled:opacity-40"
           aria-label="Vidéo suivante"
           @click="next"
         >
@@ -77,14 +92,48 @@ watch(
       </div>
     </div>
 
+    <div
+      v-if="hasMultiple"
+      class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]"
+    >
+      <button
+        v-for="(video, index) in videos"
+        :key="video.id"
+        type="button"
+        class="group relative h-16 w-24 shrink-0 overflow-hidden rounded-[12px] border transition duration-200"
+        :class="
+          index === currentIndex
+            ? 'border-blue-500/70 shadow-[0_0_16px_rgba(59,130,246,0.25)]'
+            : 'border-slate-800 hover:border-slate-600'
+        "
+        :aria-label="`Vidéo ${index + 1}`"
+        @click="goTo(index)"
+      >
+        <video
+          :src="video.url"
+          muted
+          preload="metadata"
+          class="h-full w-full object-cover opacity-80 transition duration-200 group-hover:opacity-100"
+        />
+        <span
+          class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 to-transparent px-1.5 py-1 text-[9px] font-medium text-slate-200"
+        >
+          {{ index + 1 }}
+          <template v-if="video.series?.exercise_name">
+            · {{ video.series.exercise_name }}
+          </template>
+        </span>
+      </button>
+    </div>
+
     <VideoAnnotator v-if="currentVideo" :key="currentVideo.id" :video="currentVideo" />
 
     <div v-if="hasMultiple" class="flex items-center justify-center gap-1.5">
       <button
         v-for="(video, index) in videos"
-        :key="video.id"
+        :key="`dot-${video.id}`"
         type="button"
-        class="h-2 rounded-full transition-all"
+        class="h-2 rounded-full transition-all duration-200"
         :class="index === currentIndex ? 'w-5 bg-blue-500' : 'w-2 bg-slate-700 hover:bg-slate-600'"
         :aria-label="`Aller à la vidéo ${index + 1}`"
         @click="goTo(index)"

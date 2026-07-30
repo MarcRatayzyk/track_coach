@@ -988,3 +988,337 @@
 [data-theme='light'] .border-red-500\/40 {
     border-color: rgb(239 68 68 / 0.4);
 }
+
+/* ── Surfaces / opacités manquantes (cartes dashboard, messagerie, KPI) ── */
+
+[data-theme='light'] .bg-slate-900\/55 {
+    background-color: rgb(255 255 255 / 0.94);
+}
+
+[data-theme='light'] .bg-slate-900\/45 {
+    background-color: rgb(255 255 255 / 0.92);
+}
+
+[data-theme='light'] .bg-slate-900\/35 {
+    background-color: rgb(248 250 252 / 0.9);
+}
+
+[data-theme='light'] .bg-slate-950\/70 {
+    background-color: rgb(248 250 252 / 0.96);
+}
+
+[data-theme='light'] .bg-slate-950\/25 {
+    background-color: rgb(248 250 252 / 0.88);
+}
+
+[data-theme='light'] .bg-slate-950\/15 {
+    background-color: rgb(248 250 252 / 0.85);
+}
+
+[data-theme='light'] .bg-amber-950\/15 {
+    background-color: rgb(255 251 235 / 0.95);
+}
+
+[data-theme='light'] .bg-rose-950\/15 {
+    background-color: rgb(255 241 242 / 0.95);
+}
+
+[data-theme='light'] .bg-violet-950\/40 {
+    background-color: rgb(245 243 255 / 0.95);
+}
+
+[data-theme='light'] .bg-violet-950\/20 {
+    background-color: rgb(245 243 255 / 0.92);
+}
+
+[data-theme='light'] .bg-blue-950\/20 {
+    background-color: rgb(239 246 255 / 0.95);
+}
+
+[data-theme='light'] .bg-indigo-950\/15 {
+    background-color: rgb(238 242 255 / 0.95);
+}
+
+[data-theme='light'] .bg-slate-800\/80 {
+    background-color: rgb(226 232 240 / 0.85);
+}
+
+[data-theme='light'] .bg-slate-800\/60 {
+    background-color: rgb(226 232 240 / 0.7);
+}
+
+/* Gradients — stops avec opacités (headers, KPI, awards, messagerie) */
+[data-theme='light'] .from-slate-900\/90 {
+    --tw-gradient-from: rgb(255 255 255 / 0.95);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .from-slate-900\/80 {
+    --tw-gradient-from: rgb(255 255 255 / 0.92);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .from-slate-900\/60 {
+    --tw-gradient-from: rgb(248 250 252 / 0.95);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .from-slate-900\/55 {
+    --tw-gradient-from: rgb(248 250 252 / 0.95);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .from-slate-900\/50 {
+    --tw-gradient-from: #ffffff;
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .via-slate-900\/80 {
+    --tw-gradient-via: rgb(255 255 255 / 0.9);
+    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-via-stops);
+}
+
+[data-theme='light'] .via-slate-900\/70 {
+    --tw-gradient-via: rgb(248 250 252 / 0.95);
+    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-via-stops);
+}
+
+[data-theme='light'] .via-slate-900\/60 {
+    --tw-gradient-via: rgb(248 250 252 / 0.95);
+    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-via-stops);
+}
+
+[data-theme='light'] .via-slate-900\/55 {
+    --tw-gradient-via: rgb(248 250 252 / 0.95);
+    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-via-stops);
+}
+
+[data-theme='light'] .via-slate-900\/50 {
+    --tw-gradient-via: #f8fafc;
+    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-via-stops);
+}
+
+[data-theme='light'] .to-slate-900\/60 {
+    --tw-gradient-to: rgb(241 245 249 / 0.95);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .to-slate-900\/50 {
+    --tw-gradient-to: rgb(241 245 249 / 0.95);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .to-slate-950\/70 {
+    --tw-gradient-to: rgb(241 245 249 / 0.95);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .to-slate-950\/60 {
+    --tw-gradient-to: rgb(241 245 249 / 0.92);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .to-blue-950\/40 {
+    --tw-gradient-to: rgb(239 246 255 / 0.95);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .to-blue-950\/25 {
+    --tw-gradient-to: rgb(239 246 255 / 0.9);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .from-violet-950\/40 {
+    --tw-gradient-from: rgb(245 243 255 / 0.98);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .from-blue-600\/25 {
+    --tw-gradient-from: rgb(219 234 254 / 0.95);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .from-slate-700 {
+    --tw-gradient-from: #cbd5e1;
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .to-slate-900 {
+    --tw-gradient-to: #e2e8f0;
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+[data-theme='light'] .to-slate-950\/80 {
+    --tw-gradient-to: rgb(241 245 249 / 0.95);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+/* Accents lisibles sur fond clair */
+[data-theme='light'] .text-amber-400 {
+    color: #b45309;
+}
+
+[data-theme='light'] .text-orange-400 {
+    color: #c2410c;
+}
+
+[data-theme='light'] .text-violet-300 {
+    color: #6d28d9;
+}
+
+[data-theme='light'] .text-violet-300\/90 {
+    color: rgb(109 40 217 / 0.95);
+}
+
+[data-theme='light'] .text-violet-100 {
+    color: #5b21b6;
+}
+
+[data-theme='light'] .text-indigo-300 {
+    color: #4338ca;
+}
+
+[data-theme='light'] .text-indigo-400 {
+    color: #4338ca;
+}
+
+[data-theme='light'] .text-blue-100 {
+    color: #1e40af;
+}
+
+[data-theme='light'] .text-blue-100\/80 {
+    color: rgb(30 64 175 / 0.9);
+}
+
+[data-theme='light'] .text-sky-100 {
+    color: #0369a1;
+}
+
+[data-theme='light'] .text-sky-300 {
+    color: #0369a1;
+}
+
+[data-theme='light'] .text-rose-100 {
+    color: #9f1239;
+}
+
+[data-theme='light'] .text-rose-300 {
+    color: #be123c;
+}
+
+[data-theme='light'] .text-rose-400 {
+    color: #e11d48;
+}
+
+[data-theme='light'] .text-emerald-400 {
+    color: #047857;
+}
+
+[data-theme='light'] .text-blue-400 {
+    color: #1d4ed8;
+}
+
+[data-theme='light'] .text-blue-400\/80 {
+    color: rgb(29 78 216 / 0.9);
+}
+
+[data-theme='light'] .text-white\/90 {
+    color: rgb(15 23 42 / 0.92);
+}
+
+[data-theme='light'] .text-white\/80 {
+    color: rgb(15 23 42 / 0.85);
+}
+
+[data-theme='light'] .text-slate-400 {
+    color: #334155;
+}
+
+[data-theme='light'] .text-slate-500 {
+    color: #475569;
+}
+
+[data-theme='light'] .text-slate-600 {
+    color: #64748b;
+}
+
+/* Conserver le texte blanc sur boutons / pastilles colorés */
+[data-theme='light'] .bg-violet-600.text-white,
+[data-theme='light'] .bg-violet-500.text-white,
+[data-theme='light'] button.bg-violet-600,
+[data-theme='light'] .from-blue-600.text-white,
+[data-theme='light'] .from-blue-500.text-white,
+[data-theme='light'] .bg-rose-600.text-white,
+[data-theme='light'] .bg-amber-600.text-white,
+[data-theme='light'] .bg-red-600.text-white,
+[data-theme='light'] .bg-emerald-500.text-white {
+    color: #ffffff;
+}
+
+[data-theme='light'] a.bg-gradient-to-r.from-blue-600.text-white,
+[data-theme='light'] button.bg-gradient-to-r.from-blue-600.text-white,
+[data-theme='light'] .bg-gradient-to-r.from-blue-600.to-blue-500.text-white {
+    color: #ffffff;
+}
+
+/* Hover surfaces messagerie / listes */
+[data-theme='light'] .hover\:bg-slate-900\/60:hover {
+    background-color: rgb(241 245 249 / 0.95);
+}
+
+[data-theme='light'] .hover\:bg-slate-900\/70:hover {
+    background-color: rgb(241 245 249 / 0.92);
+}
+
+[data-theme='light'] .border-violet-500\/30 {
+    border-color: rgb(139 92 246 / 0.4);
+}
+
+[data-theme='light'] .border-violet-500\/25 {
+    border-color: rgb(139 92 246 / 0.35);
+}
+
+[data-theme='light'] .bg-violet-600\/20 {
+    background-color: rgb(237 233 254 / 0.95);
+}
+
+[data-theme='light'] .hover\:bg-violet-600\/30:hover {
+    background-color: rgb(221 214 254 / 0.95);
+}
+
+[data-theme='light'] .bg-violet-500\/10 {
+    background-color: rgb(237 233 254 / 0.9);
+}
+
+[data-theme='light'] .bg-violet-500\/5 {
+    background-color: rgb(245 243 255 / 0.9);
+}
+
+[data-theme='light'] .text-amber-100 {
+    color: #92400e;
+}
+
+[data-theme='light'] .bg-amber-500\/10 {
+    background-color: rgb(254 243 199 / 0.85);
+}
+
+[data-theme='light'] .bg-rose-500\/10 {
+    background-color: rgb(255 228 230 / 0.9);
+}
+
+[data-theme='light'] .bg-sky-500\/10 {
+    background-color: rgb(224 242 254 / 0.9);
+}
+
+[data-theme='light'] .shadow-blue-950\/25 {
+    --tw-shadow-color: rgb(59 130 246 / 0.12);
+}
+
+[data-theme='light'] .shadow-blue-950\/20 {
+    --tw-shadow-color: rgb(59 130 246 / 0.1);
+}

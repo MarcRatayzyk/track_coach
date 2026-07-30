@@ -1,9 +1,10 @@
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const androidDir = join(process.cwd(), 'android');
 const gradlew = join(androidDir, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew');
+const DEFAULT_SERVER_URL = 'https://track-coach.onrender.com';
 
 const javaHomeCandidates = [
     process.env.JAVA_HOME,
@@ -12,6 +13,11 @@ const javaHomeCandidates = [
 ].filter(Boolean);
 
 const env = { ...process.env };
+
+if (!env.CAPACITOR_SERVER_URL) {
+    env.CAPACITOR_SERVER_URL = DEFAULT_SERVER_URL;
+    console.warn(`CAPACITOR_SERVER_URL unset — defaulting to ${DEFAULT_SERVER_URL}`);
+}
 
 if (!env.JAVA_HOME) {
     for (const candidate of javaHomeCandidates) {
@@ -30,6 +36,7 @@ if (!env.JAVA_HOME) {
 }
 
 console.log(`Using JAVA_HOME=${env.JAVA_HOME}`);
+console.log(`Using CAPACITOR_SERVER_URL=${env.CAPACITOR_SERVER_URL}`);
 
 function runGradle(args) {
     if (process.platform === 'win32') {
@@ -50,6 +57,22 @@ const build = runGradle(['assembleDebug']);
 if (build.status !== 0) {
     process.exit(build.status ?? 1);
 }
+
+const configPath = join(androidDir, 'app', 'src', 'main', 'assets', 'capacitor.config.json');
+if (!existsSync(configPath)) {
+    console.error(`capacitor.config.json manquant : ${configPath}`);
+    process.exit(1);
+}
+
+const config = JSON.parse(readFileSync(configPath, 'utf8'));
+const serverUrl = config?.server?.url;
+if (!serverUrl || typeof serverUrl !== 'string' || !serverUrl.startsWith('https://')) {
+    console.error(
+        'APK refusé : server.url absent dans capacitor.config.json. Lance d’abord npm run cap:sync avec CAPACITOR_SERVER_URL.',
+    );
+    process.exit(1);
+}
+console.log(`Verified Capacitor server.url=${serverUrl}`);
 
 const builtApk = join(androidDir, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
 const publicApk = join(process.cwd(), 'public', 'downloads', 'power-roster.apk');

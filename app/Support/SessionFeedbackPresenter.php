@@ -23,6 +23,7 @@ class SessionFeedbackPresenter
     {
         $feedback->loadMissing([
             'athlete:id,name',
+            'athlete.profile',
             'programTrainingDay.exercises',
             'athleteVideos.annotations',
         ]);
@@ -58,8 +59,12 @@ class SessionFeedbackPresenter
             'id' => $feedback->id,
             'athlete_id' => $feedback->athlete_id,
             'athlete_name' => $feedback->athlete?->name,
+            'feedback_frequency' => $feedback->athlete
+                ? FeedbackFrequencySupport::frequencyFor($feedback->athlete)
+                : null,
             'session_date' => $sessionDate,
             'session_label' => self::sessionLabel($day),
+            'session_notes' => $day?->notes,
             'athlete_notes' => $feedback->athlete_notes,
             'session_logged_notes' => $loggedNotes,
             'status' => $feedback->status,
@@ -622,12 +627,15 @@ class SessionFeedbackPresenter
     public static function list(Collection $feedbacks): array
     {
         return $feedbacks->map(function (SessionFeedback $feedback): array {
-            $feedback->loadMissing(['athlete:id,name', 'programTrainingDay', 'athleteVideos']);
+            $feedback->loadMissing(['athlete:id,name', 'athlete.profile', 'programTrainingDay', 'athleteVideos']);
 
             return [
                 'id' => $feedback->id,
                 'athlete_id' => $feedback->athlete_id,
                 'athlete_name' => $feedback->athlete?->name,
+                'feedback_frequency' => $feedback->athlete
+                    ? FeedbackFrequencySupport::frequencyFor($feedback->athlete)
+                    : null,
                 'session_date' => $feedback->session_date?->toDateString(),
                 'session_label' => self::sessionLabel($feedback->programTrainingDay),
                 'athlete_notes' => $feedback->athlete_notes,

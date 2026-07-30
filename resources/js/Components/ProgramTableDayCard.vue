@@ -188,6 +188,7 @@ const primaryLift = computed(() => {
 
 function addRow() {
   rows.value.push(makeRow());
+  syncEditorCanRemove();
 }
 
 function syncEditorRowReference(index) {
@@ -218,6 +219,19 @@ function removeRow(index) {
   rows.value.splice(index, 1);
   if (rows.value.length === 0) {
     rows.value = [makeRow()];
+  }
+  syncEditorCanRemove();
+}
+
+function syncEditorCanRemove() {
+  if (!rowEditorEnabled.value) {
+    return;
+  }
+
+  const state = tableRowEditor.state;
+
+  if (state.weekNumber === props.weekNumber && state.weekday === props.weekday) {
+    state.canRemove = rows.value.length > 1;
   }
 }
 
@@ -364,6 +378,35 @@ function goToNextRow() {
   selectRow(rows.value.length - 1);
 }
 
+function removeSelectedRow() {
+  if (!rowEditorEnabled.value) {
+    return;
+  }
+
+  const state = tableRowEditor.state;
+
+  if (state.weekNumber !== props.weekNumber || state.weekday !== props.weekday) {
+    return;
+  }
+
+  const index = state.rowIndex;
+
+  if (index == null || rows.value.length <= 1) {
+    return;
+  }
+
+  removeRow(index);
+
+  const nextIndex = Math.min(index, rows.value.length - 1);
+
+  if (nextIndex >= 0) {
+    selectRow(nextIndex);
+    return;
+  }
+
+  tableRowEditor.clearSelection();
+}
+
 function selectRow(index) {
   if (!rowEditorEnabled.value) {
     return;
@@ -380,6 +423,8 @@ function selectRow(index) {
     defaultLift: primaryLift.value,
     onUpdate: (value) => updateRow(index, value),
     onGoToNextRow: goToNextRow,
+    onRemove: removeSelectedRow,
+    canRemove: rows.value.length > 1,
   });
 }
 </script>

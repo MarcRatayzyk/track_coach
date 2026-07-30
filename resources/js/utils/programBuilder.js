@@ -32,7 +32,7 @@ export function emptyExerciseLine(name = '') {
 
 export const SET_SCHEME_OPTIONS = [
   { value: 'standard', label: 'Standard' },
-  { value: 'ramp', label: 'Ramp' },
+  { value: 'ramp', label: 'Ramp-up' },
   { value: 'cluster', label: 'Cluster' },
 ];
 

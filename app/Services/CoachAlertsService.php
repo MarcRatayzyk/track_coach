@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\AthleteProgramAssignment;
 use App\Models\Competition;
+use App\Models\DashboardTask;
 use App\Models\MessageThread;
+use App\Models\SessionFeedback;
 use App\Models\TrainingSession;
 use App\Models\User;
 use Carbon\Carbon;
@@ -136,6 +138,8 @@ class CoachAlertsService
 
         $alerts = $alerts->merge($this->competitionAlerts($athleteIds, $today));
         $alerts = $alerts->merge($this->unreadMessageAlerts($coach));
+        $alerts = $alerts->merge($this->feedbackNotSentAlerts($coach, $today));
+        $alerts = $alerts->merge($this->feedbackOverdueAlerts($coach, $today));
 
         return $this->limitAlertsPerType($this->sortAlerts($alerts))->values()->all();
     }
@@ -495,6 +499,212 @@ class CoachAlertsService
     }
 
     /**
+     * Alerte agrégée : athlètes qui n'ont pas encore envoyé leur retour (après le jour / la semaine).
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function feedbackNotSentAlerts(User $coach, Carbon $today): Collection
+    {
+        $todayString = $today->toDateString();
+        $currentWeekStart = $today->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
+
+        $dailyTasks = DashboardTask::query()
+            ->where('coach_id', $coach->id)
+            ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
+            ->where('status', 'pending')
+            ->whereNull('session_feedback_id')
+            ->whereNotNull('session_date')
+            ->whereNull('period_week_start')
+            ->whereDate('session_date', '<', $todayString)
+            ->with('athlete:id,name')
+            ->orderByDesc('session_date')
+            ->limit(40)
+            ->get();
+
+        $weeklyTasks = DashboardTask::query()
+            ->where('coach_id', $coach->id)
+            ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
+            ->where('status', 'pending')
+            ->whereNull('session_feedback_id')
+            ->whereNotNull('period_week_start')
+            ->whereDate('period_week_start', '<', $currentWeekStart)
+            ->with('athlete:id,name')
+            ->orderByDesc('period_week_start')
+            ->limit(20)
+            ->get();
+
+        $items = collect();
+
+        foreach ($dailyTasks as $task) {
+            $athleteName = $task->athlete?->name ?? 'Athlète';
+            $sessionLabel = $task->session_date?->locale('fr')->isoFormat('ddd D MMMM')
+                ?? $todayString;
+
+            $items->push([
+                'athlete_id' => $task->athlete_id,
+                'athlete_name' => $athleteName,
+                'kind' => 'daily',
+                'label' => "Journalier · {$sessionLabel}",
+                'href' => "/athletes/{$task->athlete_id}",
+                'session_feedback_id' => null,
+            ]);
+        }
+
+        foreach ($weeklyTasks as $task) {
+            $athleteName = $task->athlete?->name ?? 'Athlète';
+            $weekStart = $task->period_week_start;
+            $weekLabel = $weekStart !== null
+                ? $weekStart->locale('fr')->isoFormat('D MMM')
+                    .' – '
+                    .$weekStart->copy()->endOfWeek(Carbon::SUNDAY)->locale('fr')->isoFormat('D MMM')
+                : 'semaine passée';
+
+            $items->push([
+                'athlete_id' => $task->athlete_id,
+                'athlete_name' => $athleteName,
+                'kind' => 'weekly',
+                'label' => "Hebdo · {$weekLabel}",
+                'href' => "/athletes/{$task->athlete_id}",
+                'session_feedback_id' => null,
+            ]);
+        }
+
+        if ($items->isEmpty()) {
+            return collect();
+        }
+
+        $athleteCount = $items->pluck('athlete_id')->unique()->count();
+        $subtitle = $athleteCount === 1
+            ? "1 athlète ne t'a pas envoyé son retour"
+            : "{$athleteCount} athlètes ne t'ont pas envoyé leurs retours";
+
+        return collect([
+            $this->makeAlert(
+                key: "feedback-not-sent-{$todayString}",
+                type: 'feedback_not_sent',
+                severity: 'warning',
+                title: 'Retours non envoyés',
+                body: $subtitle,
+                href: '/feedbacks?filter=pending',
+                athleteId: null,
+                athleteName: $subtitle,
+                sortDate: $todayString,
+                items: $items->values()->all(),
+            ),
+        ]);
+    }
+
+    /**
+     * Alerte agrégée : retours déjà envoyés mais non traités après l'échéance.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function feedbackOverdueAlerts(User $coach, Carbon $today): Collection
+    {
+        $todayString = $today->toDateString();
+        $currentWeekStart = $today->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
+
+        $dailyTasks = DashboardTask::query()
+            ->where('coach_id', $coach->id)
+            ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
+            ->where('status', 'pending')
+            ->whereNotNull('session_feedback_id')
+            ->whereNotNull('session_date')
+            ->whereNull('period_week_start')
+            ->whereDate('session_date', '<', $todayString)
+            ->whereHas(
+                'sessionFeedback',
+                fn ($q) => $q->where('status', '!=', SessionFeedback::STATUS_COACH_REPLIED),
+            )
+            ->with(['athlete:id,name', 'sessionFeedback:id,status'])
+            ->orderByDesc('session_date')
+            ->limit(40)
+            ->get();
+
+        $weeklyTasks = DashboardTask::query()
+            ->where('coach_id', $coach->id)
+            ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
+            ->where('status', 'pending')
+            ->whereNotNull('session_feedback_id')
+            ->whereNotNull('period_week_start')
+            ->whereDate('period_week_start', '<', $currentWeekStart)
+            ->whereHas(
+                'sessionFeedback',
+                fn ($q) => $q->where('status', '!=', SessionFeedback::STATUS_COACH_REPLIED),
+            )
+            ->with(['athlete:id,name', 'sessionFeedback:id,status'])
+            ->orderByDesc('period_week_start')
+            ->limit(20)
+            ->get();
+
+        $items = collect();
+
+        foreach ($dailyTasks as $task) {
+            $athleteName = $task->athlete?->name ?? 'Athlète';
+            $sessionLabel = $task->session_date?->locale('fr')->isoFormat('ddd D MMMM')
+                ?? $todayString;
+            $feedbackId = $task->session_feedback_id;
+
+            $items->push([
+                'athlete_id' => $task->athlete_id,
+                'athlete_name' => $athleteName,
+                'kind' => 'daily',
+                'label' => "Journalier · {$sessionLabel}",
+                'href' => $feedbackId
+                    ? "/feedbacks?feedback={$feedbackId}&filter=pending"
+                    : '/feedbacks?filter=overdue',
+                'session_feedback_id' => $feedbackId,
+            ]);
+        }
+
+        foreach ($weeklyTasks as $task) {
+            $athleteName = $task->athlete?->name ?? 'Athlète';
+            $weekStart = $task->period_week_start;
+            $weekLabel = $weekStart !== null
+                ? $weekStart->locale('fr')->isoFormat('D MMM')
+                    .' – '
+                    .$weekStart->copy()->endOfWeek(Carbon::SUNDAY)->locale('fr')->isoFormat('D MMM')
+                : 'semaine passée';
+            $feedbackId = $task->session_feedback_id;
+
+            $items->push([
+                'athlete_id' => $task->athlete_id,
+                'athlete_name' => $athleteName,
+                'kind' => 'weekly',
+                'label' => "Hebdo · {$weekLabel}",
+                'href' => $feedbackId
+                    ? "/feedbacks?feedback={$feedbackId}&filter=pending"
+                    : '/feedbacks?filter=overdue',
+                'session_feedback_id' => $feedbackId,
+            ]);
+        }
+
+        if ($items->isEmpty()) {
+            return collect();
+        }
+
+        $count = $items->count();
+        $subtitle = $count === 1
+            ? '1 retour en retard'
+            : "{$count} retours en retard";
+
+        return collect([
+            $this->makeAlert(
+                key: "feedback-overdue-{$todayString}",
+                type: 'feedback_overdue',
+                severity: 'critical',
+                title: 'Retours en retard',
+                body: $subtitle,
+                href: '/feedbacks?filter=overdue',
+                athleteId: null,
+                athleteName: $subtitle,
+                sortDate: $todayString,
+                items: $items->values()->all(),
+            ),
+        ]);
+    }
+
+    /**
      * @return Collection<int, array<string, mixed>>
      */
     private function unreadMessageAlerts(User $coach): Collection
@@ -572,6 +782,7 @@ class CoachAlertsService
         ?string $athleteName,
         string $sortDate,
         ?array $sharePayload = null,
+        ?array $items = null,
     ): array {
         return [
             'key' => $key,
@@ -584,6 +795,7 @@ class CoachAlertsService
             'athlete_name' => $athleteName,
             'sort_date' => $sortDate,
             'share_payload' => $sharePayload,
+            'items' => $items,
         ];
     }
 

@@ -45,6 +45,7 @@ class CoachFeedbackMetricsService
         $weekEnd = $today->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
 
         $this->linkOrphanWeeklyFeedbacks($coach, $weekStart, $weekEnd);
+        $this->closeTasksAlreadyReplied($coach);
 
         $athleteIds = $coach->athletes()
             ->where('users.role', 'athlete')
@@ -52,6 +53,7 @@ class CoachFeedbackMetricsService
             ->pluck('users.id');
 
         $dailyExpectedSlots = $this->countDailyExpectedSlots($athleteIds, $today);
+        $dailyExpectedWeek = $this->countDailyExpectedSlotsInWeek($athleteIds, $weekStart, $weekEnd);
         $weeklyExpectedSlots = $this->countWeeklyExpectedSlots($athleteIds, $weekStart, $weekEnd);
 
         $dailyAthleteIds = $this->dailyAthleteIds($athleteIds, $today);
@@ -63,20 +65,45 @@ class CoachFeedbackMetricsService
             ->whereNull('period_week_start')
             ->whereIn('athlete_id', $dailyAthleteIds);
 
+        // Attente athlète (pas un retard coach) — sert encore au dénominateur « attendus ».
+        $awaitingAthlete = (clone $dailyTasksQuery)
+            ->where('status', 'pending')
+            ->whereDate('session_date', '<', $today->toDateString())
+            ->whereNull('session_feedback_id')
+            ->count();
+
+        // Retard coach = retour déjà envoyé, non répondu, séance passée.
         $overdue = (clone $dailyTasksQuery)
             ->where('status', 'pending')
             ->whereDate('session_date', '<', $today->toDateString())
+            ->whereNotNull('session_feedback_id')
+            ->whereHas(
+                'sessionFeedback',
+                fn ($feedback) => $feedback->where(
+                    'status',
+                    '!=',
+                    SessionFeedback::STATUS_COACH_REPLIED,
+                ),
+            )
             ->count();
 
         $dueTodayPending = (clone $dailyTasksQuery)
             ->where('status', 'pending')
             ->whereDate('session_date', $today->toDateString())
+            ->whereNull('session_feedback_id')
             ->count();
 
         $dailyReceived = SessionFeedback::query()
             ->where('coach_id', $coach->id)
             ->whereIn('athlete_id', $dailyAthleteIds)
             ->whereDate('session_date', $today->toDateString())
+            ->count();
+
+        $dailyRepliedToday = SessionFeedback::query()
+            ->where('coach_id', $coach->id)
+            ->whereIn('athlete_id', $dailyAthleteIds)
+            ->whereDate('session_date', $today->toDateString())
+            ->where('status', SessionFeedback::STATUS_COACH_REPLIED)
             ->count();
 
         $dailyProcessedToday = SessionFeedback::query()
@@ -86,30 +113,65 @@ class CoachFeedbackMetricsService
             ->whereDate('updated_at', $today->toDateString())
             ->count();
 
+        // Aujourd'hui (athlètes journaliers) + retards coach (tous athlètes) —
+        // même logique que l'onglet Retours : session_date < today et pas répondu.
         $dailyPendingTasks = DashboardTask::query()
             ->where('coach_id', $coach->id)
             ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
             ->whereNotNull('session_date')
             ->whereNull('period_week_start')
-            ->where('status', 'pending')
-            ->with('athlete:id,name')
+            ->where(function ($query) use ($today, $dailyAthleteIds, $athleteIds): void {
+                $query->where(function ($todayQuery) use ($today, $dailyAthleteIds): void {
+                    $todayQuery->whereIn('athlete_id', $dailyAthleteIds)
+                        ->whereDate('session_date', $today->toDateString());
+                })->orWhere(function ($overdueQuery) use ($today, $athleteIds): void {
+                    $overdueQuery->whereIn('athlete_id', $athleteIds)
+                        ->whereDate('session_date', '<', $today->toDateString())
+                        ->where(function ($openQuery): void {
+                            $openQuery->where(function ($waiting): void {
+                                $waiting->where('status', 'pending')
+                                    ->whereNull('session_feedback_id');
+                            })->orWhereHas(
+                                'sessionFeedback',
+                                fn ($feedback) => $feedback->where(
+                                    'status',
+                                    '!=',
+                                    SessionFeedback::STATUS_COACH_REPLIED,
+                                ),
+                            );
+                        });
+                });
+            })
+            ->with(['athlete:id,name', 'sessionFeedback:id,status'])
             ->orderBy('session_date')
             ->orderBy('id')
-            ->limit(50)
+            ->limit(80)
             ->get()
+            ->sortBy(fn (DashboardTask $task) => $this->feedbackListSortRank($task))
+            ->values()
             ->map(fn (DashboardTask $task) => $this->presentTask($task));
 
-        $weeklyTasksQuery = DashboardTask::query()
+        // Aligner le dashboard sur la page Retours : inclure les SessionFeedback
+        // journaliers en retard même sans DashboardTask ouverte.
+        $dailyPendingTasks = $this->mergeOrphanOverdueDailyFeedbacks(
+            $dailyPendingTasks,
+            $coach,
+            $athleteIds,
+            $today,
+        );
+
+        $weeklyCurrentQuery = DashboardTask::query()
             ->where('coach_id', $coach->id)
             ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
             ->whereNotNull('period_week_start')
-            ->whereDate('period_week_start', $weekStart->toDateString());
+            ->whereDate('period_week_start', $weekStart->toDateString())
+            ->whereIn('athlete_id', $athleteIds);
 
-        $weeklyReceived = (clone $weeklyTasksQuery)
+        $weeklyReceived = (clone $weeklyCurrentQuery)
             ->whereNotNull('session_feedback_id')
             ->count();
 
-        $weeklyProcessed = (clone $weeklyTasksQuery)
+        $weeklyProcessed = (clone $weeklyCurrentQuery)
             ->whereNotNull('session_feedback_id')
             ->whereHas(
                 'sessionFeedback',
@@ -117,35 +179,61 @@ class CoachFeedbackMetricsService
             )
             ->count();
 
+        // Semaine courante + semaines passées encore ouvertes (vrai retard hebdo).
         $weeklyPendingTasks = DashboardTask::query()
             ->where('coach_id', $coach->id)
             ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
             ->whereNotNull('period_week_start')
-            ->whereDate('period_week_start', $weekStart->toDateString())
-            ->where('status', 'pending')
-            ->with('athlete:id,name')
-            ->orderBy('due_at')
+            ->whereIn('athlete_id', $athleteIds)
+            ->where(function ($query) use ($weekStart): void {
+                $query->whereDate('period_week_start', $weekStart->toDateString())
+                    ->orWhere(function ($overdueQuery) use ($weekStart): void {
+                        $overdueQuery->whereDate('period_week_start', '<', $weekStart->toDateString())
+                            ->where(function ($openQuery): void {
+                                $openQuery->where(function ($waiting): void {
+                                    $waiting->where('status', 'pending')
+                                        ->whereNull('session_feedback_id');
+                                })->orWhereHas(
+                                    'sessionFeedback',
+                                    fn ($feedback) => $feedback->where(
+                                        'status',
+                                        '!=',
+                                        SessionFeedback::STATUS_COACH_REPLIED,
+                                    ),
+                                );
+                            });
+                    });
+            })
+            ->with(['athlete:id,name', 'sessionFeedback:id,status'])
+            ->orderBy('period_week_start')
             ->orderBy('id')
-            ->limit(50)
+            ->limit(80)
             ->get()
+            ->sortBy(fn (DashboardTask $task) => $this->feedbackListSortRank($task))
+            ->values()
             ->map(fn (DashboardTask $task) => $this->presentTask($task));
 
-        $dailyExpectedToday = $overdue + $dailyExpectedSlots;
+        $dailyExpectedToday = $awaitingAthlete + $dailyExpectedSlots;
 
         return [
             'daily' => [
                 'expected_today' => $dailyExpectedToday,
                 'overdue' => $overdue,
+                'awaiting_athlete' => $awaitingAthlete,
                 'due_today' => $dueTodayPending,
                 'received_today' => $dailyReceived,
+                'replied_today' => $dailyRepliedToday,
                 'processed_today' => $dailyProcessedToday,
                 'pending_tasks' => $dailyPendingTasks,
                 'breakdown' => $this->buildDailyBreakdown($coach, $today, $athleteIds),
             ],
             'weekly' => [
                 'expected_week' => $weeklyExpectedSlots,
+                'expected_week_daily' => $dailyExpectedWeek,
+                'expected_week_total' => $dailyExpectedWeek + $weeklyExpectedSlots,
                 'received_week' => $weeklyReceived,
                 'processed_week' => $weeklyProcessed,
+                'replied_week' => $weeklyProcessed,
                 'pending_tasks' => $weeklyPendingTasks,
                 'breakdown' => $this->buildWeeklyBreakdown($coach, $weekStart, $weekEnd, $athleteIds),
             ],
@@ -175,6 +263,40 @@ class CoachFeedbackMetricsService
             if (ProgramSchedule::hasSessionOnDate($assignment, $today)) {
                 $count++;
             }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Nombre de retours journaliers attendus sur toute la semaine civile.
+     */
+    private function countDailyExpectedSlotsInWeek(Collection $athleteIds, Carbon $weekStart, Carbon $weekEnd): int
+    {
+        if ($athleteIds->isEmpty()) {
+            return 0;
+        }
+
+        $count = 0;
+        $assignments = $this->activeAssignments($athleteIds, $weekEnd);
+        $cursor = $weekStart->copy()->startOfDay();
+        $end = $weekEnd->copy()->startOfDay();
+
+        while ($cursor->lte($end)) {
+            foreach ($assignments as $assignment) {
+                $frequency = $assignment->athlete?->profile?->feedback_frequency
+                    ?? AthleteProfile::FREQUENCY_WEEKLY;
+
+                if ($frequency !== AthleteProfile::FREQUENCY_DAILY) {
+                    continue;
+                }
+
+                if (ProgramSchedule::hasSessionOnDate($assignment, $cursor)) {
+                    $count++;
+                }
+            }
+
+            $cursor->addDay();
         }
 
         return $count;
@@ -383,23 +505,16 @@ class CoachFeedbackMetricsService
             ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
             ->whereNotNull('period_week_start')
             ->whereDate('period_week_start', $weekStartString)
-            ->where('status', 'pending')
-            ->with('athlete:id,name')
+            ->with(['athlete:id,name', 'sessionFeedback.athlete:id,name'])
             ->orderBy('id')
             ->get();
 
         $pending = [];
         $submittedFromTasks = [];
 
-        $linkedFeedbacks = SessionFeedback::query()
-            ->whereIn('id', $pendingTasks->pluck('session_feedback_id')->filter())
-            ->with('athlete:id,name')
-            ->get()
-            ->keyBy('id');
-
         foreach ($pendingTasks as $task) {
             if ($task->session_feedback_id !== null) {
-                $feedback = $linkedFeedbacks->get($task->session_feedback_id);
+                $feedback = $task->sessionFeedback;
                 $submittedFromTasks[] = $feedback !== null
                     ? $this->presentBreakdownFromFeedback($feedback, $weekStartString)
                     : $this->presentBreakdownFromTask($task, $weekStartString);
@@ -451,13 +566,27 @@ class CoachFeedbackMetricsService
     private function presentBreakdownFromTask(DashboardTask $task, string $referenceToday): array
     {
         $sessionDate = $task->session_date?->toDateString();
-        $isOverdue = $sessionDate !== null && $sessionDate < $referenceToday;
+        $periodWeekStart = $task->period_week_start?->toDateString();
+
+        // Sans soumission : pas un retard coach (signal via alertes).
+        $isOverdue = false;
+        if ($task->session_feedback_id !== null) {
+            if ($periodWeekStart !== null) {
+                $weekEnd = Carbon::parse($periodWeekStart)
+                    ->startOfWeek(Carbon::MONDAY)
+                    ->endOfWeek(Carbon::SUNDAY)
+                    ->toDateString();
+                $isOverdue = $referenceToday > $weekEnd;
+            } else {
+                $isOverdue = $sessionDate !== null && $sessionDate < $referenceToday;
+            }
+        }
 
         return [
             'athlete_id' => $task->athlete_id,
             'athlete_name' => $task->athlete?->name,
             'session_date' => $sessionDate,
-            'period_week_start' => $task->period_week_start?->toDateString(),
+            'period_week_start' => $periodWeekStart,
             'session_feedback_id' => $task->session_feedback_id,
             'feedback_status' => null,
             'is_overdue' => $isOverdue,
@@ -497,7 +626,102 @@ class CoachFeedbackMetricsService
             'status' => $task->status,
             'session_feedback_id' => $task->session_feedback_id,
             'has_submission' => $task->session_feedback_id !== null,
+            'feedback_status' => $task->sessionFeedback?->status,
         ];
+    }
+
+    /**
+     * Ordre d'affichage dashboard : pas encore envoyé → reçu → répondu.
+     */
+    private function feedbackListSortRank(DashboardTask $task): int
+    {
+        if ($task->sessionFeedback?->status === SessionFeedback::STATUS_COACH_REPLIED) {
+            return 2;
+        }
+
+        if ($task->session_feedback_id !== null) {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, array<string, mixed>>  $tasks
+     * @param  Collection<int, int|string>  $athleteIds
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    private function mergeOrphanOverdueDailyFeedbacks(
+        $tasks,
+        User $coach,
+        Collection $athleteIds,
+        Carbon $today,
+    ) {
+        if ($athleteIds->isEmpty()) {
+            return $tasks;
+        }
+
+        $existingFeedbackIds = $tasks
+            ->pluck('session_feedback_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $orphans = SessionFeedback::query()
+            ->where('coach_id', $coach->id)
+            ->whereIn('athlete_id', $athleteIds)
+            ->where('status', '!=', SessionFeedback::STATUS_COACH_REPLIED)
+            ->whereDate('session_date', '<', $today->toDateString())
+            ->whereHas('athlete.profile', function ($query): void {
+                $query->where('feedback_frequency', AthleteProfile::FREQUENCY_DAILY);
+            })
+            ->when(
+                $existingFeedbackIds !== [],
+                fn ($query) => $query->whereNotIn('id', $existingFeedbackIds),
+            )
+            ->with(['athlete:id,name'])
+            ->orderBy('session_date')
+            ->limit(40)
+            ->get();
+
+        if ($orphans->isEmpty()) {
+            return $tasks;
+        }
+
+        $extra = $orphans->map(fn (SessionFeedback $feedback) => [
+            'id' => 'sf-'.$feedback->id,
+            'athlete_id' => $feedback->athlete_id,
+            'athlete' => $feedback->athlete
+                ? ['id' => $feedback->athlete->id, 'name' => $feedback->athlete->name]
+                : null,
+            'session_date' => $feedback->session_date?->toDateString(),
+            'period_week_start' => null,
+            'due_at' => $feedback->session_date?->copy()->endOfDay()?->toIso8601String(),
+            'status' => 'pending',
+            'session_feedback_id' => $feedback->id,
+            'has_submission' => true,
+            'feedback_status' => $feedback->status,
+            'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
+        ]);
+
+        return $tasks->concat($extra)->values();
+    }
+
+    private function closeTasksAlreadyReplied(User $coach): void
+    {
+        DashboardTask::query()
+            ->where('coach_id', $coach->id)
+            ->where('type', DashboardTask::TYPE_FEEDBACK_SESSION)
+            ->where('status', 'pending')
+            ->whereNotNull('session_feedback_id')
+            ->whereHas(
+                'sessionFeedback',
+                fn ($query) => $query->where('status', SessionFeedback::STATUS_COACH_REPLIED),
+            )
+            ->update([
+                'status' => 'done',
+                'completed_at' => now(),
+            ]);
     }
 
     private function linkOrphanWeeklyFeedbacks(User $coach, Carbon $weekStart, Carbon $weekEnd): void
@@ -517,6 +741,7 @@ class CoachFeedbackMetricsService
 
         $feedbacksByAthlete = SessionFeedback::query()
             ->where('coach_id', $coach->id)
+            ->where('status', SessionFeedback::STATUS_SUBMITTED)
             ->whereIn('athlete_id', $tasks->pluck('athlete_id'))
             ->whereDate('session_date', '>=', $weekStart->toDateString())
             ->whereDate('session_date', '<=', $weekEnd->toDateString())

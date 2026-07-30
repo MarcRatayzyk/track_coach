@@ -1,6 +1,7 @@
 <?php
 namespace Database\Seeders;
 
+use App\Models\AthleteBodyWeightEntry;
 use App\Models\AthleteProfile;
 use App\Models\AthleteReadinessEntry;
 use App\Models\AthleteReadinessForm;
@@ -89,6 +90,7 @@ class DatabaseSeeder extends Seeder
             $this->seedMessageThreads($coach, $athletes);
             $this->seedReadinessForms($coach, $athletes);
             $this->seedReadinessEntries($athletes);
+            $this->seedBodyWeights($athletes, $athleteDefinitions);
         });
     }
 
@@ -108,8 +110,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
                 'prs' => ['squat' => 150, 'bench' => 90, 'deadlift' => 185],
                 'competition_name' => 'Open de Lyon',
-                'competition_days' => 5,
-                'block_end_days' => 6,
+                'competition_days' => 12,
+                'block_end_days' => 45,
                 'competition_location' => 'Palais des Sports, Lyon',
                 'skip_sessions' => ['3-6'],
             ],
@@ -123,8 +125,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 215, 'bench' => 145, 'deadlift' => 250],
                 'competition_name' => 'Coupe Grand Est',
-                'competition_days' => 14,
-                'block_end_days' => 11,
+                'competition_days' => 96,
+                'block_end_days' => 55,
                 'competition_location' => 'Complexe sportif Marcel-Cerdan, Metz',
                 'seed_match_plan' => true,
                 'skip_sessions' => ['2-4', '4-6'],
@@ -139,8 +141,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 175, 'bench' => 105, 'deadlift' => 205],
                 'competition_name' => 'Challenge des clubs',
-                'competition_days' => 22,
-                'block_end_days' => 3,
+                'competition_days' => 140,
+                'block_end_days' => 70,
                 'competition_location' => 'Halle Diagana, Paris',
                 'skip_sessions' => ['1-6', '3-4', '5-6', '6-4'],
             ],
@@ -154,8 +156,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 195, 'bench' => 130, 'deadlift' => 230],
                 'competition_name' => 'Championnat Régional IDF',
-                'competition_days' => 18,
-                'block_end_days' => 9,
+                'competition_days' => 124,
+                'block_end_days' => 85,
                 'competition_location' => 'Gymnase Pierre-de-Coubertin, Paris',
                 'seed_match_plan' => true,
                 'skip_sessions' => ['2-6'],
@@ -170,8 +172,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
                 'prs' => ['squat' => 125, 'bench' => 72, 'deadlift' => 155],
                 'competition_name' => 'Open de Toulouse',
-                'competition_days' => 8,
-                'block_end_days' => 5,
+                'competition_days' => 54,
+                'block_end_days' => 50,
                 'competition_location' => 'Palais des Sports, Toulouse',
                 'skip_sessions' => [],
             ],
@@ -185,8 +187,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 240, 'bench' => 165, 'deadlift' => 280],
                 'competition_name' => 'Nationaux Force Athlétique',
-                'competition_days' => 28,
-                'block_end_days' => 14,
+                'competition_days' => -48,
+                'block_end_days' => 100,
                 'competition_location' => 'Arena de Bercy, Paris',
                 'seed_match_plan' => true,
                 'skip_sessions' => ['3-2', '5-4'],
@@ -201,8 +203,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 165, 'bench' => 95, 'deadlift' => 195],
                 'competition_name' => 'Coupe de Bretagne',
-                'competition_days' => 12,
-                'block_end_days' => 7,
+                'competition_days' => 82,
+                'block_end_days' => 75,
                 'competition_location' => 'Salle Omnisports, Rennes',
                 'skip_sessions' => ['4-4'],
             ],
@@ -216,8 +218,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 255, 'bench' => 175, 'deadlift' => 295],
                 'competition_name' => 'Open de Marseille',
-                'competition_days' => 35,
-                'block_end_days' => 18,
+                'competition_days' => -75,
+                'block_end_days' => 120,
                 'competition_location' => 'Palais Omnisports, Marseille',
                 'seed_match_plan' => true,
                 'skip_sessions' => ['1-4', '2-2'],
@@ -232,8 +234,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
                 'prs' => ['squat' => 105, 'bench' => 60, 'deadlift' => 130],
                 'competition_name' => 'Challenge Féminin Nord',
-                'competition_days' => 6,
-                'block_end_days' => 4,
+                'competition_days' => 26,
+                'block_end_days' => 60,
                 'competition_location' => 'Complexe sportif, Lille',
                 'skip_sessions' => ['3-6'],
             ],
@@ -247,8 +249,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 180, 'bench' => 125, 'deadlift' => 215],
                 'competition_name' => 'Open de Bordeaux',
-                'competition_days' => 16,
-                'block_end_days' => 10,
+                'competition_days' => 110,
+                'block_end_days' => 90,
                 'competition_location' => 'Palais des Sports, Bordeaux',
                 'skip_sessions' => ['2-4', '3-4'],
             ],
@@ -262,8 +264,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 155, 'bench' => 100, 'deadlift' => 190],
                 'competition_name' => 'Coupe Auvergne-Rhône-Alpes',
-                'competition_days' => 20,
-                'block_end_days' => 8,
+                'competition_days' => -18,
+                'block_end_days' => 105,
                 'competition_location' => 'Halle Tony-Garnier, Lyon',
                 'seed_match_plan' => true,
                 'skip_sessions' => ['1-2', '4-6', '5-2'],
@@ -278,8 +280,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 140, 'bench' => 85, 'deadlift' => 175],
                 'competition_name' => 'Open de Nantes',
-                'competition_days' => 10,
-                'block_end_days' => 6,
+                'competition_days' => 68,
+                'block_end_days' => 65,
                 'competition_location' => 'Salle de la Trocardière, Nantes',
                 'skip_sessions' => ['5-6'],
             ],
@@ -293,8 +295,8 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
                 'prs' => ['squat' => 170, 'bench' => 100, 'deadlift' => 200],
                 'competition_name' => 'Open de Strasbourg',
-                'competition_days' => 7,
-                'block_end_days' => 5,
+                'competition_days' => 40,
+                'block_end_days' => 80,
                 'competition_location' => 'Palais des Sports, Strasbourg',
                 'skip_sessions' => ['2-6'],
             ],
@@ -314,6 +316,10 @@ class DatabaseSeeder extends Seeder
                 'role' => $attributes['role'],
                 'initial_setup_completed_at' => now(),
                 'email_verified_at' => now(),
+                'is_demo' => false,
+                'trial_ends_at' => ($attributes['role'] ?? null) === 'coach'
+                    ? now()->addYear()
+                    : null,
             ],
         );
     }
@@ -341,6 +347,7 @@ class DatabaseSeeder extends Seeder
             ->delete();
 
         TrainingSession::query()->whereIn('athlete_id', $athleteIds)->delete();
+        AthleteBodyWeightEntry::query()->whereIn('athlete_id', $athleteIds)->delete();
         AthleteReadinessEntry::query()->whereIn('athlete_id', $athleteIds)->delete();
         AthleteReadinessForm::query()->whereIn('athlete_id', $athleteIds)->delete();
         CoachReadinessForm::query()->where('coach_id', $coach->id)->delete();
@@ -393,9 +400,12 @@ class DatabaseSeeder extends Seeder
     private function seedPrHistory(User $athlete, array $prs): void
     {
         $factors = [
+            ['months' => 10, 'factor' => 0.82],
             ['months' => 8, 'factor' => 0.86],
             ['months' => 6, 'factor' => 0.90],
+            ['months' => 5, 'factor' => 0.92],
             ['months' => 4, 'factor' => 0.94],
+            ['months' => 3, 'factor' => 0.96],
             ['months' => 2, 'factor' => 0.97],
             ['months' => 1, 'factor' => 0.99],
             ['months' => 0, 'factor' => 1.00],
@@ -561,6 +571,18 @@ class DatabaseSeeder extends Seeder
             $this->createProgramExercise($benchDay, 2, ProgramDayExercise::SECTION_ACCESSORY, 'Larsen press', 'bench', 3, 8);
             $this->createProgramExercise($benchDay, 3, ProgramDayExercise::SECTION_ACCESSORY, 'Skull crusher', 'bench', 3, 12);
 
+            $midWeekDay = ProgramTrainingDay::query()->create([
+                'week_id' => $week->id,
+                'day_number' => 3,
+                'main_lift' => ProgramTrainingDay::LIFT_BENCH,
+                'session_label' => 'Upper technique',
+            ]);
+
+            $this->createProgramExercise($midWeekDay, 0, ProgramDayExercise::SECTION_TOPSET, 'Bench technique', 'bench', 1, $benchTopReps[$weekNumber - 1], null, max(60, $benchTopPct[$weekNumber - 1] - 8));
+            $this->createProgramExercise($midWeekDay, 1, ProgramDayExercise::SECTION_BACKOFF, 'Close grip bench', 'bench', 3, 8, null, max(55, $benchBackoffPct[$weekNumber - 1] - 5));
+            $this->createProgramExercise($midWeekDay, 2, ProgramDayExercise::SECTION_ACCESSORY, 'Face pull', 'bench', 3, 15);
+            $this->createProgramExercise($midWeekDay, 3, ProgramDayExercise::SECTION_ACCESSORY, 'Triceps poulie', 'bench', 3, 12);
+
             $deadliftDay = ProgramTrainingDay::query()->create([
                 'week_id' => $week->id,
                 'day_number' => 6,
@@ -674,6 +696,7 @@ class DatabaseSeeder extends Seeder
                 'sets' => $exercise->sets,
                 'reps' => $exercise->reps,
                 'load' => $load,
+                'rpe' => $this->seededRpeForExercise($exercise->lift ?? $day->main_lift, (int) $exercise->sets),
             ];
         }
 
@@ -1042,20 +1065,20 @@ class DatabaseSeeder extends Seeder
         $fields = ReadinessFormSupport::defaultFields();
         $fieldsByKey = collect($fields)->keyBy('preset_key');
 
-        $scoresByAthlete = [
-            'daily' => [7, 8, 6, 7, 9, 8, 7],
-            'weekly' => [6, 7, 7, 5, 8, 7, 6],
-            'return' => [5, 6, 7, 7, 8, 6, 7],
-            'thomas' => [7, 7, 6, 8, 7, 6, 7],
-            'sarah' => [8, 8, 7, 9, 8, 7, 8],
-            'nicolas' => [6, 5, 6, 7, 6, 5, 6],
-            'emma' => [7, 8, 7, 7, 8, 7, 8],
-            'antoine' => [6, 6, 7, 6, 7, 6, 7],
-            'julie' => [8, 7, 8, 7, 9, 8, 7],
-            'maxime' => [7, 6, 7, 7, 6, 7, 7],
-            'chloe' => [6, 7, 6, 7, 7, 6, 7],
-            'lucas' => [7, 7, 8, 7, 7, 8, 7],
-            'ines' => [8, 8, 7, 8, 9, 8, 8],
+        $baseScores = [
+            'daily' => 7,
+            'weekly' => 6,
+            'return' => 6,
+            'thomas' => 7,
+            'sarah' => 8,
+            'nicolas' => 6,
+            'emma' => 7,
+            'antoine' => 6,
+            'julie' => 8,
+            'maxime' => 7,
+            'chloe' => 6,
+            'lucas' => 7,
+            'ines' => 8,
         ];
 
         $sommeilOptions = ['lt_5h', '5_6h', '6_7h', '7_8h', '8_9h'];
@@ -1065,52 +1088,115 @@ class DatabaseSeeder extends Seeder
         $motivationOptions = ['faible', 'moyenne', 'bonne', 'excellente'];
         $formeOptions = ['1', '2', '3', '4', '5'];
 
-        foreach ($scoresByAthlete as $key => $scores) {
+        foreach ($baseScores as $key => $baseScore) {
             if (! isset($athletes[$key])) {
                 continue;
             }
 
             $athlete = $athletes[$key];
 
-            foreach ($scores as $offset => $score) {
+            for ($offset = 0; $offset < 28; $offset++) {
+                // Valeurs globalement positives (bien-être plutôt bon).
+                $score = max(7, min(9, $baseScore + (($offset % 3) - 1)));
                 $values = [];
 
                 if ($field = $fieldsByKey->get('steps')) {
-                    $values[$field['id']] = 3000 + ($score * 800) + ($offset * 150);
+                    $values[$field['id']] = 7500 + ($score * 400) + ($offset * 35);
                 }
                 if ($field = $fieldsByKey->get('kcal')) {
-                    $values[$field['id']] = (string) (1800 + ($score * 80));
+                    $values[$field['id']] = (string) (2200 + ($score * 40) + ($offset % 5) * 15);
                 }
                 if ($field = $fieldsByKey->get('sommeil')) {
-                    $values[$field['id']] = $sommeilOptions[min(4, max(0, (int) round(($score - 5) / 1.2)))];
+                    $values[$field['id']] = $sommeilOptions[min(4, max(2, (int) round(($score - 5) / 1.2)))];
                 }
                 if ($field = $fieldsByKey->get('alimentation')) {
-                    $values[$field['id']] = $alimentationOptions[min(2, max(0, (int) floor(($score - 5) / 2)))];
+                    $values[$field['id']] = $alimentationOptions[min(2, max(1, (int) floor(($score - 5) / 2)))];
                 }
                 if ($field = $fieldsByKey->get('hydratation')) {
-                    $values[$field['id']] = $hydratationOptions[min(3, max(0, (int) floor(($score - 4) / 1.5)))];
+                    $values[$field['id']] = $hydratationOptions[min(3, max(2, (int) floor(($score - 4) / 1.5)))];
                 }
                 if ($field = $fieldsByKey->get('stress_global')) {
-                    $values[$field['id']] = $stressOptions[min(2, max(0, (int) floor(($score - 5) / 2)))];
+                    $values[$field['id']] = $stressOptions[min(2, max(1, (int) floor(($score - 5) / 2)))];
                 }
                 if ($field = $fieldsByKey->get('motivation')) {
-                    $values[$field['id']] = $motivationOptions[min(3, max(0, (int) floor(($score - 5) / 1.5)))];
+                    $values[$field['id']] = $motivationOptions[min(3, max(2, (int) floor(($score - 5) / 1.5)))];
                 }
                 if ($field = $fieldsByKey->get('forme_physique')) {
-                    $values[$field['id']] = $formeOptions[min(4, max(0, (int) round(($score - 4) / 1.5)))];
+                    $values[$field['id']] = $formeOptions[min(4, max(3, (int) round(($score - 4) / 1.5)))];
                 }
                 if ($field = $fieldsByKey->get('forme_mentale')) {
-                    $values[$field['id']] = $formeOptions[min(4, max(0, (int) round(($score - 5) / 1.2)))];
+                    $values[$field['id']] = $formeOptions[min(4, max(3, (int) round(($score - 5) / 1.2)))];
                 }
 
                 AthleteReadinessEntry::query()->create([
                     'athlete_id' => $athlete->id,
-                    'entry_date' => now()->copy()->subDays(6 - $offset)->toDateString(),
+                    'entry_date' => now()->copy()->subDays(27 - $offset)->toDateString(),
                     'values' => $values,
                     'score' => 0,
                 ]);
             }
         }
+    }
+
+    /**
+     * @param  array<string, User>  $athletes
+     * @param  array<string, array<string, mixed>>  $definitions
+     */
+    private function seedBodyWeights(array $athletes, array $definitions): void
+    {
+        $baseByCategory = [
+            'f47' => 46.5,
+            'f52' => 51.2,
+            'f57' => 56.1,
+            'f63' => 61.8,
+            'f69' => 67.4,
+            'f76' => 74.2,
+            'f84' => 81.5,
+            'm59' => 58.4,
+            'm66' => 65.1,
+            'm74' => 72.8,
+            'm83' => 81.6,
+            'm93' => 91.2,
+            'm105' => 102.4,
+            'm120' => 116.8,
+        ];
+
+        foreach ($definitions as $key => $definition) {
+            if (! isset($athletes[$key])) {
+                continue;
+            }
+
+            $base = $baseByCategory[$definition['weight_category']] ?? 75.0;
+            $athlete = $athletes[$key];
+
+            for ($offset = 0; $offset < 42; $offset++) {
+                $wave = sin($offset / 4.5) * 0.6;
+                $trend = ($offset / 42) * 0.8;
+                $weight = round($base + $wave - $trend, 2);
+
+                AthleteBodyWeightEntry::query()->updateOrCreate(
+                    [
+                        'athlete_id' => $athlete->id,
+                        'entry_date' => now()->copy()->subDays(41 - $offset)->toDateString(),
+                    ],
+                    ['weight_kg' => $weight],
+                );
+            }
+        }
+    }
+
+    private function seededRpeForExercise(?string $lift, int $sets): float
+    {
+        $base = match ($lift) {
+            'squat' => 7.5,
+            'bench' => 7.0,
+            'deadlift' => 8.0,
+            default => 6.5,
+        };
+
+        $bump = min(1.5, max(0, ($sets - 3) * 0.25));
+
+        return round(($base + $bump) * 2) / 2;
     }
 
     private function roundToNearest(float $value, float $step): float

@@ -6,21 +6,34 @@ export default {
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AppLogo from '../Components/AppLogo.vue';
 import { track } from '../utils/analytics';
+
+const props = defineProps({
+    selectedPlan: { type: String, default: null },
+    plans: { type: Array, default: () => [] },
+});
+
+const selectedPlanMeta = computed(() => props.plans.find((p) => p.key === props.selectedPlan) ?? null);
 
 const form = useForm({
     name: '',
     email: '',
     password: '',
     password_confirmation: '',
+    plan: props.selectedPlan ?? '',
 });
+
+function formatPrice(amount) {
+    return Number(amount).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 function submit() {
     form.post('/register', {
         preserveScroll: true,
         onSuccess: () => {
-            track('user_registered', { role: 'coach' });
+            track('user_registered', { role: 'coach', plan: form.plan || null });
         },
     });
 }
@@ -39,7 +52,7 @@ function submit() {
             <div class="relative">
                 <Link href="/" class="inline-flex items-center">
                     <AppLogo
-                        mark-class="h-12 w-12"
+                        mark-class="h-11 w-11"
                         wordmark-class="text-2xl font-bold tracking-tight text-white"
                     />
                 </Link>
@@ -47,8 +60,7 @@ function submit() {
                     Lance ton espace coach en quelques minutes.
                 </h1>
                 <p class="mt-5 max-w-md text-lg leading-relaxed text-slate-400">
-                    Crée ton compte, invite tes athlètes et partage-leur le lien d’activation, puis construis
-                    leurs programmes et suis leur progression au quotidien.
+                    Crée ton compte, puis finalise le paiement Stripe pour le plan choisi.
                 </p>
             </div>
             <ol class="relative mt-12 space-y-4 text-slate-300">
@@ -58,11 +70,11 @@ function submit() {
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">2</span>
-                    <span>Invite tes athlètes — partage le lien d’activation</span>
+                    <span>Paiement sécurisé via Stripe</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">3</span>
-                    <span>Programme, messagerie et retours vidéo centralisés</span>
+                    <span>Invite tes athlètes et démarre</span>
                 </li>
             </ol>
         </div>
@@ -80,8 +92,23 @@ function submit() {
                 <h2 class="mt-6 text-3xl font-bold text-white lg:mt-0">Créer un compte coach</h2>
                 <p class="mt-2 text-slate-400">
                     Déjà inscrit ?
-                    <Link href="/login" class="font-medium text-blue-400 hover:text-blue-300">Se connecter</Link>
+                    <Link
+                        :href="selectedPlan ? `/login?plan=${selectedPlan}` : '/login'"
+                        class="font-medium text-blue-400 hover:text-blue-300"
+                    >
+                        Se connecter
+                    </Link>
                 </p>
+
+                <div
+                    v-if="selectedPlanMeta"
+                    class="mt-6 rounded-xl border border-blue-500/30 bg-blue-950/30 px-4 py-3 text-sm text-blue-100"
+                >
+                    Plan sélectionné :
+                    <strong class="text-white">{{ selectedPlanMeta.name }}</strong>
+                    — {{ formatPrice(selectedPlanMeta.price_eur) }} €/mois.
+                    Après inscription, tu seras redirigé vers le paiement Stripe.
+                </div>
 
                 <form class="mt-8 space-y-5" @submit.prevent="submit">
                     <div>
@@ -146,6 +173,7 @@ function submit() {
                         class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-4 text-base font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500 disabled:opacity-60"
                     >
                         <span v-if="form.processing">Création du compte…</span>
+                        <span v-else-if="selectedPlanMeta">Créer mon compte et payer</span>
                         <span v-else>Créer mon compte coach</span>
                         <span v-if="!form.processing" aria-hidden="true">→</span>
                     </button>

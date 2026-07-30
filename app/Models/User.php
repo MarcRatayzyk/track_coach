@@ -14,10 +14,12 @@ use Illuminate\Notifications\Notifiable;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyCoachEmailNotification;
 use Illuminate\Support\Str;
+use Laravel\Cashier\Billable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmailContract
 {
+    use Billable;
     use HasApiTokens;
     use CanResetPassword;
     use HasFactory;
@@ -30,6 +32,9 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'password',
         'role',
         'initial_setup_completed_at',
+        'trial_ends_at',
+        'is_demo',
+        'demo_expires_at',
     ];
 
     protected $hidden = [
@@ -41,7 +46,17 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'password' => 'hashed',
         'initial_setup_completed_at' => 'datetime',
         'email_verified_at' => 'datetime',
+        'trial_ends_at' => 'datetime',
+        'demo_expires_at' => 'datetime',
+        'is_demo' => 'boolean',
     ];
+
+    public function activeAthleteCount(): int
+    {
+        return $this->athletes()
+            ->wherePivot('status', 'active')
+            ->count();
+    }
 
     public function athletes(): BelongsToMany
     {

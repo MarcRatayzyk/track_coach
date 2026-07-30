@@ -67,22 +67,24 @@ class MessagingInboxSupport
 
     public static function dispatchThreadUpdated(MessageThread $thread): void
     {
-        $thread->loadMissing(['coach', 'athlete']);
+        BroadcastSafely::run(function () use ($thread): void {
+            $thread->loadMissing(['coach', 'athlete']);
 
-        foreach ([$thread->coach, $thread->athlete] as $participant) {
-            if ($participant === null) {
-                continue;
+            foreach ([$thread->coach, $thread->athlete] as $participant) {
+                if ($participant === null) {
+                    continue;
+                }
+
+                $totalUnread = self::totalUnreadFor($participant);
+
+                ThreadUpdated::dispatch(
+                    $thread,
+                    $participant,
+                    self::unreadCountFor($participant, $thread),
+                    $totalUnread,
+                );
             }
-
-            $totalUnread = self::totalUnreadFor($participant);
-
-            ThreadUpdated::dispatch(
-                $thread,
-                $participant,
-                self::unreadCountFor($participant, $thread),
-                $totalUnread,
-            );
-        }
+        });
     }
 
     /**
@@ -135,6 +137,7 @@ class MessagingInboxSupport
             'messages_count' => $thread->messages_count ?? $thread->messages()->count(),
             'unread_messages_count' => (int) ($thread->unread_messages_count ?? 0),
             'updated_at' => $thread->updated_at?->toIso8601String(),
+            'is_online' => self::isCounterpartOnline($thread, $viewer),
             'last_message' => self::lastMessagePreview($thread, $viewer),
         ];
     }
@@ -160,11 +163,35 @@ class MessagingInboxSupport
             $content = $hasAudio ? 'Message vocal' : 'Pièce jointe';
         }
 
+        $hasAudio = $message->relationLoaded('audioFiles')
+            ? $message->audioFiles->isNotEmpty()
+            : $message->audioFiles()->exists();
+
         return [
             'content' => $content,
             'created_at' => $message->created_at?->toIso8601String(),
             'is_mine' => (int) $message->sender_id === (int) $viewer->id,
             'sender_name' => $message->sender?->name,
+            'has_audio' => $hasAudio,
         ];
+    }
+
+    /**
+     * Soft presence heuristic: counterpart messaged within the last 2 hours.
+     */
+    public static function isCounterpartOnline(MessageThread $thread, User $viewer): bool
+    {
+        $thread->loadMissing('latestMessage');
+        $message = $thread->latestMessage;
+
+        if ($message === null || $message->created_at === null) {
+            return false;
+        }
+
+        if ((int) $message->sender_id === (int) $viewer->id) {
+            return false;
+        }
+
+        return $message->created_at->greaterThan(now()->subHours(2));
     }
 }

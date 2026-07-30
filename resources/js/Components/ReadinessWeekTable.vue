@@ -61,19 +61,34 @@ function cellValue(row, field) {
 
 function cellStyle(field, value) {
   const color = resolveOptionColor(field, value);
-  if (!color) {
+  if (!color || value == null || value === '') {
     return {};
   }
   return {
-    backgroundColor: `${color}55`,
-    color: '#0f172a',
+    color,
     fontWeight: 600,
   };
+}
+
+function cellDotStyle(field, value) {
+  const color = resolveOptionColor(field, value);
+  if (!color || value == null || value === '') {
+    return null;
+  }
+  return { backgroundColor: color };
 }
 
 function cellText(field, value) {
   if (value == null || value === '') {
     return '—';
+  }
+  if (typeof value === 'number' || (typeof value === 'string' && value !== '' && Number.isFinite(Number(value)))) {
+    const n = Number(value);
+    if (Number.isFinite(n) && String(value).match(/^\d+([.,]\d+)?$/)) {
+      return (Math.round(n * 100) / 100).toLocaleString('fr-FR', {
+        maximumFractionDigits: 2,
+      });
+    }
   }
   return resolveOptionLabel(field, value);
 }
@@ -113,11 +128,24 @@ const hasAnyValue = computed(() =>
             <td
               v-for="field in sortedFields"
               :key="`${row.date}-${field.id}`"
-              class="max-w-[9rem] truncate px-2 py-2 text-slate-200"
-              :style="cellStyle(field, cellValue(row, field))"
+              class="max-w-[10rem] px-2 py-2"
               :title="String(cellText(field, cellValue(row, field)))"
             >
-              {{ cellText(field, cellValue(row, field)) }}
+              <span
+                v-if="cellValue(row, field) != null && cellValue(row, field) !== ''"
+                class="inline-flex max-w-full items-center gap-1.5"
+              >
+                <span
+                  v-if="cellDotStyle(field, cellValue(row, field))"
+                  class="h-2 w-2 shrink-0 rounded-full"
+                  :style="cellDotStyle(field, cellValue(row, field))"
+                  aria-hidden="true"
+                />
+                <span class="truncate" :style="cellStyle(field, cellValue(row, field))">
+                  {{ cellText(field, cellValue(row, field)) }}
+                </span>
+              </span>
+              <span v-else class="text-slate-600">—</span>
             </td>
           </tr>
         </tbody>

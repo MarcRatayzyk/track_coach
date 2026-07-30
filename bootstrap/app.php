@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnableCrossOriginIsolation;
+use App\Http\Middleware\EnsureCoachHasBillingAccess;
 use App\Http\Middleware\EnsureEmailIsVerifiedUnlessManual;
 use App\Http\Middleware\EnsureUserIsCoach;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -27,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'coach' => EnsureUserIsCoach::class,
             'verified' => EnsureEmailIsVerifiedUnlessManual::class,
+            'billing' => EnsureCoachHasBillingAccess::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'stripe/*',
         ]);
 
         $middleware->redirectGuestsTo('/login');

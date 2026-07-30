@@ -106,6 +106,16 @@ function parseRest(value) {
 function goToNextRow() {
   editor?.state.onGoToNextRow?.();
 }
+
+const canRemove = computed(() => Boolean(editor?.state.canRemove));
+
+function removeRow() {
+  if (!canRemove.value) {
+    return;
+  }
+
+  editor?.state.onRemove?.();
+}
 </script>
 
 <template>
@@ -120,14 +130,24 @@ function goToNextRow() {
           <span v-if="row && sessionHeading" class="font-normal text-slate-400">· {{ sessionHeading }}</span>
         </p>
       </div>
-      <button
-        v-if="row"
-        type="button"
-        class="shrink-0 text-xs font-medium text-slate-500 hover:text-slate-300"
-        @click="editor?.clearSelection()"
-      >
-        Fermer
-      </button>
+      <div v-if="row" class="flex shrink-0 items-center gap-3">
+        <button
+          type="button"
+          class="text-xs font-medium text-red-400 transition hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
+          :disabled="!canRemove"
+          :title="canRemove ? 'Supprimer cette série' : 'Au moins une série est requise'"
+          @click="removeRow"
+        >
+          Supprimer
+        </button>
+        <button
+          type="button"
+          class="text-xs font-medium text-slate-500 hover:text-slate-300"
+          @click="editor?.clearSelection()"
+        >
+          Fermer
+        </button>
+      </div>
     </div>
 
     <div v-if="row" class="space-y-3 px-4 py-3">

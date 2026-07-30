@@ -204,10 +204,6 @@ class AthleteDataWebController extends Controller
 
     private function competitionRedirect(User $user, User $athlete): RedirectResponse
     {
-        if ($user->id === $athlete->id) {
-            return back();
-        }
-
-        return redirect()->route('athletes.show', $athlete);
+        return back();
     }
 }

@@ -44,7 +44,18 @@ const chartOptions = {
     y: {
       min: 1,
       max: 10,
-      ticks: { stepSize: 0.5 },
+      ticks: {
+        stepSize: 0.5,
+        callback(value) {
+          const n = Number(value);
+          if (!Number.isFinite(n)) {
+            return value;
+          }
+          return (Math.round(n * 100) / 100).toLocaleString('fr-FR', {
+            maximumFractionDigits: 2,
+          });
+        },
+      },
     },
   },
 };
@@ -52,7 +63,7 @@ const chartOptions = {
 
 <template>
   <div :class="embedded ? 'h-56' : 'h-64'">
-    <LineChart v-if="points.length" :data="chartData" :options="chartOptions" />
+    <LineChart v-if="points.length" :chart-data="chartData" :options="chartOptions" />
     <p v-else class="flex h-full items-center justify-center text-sm text-slate-500">
       Aucune séance avec RPE sur cette période.
     </p>

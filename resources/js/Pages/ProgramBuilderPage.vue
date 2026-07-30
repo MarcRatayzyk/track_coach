@@ -139,7 +139,7 @@ const pasting = ref(false);
 const pasteMode = ref(false);
 const customExercisesOpen = ref(false);
 const activeTab = ref(
-  ['calendar', 'table', 'table_v2', 'stats'].includes(initialTab) ? initialTab : 'calendar',
+  ['calendar', 'table', 'table_v2', 'stats'].includes(initialTab) ? initialTab : 'table_v2',
 );
 
 
@@ -871,30 +871,6 @@ function clearClipboard() {
 
     <div class="flex flex-col gap-3 border-b border-slate-800 sm:flex-row sm:items-center sm:justify-between">
       <div class="-mx-3 flex overflow-x-auto px-3 sm:mx-0 sm:px-0">
-        <button
-          type="button"
-          class="shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition sm:px-4"
-          :class="
-            activeTab === 'calendar'
-              ? 'border-blue-500 text-blue-300'
-              : 'border-transparent text-slate-400 hover:text-white'
-          "
-          @click="activeTab = 'calendar'"
-        >
-          Calendrier
-        </button>
-        <button
-          type="button"
-          class="shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition sm:px-4"
-          :class="
-            activeTab === 'table'
-              ? 'border-blue-500 text-blue-300'
-              : 'border-transparent text-slate-400 hover:text-white'
-          "
-          @click="activeTab = 'table'"
-        >
-          Tableur
-        </button>
         <button
           v-if="showCalendar"
           type="button"

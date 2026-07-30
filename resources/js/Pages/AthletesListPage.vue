@@ -494,10 +494,6 @@ function confirmRemove(row) {
                     >
                       En attente
                     </span>
-                    <p v-if="row.email" class="truncate text-xs text-slate-500">{{ row.email }}</p>
-                    <p v-else-if="row.is_pending_activation" class="truncate text-xs text-slate-500">
-                      E-mail à renseigner par l’athlète
-                    </p>
                   </div>
                 </div>
               </td>

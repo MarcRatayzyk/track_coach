@@ -779,6 +779,10 @@ onMounted(() => {
           :training-sessions="trainingSessions"
           :time-range="timeRange"
           :time-range-options="timeRangeOptions"
+          :athlete-id="athlete.id"
+          :latest-pr="athlete.latest_pr"
+          :is-coach="isCoach"
+          :can-edit-prs="canManageSessions"
           @update:time-range="timeRange = $event"
         />
       </div>

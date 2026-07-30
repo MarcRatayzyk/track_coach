@@ -26,6 +26,7 @@ class MessagePresenter
             'sender_id' => $message->sender_id,
             'content' => $message->content,
             'created_at' => $message->created_at?->toIso8601String(),
+            'read_at' => $message->read_at?->toIso8601String(),
             'sender' => $message->sender ? [
                 'id' => $message->sender->id,
                 'name' => $message->sender->name,

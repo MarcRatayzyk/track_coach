@@ -1,11 +1,10 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { filterEntriesByRange } from '../utils/athleteOverviewStats';
-import { buildRpeTrendSeries, filterRpeTrendByRange, RPE_EXERCISE_FILTERS } from '../utils/rpeTrend';
+import AthletePrForm from './AthletePrForm.vue';
 import BodyWeightTrendChart from './charts/BodyWeightTrendChart.vue';
 import PrProgressionCharts from './charts/PrProgressionCharts.vue';
 import ReadinessWeekTable from './ReadinessWeekTable.vue';
-import RpeTrendChart from './charts/RpeTrendChart.vue';
 import SbdTonnageDonutChart from './charts/SbdTonnageDonutChart.vue';
 
 const props = defineProps({
@@ -49,20 +48,28 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  athleteId: {
+    type: Number,
+    default: null,
+  },
+  latestPr: {
+    type: Object,
+    default: null,
+  },
+  isCoach: {
+    type: Boolean,
+    default: false,
+  },
+  canEditPrs: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:timeRange']);
 
 const wellnessTimeRange = ref('1m');
-const rpeTimeRange = ref('3m');
-const rpeExerciseFilter = ref('all');
-
-const rpePoints = computed(() => {
-  const series = buildRpeTrendSeries(props.trainingSessions, {
-    exerciseFilter: rpeExerciseFilter.value,
-  });
-  return filterRpeTrendByRange(series, rpeTimeRange.value);
-});
+const showPrForm = ref(false);
 
 const wellnessTimeRangeOptions = [
   { value: '7d', label: '7 j' },
@@ -109,83 +116,60 @@ const filteredBodyWeight = computed(() =>
       <SbdTonnageDonutChart :flat-items="stats?.flatItems ?? []" />
 
       <article class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h3 class="text-sm font-semibold text-white">Évolution RPE (réalisé)</h3>
-          <div class="flex flex-wrap gap-2">
+        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h3 class="text-sm font-semibold text-white">Poids</h3>
+          <div class="flex flex-wrap gap-1.5">
             <button
-              v-for="option in wellnessTimeRangeOptions.filter((item) => ['7d', '1m', '3m', '6m'].includes(item.value))"
-              :key="`rpe-range-${option.value}`"
+              v-for="option in wellnessTimeRangeOptions"
+              :key="`bw-${option.value}`"
               type="button"
-              class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
+              class="rounded-lg border px-2 py-0.5 text-[11px] font-medium transition"
               :class="
-                rpeTimeRange === option.value
-                  ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
+                wellnessTimeRange === option.value
+                  ? 'border-violet-400/70 bg-violet-500/20 text-violet-200'
                   : 'border-slate-700 text-slate-400 hover:bg-slate-800'
               "
-              @click="rpeTimeRange = option.value"
+              @click="wellnessTimeRange = option.value"
             >
               {{ option.label }}
             </button>
           </div>
         </div>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <button
-            v-for="option in RPE_EXERCISE_FILTERS"
-            :key="option.value"
-            type="button"
-            class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
-            :class="
-              rpeExerciseFilter === option.value
-                ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
-                : 'border-slate-700 text-slate-400 hover:bg-slate-800'
-            "
-            @click="rpeExerciseFilter = option.value"
-          >
-            {{ option.label }}
-          </button>
-        </div>
-        <div class="mt-3 min-w-0 overflow-x-auto">
-          <RpeTrendChart :points="rpePoints" embedded />
-        </div>
-      </article>
-    </div>
-
-    <div class="mt-3 flex flex-wrap gap-2">
-      <button
-        v-for="option in wellnessTimeRangeOptions"
-        :key="option.value"
-        type="button"
-        class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
-        :class="
-          wellnessTimeRange === option.value
-            ? 'border-violet-400/70 bg-violet-500/20 text-violet-200'
-            : 'border-slate-700 text-slate-400 hover:bg-slate-800'
-        "
-        @click="wellnessTimeRange = option.value"
-      >
-        {{ option.label }}
-      </button>
-    </div>
-
-    <div class="mt-3 grid min-w-0 gap-4 lg:grid-cols-2">
-      <article class="min-w-0 overflow-hidden">
-        <h3 class="mb-3 text-sm font-semibold text-white">Facteurs externes</h3>
-        <div v-if="filteredReadiness.length || (readinessForm?.fields?.length)" class="min-w-0 overflow-x-auto">
-          <ReadinessWeekTable
-            :fields="readinessForm?.fields ?? []"
-            :entries="filteredReadiness"
-            embedded
-          />
-        </div>
-        <p v-else class="text-sm text-slate-500">Aucune saisie de facteurs externes sur cette période.</p>
-      </article>
-
-      <article class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
         <div class="min-w-0 overflow-x-auto">
           <BodyWeightTrendChart :entries="filteredBodyWeight" embedded />
         </div>
       </article>
     </div>
+
+    <article class="mt-3 min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-sm font-semibold text-white">Facteurs externes</h3>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="option in wellnessTimeRangeOptions"
+            :key="`ready-${option.value}`"
+            type="button"
+            class="rounded-lg border px-2 py-0.5 text-[11px] font-medium transition"
+            :class="
+              wellnessTimeRange === option.value
+                ? 'border-violet-400/70 bg-violet-500/20 text-violet-200'
+                : 'border-slate-700 text-slate-400 hover:bg-slate-800'
+            "
+            @click="wellnessTimeRange = option.value"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+      <div v-if="filteredReadiness.length || (readinessForm?.fields?.length)" class="min-w-0 overflow-x-auto">
+        <ReadinessWeekTable
+          :fields="readinessForm?.fields ?? []"
+          :entries="filteredReadiness"
+          embedded
+        />
+      </div>
+      <p v-else class="text-sm text-slate-500">Aucune saisie de facteurs externes sur cette période.</p>
+    </article>
 
     <article
       v-if="showPrChart"
@@ -193,23 +177,48 @@ const filteredBodyWeight = computed(() =>
     >
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h3 class="text-sm font-semibold text-white">Progression des PR</h3>
-        <div v-if="timeRangeOptions.length" class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <button
-            v-for="option in timeRangeOptions"
-            :key="option.value"
+            v-if="canEditPrs && athleteId"
             type="button"
-            class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
+            class="rounded-lg border px-2.5 py-1 text-xs font-semibold transition"
             :class="
-              timeRange === option.value
-                ? 'border-blue-400/70 bg-blue-500/20 text-blue-200'
-                : 'border-slate-700 text-slate-400 hover:bg-slate-800'
+              showPrForm
+                ? 'border-slate-600 text-slate-300 hover:bg-slate-800'
+                : 'border-blue-500/50 bg-blue-600/15 text-blue-200 hover:bg-blue-600/25'
             "
-            @click="emit('update:timeRange', option.value)"
+            @click="showPrForm = !showPrForm"
           >
-            {{ option.label }}
+            {{ showPrForm ? 'Fermer' : 'Enregistrer un PR' }}
           </button>
+          <template v-if="timeRangeOptions.length">
+            <button
+              v-for="option in timeRangeOptions"
+              :key="option.value"
+              type="button"
+              class="rounded-lg border px-2.5 py-1 text-xs font-medium transition"
+              :class="
+                timeRange === option.value
+                  ? 'border-blue-400/70 bg-blue-500/20 text-blue-200'
+                  : 'border-slate-700 text-slate-400 hover:bg-slate-800'
+              "
+              @click="emit('update:timeRange', option.value)"
+            >
+              {{ option.label }}
+            </button>
+          </template>
         </div>
       </div>
+
+      <AthletePrForm
+        v-if="showPrForm && athleteId"
+        class="mt-4"
+        :athlete-id="athleteId"
+        :latest-pr="latestPr"
+        :is-coach="isCoach"
+        title="Enregistrer un PR"
+        description="Saisis squat, bench, terre et la date du record."
+      />
 
       <div class="mt-4 min-w-0 overflow-x-auto">
         <PrProgressionCharts :records="prRecords" embedded />

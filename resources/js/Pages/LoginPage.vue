@@ -57,7 +57,7 @@ function submit() {
             <div class="relative">
                 <Link href="/" class="inline-flex items-center">
                     <AppLogo
-                        mark-class="h-12 w-12"
+                        mark-class="h-11 w-11"
                         wordmark-class="text-2xl font-bold tracking-tight text-white"
                     />
                 </Link>

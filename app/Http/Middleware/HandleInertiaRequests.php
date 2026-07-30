@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Exercise;
 use App\Support\AuthSidebarSupport;
 use App\Support\ActivationDelivery;
+use App\Support\BillingAccess;
 use App\Support\MessagingInboxSupport;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -46,6 +47,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'role' => $request->user()->role,
+                    'is_demo' => (bool) $request->user()->is_demo,
                 ] : null,
                 'sidebarProfile' => fn () => $request->user()
                     ? AuthSidebarSupport::profileLinkForUser($request->user())
@@ -54,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                     ? AuthSidebarSupport::coachSummaryForAthlete($request->user())
                     : null,
             ],
+            'billing' => fn () => BillingAccess::sharedProps($request->user()),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCoachAthleteRequest;
 use App\Models\AthleteProfile;
 use App\Models\User;
+use App\Support\BillingAccess;
 use App\Support\AccountSetupUrlGenerator;
 use App\Support\ActivationDelivery;
 use App\Support\ReadinessFormSupport;
@@ -20,6 +21,24 @@ class CoachAthleteRosterController extends Controller
         $this->authorize('create', User::class);
 
         $coach = $request->user();
+
+        if (! BillingAccess::canAddAthlete($coach)) {
+            if ($coach->is_demo) {
+                return back()->with(
+                    'error',
+                    'La sandbox démo ne permet pas d’ajouter d’athlètes. Crée un vrai compte pour gérer ton roster.',
+                );
+            }
+
+            $limit = BillingAccess::seatLimit($coach);
+
+            return back()->with(
+                'error',
+                $limit === null
+                    ? 'Impossible d’ajouter un athlète avec ton abonnement actuel.'
+                    : "Tu as atteint la limite de {$limit} athlètes de ton plan. Passe à un plan supérieur.",
+            );
+        }
 
         $first = trim($request->validated('first_name'));
         $last = trim($request->validated('last_name'));

@@ -1,10 +1,13 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-const serverUrl = process.env.CAPACITOR_SERVER_URL?.replace(/\/$/, '');
+/** URL prod par défaut — évite un APK bloqué sur « Chargement… » si la var est oubliée. */
+const DEFAULT_SERVER_URL = 'https://track-coach.onrender.com';
 
-if (!serverUrl) {
+const serverUrl = (process.env.CAPACITOR_SERVER_URL || DEFAULT_SERVER_URL).replace(/\/$/, '');
+
+if (!process.env.CAPACITOR_SERVER_URL) {
     console.warn(
-        'CAPACITOR_SERVER_URL is not set. Set it to your production HTTPS URL before running cap sync.',
+        `CAPACITOR_SERVER_URL unset — using default ${DEFAULT_SERVER_URL}. Set the env var to override.`,
     );
 }
 
@@ -12,9 +15,10 @@ const config: CapacitorConfig = {
     appId: 'com.trackcoach.athlete',
     appName: 'Power Roster',
     webDir: 'capacitor-www',
-    server: serverUrl
-        ? { url: `${serverUrl}/login`, cleartext: false }
-        : undefined,
+    server: {
+        url: `${serverUrl}/login`,
+        cleartext: false,
+    },
     android: {
         appendUserAgent: ' TrackCoachMobile/1.0',
         backgroundColor: '#020617',

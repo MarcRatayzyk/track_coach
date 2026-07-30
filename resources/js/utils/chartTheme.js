@@ -5,6 +5,19 @@ export const LIFT_COLORS = {
   total: { border: 'rgb(147, 197, 253)', bg: 'rgba(147, 197, 253, 0.2)' },
 };
 
+/** Accents plus foncés pour titres / libellés sur fond clair */
+export const LIFT_COLORS_LIGHT = {
+  squat: { border: 'rgb(109, 40, 217)', bg: 'rgba(139, 92, 246, 0.16)' },
+  bench: { border: 'rgb(162, 28, 175)', bg: 'rgba(217, 70, 239, 0.14)' },
+  deadlift: { border: 'rgb(180, 83, 9)', bg: 'rgba(245, 158, 11, 0.16)' },
+  total: { border: 'rgb(29, 78, 216)', bg: 'rgba(59, 130, 246, 0.14)' },
+};
+
+export function liftColorsForTheme(key) {
+  const palette = isLightTheme() ? LIFT_COLORS_LIGHT : LIFT_COLORS;
+  return palette[key] ?? palette.squat ?? LIFT_COLORS.squat;
+}
+
 export const BLOCK_TYPE_COLORS = {
   volume: { border: 'rgb(52, 211, 153)', bg: 'rgba(52, 211, 153, 0.15)' },
   intensification: { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.15)' },
@@ -65,16 +78,17 @@ export function glowCardStyle(colors) {
 }
 
 export function prGlowCardStyle() {
-  const squat = LIFT_COLORS.squat.border;
-  const bench = LIFT_COLORS.bench.border;
-  const deadlift = LIFT_COLORS.deadlift.border;
+  const palette = isLightTheme() ? LIFT_COLORS_LIGHT : LIFT_COLORS;
+  const squat = palette.squat.border;
+  const bench = palette.bench.border;
+  const deadlift = palette.deadlift.border;
   const isLight = isLightTheme();
 
   return {
     background: isLight ? GLOW_CARD_BG_LIGHT : GLOW_CARD_BG_DARK,
     borderWidth: '1px',
     borderStyle: 'solid',
-    borderColor: withAlpha(LIFT_COLORS.total.border, 0.28),
+    borderColor: withAlpha(palette.total.border, isLight ? 0.35 : 0.28),
     boxShadow: isLight
       ? [
           `-8px 0 22px ${withAlpha(squat, 0.18)}`,
@@ -98,10 +112,16 @@ export const LIFT_LABELS = {
   total: 'Total',
 };
 
-const gridColor = 'rgba(51, 65, 85, 0.5)';
-const tickColor = 'rgb(148, 163, 184)';
+const gridColorDark = 'rgba(51, 65, 85, 0.5)';
+const tickColorDark = 'rgb(148, 163, 184)';
+const gridColorLight = 'rgba(148, 163, 184, 0.35)';
+const tickColorLight = 'rgb(71, 85, 105)';
 
 export function baseChartOptions(overrides = {}) {
+  const isLight = isLightTheme();
+  const gridColor = isLight ? gridColorLight : gridColorDark;
+  const tickColor = isLight ? tickColorLight : tickColorDark;
+
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -115,10 +135,10 @@ export function baseChartOptions(overrides = {}) {
         },
       },
       tooltip: {
-        backgroundColor: 'rgb(15, 23, 42)',
-        titleColor: 'rgb(248, 250, 252)',
-        bodyColor: 'rgb(203, 213, 225)',
-        borderColor: 'rgb(51, 65, 85)',
+        backgroundColor: isLight ? 'rgb(255, 255, 255)' : 'rgb(15, 23, 42)',
+        titleColor: isLight ? 'rgb(15, 23, 42)' : 'rgb(248, 250, 252)',
+        bodyColor: isLight ? 'rgb(51, 65, 85)' : 'rgb(203, 213, 225)',
+        borderColor: isLight ? 'rgb(203, 213, 225)' : 'rgb(51, 65, 85)',
         borderWidth: 1,
         padding: 12,
       },
@@ -139,6 +159,9 @@ export function baseChartOptions(overrides = {}) {
 }
 
 export function doughnutChartOptions(overrides = {}) {
+  const isLight = isLightTheme();
+  const tickColor = isLight ? tickColorLight : tickColorDark;
+
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -163,10 +186,10 @@ export function doughnutChartOptions(overrides = {}) {
         },
       },
       tooltip: {
-        backgroundColor: 'rgb(15, 23, 42)',
-        titleColor: 'rgb(248, 250, 252)',
-        bodyColor: 'rgb(203, 213, 225)',
-        borderColor: 'rgb(51, 65, 85)',
+        backgroundColor: isLight ? 'rgb(255, 255, 255)' : 'rgb(15, 23, 42)',
+        titleColor: isLight ? 'rgb(15, 23, 42)' : 'rgb(248, 250, 252)',
+        bodyColor: isLight ? 'rgb(51, 65, 85)' : 'rgb(203, 213, 225)',
+        borderColor: isLight ? 'rgb(203, 213, 225)' : 'rgb(51, 65, 85)',
         borderWidth: 1,
         callbacks: {
           label(context) {

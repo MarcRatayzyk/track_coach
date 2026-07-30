@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\ActivationDelivery;
+use App\Support\BillingPlans;
 use App\Support\MobileApp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,8 +22,19 @@ class LoginController extends Controller
             return $this->redirectAuthenticatedUser($request->user());
         }
 
+        $plan = $request->query('plan', $request->session()->get('subscribe_plan'));
+        if (is_string($plan) && array_key_exists($plan, BillingPlans::all())) {
+            $request->session()->put('subscribe_plan', $plan);
+        } else {
+            $plan = $request->session()->get('subscribe_plan');
+            if (! is_string($plan) || ! array_key_exists($plan, BillingPlans::all())) {
+                $plan = null;
+            }
+        }
+
         return Inertia::render('LoginPage', [
             'email' => old('email', ''),
+            'selectedPlan' => $plan,
         ]);
     }
 
@@ -64,6 +76,11 @@ class LoginController extends Controller
         }
 
         if ($user->role === 'coach') {
+            $plan = $request->session()->get('subscribe_plan');
+            if (is_string($plan) && array_key_exists($plan, BillingPlans::all())) {
+                return redirect()->route('billing.checkout.plan', ['plan' => $plan]);
+            }
+
             return redirect()->intended(route('dashboard'));
         }
 
@@ -89,6 +106,11 @@ class LoginController extends Controller
         }
 
         if ($user->role === 'coach') {
+            $plan = session('subscribe_plan');
+            if (is_string($plan) && array_key_exists($plan, BillingPlans::all()) && ! $user->is_demo) {
+                return redirect()->route('billing.checkout.plan', ['plan' => $plan]);
+            }
+
             return redirect()->route('dashboard');
         }
 

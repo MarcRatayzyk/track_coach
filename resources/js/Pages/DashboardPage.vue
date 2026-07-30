@@ -7,30 +7,28 @@ export default {
 </script>
 
 <script setup>
-import { Link, router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
 import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
-import CoachDashboardCalendar from '../Components/CoachDashboardCalendar.vue';
 import CoachOnboardingTour from '../Components/CoachOnboardingTour.vue';
 import CoachRosterAwardsModal from '../Components/CoachRosterAwardsModal.vue';
 import CompetitionCalendarModal from '../Components/CompetitionCalendarModal.vue';
-import DashboardAlertsPanel from '../Components/DashboardAlertsPanel.vue';
 import FeedbackBreakdownModal from '../Components/FeedbackBreakdownModal.vue';
-import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import OnboardingChecklist from '../Components/OnboardingChecklist.vue';
-import SemiCircleGauge from '../Components/SemiCircleGauge.vue';
 import UiIcon from '../Components/UiIcon.vue';
-import {
-  formatCalendarFr,
-  formatDateTimeFr,
-} from '../utils/formatDates';
+import AlertsPanel from '../Components/CoachDashboard/AlertsPanel.vue';
+import CalendarWidget from '../Components/CoachDashboard/CalendarWidget.vue';
+import ConversationPreview from '../Components/CoachDashboard/ConversationPreview.vue';
+import DashboardHeader from '../Components/CoachDashboard/DashboardHeader.vue';
+import PendingReviews from '../Components/CoachDashboard/PendingReviews.vue';
+import PriorityPanel from '../Components/CoachDashboard/PriorityPanel.vue';
+import ShortcutGrid from '../Components/CoachDashboard/ShortcutGrid.vue';
+import { useDismissedAlerts } from '../composables/useDismissedAlerts';
+import { formatCalendarFr } from '../utils/formatDates';
 import { isCoachOnboardingDone } from '../utils/coachOnboarding';
 
 const props = defineProps({
-  athleteCount: {
-    type: Number,
-    default: 0,
-  },
+  athleteCount: { type: Number, default: 0 },
   feedback: {
     type: Object,
     default: () => ({
@@ -39,6 +37,7 @@ const props = defineProps({
         overdue: 0,
         due_today: 0,
         received_today: 0,
+        replied_today: 0,
         processed_today: 0,
         pending_tasks: [],
       },
@@ -46,6 +45,7 @@ const props = defineProps({
         expected_week: 0,
         received_week: 0,
         processed_week: 0,
+        replied_week: 0,
         pending_tasks: [],
       },
       week_start: null,
@@ -62,66 +62,67 @@ const props = defineProps({
       next_athlete_name: null,
     }),
   },
-  upcomingCompetitions: {
-    type: Array,
-    default: () => [],
-  },
-  recentThreads: {
-    type: Array,
-    default: () => [],
-  },
+  upcomingCompetitions: { type: Array, default: () => [] },
+  recentThreads: { type: Array, default: () => [] },
   stats: {
     type: Object,
-    default: () => ({
-      active_programs: 0,
-      program_templates: 0,
-    }),
+    default: () => ({ active_programs: 0, program_templates: 0 }),
   },
-  alerts: {
-    type: Array,
-    default: () => [],
-  },
-  calendarReminders: {
-    type: Array,
-    default: () => [],
-  },
-  calendarCompetitions: {
-    type: Array,
-    default: () => [],
-  },
-  calendarBlockEvents: {
-    type: Array,
-    default: () => [],
-  },
-  rosterAthletes: {
-    type: Array,
-    default: () => [],
-  },
-  coachReadinessForm: {
-    type: Object,
-    default: null,
-  },
-  monthlyReadinessAwards: {
-    type: Object,
-    default: null,
-  },
+  alerts: { type: Array, default: () => [] },
+  calendarReminders: { type: Array, default: () => [] },
+  calendarCompetitions: { type: Array, default: () => [] },
+  calendarBlockEvents: { type: Array, default: () => [] },
+  rosterAthletes: { type: Array, default: () => [] },
+  coachReadinessForm: { type: Object, default: null },
+  monthlyReadinessAwards: { type: Object, default: null },
   onboarding: {
     type: Object,
     default: () => ({ steps: [], completed_count: 0, total: 0 }),
   },
+  activityFeed: { type: Array, default: () => [] },
+  performance: { type: Object, default: () => ({}) },
 });
 
+const page = usePage();
+const { filterActive } = useDismissedAlerts();
+const activeAlerts = computed(() => filterActive(props.alerts));
 const daily = computed(() => props.feedback.daily ?? {});
 const weekly = computed(() => props.feedback.weekly ?? {});
 
-const dailyPending = computed(() => daily.value.pending_tasks ?? []);
-const weeklyPending = computed(() => weekly.value.pending_tasks ?? []);
+function feedbackListRank(task) {
+  if (task.feedback_status === 'coach_replied') return 2;
+  if (task.has_submission) return 1;
+  return 0;
+}
 
-const dailyReceivedPending = computed(() =>
-  dailyPending.value.filter((task) => task.has_submission),
+function sortFeedbackList(tasks) {
+  return [...tasks].sort((a, b) => {
+    const rankDiff = feedbackListRank(a) - feedbackListRank(b);
+    if (rankDiff !== 0) return rankDiff;
+    return (a.id ?? 0) - (b.id ?? 0);
+  });
+}
+
+const dailyFeedbackList = computed(() => sortFeedbackList(daily.value.pending_tasks ?? []));
+const weeklyFeedbackList = computed(() => sortFeedbackList(weekly.value.pending_tasks ?? []));
+
+const dailyPendingCount = computed(
+  () =>
+    (dailyFeedbackList.value ?? []).filter(
+      (t) => t.has_submission && t.feedback_status !== 'coach_replied',
+    ).length
+    || (daily.value.due_today ?? 0) + (daily.value.overdue ?? 0),
 );
-const weeklyReceivedPending = computed(() =>
-  weeklyPending.value.filter((task) => task.has_submission),
+
+const weeklyPendingCount = computed(
+  () =>
+    (weeklyFeedbackList.value ?? []).filter(
+      (t) => t.has_submission && t.feedback_status !== 'coach_replied',
+    ).length
+    || Math.max(
+      0,
+      (weekly.value.expected_week ?? 0) - (weekly.value.replied_week ?? weekly.value.processed_week ?? 0),
+    ),
 );
 
 const weekLabel = computed(() => {
@@ -135,32 +136,20 @@ const todayLabel = computed(() =>
   props.feedback.today ? formatCalendarFr(props.feedback.today) : "Aujourd'hui",
 );
 
-function feedbackTaskUrl(task) {
-  if (!task.session_feedback_id) {
-    return null;
-  }
-  return `/feedbacks?feedback=${task.session_feedback_id}&filter=pending`;
-}
-
-function openFeedbackTask(task) {
-  const url = feedbackTaskUrl(task);
-  if (url) {
-    router.visit(url);
-  }
-}
-
 const upcomingComps = computed(() => props.upcomingCompetitions ?? []);
 const threads = computed(() => props.recentThreads ?? []);
+const unreadMessages = computed(() => page.props.messagingInbox?.total_unread ?? 0);
+const criticalAlerts = computed(
+  () => activeAlerts.value.filter((a) => a.severity === 'critical').length,
+);
+const competitionSummary = computed(() => props.competitionSummary ?? {});
+const hasAthletes = computed(() => props.athleteCount > 0);
+
 const showCompetitionModal = ref(false);
 const showDailyFeedbackModal = ref(false);
 const showWeeklyFeedbackModal = ref(false);
-
 const dailyBreakdown = computed(() => daily.value.breakdown ?? { pending: [], submitted: [] });
 const weeklyBreakdown = computed(() => weekly.value.breakdown ?? { pending: [], submitted: [] });
-
-const competitionSummary = computed(() => props.competitionSummary ?? {});
-
-const hasAthletes = computed(() => props.athleteCount > 0);
 const showAddAthleteModal = ref(false);
 const showOnboardingTour = ref(false);
 const showRosterAwardsModal = ref(false);
@@ -170,23 +159,17 @@ function awardsStorageKey(awards) {
 }
 
 function hasSeenRosterAwards(awards) {
-  if (typeof window === 'undefined' || !awards) {
-    return true;
-  }
+  if (typeof window === 'undefined' || !awards) return true;
   return window.localStorage.getItem(awardsStorageKey(awards)) === '1';
 }
 
 function markRosterAwardsSeen(awards) {
-  if (typeof window === 'undefined' || !awards) {
-    return;
-  }
+  if (typeof window === 'undefined' || !awards) return;
   window.localStorage.setItem(awardsStorageKey(awards), '1');
 }
 
 function openRosterAwards() {
-  if (!props.monthlyReadinessAwards) {
-    return;
-  }
+  if (!props.monthlyReadinessAwards) return;
   showRosterAwardsModal.value = true;
 }
 
@@ -218,6 +201,7 @@ watch(showAddAthleteModal, (open) => {
         'competitionSummary',
         'upcomingCompetitions',
         'monthlyReadinessAwards',
+        'rosterAthletes',
       ],
     });
   }
@@ -249,22 +233,22 @@ onMounted(() => {
 
     <template v-if="!hasAthletes">
       <div
-        class="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center rounded-2xl border border-dashed border-blue-500/30 bg-gradient-to-b from-blue-600/10 to-slate-900/40 px-6 py-16 text-center shadow-xl"
+        class="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center rounded-[1.25rem] border border-dashed border-blue-500/30 bg-gradient-to-b from-blue-600/10 to-slate-900/40 px-6 py-16 text-center shadow-xl"
       >
         <span
           class="flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-600/15 text-blue-400"
         >
           <UiIcon name="users" class="h-8 w-8" />
         </span>
-        <h1 class="mt-6 text-3xl font-bold text-white">Bienvenue sur ton dashboard</h1>
-        <p class="mt-3 max-w-md text-slate-400">
+        <h1 class="mt-6 text-2xl font-bold text-white sm:text-3xl">Bienvenue sur ton dashboard</h1>
+        <p class="mt-3 max-w-md text-sm text-slate-400 sm:text-base">
           Tu n’as pas encore d’athlète. Commence par en inviter un et partage le lien d’activation pour
           qu’il configure son compte.
         </p>
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <div class="mt-8 flex w-full max-w-sm flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-4">
           <button
             type="button"
-            class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500"
+            class="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500 sm:px-8 sm:py-4 sm:text-base"
             @click="openAddAthleteModal"
           >
             <UiIcon name="users" class="h-5 w-5" />
@@ -273,7 +257,7 @@ onMounted(() => {
           <button
             v-if="!showOnboardingTour"
             type="button"
-            class="rounded-2xl border border-slate-600 px-6 py-4 text-sm font-medium text-slate-300 hover:bg-slate-800/50"
+            class="rounded-2xl border border-slate-600 px-6 py-3.5 text-sm font-medium text-slate-300 hover:bg-slate-800/50 sm:py-4"
             @click="showOnboardingTour = true"
           >
             Revoir la visite guidée
@@ -286,328 +270,103 @@ onMounted(() => {
     </template>
 
     <template v-else>
-    <h1 class="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+      <div class="space-y-6">
+        <DashboardHeader
+          :athlete-count="athleteCount"
+          :alerts-count="activeAlerts.length"
+          :active-programs="stats.active_programs ?? 0"
+          :next-competition-date="competitionSummary.next_date"
+          :next-competition-name="competitionSummary.next_name"
+          @add-athlete="openAddAthleteModal"
+        />
 
-    <div class="mt-4">
-      <OnboardingChecklist :onboarding="onboarding" />
-    </div>
+        <OnboardingChecklist :onboarding="onboarding" />
 
-    <section
-      v-if="monthlyReadinessAwards?.screens?.length"
-      class="mt-4 rounded-xl border border-violet-500/30 bg-gradient-to-r from-violet-950/40 via-slate-900/60 to-slate-900/50 p-4 shadow-lg"
-    >
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p class="text-[10px] font-semibold uppercase tracking-widest text-violet-300/90">Monthly Wrapped</p>
-          <h2 class="mt-1 text-base font-semibold text-white">Roster Awards · {{ monthlyReadinessAwards.month_label }}</h2>
-          <p class="mt-1 text-sm text-slate-400">
-            Podiums humour du groupe (pas, kcal, sommeil) — seulement si ces facteurs sont dans ton questionnaire.
-          </p>
-        </div>
-        <button
-          type="button"
-          class="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
-          @click="openRosterAwards"
+        <section
+          v-if="monthlyReadinessAwards?.screens?.length"
+          class="rounded-[1.25rem] border border-violet-500/30 bg-gradient-to-r from-violet-950/40 via-slate-900/50 to-slate-900/50 p-4 shadow-lg"
         >
-          Voir les awards
-        </button>
-      </div>
-    </section>
-
-    <!-- Ligne 1 : Retours journaliers + hebdomadaires -->
-    <div class="mt-4 grid gap-4 lg:grid-cols-2 lg:items-stretch">
-      <section
-        class="flex min-h-0 flex-col rounded-xl border border-amber-500/25 bg-slate-900/50 p-4 shadow-lg"
-      >
-        <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 class="text-base font-semibold text-white">Retours journaliers à faire</h2>
-          </div>
-          <Link
-            href="/feedbacks?filter=pending"
-            class="shrink-0 rounded-lg border border-amber-500/50 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/25"
-          >
-            Voir les retours
-          </Link>
-          <span
-            v-if="(daily.processed_today ?? 0) > 0"
-            class="rounded-full bg-emerald-950/50 px-2.5 py-1 text-xs text-emerald-300"
-          >
-            {{ daily.processed_today }} traité{{ daily.processed_today > 1 ? 's' : '' }} aujourd'hui
-          </span>
-        </div>
-
-        <p
-          v-if="dailyReceivedPending.length === 0"
-          class="mt-4 flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-950/40 px-4 py-8 text-center text-sm text-slate-500"
-        >
-          Aucun retour journalier reçu pour le moment.
-        </p>
-
-        <div
-          v-else
-          class="tc-scrollbar tc-scrollbar-alerts mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1.5 lg:max-h-[17.5rem]"
-        >
-          <div
-            v-for="task in dailyReceivedPending"
-            :key="task.id"
-            class="flex min-h-[7rem] cursor-pointer flex-col justify-between rounded-lg border border-slate-800 bg-slate-950/40 p-4 transition hover:border-blue-500/40 hover:bg-slate-900/70"
-            @click="openFeedbackTask(task)"
-          >
+          <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <p class="text-sm font-semibold text-white">Retour de séance</p>
-                <span
-                  class="rounded-full bg-blue-950/60 px-2 py-0.5 text-xs font-medium text-blue-300"
-                >
-                  Reçu
-                </span>
-              </div>
-              <Link
-                v-if="task.athlete"
-                :href="`/athletes/${task.athlete_id}`"
-                class="mt-2 inline-block text-sm font-medium text-blue-400 hover:text-blue-300"
-                @click.stop
-              >
-                {{ task.athlete.name }}
-              </Link>
-              <p v-if="task.session_date" class="mt-1 text-xs text-slate-500">
-                Séance du {{ formatCalendarFr(task.session_date) }}
-                <span v-if="task.due_at"> · échéance {{ formatDateTimeFr(task.due_at) }}</span>
+              <p class="text-[10px] font-semibold uppercase tracking-widest text-violet-300/90">
+                Monthly Wrapped
+              </p>
+              <h2 class="mt-1 text-base font-semibold text-white">
+                Roster Awards · {{ monthlyReadinessAwards.month_label }}
+              </h2>
+              <p class="mt-1 text-sm text-slate-400">
+                Podiums humour du groupe — seulement si ces facteurs sont dans ton questionnaire.
               </p>
             </div>
-            <p class="mt-3 text-center text-xs font-medium text-blue-400">Voir le retour →</p>
-          </div>
-        </div>
-      </section>
-
-      <section
-        class="flex min-h-0 flex-col rounded-xl border border-indigo-500/25 bg-slate-900/50 p-4 shadow-lg"
-      >
-        <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 class="text-base font-semibold text-white">Retours hebdomadaires à faire</h2>
-          </div>
-          <Link
-            href="/feedbacks?filter=pending"
-            class="shrink-0 rounded-lg border border-indigo-500/50 bg-indigo-500/15 px-3 py-1.5 text-xs font-semibold text-indigo-200 hover:bg-indigo-500/25"
-          >
-            Voir les retours
-          </Link>
-        </div>
-
-        <p
-          v-if="weeklyReceivedPending.length === 0"
-          class="mt-4 flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-950/40 px-4 py-8 text-center text-sm text-slate-500"
-        >
-          Aucun retour hebdomadaire reçu pour le moment.
-        </p>
-
-        <div
-          v-else
-          class="tc-scrollbar mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1.5 lg:max-h-[17.5rem]"
-        >
-          <div
-            v-for="task in weeklyReceivedPending"
-            :key="task.id"
-            class="flex min-h-[7rem] cursor-pointer flex-col justify-between rounded-lg border border-slate-800 bg-slate-950/40 p-4 transition hover:border-blue-500/40 hover:bg-slate-900/70"
-            @click="openFeedbackTask(task)"
-          >
-            <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <p class="text-sm font-semibold text-white">Retour hebdomadaire</p>
-                <span
-                  class="rounded-full bg-blue-950/60 px-2 py-0.5 text-xs font-medium text-blue-300"
-                >
-                  Reçu
-                </span>
-              </div>
-              <Link
-                v-if="task.athlete"
-                :href="`/athletes/${task.athlete_id}`"
-                class="mt-2 inline-block text-sm font-medium text-blue-400 hover:text-blue-300"
-                @click.stop
-              >
-                {{ task.athlete.name }}
-              </Link>
-              <p class="mt-1 text-xs text-slate-500">
-                {{ weekLabel }}
-                <span v-if="task.due_at"> · échéance {{ formatDateTimeFr(task.due_at) }}</span>
-              </p>
-            </div>
-            <p class="mt-3 text-center text-xs font-medium text-blue-400">Voir le retour →</p>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- Ligne 2 : 4 cartes KPI -->
-    <div class="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <button
-        type="button"
-        class="flex min-h-[8.5rem] flex-col items-center justify-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 text-center shadow-lg transition hover:border-amber-500/50 hover:bg-amber-950/30"
-        @click="showDailyFeedbackModal = true"
-      >
-        <span
-          class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400"
-        >
-          <UiIcon name="list" class="h-5 w-5" />
-        </span>
-        <div class="min-w-0 w-full px-1">
-          <p class="text-xs font-semibold leading-snug text-amber-200/90">
-            Journaliers · {{ todayLabel }}
-          </p>
-          <div class="mt-1 flex justify-center">
-            <SemiCircleGauge
-              :value="daily.received_today ?? 0"
-              :total="daily.expected_today ?? 0"
-              color="#f59e0b"
-              track-color="rgba(120, 53, 15, 0.45)"
-            />
-          </div>
-        </div>
-      </button>
-
-      <button
-        type="button"
-        class="flex min-h-[8.5rem] flex-col items-center justify-center gap-2.5 rounded-xl border border-indigo-500/30 bg-indigo-950/20 p-4 text-center shadow-lg transition hover:border-indigo-500/50 hover:bg-indigo-950/30"
-        @click="showWeeklyFeedbackModal = true"
-      >
-        <span
-          class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-400"
-        >
-          <UiIcon name="calendar" class="h-5 w-5" />
-        </span>
-        <div class="min-w-0 w-full px-1">
-          <p class="text-xs font-semibold text-indigo-200/90">Hebdomadaires</p>
-          <div class="mt-1 flex justify-center">
-            <SemiCircleGauge
-              :value="weekly.received_week ?? 0"
-              :total="weekly.expected_week ?? 0"
-              color="#818cf8"
-              track-color="rgba(49, 46, 129, 0.45)"
-            />
-          </div>
-        </div>
-      </button>
-
-      <button
-        type="button"
-        class="flex min-h-[8.5rem] flex-col items-center justify-center gap-2.5 rounded-xl border border-rose-500/30 bg-rose-950/20 p-4 text-center shadow-lg transition hover:border-rose-500/50 hover:bg-rose-950/30"
-        @click="showCompetitionModal = true"
-      >
-        <span
-          class="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/15 text-rose-400"
-        >
-          <UiIcon name="calendar" class="h-5 w-5" />
-        </span>
-        <div class="min-w-0 w-full px-1">
-          <p class="text-xs font-semibold text-rose-200/90">Compétitions</p>
-          <p class="mt-1.5 text-3xl font-bold tabular-nums text-white">
-            {{ competitionSummary.count ?? 0 }}
-          </p>
-        </div>
-      </button>
-
-      <div
-        class="flex min-h-[8.5rem] flex-col items-center justify-center gap-2.5 rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-center shadow-lg"
-      >
-        <span
-          class="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/15 text-violet-400"
-        >
-          <UiIcon name="bolt" class="h-5 w-5" />
-        </span>
-        <div class="min-w-0 w-full px-1">
-          <p class="text-xs font-semibold text-slate-400">Programmes actifs</p>
-          <p class="mt-1.5 text-3xl font-bold tabular-nums text-white">
-            {{ stats.active_programs ?? 0 }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Ligne 3 : Alertes + Conversations -->
-    <div class="mt-4 grid gap-4 lg:grid-cols-2 lg:items-stretch">
-      <DashboardAlertsPanel :alerts="alerts" />
-
-      <section class="flex min-h-0 flex-col rounded-xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
-        <div class="flex shrink-0 items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <span class="text-blue-400">
-              <UiIcon name="chat" class="h-5 w-5" />
-            </span>
-            <h2 class="text-base font-semibold text-white">Conversations</h2>
-          </div>
-          <Link href="/messaging" class="text-sm font-medium text-blue-400 hover:text-blue-300">
-            Ouvrir
-          </Link>
-        </div>
-        <p v-if="!threads.length" class="mt-4 flex flex-1 items-center justify-center text-center text-sm text-slate-500">
-          Aucune conversation.
-        </p>
-        <ul
-          v-else
-          class="tc-scrollbar mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1.5 lg:max-h-[17.5rem]"
-        >
-          <li v-for="t in threads" :key="t.id">
-            <Link
-              :href="`/messaging?thread=${t.id}`"
-              class="relative block rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2.5 pr-8 transition hover:border-blue-500/40 hover:bg-slate-800/50"
-              :class="(t.unread_messages_count ?? 0) > 0 ? 'border-blue-500/30 bg-blue-950/20' : ''"
+            <button
+              type="button"
+              class="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+              @click="openRosterAwards"
             >
-              <MessageThreadUnreadBadge :count="t.unread_messages_count ?? 0" />
-              <span class="block text-sm font-semibold text-white">{{
-                t.athlete?.name ?? 'Athlète'
-              }}</span>
-              <span class="mt-0.5 block truncate text-xs text-slate-500">
-                <template v-if="t.last_message">
-                  {{ t.last_message.is_mine ? 'Toi : ' : '' }}{{ t.last_message.content }}
-                </template>
-                <template v-else>Aucun message</template>
-              </span>
-            </Link>
-          </li>
-        </ul>
-      </section>
-    </div>
+              Voir les awards
+            </button>
+          </div>
+        </section>
 
-    <CoachDashboardCalendar
-      class="mt-4"
-      :reminders="calendarReminders"
-      :competitions="calendarCompetitions"
-      :block-events="calendarBlockEvents"
-      :roster-athletes="rosterAthletes"
-    />
+        <PriorityPanel
+          :daily-pending="dailyPendingCount"
+          :weekly-pending="weeklyPendingCount"
+          :alerts-count="activeAlerts.length"
+          :critical-alerts="criticalAlerts"
+          :unread-messages="unreadMessages"
+        />
 
-    <CompetitionCalendarModal
-      :open="showCompetitionModal"
-      :competitions="upcomingComps"
-      @close="showCompetitionModal = false"
-    />
+        <PendingReviews
+          :daily-tasks="dailyFeedbackList"
+          :weekly-tasks="weeklyFeedbackList"
+          :today="feedback.today"
+          :week-label="weekLabel"
+        />
 
-    <FeedbackBreakdownModal
-      :open="showDailyFeedbackModal"
-      variant="daily"
-      :title="`Retours journaliers · ${todayLabel}`"
-      subtitle="Athlètes avec une séance programme prévue aujourd'hui"
-      :breakdown="dailyBreakdown"
-      @close="showDailyFeedbackModal = false"
-    />
+        <div class="grid min-w-0 gap-4 lg:grid-cols-2 lg:items-stretch">
+          <ConversationPreview :threads="threads" />
+          <AlertsPanel :alerts="alerts" />
+        </div>
 
-    <FeedbackBreakdownModal
-      :open="showWeeklyFeedbackModal"
-      variant="weekly"
-      title="Retours hebdomadaires"
-      :subtitle="weekLabel"
-      :breakdown="weeklyBreakdown"
-      @close="showWeeklyFeedbackModal = false"
-    />
+        <CalendarWidget
+          :reminders="calendarReminders"
+          :competitions="calendarCompetitions"
+          :block-events="calendarBlockEvents"
+          :roster-athletes="rosterAthletes"
+        />
 
-    <CoachRosterAwardsModal
-      :open="showRosterAwardsModal"
-      :awards="monthlyReadinessAwards"
-      @close="closeRosterAwards"
-    />
+        <ShortcutGrid :on-add-athlete="openAddAthleteModal" />
+      </div>
+
+      <CompetitionCalendarModal
+        :open="showCompetitionModal"
+        :competitions="upcomingComps"
+        @close="showCompetitionModal = false"
+      />
+
+      <FeedbackBreakdownModal
+        :open="showDailyFeedbackModal"
+        variant="daily"
+        :title="`Retours journaliers · ${todayLabel}`"
+        subtitle="Athlètes avec une séance programme prévue aujourd'hui"
+        :breakdown="dailyBreakdown"
+        @close="showDailyFeedbackModal = false"
+      />
+
+      <FeedbackBreakdownModal
+        :open="showWeeklyFeedbackModal"
+        variant="weekly"
+        title="Retours hebdomadaires"
+        :subtitle="weekLabel"
+        :breakdown="weeklyBreakdown"
+        @close="showWeeklyFeedbackModal = false"
+      />
+
+      <CoachRosterAwardsModal
+        :open="showRosterAwardsModal"
+        :awards="monthlyReadinessAwards"
+        @close="closeRosterAwards"
+      />
     </template>
   </div>
 </template>

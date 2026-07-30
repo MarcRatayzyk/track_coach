@@ -12,6 +12,8 @@ export function provideTableRowEditor() {
     defaultLift: 'squat',
     onUpdate: null,
     onGoToNextRow: null,
+    onRemove: null,
+    canRemove: false,
   });
 
   function selectRow({
@@ -23,6 +25,8 @@ export function provideTableRowEditor() {
     defaultLift,
     onUpdate,
     onGoToNextRow,
+    onRemove,
+    canRemove,
   }) {
     state.weekNumber = weekNumber;
     state.weekday = weekday;
@@ -32,6 +36,8 @@ export function provideTableRowEditor() {
     state.defaultLift = defaultLift;
     state.onUpdate = onUpdate;
     state.onGoToNextRow = onGoToNextRow ?? null;
+    state.onRemove = onRemove ?? null;
+    state.canRemove = Boolean(canRemove);
   }
 
   function clearSelection() {
@@ -43,6 +49,8 @@ export function provideTableRowEditor() {
     state.defaultLift = 'squat';
     state.onUpdate = null;
     state.onGoToNextRow = null;
+    state.onRemove = null;
+    state.canRemove = false;
   }
 
   const hasSelection = computed(() => state.row != null);

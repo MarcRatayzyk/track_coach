@@ -21,6 +21,7 @@ class StoreCoachRegistrationRequest extends FormRequest
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+            'plan' => ['nullable', 'string', 'in:starter,growth,scale'],
         ];
     }
 

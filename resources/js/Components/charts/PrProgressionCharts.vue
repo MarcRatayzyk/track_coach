@@ -2,8 +2,9 @@
 import { computed, ref } from 'vue';
 import ChartCard from './ChartCard.vue';
 import LineChart from './LineChart.vue';
-import { LIFT_COLORS, LIFT_LABELS } from '../../utils/chartTheme';
+import { LIFT_COLORS, LIFT_LABELS, liftColorsForTheme } from '../../utils/chartTheme';
 import { formatCalendarFr } from '../../utils/formatDates';
+import { theme } from '../../composables/useTheme';
 
 const LIFT_KEYS = ['squat', 'bench', 'deadlift', 'total'];
 const selectedLift = ref('total');
@@ -70,13 +71,15 @@ const chartData = computed(() => ({
 }));
 
 function liftButtonStyle(key) {
-  const { border, bg } = LIFT_COLORS[key];
+  void theme.value;
+  const { border, bg } = liftColorsForTheme(key);
   const active = selectedLift.value === key;
+  const activeText = theme.value === 'light' ? '#ffffff' : 'rgb(15, 23, 42)';
 
   return {
     borderColor: border,
     backgroundColor: active ? border : bg,
-    color: active ? 'rgb(15, 23, 42)' : border,
+    color: active ? activeText : border,
   };
 }
 

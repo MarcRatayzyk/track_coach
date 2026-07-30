@@ -61,8 +61,6 @@ const profileForm = useForm({
   club_gym: props.editableProfile?.club_gym ?? '',
 });
 
-const rosterStats = computed(() => props.coach.roster_stats ?? null);
-
 const exerciseLibrary = computed(() => page.props.exerciseLibrary ?? []);
 const exerciseCounts = computed(() => {
   const all = exerciseLibrary.value;
@@ -359,39 +357,6 @@ function submitProfile() {
         </div>
       </section>
     </template>
-
-    <section
-      v-if="rosterStats"
-      class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg"
-    >
-      <h2 class="text-sm font-semibold text-white">Statistiques roster</h2>
-      <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div class="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-3 text-center">
-          <p class="text-2xl font-bold tabular-nums text-white">{{ rosterStats.athlete_count }}</p>
-          <p class="mt-1 text-xs text-slate-500">Athlètes actifs</p>
-        </div>
-        <div class="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-3 text-center">
-          <p class="text-2xl font-bold tabular-nums text-white">
-            {{
-              rosterStats.average_adherence_30d != null
-                ? `${rosterStats.average_adherence_30d}%`
-                : '—'
-            }}
-          </p>
-          <p class="mt-1 text-xs text-slate-500">Adhérence moy. (30 j)</p>
-        </div>
-        <div class="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-3 text-center">
-          <p class="text-2xl font-bold tabular-nums text-white">{{ rosterStats.active_blocks }}</p>
-          <p class="mt-1 text-xs text-slate-500">Blocs actifs</p>
-        </div>
-        <div class="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-3 text-center">
-          <p class="text-2xl font-bold tabular-nums text-white">
-            {{ rosterStats.upcoming_competitions }}
-          </p>
-          <p class="mt-1 text-xs text-slate-500">Compétitions à venir</p>
-        </div>
-      </div>
-    </section>
 
     <ReadinessFormBuilderModal
       v-if="canEdit"

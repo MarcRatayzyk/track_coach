@@ -336,7 +336,7 @@ onMounted(() => {
         <div
           v-for="row in grid.rows"
           :key="`label-${row.weekday}`"
-          class="flex h-10 items-center justify-end border-b border-slate-800/60 px-1 pr-2 text-[10px] font-medium leading-none text-slate-500 last:border-b-0 lg:h-8"
+          class="flex h-10 items-center justify-end border-b border-slate-800/60 px-1 pr-2 text-[10px] font-medium leading-none text-slate-400 last:border-b-0 lg:h-8"
         >
           {{ row.label }}
         </div>
@@ -351,7 +351,7 @@ onMounted(() => {
                 :key="`${header.year}-${header.month}-${index}`"
                 :data-month-key="`${header.year}-${header.month}`"
                 :colspan="header.colSpan"
-                class="min-w-[1.75rem] border-b border-slate-700/80 px-1 pb-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+                class="min-w-[1.75rem] border-b border-slate-700/80 px-1 pb-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-300"
                 :class="monthBandClass(header.monthIndex)"
               >
                 {{ header.label }}

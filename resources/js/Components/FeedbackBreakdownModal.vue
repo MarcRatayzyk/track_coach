@@ -46,7 +46,7 @@ function statusLabel(item) {
   if (item.is_overdue) {
     return 'En retard';
   }
-  return "À faire aujourd'hui";
+  return "N'a pas encore envoyé";
 }
 
 function dateLabel(item) {

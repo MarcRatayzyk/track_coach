@@ -220,6 +220,7 @@ onMounted(() => {
 <template>
   <div class="space-y-3 lg:space-y-4">
     <AthleteDashboardHeader
+      v-if="todaySession?.status !== 'session'"
       :athlete-id="athleteId"
       :next-competition="nextCompetition"
       :today-session-title="todaySessionTitle"
@@ -229,13 +230,29 @@ onMounted(() => {
       @open-check-in="openCheckInModal"
     />
 
+    <div
+      v-else-if="!todayReadiness || !todayBodyWeight"
+      class="flex justify-end"
+    >
+      <button
+        type="button"
+        class="shrink-0 rounded-lg border border-blue-500/40 bg-blue-950/30 px-3 py-1.5 text-xs font-semibold text-blue-200 lg:hidden"
+        @click="openCheckInModal"
+      >
+        Check-in
+      </button>
+    </div>
+
     <TodaySessionCard
       class="min-w-0"
       :class="sessionCardMotionClass"
       :today-session="todaySession"
       :athlete-id="athleteId"
+      :athlete-name="athleteName"
       :one-rm="oneRm"
       :today-logged-session="todayLoggedSession"
+      :next-competition="nextCompetition"
+      :block-progress="blockProgress"
     />
 
     <section

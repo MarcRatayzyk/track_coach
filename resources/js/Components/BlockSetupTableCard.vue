@@ -31,14 +31,14 @@ const form = useForm({
   days_per_week: 4,
   date_start: today,
   day_table_layout_id: props.defaultDayTableLayoutId ?? props.dayTableLayouts[0]?.id ?? '',
-  builder_tab: 'table',
+  builder_tab: 'table_v2',
 });
 
 function submit() {
   form.post('/coach/program-blocks', {
     preserveScroll: true,
     onSuccess: () => {
-      track('program_created', { source: 'table' });
+      track('program_created', { source: 'table_v2' });
     },
   });
 }
@@ -46,7 +46,7 @@ function submit() {
 const deletingId = ref(null);
 
 function openBlock(assignmentId) {
-  router.get('/program-builder', { assignment: assignmentId, tab: 'table' }, { preserveState: false });
+  router.get('/program-builder', { assignment: assignmentId, tab: 'table_v2' }, { preserveState: false });
 }
 
 function deleteBlock(block) {
@@ -190,7 +190,7 @@ function deleteBlock(block) {
               class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-medium text-blue-300 hover:bg-slate-800"
               @click="openBlock(block.id)"
             >
-              Ouvrir en tableur
+              Ouvrir en tableur V2
             </button>
             <button
               type="button"

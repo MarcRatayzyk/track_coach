@@ -11,6 +11,7 @@ use App\Http\Controllers\Web\AppPageController;
 use App\Http\Controllers\Web\AthleteCompetitionController;
 use App\Http\Controllers\Web\AthleteBodyWeightController;
 use App\Http\Controllers\Web\AthleteReadinessController;
+use App\Http\Controllers\Web\BillingController;
 use App\Http\Controllers\Web\BugReportController;
 use App\Http\Controllers\Web\Coach\AthleteDataWebController;
 use App\Http\Controllers\Web\Coach\AthleteProgramHistoryController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\Web\Coach\CoachChartTemplateWebController;
 use App\Http\Controllers\Web\Coach\CoachStatsDashboardWebController;
 use App\Http\Controllers\Web\Coach\DayTableLayoutWebController;
 use App\Http\Controllers\Web\Coach\ProgramWebController;
+use App\Http\Controllers\Web\DemoController;
 use App\Http\Controllers\Web\RegisterController;
 use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\LoginController;
@@ -41,11 +43,17 @@ Route::get('/downloads/power-roster.apk', ApkDownloadController::class)
 
 Route::inertia('/confidentialite', 'PrivacyPolicyPage')->name('privacy');
 
+Route::get('/subscribe/{plan}', [BillingController::class, 'subscribe'])
+    ->whereIn('plan', ['starter', 'growth', 'scale'])
+    ->name('subscribe');
+
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:login');
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:register');
+    Route::get('/demo', [DemoController::class, 'create'])->name('demo.create');
+    Route::post('/demo', [DemoController::class, 'store'])->middleware('throttle:register')->name('demo.store');
     Route::get('/forgot-password', [ForgotPasswordController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'store'])->name('password.email');
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'create'])->name('password.reset');
@@ -74,69 +82,84 @@ Route::middleware('auth')->group(function (): void {
 });
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
-    Route::get('/athlete/dashboard', [AppPageController::class, 'athleteDashboard'])
-        ->name('athlete.dashboard');
-    Route::get('/athlete/program', [AppPageController::class, 'athleteProgram'])
-        ->name('athlete.program');
-    Route::get('/coaches/{coach}', [CoachProfileController::class, 'show'])
-        ->name('coaches.show');
+    Route::get('/subscription/blocked', [BillingController::class, 'blocked'])
+        ->name('subscription.blocked');
 
-    Route::get('/feedbacks', [SessionFeedbackWebController::class, 'index'])->name('feedbacks.index');
-    Route::get('/feedbacks/{feedback}', [SessionFeedbackWebController::class, 'show'])->name('feedbacks.show');
-    Route::post('/feedbacks', [SessionFeedbackWebController::class, 'store'])->name('feedbacks.store');
-    Route::post('/feedbacks/{feedback}/reply', [SessionFeedbackWebController::class, 'reply'])
-        ->name('feedbacks.reply');
-    Route::post('/feedbacks/video-uploads', [SessionFeedbackVideoUploadController::class, 'store'])
-        ->name('feedbacks.video-uploads.store');
-    Route::post('/feedbacks/video-uploads/{media}/complete', [SessionFeedbackVideoUploadController::class, 'complete'])
-        ->name('feedbacks.video-uploads.complete');
+    Route::middleware('billing')->group(function (): void {
+        Route::get('/athlete/dashboard', [AppPageController::class, 'athleteDashboard'])
+            ->name('athlete.dashboard');
+        Route::get('/athlete/program', [AppPageController::class, 'athleteProgram'])
+            ->name('athlete.program');
+        Route::get('/coaches/{coach}', [CoachProfileController::class, 'show'])
+            ->name('coaches.show');
 
-    Route::get('/athletes/{athlete}', [AppPageController::class, 'athlete'])->name('athletes.show');
-    Route::post('/athletes/{athlete}/training-sessions', [AthleteDataWebController::class, 'storeTrainingSession'])
-        ->name('athletes.training-sessions.store');
-    Route::put('/athletes/{athlete}/training-sessions/{trainingSession}', [AthleteDataWebController::class, 'updateTrainingSession'])
-        ->name('athletes.training-sessions.update');
-    Route::delete('/athletes/{athlete}/training-sessions/{trainingSession}', [AthleteDataWebController::class, 'destroyTrainingSession'])
-        ->name('athletes.training-sessions.destroy');
-    Route::post('/athletes/{athlete}/readiness', [AthleteReadinessController::class, 'store'])
-        ->name('athletes.readiness.store');
-    Route::post('/athletes/{athlete}/body-weight', [AthleteBodyWeightController::class, 'store'])
-        ->name('athletes.body-weight.store');
-    Route::patch('/athletes/{athlete}/competitions/{competition}/match-plan', [AthleteCompetitionController::class, 'updateMatchPlan'])
-        ->name('athletes.competitions.match-plan.update');
-    Route::get('/athletes/{athlete}/competitions/{competition}/live', [CompetitionLiveController::class, 'show'])
-        ->name('athletes.competitions.live.show');
-    Route::patch('/athletes/{athlete}/competitions/{competition}/live', [CompetitionLiveController::class, 'update'])
-        ->name('athletes.competitions.live.update');
-    Route::post('/athletes/{athlete}/prs', [AthleteDataWebController::class, 'storePr'])
-        ->name('athletes.prs.store');
-    Route::patch('/athletes/{athlete}/profile', [AthleteDataWebController::class, 'updateOwnProfile'])
-        ->name('athletes.profile.update');
-    Route::post('/athletes/{athlete}/competitions', [AthleteDataWebController::class, 'storeCompetition'])
-        ->name('athletes.competitions.store');
-    Route::patch('/athletes/{athlete}/competitions/{competition}', [AthleteDataWebController::class, 'updateCompetition'])
-        ->name('athletes.competitions.update');
-    Route::delete('/athletes/{athlete}/competitions/{competition}', [AthleteDataWebController::class, 'destroyCompetition'])
-        ->name('athletes.competitions.destroy');
+        Route::get('/feedbacks', [SessionFeedbackWebController::class, 'index'])->name('feedbacks.index');
+        Route::get('/feedbacks/{feedback}', [SessionFeedbackWebController::class, 'show'])->name('feedbacks.show');
+        Route::post('/feedbacks', [SessionFeedbackWebController::class, 'store'])->name('feedbacks.store');
+        Route::post('/feedbacks/{feedback}/reply', [SessionFeedbackWebController::class, 'reply'])
+            ->name('feedbacks.reply');
+        Route::post('/feedbacks/video-uploads', [SessionFeedbackVideoUploadController::class, 'store'])
+            ->name('feedbacks.video-uploads.store');
+        Route::post('/feedbacks/video-uploads/{media}/complete', [SessionFeedbackVideoUploadController::class, 'complete'])
+            ->name('feedbacks.video-uploads.complete');
+
+        Route::get('/athletes/{athlete}', [AppPageController::class, 'athlete'])->name('athletes.show');
+        Route::post('/athletes/{athlete}/training-sessions', [AthleteDataWebController::class, 'storeTrainingSession'])
+            ->name('athletes.training-sessions.store');
+        Route::put('/athletes/{athlete}/training-sessions/{trainingSession}', [AthleteDataWebController::class, 'updateTrainingSession'])
+            ->name('athletes.training-sessions.update');
+        Route::delete('/athletes/{athlete}/training-sessions/{trainingSession}', [AthleteDataWebController::class, 'destroyTrainingSession'])
+            ->name('athletes.training-sessions.destroy');
+        Route::post('/athletes/{athlete}/readiness', [AthleteReadinessController::class, 'store'])
+            ->name('athletes.readiness.store');
+        Route::post('/athletes/{athlete}/body-weight', [AthleteBodyWeightController::class, 'store'])
+            ->name('athletes.body-weight.store');
+        Route::patch('/athletes/{athlete}/competitions/{competition}/match-plan', [AthleteCompetitionController::class, 'updateMatchPlan'])
+            ->name('athletes.competitions.match-plan.update');
+        Route::get('/athletes/{athlete}/competitions/{competition}/live', [CompetitionLiveController::class, 'show'])
+            ->name('athletes.competitions.live.show');
+        Route::patch('/athletes/{athlete}/competitions/{competition}/live', [CompetitionLiveController::class, 'update'])
+            ->name('athletes.competitions.live.update');
+        Route::post('/athletes/{athlete}/prs', [AthleteDataWebController::class, 'storePr'])
+            ->name('athletes.prs.store');
+        Route::patch('/athletes/{athlete}/profile', [AthleteDataWebController::class, 'updateOwnProfile'])
+            ->name('athletes.profile.update');
+        Route::post('/athletes/{athlete}/competitions', [AthleteDataWebController::class, 'storeCompetition'])
+            ->name('athletes.competitions.store');
+        Route::patch('/athletes/{athlete}/competitions/{competition}', [AthleteDataWebController::class, 'updateCompetition'])
+            ->name('athletes.competitions.update');
+        Route::delete('/athletes/{athlete}/competitions/{competition}', [AthleteDataWebController::class, 'destroyCompetition'])
+            ->name('athletes.competitions.destroy');
+
+        Route::post('/support/bug-report', [BugReportController::class, 'store'])
+            ->middleware('throttle:5,1')
+            ->name('support.bug-report.store');
+
+        Route::get('/messaging', [AppPageController::class, 'messaging'])->name('messaging');
+        Route::post('/coach/threads/{thread}/messages', [MessageWebController::class, 'storeMessage'])
+            ->middleware('throttle:messages')
+            ->name('coach.threads.messages.store');
+        Route::post('/messaging/threads/{thread}/messages', [MessageWebController::class, 'storeMessage'])
+            ->middleware('throttle:messages')
+            ->name('messaging.threads.messages.store');
+    });
 
     Route::get('/account/privacy', [AccountPrivacyController::class, 'show'])->name('account.privacy');
     Route::get('/account/data-export', [AccountPrivacyController::class, 'export'])->name('account.data-export');
     Route::delete('/account', [AccountPrivacyController::class, 'destroy'])->name('account.destroy');
-
-    Route::post('/support/bug-report', [BugReportController::class, 'store'])
-        ->middleware('throttle:5,1')
-        ->name('support.bug-report.store');
-
-    Route::get('/messaging', [AppPageController::class, 'messaging'])->name('messaging');
-    Route::post('/coach/threads/{thread}/messages', [MessageWebController::class, 'storeMessage'])
-        ->middleware('throttle:messages')
-        ->name('coach.threads.messages.store');
-    Route::post('/messaging/threads/{thread}/messages', [MessageWebController::class, 'storeMessage'])
-        ->middleware('throttle:messages')
-        ->name('messaging.threads.messages.store');
 });
 
 Route::middleware(['auth', 'verified', 'coach'])->group(function (): void {
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
+    Route::get('/billing/checkout/{plan}', [BillingController::class, 'checkoutPlan'])
+        ->whereIn('plan', ['starter', 'growth', 'scale'])
+        ->name('billing.checkout.plan');
+    Route::get('/billing/success', [BillingController::class, 'success'])->name('billing.success');
+    Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+});
+
+Route::middleware(['auth', 'verified', 'coach', 'billing'])->group(function (): void {
     Route::patch('/coach/tasks/{task}/complete', [DashboardTaskController::class, 'complete'])
         ->name('coach.tasks.complete');
 
@@ -237,5 +260,6 @@ Route::middleware(['auth', 'verified', 'coach'])->group(function (): void {
     Route::delete('/coach/calendar-reminders/{reminder}', [CoachCalendarReminderController::class, 'destroy'])
         ->name('coach.calendar-reminders.destroy');
     Route::get('/athletes', [AppPageController::class, 'athletes'])->name('athletes.index');
+    Route::get('/competitions', [AppPageController::class, 'competitions'])->name('competitions.index');
     Route::get('/program-builder', [AppPageController::class, 'programBuilder'])->name('program.builder');
 });

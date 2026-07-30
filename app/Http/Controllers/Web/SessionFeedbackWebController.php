@@ -6,12 +6,15 @@ use App\Actions\SendFeedbackReplyMessageAction;
 use App\Actions\StoreSessionFeedbackAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSessionFeedbackRequest;
+use App\Models\AthleteProfile;
 use App\Models\MessageThread;
 use App\Models\SessionFeedback;
 use App\Services\AthleteEligibleFeedbackSessionsService;
+use App\Services\CoachFeedbackMetricsService;
 use App\Support\FeedbackFrequencySupport;
 use App\Support\SessionFeedbackPresenter;
 use App\Support\VideoUploadDisk;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -107,18 +110,15 @@ class SessionFeedbackWebController extends Controller
             ->with('success', 'Retour envoyé à l’athlète.');
     }
 
-    private function coachIndex($coach, string $filter, ?int $activeId): Response
+    private function coachIndex($coach, string $_filter, ?int $activeId): Response
     {
-        $query = SessionFeedback::query()
+        $feedbacks = SessionFeedback::query()
             ->where('coach_id', $coach->id)
             ->with(['athlete:id,name', 'programTrainingDay', 'athleteVideos'])
-            ->orderByDesc('submitted_at');
+            ->orderByDesc('submitted_at')
+            ->limit(100)
+            ->get();
 
-        if ($filter === 'pending') {
-            $query->where('status', SessionFeedback::STATUS_SUBMITTED);
-        }
-
-        $feedbacks = $query->limit(100)->get();
         $activeFeedback = null;
 
         if ($activeId !== null) {
@@ -134,14 +134,17 @@ class SessionFeedbackWebController extends Controller
             }
         }
 
+        $metrics = app(CoachFeedbackMetricsService::class)->forCoach($coach);
+
         return Inertia::render('SessionFeedbacksPage', [
             'role' => 'coach',
-            'filter' => $filter,
+            'filter' => 'all',
             'feedbacks' => SessionFeedbackPresenter::list($feedbacks),
             'activeFeedback' => $activeFeedback,
             'eligibleSessions' => [],
             'feedbackFrequency' => null,
             'uploadLimits' => $this->uploadLimits(),
+            'metrics' => $this->compactCoachMetrics($metrics, $feedbacks),
         ]);
     }
 
@@ -178,6 +181,7 @@ class SessionFeedbackWebController extends Controller
             'eligibleSessions' => $eligibleService->forAthlete($athlete),
             'feedbackFrequency' => FeedbackFrequencySupport::frequencyFor($athlete),
             'uploadLimits' => $this->uploadLimits(),
+            'metrics' => null,
         ]);
     }
 
@@ -200,11 +204,15 @@ class SessionFeedbackWebController extends Controller
 
             return [
                 'role' => 'coach',
-                'filter' => $filter,
+                'filter' => 'all',
                 'feedbacks' => SessionFeedbackPresenter::list($feedbacks),
                 'eligibleSessions' => [],
                 'feedbackFrequency' => null,
                 'uploadLimits' => $this->uploadLimits(),
+                'metrics' => $this->compactCoachMetrics(
+                    app(CoachFeedbackMetricsService::class)->forCoach($user),
+                    $feedbacks,
+                ),
             ];
         }
 
@@ -222,6 +230,93 @@ class SessionFeedbackWebController extends Controller
             'eligibleSessions' => app(AthleteEligibleFeedbackSessionsService::class)->forAthlete($user),
             'feedbackFrequency' => FeedbackFrequencySupport::frequencyFor($user),
             'uploadLimits' => $this->uploadLimits(),
+            'metrics' => null,
+        ];
+    }
+
+    /**
+     * KPI légers pour la page retours (journalier + hebdo).
+     *
+     * @param  array<string, mixed>  $metrics
+     * @param  \Illuminate\Support\Collection<int, SessionFeedback>  $feedbacks
+     * @return array<string, mixed>
+     */
+    private function compactCoachMetrics(array $metrics, $feedbacks): array
+    {
+        $dailyTasks = collect($metrics['daily']['pending_tasks'] ?? []);
+        $weeklyTasks = collect($metrics['weekly']['pending_tasks'] ?? []);
+        $today = (string) ($metrics['today'] ?? now()->toDateString());
+
+        $awaiting = static fn ($tasks) => $tasks
+            ->filter(fn (array $task) => ($task['has_submission'] ?? false)
+                && ($task['feedback_status'] ?? null) !== SessionFeedback::STATUS_COACH_REPLIED)
+            ->count();
+
+        // Retard journalier : session_date < aujourd'hui.
+        // Retard hebdo : uniquement après la fin de la semaine d'envoi (dimanche),
+        // pas le lendemain de la séance.
+        $feedbacks->loadMissing('athlete.profile');
+        $overdueDaily = 0;
+        $overdueWeekly = 0;
+        foreach ($feedbacks as $feedback) {
+            if ($feedback->status === SessionFeedback::STATUS_COACH_REPLIED) {
+                continue;
+            }
+            $sessionDate = $feedback->session_date?->toDateString();
+            if ($sessionDate === null) {
+                continue;
+            }
+
+            $frequency = $feedback->athlete?->profile?->feedback_frequency
+                ?? AthleteProfile::FREQUENCY_WEEKLY;
+
+            if ($frequency === AthleteProfile::FREQUENCY_DAILY) {
+                if ($sessionDate < $today) {
+                    $overdueDaily++;
+                }
+                continue;
+            }
+
+            $weekEnd = Carbon::parse($sessionDate)
+                ->startOfWeek(Carbon::MONDAY)
+                ->endOfWeek(Carbon::SUNDAY)
+                ->toDateString();
+
+            if ($today > $weekEnd) {
+                $overdueWeekly++;
+            }
+        }
+
+        $expectedDaily = (int) ($metrics['weekly']['expected_week_daily'] ?? 0);
+        $expectedWeekly = (int) ($metrics['weekly']['expected_week'] ?? 0);
+        $expectedTotal = (int) ($metrics['weekly']['expected_week_total'] ?? ($expectedDaily + $expectedWeekly));
+        $pendingDaily = $awaiting($dailyTasks);
+        $pendingWeekly = $awaiting($weeklyTasks);
+        $doneDaily = (int) ($metrics['daily']['replied_today'] ?? 0);
+        $doneWeekly = (int) ($metrics['weekly']['replied_week'] ?? $metrics['weekly']['processed_week'] ?? 0);
+
+        return [
+            'expected' => [
+                'daily' => $expectedDaily,
+                'weekly' => $expectedWeekly,
+                'total' => $expectedTotal,
+                'scope' => 'week',
+            ],
+            'pending' => [
+                'daily' => $pendingDaily,
+                'weekly' => $pendingWeekly,
+                'total' => $pendingDaily + $pendingWeekly,
+            ],
+            'done' => [
+                'daily' => $doneDaily,
+                'weekly' => $doneWeekly,
+                'total' => $doneDaily + $doneWeekly,
+            ],
+            'overdue' => [
+                'daily' => $overdueDaily,
+                'weekly' => $overdueWeekly,
+                'total' => $overdueDaily + $overdueWeekly,
+            ],
         ];
     }
 

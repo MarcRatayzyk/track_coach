@@ -28,7 +28,10 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Poids (kg)',
-        data: sortedEntries.value.map((entry) => entry.weight_kg),
+        data: sortedEntries.value.map((entry) => {
+          const n = Number(entry.weight_kg);
+          return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
+        }),
         borderColor: 'rgb(168, 85, 247)',
         backgroundColor: 'rgba(168, 85, 247, 0.12)',
         fill: true,
@@ -46,7 +49,15 @@ const chartOptions = {
     y: {
       ticks: {
         callback(value) {
-          return `${value} kg`;
+          const n = Number(value);
+          if (!Number.isFinite(n)) {
+            return value;
+          }
+          const rounded = Math.round(n * 100) / 100;
+          return `${rounded.toLocaleString('fr-FR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+          })} kg`;
         },
       },
     },
@@ -56,7 +67,11 @@ const chartOptions = {
     tooltip: {
       callbacks: {
         label(context) {
-          return `${Number(context.parsed.y).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} kg`;
+          const n = Number(context.parsed.y);
+          return `${n.toLocaleString('fr-FR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+          })} kg`;
         },
       },
     },

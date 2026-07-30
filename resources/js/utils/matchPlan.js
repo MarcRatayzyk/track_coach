@@ -3,7 +3,7 @@ export const LIFTS = ['squat', 'bench', 'deadlift'];
 export const LIFT_LABELS = {
   squat: 'Squat (S)',
   bench: 'Bench (B)',
-  deadlift: 'Deadlift (T)',
+  deadlift: 'Deadlift (D)',
 };
 
 export const ATTEMPT_KEYS = ['attempt1', 'attempt2', 'attempt3'];

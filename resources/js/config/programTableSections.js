@@ -37,10 +37,8 @@ export const PROGRAM_TABLE_SECTIONS = [
   },
 ];
 
-export function sectionRowClass(section) {
-  return (
-    PROGRAM_TABLE_SECTIONS.find((option) => option.value === section)?.rowClass ?? 'bg-white/5'
-  );
+export function sectionRowClass(_section) {
+  return '';
 }
 
 export function sectionOption(section) {

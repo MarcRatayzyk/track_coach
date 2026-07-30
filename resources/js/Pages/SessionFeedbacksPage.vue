@@ -7,7 +7,7 @@ export default {
 </script>
 
 <script setup>
-import { Link, router, useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref, useTemplateRef, watch } from 'vue';
 import { Capacitor } from '@capacitor/core';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
@@ -18,6 +18,8 @@ import SeriesComparisonCard from '../Components/SeriesComparisonCard.vue';
 import SeriesPickerModal from '../Components/SeriesPickerModal.vue';
 import VideoTrimModal from '../Components/VideoTrimModal.vue';
 import { track } from '../utils/analytics';
+import ReviewsWorkspace from '../Components/Feedbacks/ReviewsWorkspace.vue';
+import AthleteReviewsWorkspace from '../Components/Feedbacks/AthleteReviewsWorkspace.vue';
 
 const props = defineProps({
   role: { type: String, default: 'athlete' },
@@ -30,6 +32,7 @@ const props = defineProps({
     type: Object,
     default: () => ({ maxFiles: 3, maxFileBytes: 100 * 1024 * 1024, driver: 'local' }),
   },
+  metrics: { type: Object, default: null },
 });
 
 const isCoach = computed(() => props.role === 'coach');
@@ -149,11 +152,6 @@ const replyForm = useForm({
   content: '',
 });
 
-const filterOptions = [
-  { value: 'pending', label: 'En attente' },
-  { value: 'all', label: 'Tous' },
-];
-
 const maxVideoMbLabel = computed(() =>
   Math.max(1, Math.floor(MAX_VIDEO_BYTES.value / (1024 * 1024))),
 );
@@ -184,16 +182,7 @@ const submitBusy = computed(
 );
 
 function feedbackUrl(id) {
-  return `/feedbacks?feedback=${id}${isCoach.value && props.filter === 'pending' ? '&filter=pending' : ''}`;
-}
-
-function filterUrl(value) {
-  const params = new URLSearchParams();
-  params.set('filter', value);
-  if (props.activeFeedback?.id) {
-    params.set('feedback', props.activeFeedback.id);
-  }
-  return `/feedbacks?${params.toString()}`;
+  return `/feedbacks?feedback=${id}`;
 }
 
 function selectFeedback(id) {
@@ -684,390 +673,169 @@ function seriesPayload() {
 </script>
 
 <template>
-  <div>
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold text-white">Retours de séance</h1>
-        <p v-if="isCoach" class="mt-2 max-w-2xl text-slate-400">
-          Consultez les vidéos et commentaires des athlètes, puis répondez via la messagerie.
-        </p>
-      </div>
-      <div v-if="isCoach" class="flex gap-2">
-        <Link
-          v-for="opt in filterOptions"
-          :key="opt.value"
-          :href="filterUrl(opt.value)"
-          preserve-state
-          class="rounded-lg border px-3 py-1.5 text-sm font-medium transition"
-          :class="
-            filter === opt.value
-              ? 'border-blue-500/60 bg-blue-600/20 text-white'
-              : 'border-slate-700 text-slate-300 hover:bg-slate-800'
-          "
-        >
-          {{ opt.label }}
-        </Link>
-      </div>
-      <button
-        v-else-if="eligibleSessions.length"
-        type="button"
-        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-        @click="showSubmitForm = !showSubmitForm"
+  <ReviewsWorkspace
+    v-if="isCoach"
+    :feedbacks="feedbacks"
+    :active-feedback="activeFeedback"
+    :metrics="metrics"
+  />
+
+  <AthleteReviewsWorkspace
+    v-else
+    :feedbacks="feedbacks"
+    :active-feedback="activeFeedback"
+    :can-submit="eligibleSessions.length > 0"
+    :submit-label="isWeekly ? 'Nouveau retour hebdo' : 'Nouveau retour'"
+    :show-submit-form="showSubmitForm"
+    @toggle-submit="showSubmitForm = !showSubmitForm"
+  >
+    <template #submit-form>
+      <div
+        v-if="showSubmitForm"
+        class="rounded-[18px] border border-blue-500/30 bg-slate-900/60 p-4 shadow-xl lg:p-6"
       >
-        {{ showSubmitForm ? 'Annuler' : isWeekly ? 'Nouveau retour hebdo' : 'Nouveau retour' }}
-      </button>
-    </div>
-
-    <div
-      v-if="!isCoach && showSubmitForm"
-      class="mt-3 rounded-2xl border border-blue-500/30 bg-slate-900/60 p-4 shadow-xl lg:mt-4 lg:p-6"
-    >
-      <h2 class="text-base font-semibold text-white">
-        {{ isWeekly ? 'Envoyer votre retour hebdomadaire' : 'Envoyer un retour' }}
-      </h2>
-      <form class="mt-4 space-y-4" @submit.prevent="submitFeedback">
-        <div>
-          <label class="block text-sm font-medium text-slate-300">
-            {{ isWeekly ? 'Semaine / séance' : 'Séance' }}
-          </label>
-          <select
-            v-model="submitForm.session_date"
-            required
-            class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-          >
-            <option value="" disabled>Choisir une séance</option>
-            <option
-              v-for="s in eligibleSessions"
-              :key="s.session_date"
-              :value="s.session_date"
+        <h2 class="text-base font-semibold text-white">
+          {{ isWeekly ? 'Envoyer votre retour hebdomadaire' : 'Envoyer un retour' }}
+        </h2>
+        <form class="mt-4 space-y-4" @submit.prevent="submitFeedback">
+          <div>
+            <label class="block text-sm font-medium text-slate-300">
+              {{ isWeekly ? 'Semaine / séance' : 'Séance' }}
+            </label>
+            <select
+              v-model="submitForm.session_date"
+              required
+              class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
             >
-              {{ isWeekly ? s.session_label : `${formatCalendarFr(s.session_date)} — ${s.session_label}` }}
-            </option>
-          </select>
-          <p v-if="submitForm.errors.session_date" class="mt-1 text-sm text-red-400">
-            {{ submitForm.errors.session_date }}
-          </p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-slate-300">Message</label>
-          <textarea
-            v-model="submitForm.athlete_notes"
-            rows="4"
-            placeholder="Comment s’est passée la séance ?"
-            class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-600"
-          />
-          <div
-            v-if="selectedSessionLoggedNotes.length"
-            class="mt-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3"
-          >
-            <p class="text-xs font-medium text-slate-400">Notes prises pendant la séance</p>
-            <ul class="mt-2 space-y-1.5">
-              <li
-                v-for="(entry, index) in selectedSessionLoggedNotes"
-                :key="`${entry.exercise_name}-${index}`"
-                class="text-sm text-slate-200"
+              <option value="" disabled>Choisir une séance</option>
+              <option
+                v-for="s in eligibleSessions"
+                :key="s.session_date"
+                :value="s.session_date"
               >
-                <span class="font-medium text-slate-100">{{ entry.exercise_name }}</span>
-                <span class="text-slate-500"> — </span>
-                <span class="whitespace-pre-wrap text-slate-300">{{ entry.note }}</span>
-              </li>
-            </ul>
-            <p class="mt-2 text-[11px] text-slate-500">
-              Ces notes seront incluses automatiquement dans le retour.
+                {{ isWeekly ? s.session_label : `${formatCalendarFr(s.session_date)} — ${s.session_label}` }}
+              </option>
+            </select>
+            <p v-if="submitForm.errors.session_date" class="mt-1 text-sm text-red-400">
+              {{ submitForm.errors.session_date }}
             </p>
           </div>
-          <p v-if="submitForm.errors.athlete_notes" class="mt-1 text-sm text-red-400">
-            {{ submitForm.errors.athlete_notes }}
-          </p>
-        </div>
 
-        <div>
-          <label class="block text-sm font-medium text-slate-300">
-            Vidéos (optionnel, 1 à {{ MAX_VIDEOS }}, max {{ maxVideoMbLabel }} Mo)
-          </label>
-          <button
-            v-if="isNative"
-            type="button"
-            :disabled="submitBusy"
-            class="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-            @click="pickNativeVideos"
-          >
-            {{ selectedVideos.length ? 'Changer les vidéos' : 'Choisir des vidéos' }}
-          </button>
-          <input
-            v-else
-            ref="videoInput"
-            type="file"
-            accept="video/*"
-            multiple
-            :disabled="submitBusy"
-            class="mt-1 w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white disabled:opacity-50"
-            @change="onVideoChange"
-          />
-          <p v-if="selectedVideos.length" class="mt-2 text-xs text-slate-500">
-            {{ selectedVideos.length }} fichier{{ selectedVideos.length > 1 ? 's' : '' }} sélectionné{{ selectedVideos.length > 1 ? 's' : '' }}
-          </p>
+          <div>
+            <label class="block text-sm font-medium text-slate-300">Message</label>
+            <textarea
+              v-model="submitForm.athlete_notes"
+              rows="4"
+              placeholder="Comment s’est passée la séance ?"
+              class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-600"
+            />
+            <div
+              v-if="selectedSessionLoggedNotes.length"
+              class="mt-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3"
+            >
+              <p class="text-xs font-medium text-slate-400">Notes prises pendant la séance</p>
+              <ul class="mt-2 space-y-1.5">
+                <li
+                  v-for="(entry, index) in selectedSessionLoggedNotes"
+                  :key="`${entry.exercise_name}-${index}`"
+                  class="text-sm text-slate-200"
+                >
+                  <span class="font-medium text-slate-100">{{ entry.exercise_name }}</span>
+                  <span class="text-slate-500"> — </span>
+                  <span class="whitespace-pre-wrap text-slate-300">{{ entry.note }}</span>
+                </li>
+              </ul>
+            </div>
+            <p v-if="submitForm.errors.athlete_notes" class="mt-1 text-sm text-red-400">
+              {{ submitForm.errors.athlete_notes }}
+            </p>
+          </div>
 
-          <div
-            v-if="selectedVideos.length && sessionExercises.length"
-            class="mt-3 space-y-2 rounded-xl border border-slate-800 bg-slate-950/40 p-3"
-          >
-            <p class="text-xs font-medium text-slate-400">
-              Associez chaque vidéo à une série (optionnel)
+          <div>
+            <label class="block text-sm font-medium text-slate-300">
+              Vidéos (optionnel, 1 à {{ MAX_VIDEOS }}, max {{ maxVideoMbLabel }} Mo)
+            </label>
+            <button
+              v-if="isNative"
+              type="button"
+              :disabled="submitBusy"
+              class="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+              @click="pickNativeVideos"
+            >
+              {{ selectedVideos.length ? 'Changer les vidéos' : 'Choisir des vidéos' }}
+            </button>
+            <input
+              v-else
+              ref="videoInput"
+              type="file"
+              accept="video/*"
+              multiple
+              :disabled="submitBusy"
+              class="mt-1 w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white disabled:opacity-50"
+              @change="onVideoChange"
+            />
+            <p v-if="selectedVideos.length" class="mt-2 text-xs text-slate-500">
+              {{ selectedVideos.length }} fichier{{ selectedVideos.length > 1 ? 's' : '' }} sélectionné{{ selectedVideos.length > 1 ? 's' : '' }}
             </p>
             <div
-              v-for="(video, index) in selectedVideos"
-              :key="index"
-              class="flex flex-col gap-1.5"
+              v-if="selectedVideos.length && sessionExercises.length"
+              class="mt-3 space-y-2 rounded-xl border border-slate-800 bg-slate-950/40 p-3"
             >
-              <span class="min-w-0 truncate text-xs text-slate-300">
-                {{ video.name }}
-              </span>
-              <button
-                type="button"
-                class="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-left transition hover:border-slate-600 hover:bg-slate-900"
-                @click="openSeriesPicker(index)"
-              >
-                <span class="min-w-0">
-                  <span class="block truncate text-sm font-medium text-white">
-                    {{ seriesLabelFor(index) }}
+              <p class="text-xs font-medium text-slate-400">Associez chaque vidéo à une série (optionnel)</p>
+              <div v-for="(video, index) in selectedVideos" :key="index" class="flex flex-col gap-1.5">
+                <span class="min-w-0 truncate text-xs text-slate-300">{{ video.name }}</span>
+                <button
+                  type="button"
+                  class="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-left transition hover:border-slate-600 hover:bg-slate-900"
+                  @click="openSeriesPicker(index)"
+                >
+                  <span class="min-w-0">
+                    <span class="block truncate text-sm font-medium text-white">{{ seriesLabelFor(index) }}</span>
+                    <span class="mt-0.5 block truncate text-xs text-slate-500">{{ seriesSummaryFor(index) }}</span>
                   </span>
-                  <span class="mt-0.5 block truncate text-xs text-slate-500">
-                    {{ seriesSummaryFor(index) }}
-                  </span>
-                </span>
-                <span class="shrink-0 text-xs font-medium text-blue-300">Changer</span>
-              </button>
+                  <span class="shrink-0 text-xs font-medium text-blue-300">Changer</span>
+                </button>
+              </div>
             </div>
-          </div>
-          <p v-if="trimSummary" class="mt-1 text-xs text-sky-400/90">
-            Rogné : {{ trimSummary }}
-          </p>
-          <p v-if="compressionSummary && !isCompressing" class="mt-1 text-xs text-emerald-400/90">
-            {{ compressionSummary }}
-          </p>
-          <div v-if="showProgressBar" class="mt-3">
-            <div class="h-2 overflow-hidden rounded-full bg-slate-800">
-              <div
-                class="h-full rounded-full bg-blue-500 transition-all duration-200"
-                :style="{ width: `${progressPercent}%` }"
-              />
+            <p v-if="trimSummary" class="mt-1 text-xs text-sky-400/90">Rogné : {{ trimSummary }}</p>
+            <p v-if="compressionSummary && !isCompressing" class="mt-1 text-xs text-emerald-400/90">{{ compressionSummary }}</p>
+            <div v-if="showProgressBar" class="mt-3">
+              <div class="h-2 overflow-hidden rounded-full bg-slate-800">
+                <div class="h-full rounded-full bg-blue-500 transition-all duration-200" :style="{ width: `${progressPercent}%` }" />
+              </div>
+              <p v-if="statusLine" class="mt-1 text-xs text-slate-400">{{ statusLine }}</p>
             </div>
-            <p v-if="statusLine" class="mt-1 text-xs text-slate-400">{{ statusLine }}</p>
+            <p v-if="submitForm.errors.videos" class="mt-1 text-sm text-red-400">{{ submitForm.errors.videos }}</p>
+            <p v-else-if="submitForm.errors.video_upload_ids" class="mt-1 text-sm text-red-400">{{ submitForm.errors.video_upload_ids }}</p>
           </div>
-          <p v-if="!usesDirectUpload" class="mt-2 text-xs text-amber-400/90">
-            Mode local : limite PHP ~{{ maxVideoMbLabel }} Mo. Configure R2 (clés AWS_*) pour aller jusqu’à 500 Mo.
-          </p>
-          <p v-if="submitForm.errors.videos" class="mt-1 text-sm text-red-400">
-            {{ submitForm.errors.videos }}
-          </p>
-          <p v-else-if="submitForm.errors.video_upload_ids" class="mt-1 text-sm text-red-400">
-            {{ submitForm.errors.video_upload_ids }}
-          </p>
-        </div>
 
-        <button
-          type="submit"
-          :disabled="submitBusy"
-          class="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-        >
-          {{
-            isCompressing
-              ? 'Compression…'
-              : isUploading || submitForm.processing
-                ? 'Envoi en cours…'
-                : 'Envoyer au coach'
-          }}
-        </button>
-      </form>
-    </div>
-
-    <div class="mt-3 space-y-4 lg:mt-6 lg:space-y-5">
-      <!-- Bandeau horizontal : retours -->
-      <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-3 shadow-xl sm:p-4">
-        <div class="mb-3 flex items-center justify-between gap-3">
-          <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            {{ isCoach ? 'Retours reçus' : 'Historique' }}
-          </h2>
-          <p v-if="feedbacks.length" class="text-xs text-slate-500">
-            {{ feedbacks.length }} retour{{ feedbacks.length > 1 ? 's' : '' }}
-          </p>
-        </div>
-        <div
-          v-if="feedbacks.length"
-          class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]"
-        >
           <button
-            v-for="item in feedbacks"
-            :key="item.id"
-            type="button"
-            class="w-44 shrink-0 rounded-xl border px-3 py-2.5 text-left transition"
-            :class="
-              activeFeedback?.id === item.id
-                ? 'border-blue-500/60 bg-blue-600/20'
-                : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
-            "
-            @click="selectFeedback(item.id)"
+            type="submit"
+            :disabled="submitBusy"
+            class="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_0_24px_rgba(59,130,246,0.25)] hover:from-blue-500 hover:to-blue-400 disabled:opacity-50"
           >
-            <p class="truncate text-sm font-semibold text-white">
-              <template v-if="isCoach">{{ item.athlete_name }}</template>
-              <template v-else>{{ item.session_label }}</template>
-            </p>
-            <p class="mt-0.5 truncate text-xs text-slate-500">
-              {{ formatCalendarFr(item.session_date) }}
-              · {{ item.video_count }} vidéo(s)
-            </p>
-            <span
-              class="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
-              :class="
-                item.status === 'coach_replied'
-                  ? 'bg-emerald-500/20 text-emerald-300'
-                  : 'bg-amber-500/20 text-amber-300'
-              "
-            >
-              {{ item.status === 'coach_replied' ? 'Répondu' : 'En attente' }}
-            </span>
+            {{ isCompressing ? 'Compression…' : isUploading || submitForm.processing ? 'Envoi en cours…' : 'Envoyer au coach' }}
           </button>
-        </div>
-        <p v-else class="py-2 text-center text-sm text-slate-500">
-          Aucun retour pour le moment.
-        </p>
-      </section>
+        </form>
+      </div>
+    </template>
+  </AthleteReviewsWorkspace>
 
-      <!-- Contenu principal : prévu / réalisé + vidéos -->
-      <section class="min-h-[12rem] rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:p-6">
-        <template v-if="activeFeedback">
-          <div
-            v-if="activeFeedback.session_exercises?.length"
-            :class="activeFeedback.videos?.length ? 'mb-5 border-b border-slate-800 pb-4' : ''"
-          >
-            <SeriesComparisonCard :exercises="activeFeedback.session_exercises" />
-          </div>
-
-          <VideoFeedbackSlider
-            v-if="activeFeedback.videos?.length"
-            :videos="activeFeedback.videos"
-          />
-
-          <div
-            v-else-if="!activeFeedback.session_exercises?.length"
-            class="flex min-h-[10rem] items-center justify-center text-sm text-slate-500"
-          >
-            Aucune vidéo ni exercice programmé pour ce retour.
-          </div>
-        </template>
-        <div v-else class="flex min-h-[10rem] items-center justify-center text-slate-500">
-          Sélectionnez un retour dans le bandeau.
-        </div>
-      </section>
-
-      <!-- Bas : message athlète + saisie coach -->
-      <section
-        v-if="activeFeedback"
-        class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-xl lg:p-6"
-      >
-        <div class="border-b border-slate-800 pb-3">
-          <h2 class="text-lg font-semibold text-white">
-            <template v-if="isCoach">{{ activeFeedback.athlete_name }}</template>
-            <template v-else>{{ activeFeedback.session_label }}</template>
-          </h2>
-          <p class="mt-1 text-sm text-slate-500">
-            Séance du {{ formatCalendarFr(activeFeedback.session_date) }}
-            · envoyé {{ formatSubmitted(activeFeedback.submitted_at) }}
-          </p>
-        </div>
-
-        <div class="mt-4 grid gap-5 lg:grid-cols-2">
-          <div v-if="activeFeedback.athlete_notes">
-            <h3 class="text-sm font-medium text-slate-400">Message athlète</h3>
-            <p class="mt-2 whitespace-pre-wrap rounded-lg bg-slate-950/60 p-3 text-sm text-slate-200">
-              {{ activeFeedback.athlete_notes }}
-            </p>
-          </div>
-          <div
-            v-else-if="activeFeedback.session_logged_notes?.length"
-            class="rounded-lg bg-slate-950/60 p-3"
-          >
-            <h3 class="text-sm font-medium text-slate-400">Notes de séance</h3>
-            <ul class="mt-2 space-y-1.5">
-              <li
-                v-for="(entry, index) in activeFeedback.session_logged_notes"
-                :key="`${entry.exercise_name}-${index}`"
-                class="text-sm text-slate-200"
-              >
-                <span class="font-medium text-white">{{ entry.exercise_name }}</span>
-                <span class="text-slate-500"> — </span>
-                <span class="whitespace-pre-wrap text-slate-300">{{ entry.note }}</span>
-              </li>
-            </ul>
-          </div>
-          <div v-else class="text-sm text-slate-500">Aucun message de l’athlète.</div>
-
-          <div v-if="activeFeedback.reply">
-            <h3 class="text-sm font-semibold text-emerald-400">Réponse du coach</h3>
-            <p
-              v-if="activeFeedback.reply.body"
-              class="mt-2 whitespace-pre-wrap text-sm text-slate-200"
-            >
-              {{ activeFeedback.reply.body }}
-            </p>
-            <div v-if="activeFeedback.reply.audio_files?.length" class="mt-3 space-y-2">
-              <audio
-                v-for="audio in activeFeedback.reply.audio_files"
-                :key="audio.id"
-                :src="audio.url"
-                controls
-                class="w-full"
-              />
-            </div>
-            <p class="mt-2 text-xs text-slate-500">
-              {{ formatSubmitted(activeFeedback.reply.created_at) }}
-            </p>
-          </div>
-
-          <div
-            v-else-if="isCoach && activeFeedback.status === 'submitted'"
-            class="space-y-3"
-          >
-            <label class="block text-sm font-medium text-slate-300">Votre retour</label>
-            <textarea
-              v-model="replyForm.content"
-              rows="3"
-              placeholder="Écrivez votre retour à l’athlète…"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-600"
-            />
-            <p v-if="replyForm.errors.content" class="text-sm text-red-400">
-              {{ replyForm.errors.content }}
-            </p>
-            <button
-              type="button"
-              :disabled="replyForm.processing"
-              class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-              @click="sendReply"
-            >
-              {{ replyForm.processing ? 'Envoi…' : 'Envoyer le retour' }}
-            </button>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <SeriesPickerModal
-      v-model="seriesPickerValue"
-      v-model:open="seriesPickerOpen"
-      :exercises="sessionExercises"
-      title="Choisir une série"
-    />
-
-    <VideoTrimModal
-      :open="trimModalOpen"
-      :source="trimModalSource"
-      :index="trimQueueIndex ?? 0"
-      :total="selectedVideos.length"
-      @confirm="onTrimConfirm"
-      @use-full="onTrimUseFull"
-      @cancel="onTrimCancel"
-    />
-  </div>
+  <SeriesPickerModal
+    v-if="!isCoach"
+    v-model="seriesPickerValue"
+    v-model:open="seriesPickerOpen"
+    :exercises="sessionExercises"
+    title="Choisir une série"
+  />
+  <VideoTrimModal
+    v-if="!isCoach"
+    :open="trimModalOpen"
+    :source="trimModalSource"
+    :index="trimQueueIndex ?? 0"
+    :total="selectedVideos.length"
+    @confirm="onTrimConfirm"
+    @use-full="onTrimUseFull"
+    @cancel="onTrimCancel"
+  />
 </template>

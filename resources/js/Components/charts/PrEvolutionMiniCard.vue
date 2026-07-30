@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import LineChart from './LineChart.vue';
 import { formatCalendarFr } from '../../utils/formatDates';
-import { glowCardStyle, LIFT_COLORS, prGlowCardStyle } from '../../utils/chartTheme';
+import { glowCardStyle, liftColorsForTheme, prGlowCardStyle } from '../../utils/chartTheme';
 import { theme } from '../../composables/useTheme';
 import { currentValueFromSeries, seriesGain } from '../../utils/prEvolution';
 
@@ -29,7 +29,10 @@ const props = defineProps({
   },
 });
 
-const liftColors = computed(() => LIFT_COLORS[props.colorKey ?? props.liftKey]);
+const liftColors = computed(() => {
+  void theme.value;
+  return liftColorsForTheme(props.colorKey ?? props.liftKey);
+});
 
 const currentValue = computed(() => currentValueFromSeries(props.series));
 
@@ -72,6 +75,7 @@ const chartData = computed(() => ({
 }));
 
 const chartOptions = computed(() => {
+  void theme.value;
   const values = props.series.map((point) => Number(point.value ?? 0));
   const min = values.length ? Math.min(...values) : 0;
   const max = values.length ? Math.max(...values) : 0;
@@ -106,7 +110,7 @@ const chartOptions = computed(() => {
           maxTicksLimit: 3,
           maxRotation: 0,
           autoSkip: true,
-          color: 'rgb(100, 116, 139)',
+          color: theme.value === 'light' ? 'rgb(71, 85, 105)' : 'rgb(100, 116, 139)',
           font: { size: 9, weight: '500' },
           padding: 2,
         },

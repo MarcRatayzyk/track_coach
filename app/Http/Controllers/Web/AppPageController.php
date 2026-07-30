@@ -14,9 +14,12 @@ use App\Models\ProgramTemplate;
 use App\Models\User;
 use App\Support\ActiveProgramAssignmentSupport;
 use App\Support\CoachCalendarSupport;
+use App\Support\CoachDashboardInsightsSupport;
+use App\Support\CoachCompetitionsPresenter;
 use App\Support\AthleteDashboardPresenter;
 use App\Support\AthleteBodyWeightPresenter;
 use App\Support\AthleteReadinessPresenter;
+use App\Support\MessagingAthleteContextPresenter;
 use App\Support\MessagingInboxSupport;
 use App\Support\MessagePresenter;
 use App\Support\ChartTemplatePresenter;
@@ -116,6 +119,7 @@ class AppPageController extends Controller
         );
 
         $monthlyReadinessAwards = app(CoachMonthlyReadinessAwardsPresenter::class)->forCoach($coach);
+        $insights = CoachDashboardInsightsSupport::forCoach($coach, $athleteIds);
 
         $hasRepliedToFeedback = SessionFeedback::query()
             ->where('coach_id', $coach->id)
@@ -173,6 +177,8 @@ class AppPageController extends Controller
             'rosterAthletes' => $rosterAthletes,
             'coachReadinessForm' => $coachReadinessForm,
             'monthlyReadinessAwards' => $monthlyReadinessAwards,
+            'activityFeed' => $insights['feed'],
+            'performance' => $insights['performance'],
             'stats' => [
                 'active_programs' => $activeProgramsCount,
                 'program_templates' => $templatesCount,
@@ -188,6 +194,30 @@ class AppPageController extends Controller
         return Inertia::render('AthletesListPage', [
             'athletes' => $rosterService->rowsForCoach($coach),
             'coachReadinessForm' => ReadinessFormSupport::formPayload($coachForm),
+        ]);
+    }
+
+    public function competitions(): Response
+    {
+        $coach = auth()->user();
+        $payload = CoachCompetitionsPresenter::forCoach($coach);
+
+        $athletes = $coach->athletes()
+            ->where('users.role', 'athlete')
+            ->wherePivot('status', 'active')
+            ->orderBy('users.name')
+            ->get(['users.id', 'users.name'])
+            ->map(fn (User $athlete) => [
+                'id' => $athlete->id,
+                'name' => $athlete->name,
+            ])
+            ->values()
+            ->all();
+
+        return Inertia::render('CompetitionsPage', [
+            'upcoming' => $payload['upcoming'],
+            'past' => $payload['past'],
+            'athletes' => $athletes,
         ]);
     }
 
@@ -358,6 +388,7 @@ class AppPageController extends Controller
                 'activeThread' => null,
                 'messages' => [],
                 'athletesForThread' => [],
+                'athleteContext' => null,
                 'feedbackContext' => null,
             ]);
         }
@@ -381,6 +412,7 @@ class AppPageController extends Controller
             'threads' => [MessagingInboxSupport::threadListItem($thread, $athlete)],
             'activeThread' => [
                 'id' => $thread->id,
+                'is_online' => MessagingInboxSupport::isCounterpartOnline($thread, $athlete),
                 'coach' => $thread->coach ? [
                     'id' => $thread->coach->id,
                     'name' => $thread->coach->name,
@@ -392,6 +424,7 @@ class AppPageController extends Controller
             ],
             'messages' => MessagePresenter::list($messages),
             'athletesForThread' => [],
+            'athleteContext' => null,
             'feedbackContext' => null,
         ]);
     }
@@ -478,18 +511,36 @@ class AppPageController extends Controller
             ->values()
             ->all();
 
+        $athletesForThread = $user->athletes()
+            ->where('users.role', 'athlete')
+            ->wherePivot('status', 'active')
+            ->orderBy('users.name')
+            ->get(['users.id', 'users.name'])
+            ->map(fn (User $athlete) => [
+                'id' => $athlete->id,
+                'name' => $athlete->name,
+            ])
+            ->values()
+            ->all();
+
+        $athleteContext = $activeThread?->athlete
+            ? MessagingAthleteContextPresenter::forAthlete($activeThread->athlete)
+            : null;
+
         return Inertia::render('MessagingPage', [
             'role' => 'coach',
             'threads' => $threads,
             'activeThread' => $activeThread ? [
                 'id' => $activeThread->id,
+                'is_online' => MessagingInboxSupport::isCounterpartOnline($activeThread, $user),
                 'athlete' => $activeThread->athlete ? [
                     'id' => $activeThread->athlete->id,
                     'name' => $activeThread->athlete->name,
                 ] : null,
             ] : null,
             'messages' => MessagePresenter::list($messages),
-            'athletesForThread' => [],
+            'athletesForThread' => $athletesForThread,
+            'athleteContext' => $athleteContext,
             'feedbackContext' => $feedbackContext,
         ]);
     }

@@ -2,7 +2,7 @@
  * Interprète une valeur comme date civile (Y-m-d ou ISO commençant par Y-m-d)
  * sans décalage fuseau (évite « veille » pour minuit UTC).
  */
-function calendarDateFromValue(value) {
+export function calendarDateFromValue(value) {
     if (value == null || value === '') {
         return null;
     }

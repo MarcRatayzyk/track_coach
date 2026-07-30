@@ -7,6 +7,7 @@ use App\Models\Message;
 use App\Models\MessageThread;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
+use App\Support\BroadcastSafely;
 use App\Support\MailSendSupport;
 use App\Support\MessagingInboxSupport;
 use Illuminate\Support\Facades\Bus;
@@ -64,7 +65,7 @@ class SendMessageAction
             : $thread->coach;
 
         Bus::dispatchAfterResponse(function () use ($message, $thread, $recipient): void {
-            MessageSent::dispatch($message);
+            BroadcastSafely::run(fn () => MessageSent::dispatch($message));
             MessagingInboxSupport::dispatchThreadUpdated($thread);
             MailSendSupport::notifySafely($recipient, new NewMessageNotification($message));
         });

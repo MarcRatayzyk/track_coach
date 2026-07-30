@@ -18,8 +18,8 @@ class CoachCalendarSupport
         $now = Carbon::now()->startOfDay();
 
         return [
-            'start' => $now->copy()->subMonths(4)->startOfMonth()->toDateString(),
-            'end' => $now->copy()->addMonths(2)->endOfMonth()->toDateString(),
+            'start' => $now->copy()->subMonths(3)->startOfMonth()->toDateString(),
+            'end' => $now->copy()->addMonths(5)->endOfMonth()->toDateString(),
         ];
     }
 

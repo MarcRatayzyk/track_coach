@@ -17,7 +17,6 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
 const sidebarProfile = computed(() => page.props.auth?.sidebarProfile ?? null);
 const flash = computed(() => page.props.flash ?? {});
-const isSidebarCollapsed = ref(false);
 const isMobileMenuOpen = ref(false);
 const showBugReportModal = ref(false);
 const { isLight, toggleTheme } = useTheme();
@@ -203,6 +202,7 @@ function setupMessagingRealtime() {
 const coachNav = [
     { label: 'Dashboard', shortLabel: 'Accueil', href: '/dashboard', pattern: '/dashboard', icon: 'dashboard' },
     { label: 'Athlètes', shortLabel: 'Athlètes', href: '/athletes', pattern: '/athletes', icon: 'users' },
+    { label: 'Compétitions', shortLabel: 'Compét.', href: '/competitions', pattern: '/competitions', icon: 'trophy' },
     { label: 'Programmes', shortLabel: 'Prog.', href: '/program-builder', pattern: '/program-builder', icon: 'clipboard' },
     { label: 'Retours', shortLabel: 'Retours', href: '/feedbacks', pattern: '/feedbacks', icon: 'video' },
     {
@@ -213,7 +213,31 @@ const coachNav = [
         icon: 'chat',
         unreadCount: 0,
     },
+    { label: 'Abonnement', shortLabel: 'Abo', href: '/billing', pattern: '/billing', icon: 'bolt' },
 ];
+
+const billing = computed(() => page.props.billing ?? null);
+const isDemoAccount = computed(() => Boolean(user.value?.is_demo || billing.value?.isDemo));
+const demoExpiresLabel = computed(() => {
+    if (!billing.value?.demoExpiresAt) {
+        return null;
+    }
+    return new Date(billing.value.demoExpiresAt).toLocaleString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+});
+const trialBannerLabel = computed(() => {
+    if (!billing.value || billing.value.isDemo) {
+        return null;
+    }
+    if (billing.value.status !== 'trial' || !billing.value.trialEndsAt) {
+        return null;
+    }
+    return new Date(billing.value.trialEndsAt).toLocaleDateString('fr-FR');
+});
 
 const navItems = computed(() => {
     if (!user.value) {
@@ -284,21 +308,13 @@ function navActive(pattern) {
     return url === pattern || url.startsWith(`${pattern}/`);
 }
 
-const sidebarClasses = computed(() =>
-    isSidebarCollapsed.value
-        ? 'w-20 px-2.5 lg:w-20 lg:px-2.5'
-        : 'w-56 px-3 lg:w-64 lg:px-4',
-);
+const sidebarClasses = 'w-56 px-3 lg:w-64 lg:px-4';
 
 const contentPaddingClasses = computed(() => {
     // Quand le clavier est ouvert, on retire le padding bas réservé à la nav (masquée).
     const mobile = isKeyboardOpen.value
         ? 'pl-0 tc-app-content tc-app-content--keyboard lg:pb-0'
         : 'pl-0 tc-app-content lg:pb-0';
-
-    if (isSidebarCollapsed.value) {
-        return `${mobile} lg:pl-20`;
-    }
 
     return `${mobile} lg:pl-56 xl:pl-64`;
 });
@@ -311,17 +327,15 @@ const contentWidthClasses = computed(() => {
         url.startsWith('/program-builder/') ||
         url === '/athlete/program' ||
         url.startsWith('/athlete/program/') ||
-        url === '/athletes'
+        url === '/athletes' ||
+        url === '/competitions' ||
+        url.startsWith('/competitions/')
     ) {
         return 'max-w-[112rem]';
     }
 
     return 'max-w-6xl';
 });
-
-function toggleSidebar() {
-    isSidebarCollapsed.value = !isSidebarCollapsed.value;
-}
 
 function toggleMobileMenu() {
     isMobileMenuOpen.value = !isMobileMenuOpen.value;
@@ -336,7 +350,7 @@ onMounted(() => {
         return;
     }
 
-    isSidebarCollapsed.value = window.localStorage.getItem('tc-sidebar-collapsed') === 'true';
+    window.localStorage.removeItem('tc-sidebar-collapsed');
     setupMessagingRealtime();
     bindKeyboardListeners();
 });
@@ -353,14 +367,6 @@ watch(messagingInbox, () => {
     setupMessagingRealtime();
 }, { deep: true });
 
-watch(isSidebarCollapsed, (value) => {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    window.localStorage.setItem('tc-sidebar-collapsed', value ? 'true' : 'false');
-});
-
 watch(() => page.url, () => {
     closeMobileMenu();
 });
@@ -368,14 +374,43 @@ watch(() => page.url, () => {
 
 <template>
     <div class="h-screen overflow-hidden bg-slate-950 text-slate-200">
+        <div
+            v-if="isDemoAccount || trialBannerLabel"
+            class="fixed inset-x-0 top-0 z-[45] border-b px-4 py-2 text-center text-xs sm:text-sm lg:left-64"
+            :class="
+                isDemoAccount
+                    ? 'border-amber-500/30 bg-amber-950/90 text-amber-100'
+                    : 'border-blue-500/30 bg-blue-950/90 text-blue-100'
+            "
+        >
+            <template v-if="isDemoAccount">
+                Compte démo sandbox
+                <span v-if="demoExpiresLabel"> — expire le {{ demoExpiresLabel }}</span>
+                ·
+                <Link href="/register" class="font-semibold underline hover:no-underline">
+                    Créer un vrai compte
+                </Link>
+            </template>
+            <template v-else>
+                Essai gratuit jusqu’au {{ trialBannerLabel }} ·
+                <Link href="/billing" class="font-semibold underline hover:no-underline">
+                    Voir les offres
+                </Link>
+            </template>
+        </div>
+
         <header
-            class="tc-app-mobile-header fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800/90 bg-slate-900/95 px-4 py-2 backdrop-blur-sm lg:hidden"
+            class="tc-app-mobile-header fixed inset-x-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800/90 bg-slate-900/95 px-4 py-2 backdrop-blur-sm lg:hidden"
+            :class="isDemoAccount || trialBannerLabel ? 'top-9' : 'top-0'"
         >
             <Link
                 :href="isCoach ? '/dashboard' : '/athlete/dashboard'"
                 class="flex min-w-0 items-center gap-2"
             >
-                <AppLogo mark-class="h-8 w-8" wordmark-class="truncate text-sm font-bold text-white" />
+                <AppLogo
+                    mark-class="h-9 w-9"
+                    wordmark-class="truncate text-sm font-bold text-white"
+                />
             </Link>
 
             <div class="flex min-w-0 items-center gap-2">
@@ -462,38 +497,25 @@ watch(() => page.url, () => {
                 <Link
                     :href="isCoach ? '/dashboard' : '/athlete/dashboard'"
                     class="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2.5 transition hover:border-blue-500/50 hover:bg-slate-800/70"
-                    :class="isSidebarCollapsed ? 'justify-center px-2.5' : ''"
-                    :title="isSidebarCollapsed ? 'Power Roster' : undefined"
                 >
                     <AppLogo
-                        :with-wordmark="!isSidebarCollapsed"
                         mark-class="h-9 w-9"
                         wordmark-class="truncate text-base font-bold tracking-tight text-white"
                     />
                 </Link>
-
-                <button
-                    type="button"
-                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-300 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
-                    :title="isSidebarCollapsed ? 'Déplier la sidebar' : 'Replier la sidebar'"
-                    @click="toggleSidebar"
-                >
-                    <span class="text-base leading-none">{{ isSidebarCollapsed ? '›' : '‹' }}</span>
-                </button>
             </div>
 
             <Link
                 v-if="user && sidebarProfile"
                 :href="sidebarProfile.href"
                 class="mt-5 flex gap-2.5 rounded-xl border border-slate-700/80 bg-slate-950/50 p-3 transition hover:border-blue-500/40 hover:bg-slate-900/80"
-                :class="isSidebarCollapsed ? 'justify-center px-2 py-3' : ''"
             >
                 <span
                     class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-300"
                 >
                     <UiIcon :name="isCoach ? 'user-circle' : 'users'" class="h-5 w-5" />
                 </span>
-                <div v-if="!isSidebarCollapsed" class="min-w-0 flex-1">
+                <div class="min-w-0 flex-1">
                     <p class="truncate text-sm font-semibold text-white">{{ sidebarProfile.label }}</p>
                     <p class="truncate text-xs text-slate-400">{{ sidebarProfile.subtitle }}</p>
                     <p
@@ -506,7 +528,6 @@ watch(() => page.url, () => {
 
             <nav class="mt-6 flex flex-1 flex-col gap-1">
                 <p
-                    v-if="!isSidebarCollapsed"
                     class="mb-1 px-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500"
                 >
                     Menu
@@ -517,14 +538,10 @@ watch(() => page.url, () => {
                     :href="item.href"
                     class="relative flex items-center gap-2.5 rounded-xl border px-2.5 py-2 transition"
                     :class="
-                        [
-                            isSidebarCollapsed ? 'justify-center px-2' : '',
-                            navActive(item.pattern)
-                                ? 'border-blue-500/60 bg-blue-600/20 text-white shadow-md shadow-blue-900/20'
-                                : 'border-transparent text-slate-200 hover:border-slate-700 hover:bg-slate-800/50',
-                        ]
+                        navActive(item.pattern)
+                            ? 'border-blue-500/60 bg-blue-600/20 text-white shadow-md shadow-blue-900/20'
+                            : 'border-transparent text-slate-200 hover:border-slate-700 hover:bg-slate-800/50'
                     "
-                    :title="isSidebarCollapsed ? item.label : undefined"
                 >
                     <span
                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700/60 bg-slate-900/80"
@@ -536,7 +553,7 @@ watch(() => page.url, () => {
                     >
                         <UiIcon :name="item.icon" class="h-4 w-4" />
                     </span>
-                    <span v-if="!isSidebarCollapsed" class="text-sm font-medium">{{ item.label }}</span>
+                    <span class="text-sm font-medium">{{ item.label }}</span>
                     <MessageThreadUnreadBadge
                         v-if="item.unreadCount > 0"
                         :count="item.unreadCount"
@@ -547,39 +564,34 @@ watch(() => page.url, () => {
             <div class="mt-auto space-y-2 border-t border-slate-800 pt-4">
                 <InstallAppButton
                     variant="sidebar"
-                    :collapsed="isSidebarCollapsed"
+                    :collapsed="false"
                 />
 
                 <button
                     type="button"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
-                    :class="isSidebarCollapsed ? 'px-2' : ''"
                     :title="isLight ? 'Passer au thème sombre' : 'Passer au thème clair'"
                     @click="toggleTheme"
                 >
                     <UiIcon :name="isLight ? 'moon' : 'sun'" class="h-4 w-4" />
-                    <span v-if="!isSidebarCollapsed">{{ isLight ? 'Thème sombre' : 'Thème clair' }}</span>
+                    <span>{{ isLight ? 'Thème sombre' : 'Thème clair' }}</span>
                 </button>
 
                 <button
                     type="button"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
-                    :class="isSidebarCollapsed ? 'px-2' : ''"
-                    :title="isSidebarCollapsed ? 'Signaler un problème' : undefined"
                     @click="showBugReportModal = true"
                 >
                     <UiIcon name="alert" class="h-4 w-4" />
-                    <span v-if="!isSidebarCollapsed">Signaler un problème</span>
+                    <span>Signaler un problème</span>
                 </button>
 
                 <Link
                     href="/account/privacy"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
-                    :class="isSidebarCollapsed ? 'px-2' : ''"
-                    :title="isSidebarCollapsed ? 'Confidentialité et données' : undefined"
                 >
                     <UiIcon name="user-circle" class="h-4 w-4" />
-                    <span v-if="!isSidebarCollapsed">Confidentialité</span>
+                    <span>Confidentialité</span>
                 </Link>
 
                 <Link
@@ -587,12 +599,10 @@ watch(() => page.url, () => {
                     method="post"
                     as="button"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800/50 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-slate-800"
-                    :class="isSidebarCollapsed ? 'px-2' : ''"
-                    :title="isSidebarCollapsed ? 'Déconnexion' : undefined"
                     @click="resetAnalytics"
                 >
                     <UiIcon name="logout" class="h-4 w-4" />
-                    <span v-if="!isSidebarCollapsed">Déconnexion</span>
+                    <span>Déconnexion</span>
                 </Link>
             </div>
         </aside>
