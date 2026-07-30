@@ -16,6 +16,8 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 COPY package.json package-lock.json ./
+# postinstall lance scripts/sync-ffmpeg-core.mjs — nécessaire avant npm ci
+COPY scripts ./scripts
 RUN npm ci
 
 COPY . .
