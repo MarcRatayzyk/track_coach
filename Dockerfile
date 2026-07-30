@@ -28,7 +28,7 @@ ENV VITE_POSTHOG_KEY=$VITE_POSTHOG_KEY
 ENV VITE_POSTHOG_HOST=$VITE_POSTHOG_HOST
 
 RUN composer dump-autoload --optimize
-RUN node scripts/generate-pwa-icons.mjs
+# Icônes PWA déjà versionnées dans public/icons (évite Python/Pillow au build).
 RUN npm run build
 
 RUN mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/{sessions,views} storage/logs \
