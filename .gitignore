@@ -6,6 +6,7 @@
 /public/downloads/*.apk
 !/public/downloads/.gitkeep
 !/public/downloads/power-roster.apk
+!/public/downloads/power-roster.prev.apk
 /storage/*.key
 /vendor
 .env
