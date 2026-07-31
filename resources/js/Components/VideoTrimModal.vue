@@ -1,7 +1,9 @@
 <script setup>
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { Capacitor } from '@capacitor/core';
 import UiIcon from './UiIcon.vue';
 import { formatMb } from '../utils/compressVideo';
+import { warmMaterializeNativeVideoPath } from '../utils/nativeVideoFile';
 import {
   getVideoPreviewUrl,
   normalizeTrimRange,
@@ -132,6 +134,10 @@ function loadPreview() {
     return;
   }
   preloadTrimEngine();
+  // Copie cache en parallèle pendant le réglage du clip (n’attend pas ici).
+  if (Capacitor.isNativePlatform() && props.source.path) {
+    warmMaterializeNativeVideoPath(props.source);
+  }
   const url = getVideoPreviewUrl(props.source);
   previewUrl.value = url;
   ownsPreviewUrl.value =
@@ -160,7 +166,9 @@ function onLoadedMetadata() {
 async function buildFilmstrip(el, d) {
   const token = ++thumbToken;
   thumbsLoading.value = true;
-  const count = d > 45 ? 12 : d > 20 ? 10 : 8;
+  // Moins de frames / timeout plus court : le clip reste utilisable tout de suite.
+  const isNative = Capacitor.isNativePlatform();
+  const count = isNative ? (d > 40 ? 8 : 6) : d > 45 ? 12 : d > 20 ? 10 : 8;
   const canvas = document.createElement('canvas');
   const w = 72;
   const h = 96;
@@ -174,6 +182,7 @@ async function buildFilmstrip(el, d) {
 
   const frames = [];
   const prevTime = el.currentTime;
+  const seekTimeoutMs = isNative ? 180 : 450;
 
   try {
     for (let i = 0; i < count; i += 1) {
@@ -182,7 +191,7 @@ async function buildFilmstrip(el, d) {
       }
       const t = count === 1 ? 0 : (i / (count - 1)) * Math.max(0, d - 0.05);
       // eslint-disable-next-line no-await-in-loop -- seek séquentiel pour le filmstrip
-      await seekQuiet(el, t);
+      await seekQuiet(el, t, seekTimeoutMs);
       if (token !== thumbToken) {
         return;
       }
@@ -199,9 +208,9 @@ async function buildFilmstrip(el, d) {
       } catch {
         frames.push('');
       }
-    }
-    if (token === thumbToken) {
-      thumbnails.value = frames;
+      if (token === thumbToken) {
+        thumbnails.value = [...frames];
+      }
     }
   } finally {
     if (token === thumbToken) {
@@ -215,9 +224,14 @@ async function buildFilmstrip(el, d) {
   }
 }
 
-function seekQuiet(el, time) {
+function seekQuiet(el, time, timeoutMs = 450) {
   return new Promise((resolve) => {
+    let settled = false;
     const done = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
       el.removeEventListener('seeked', done);
       resolve();
     };
@@ -225,10 +239,10 @@ function seekQuiet(el, time) {
     try {
       el.currentTime = Math.min(Math.max(0, time), duration.value || time);
     } catch {
-      resolve();
+      done();
       return;
     }
-    window.setTimeout(done, 450);
+    window.setTimeout(done, timeoutMs);
   });
 }
 
@@ -493,6 +507,17 @@ onUnmounted(() => {
               @ended="stopSelectionPlayback"
               @click="playingSelection ? stopSelectionPlayback() : playSelection()"
             />
+            <div
+              v-if="!metadataReady && !errorMessage"
+              class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/80 px-6 text-center"
+            >
+              <span
+                class="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-sky-400"
+                aria-hidden="true"
+              />
+              <p class="text-sm font-medium text-slate-200">Chargement de la vidéo…</p>
+              <p class="text-xs text-slate-500">Tu pourras rogner dès que l’aperçu est prêt</p>
+            </div>
             <button
               v-if="metadataReady && !trimming"
               type="button"

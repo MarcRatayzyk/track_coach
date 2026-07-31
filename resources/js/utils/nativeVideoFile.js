@@ -7,6 +7,9 @@ import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 
+/** @type {Map<string, Promise<string>>} */
+const materializeInflight = new Map();
+
 /**
  * @param {string|undefined} path
  * @returns {boolean}
@@ -42,6 +45,32 @@ export function toFileUri(path) {
 }
 
 /**
+ * Démarre la copie cache sans bloquer l’UI (réutilise le même Promise si déjà en cours).
+ * Met à jour `source.path` une fois prêt (sans changer l’identité de l’objet).
+ *
+ * @param {{ path?: string, name?: string, type?: string, isTemp?: boolean }} source
+ * @returns {Promise<string|null>}
+ */
+export function warmMaterializeNativeVideoPath(source) {
+  if (!source?.path) {
+    return Promise.resolve(null);
+  }
+
+  return materializeNativeVideoPath(source)
+    .then((uri) => {
+      if (uri && source.path !== uri) {
+        source.path = uri;
+        source.isTemp = true;
+      }
+      return uri;
+    })
+    .catch((error) => {
+      console.warn('[warmMaterializeNativeVideoPath]', error);
+      return null;
+    });
+}
+
+/**
  * @param {{ path?: string, name?: string, type?: string }} source
  * @returns {Promise<string>} URI file:// lisible par VideoEditor
  */
@@ -55,6 +84,25 @@ export async function materializeNativeVideoPath(source) {
     return toFileUri(original);
   }
 
+  const existing = materializeInflight.get(original);
+  if (existing) {
+    return existing;
+  }
+
+  const pending = copyVirtualVideoToCache(source, original).finally(() => {
+    materializeInflight.delete(original);
+  });
+
+  materializeInflight.set(original, pending);
+  return pending;
+}
+
+/**
+ * @param {{ path?: string, name?: string, type?: string }} source
+ * @param {string} original
+ * @returns {Promise<string>}
+ */
+async function copyVirtualVideoToCache(source, original) {
   const safeName = String(source.name || 'video.mp4')
     .replace(/[^a-zA-Z0-9._-]/g, '_')
     .slice(0, 80);

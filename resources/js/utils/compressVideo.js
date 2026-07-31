@@ -10,6 +10,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem } from '@capacitor/filesystem';
 import { NativeVideoCompressor } from 'capacitor-native-video-compressor';
+import { isVirtualNativePath, materializeNativeVideoPath } from './nativeVideoFile';
 
 const SKIP_UNDER_BYTES = 2 * 1024 * 1024;
 const MIN_SAVINGS_RATIO = 0.12;
@@ -53,7 +54,14 @@ export async function compressVideo(source, options = {}) {
     // Jamais FFmpeg.wasm dans le WebView Capacitor — OOM / crash app.
     if (Capacitor.isNativePlatform()) {
       if (source.path) {
-        return await compressWithPlugin(source, onProgress, { isWeb: false });
+        let nativeSource = source;
+        if (isVirtualNativePath(source.path)) {
+          const path = await materializeNativeVideoPath(source);
+          nativeSource = { ...source, path, isTemp: true };
+          source.path = path;
+          source.isTemp = true;
+        }
+        return await compressWithPlugin(nativeSource, onProgress, { isWeb: false });
       }
       return passthrough();
     }

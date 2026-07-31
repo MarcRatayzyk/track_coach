@@ -13,7 +13,7 @@ import { Capacitor } from '@capacitor/core';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { formatCalendarFr } from '../utils/formatDates';
 import { cleanupSource, compressVideo, formatMb, resolveUploadBlob } from '../utils/compressVideo';
-import { isVirtualNativePath, materializeNativeVideoPath } from '../utils/nativeVideoFile';
+import { warmMaterializeNativeVideoPath } from '../utils/nativeVideoFile';
 import VideoFeedbackSlider from '../Components/VideoFeedbackSlider.vue';
 import SeriesComparisonCard from '../Components/SeriesComparisonCard.vue';
 import SeriesPickerModal from '../Components/SeriesPickerModal.vue';
@@ -355,7 +355,8 @@ function onVideoChange(event) {
   }
 }
 
-// Natif : picker qui renvoie un chemin ; on copie vers le cache si photopicker/content://.
+// Natif : ouvre le trim immédiatement (preview via convertFileSrc).
+// La copie cache (photopicker → fichier) part en arrière-plan pendant le clip.
 async function pickNativeVideos() {
   if (selectedVideos.value.length >= MAX_VIDEOS.value) {
     submitForm.setError('videos', `Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
@@ -363,30 +364,21 @@ async function pickNativeVideos() {
   }
   try {
     const result = await FilePicker.pickVideos({ readData: false });
-    const sources = [];
-    for (const f of result?.files ?? []) {
-      let path = f.path;
-      if (path && isVirtualNativePath(path)) {
-        try {
-          path = await materializeNativeVideoPath({
-            path,
-            name: f.name || 'video.mp4',
-            type: f.mimeType || 'video/mp4',
-          });
-        } catch (copyError) {
-          console.warn('[pickNativeVideos] copy to cache failed', copyError);
-        }
-      }
-      sources.push({
-        name: f.name || 'video.mp4',
-        size: f.size ?? 0,
-        type: f.mimeType || 'video/mp4',
-        path,
-        isTemp: Boolean(path && path !== f.path),
-      });
-    }
+    const sources = (result?.files ?? []).map((f) => ({
+      name: f.name || 'video.mp4',
+      size: f.size ?? 0,
+      type: f.mimeType || 'video/mp4',
+      path: f.path,
+      isTemp: false,
+    }));
     if (sources.length) {
       applySelectedVideos(sources);
+      // Prépare le fichier réel pendant que l’athlète règle le clip.
+      sources.forEach((source) => {
+        warmMaterializeNativeVideoPath(source).catch((error) => {
+          console.warn('[pickNativeVideos] warm materialize failed', error);
+        });
+      });
     }
   } catch (error) {
     const message = error?.message || '';

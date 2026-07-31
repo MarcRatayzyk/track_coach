@@ -159,7 +159,12 @@ async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
   let path = null;
   try {
     onProgress(0.03);
+    // Réutilise la copie déjà démarrée à la sélection (warm) si en cours / faite.
     path = await materializeNativeVideoPath(source);
+    if (source && path && source.path !== path) {
+      source.path = path;
+      source.isTemp = true;
+    }
   } catch (error) {
     console.warn('[trimVideo] materialize failed', error);
     throw new Error(
