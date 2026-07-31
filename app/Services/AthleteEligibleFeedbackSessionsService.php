@@ -6,10 +6,10 @@ use App\Models\ProgramDayExercise;
 use App\Models\ProgramTrainingDay;
 use App\Models\SessionFeedback;
 use App\Models\User;
+use App\Support\ActiveProgramAssignmentSupport;
 use App\Support\FeedbackFrequencySupport;
 use App\Support\ProgramSchedule;
 use App\Support\SessionFeedbackPresenter;
-use Carbon\Carbon;
 
 class AthleteEligibleFeedbackSessionsService
 {
@@ -18,32 +18,27 @@ class AthleteEligibleFeedbackSessionsService
      */
     public function forAthlete(User $athlete, int $daysBack = 14): array
     {
-        $assignment = $athlete->programAssignments()
-            ->where('status', 'active')
-            ->whereDate('date_start', '<=', now()->toDateString())
-            ->where(function ($query): void {
-                $query->whereNull('date_end')
-                    ->orWhereDate('date_end', '>=', now()->toDateString());
-            })
-            ->with('template.weeks.trainingDays')
-            ->latest('date_start')
-            ->first();
-
-        if ($assignment === null) {
-            return [];
-        }
-
         if (FeedbackFrequencySupport::isWeekly($athlete)) {
+            $assignment = ActiveProgramAssignmentSupport::forAthleteOnDate(
+                $athlete,
+                now(),
+                ['template.weeks.trainingDays'],
+            );
+
+            if ($assignment === null) {
+                return [];
+            }
+
             return $this->weeklyEligibleSessions($athlete, $assignment, $daysBack);
         }
 
-        return $this->dailyEligibleSessions($athlete, $assignment, $daysBack);
+        return $this->dailyEligibleSessions($athlete, $daysBack);
     }
 
     /**
      * @return list<array<string, mixed>>
      */
-    private function dailyEligibleSessions(User $athlete, $assignment, int $daysBack): array
+    private function dailyEligibleSessions(User $athlete, int $daysBack): array
     {
         $submittedDates = SessionFeedback::query()
             ->where('athlete_id', $athlete->id)
@@ -59,6 +54,16 @@ class AthleteEligibleFeedbackSessionsService
             $dateString = $date->toDateString();
 
             if (isset($submittedDates[$dateString])) {
+                continue;
+            }
+
+            $assignment = ActiveProgramAssignmentSupport::forAthleteOnDate(
+                $athlete,
+                $date,
+                ['template.weeks.trainingDays'],
+            );
+
+            if ($assignment === null) {
                 continue;
             }
 

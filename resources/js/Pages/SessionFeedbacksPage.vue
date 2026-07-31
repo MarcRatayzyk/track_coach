@@ -780,9 +780,11 @@ function seriesPayload() {
         <form class="mt-4 space-y-4" @submit.prevent="submitFeedback">
           <div>
             <label class="block text-sm font-medium text-slate-300">
-              {{ isWeekly ? 'Semaine / séance' : 'Séance' }}
+              {{ isWeekly ? 'Semaine / séance' : 'Séances sans retour' }}
             </label>
+
             <select
+              v-if="isWeekly"
               v-model="submitForm.session_date"
               required
               class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
@@ -793,9 +795,47 @@ function seriesPayload() {
                 :key="s.session_date"
                 :value="s.session_date"
               >
-                {{ isWeekly ? s.session_label : `${formatCalendarFr(s.session_date)} — ${s.session_label}` }}
+                {{ s.session_label }}
               </option>
             </select>
+
+            <div v-else class="mt-2">
+              <p
+                v-if="eligibleSessions.length === 0"
+                class="rounded-xl border border-dashed border-slate-700 bg-slate-950/40 px-4 py-3 text-sm text-slate-500"
+              >
+                Aucune séance en attente de retour.
+              </p>
+              <div
+                v-else
+                role="listbox"
+                aria-label="Séances sans retour"
+                class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 snap-x snap-mandatory"
+              >
+                <button
+                  v-for="s in eligibleSessions"
+                  :key="s.session_date"
+                  type="button"
+                  role="option"
+                  :aria-selected="submitForm.session_date === s.session_date"
+                  class="snap-start shrink-0 max-w-[11.5rem] rounded-xl border px-3 py-2.5 text-left transition duration-150"
+                  :class="
+                    submitForm.session_date === s.session_date
+                      ? 'border-blue-500 bg-blue-600/20 text-white shadow-[0_0_12px_rgba(59,130,246,0.2)]'
+                      : 'border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500 hover:text-white'
+                  "
+                  @click="submitForm.session_date = s.session_date"
+                >
+                  <span class="block text-xs font-medium text-slate-400">
+                    {{ formatCalendarFr(s.session_date) }}
+                  </span>
+                  <span class="mt-0.5 block truncate text-sm font-semibold">
+                    {{ s.session_label }}
+                  </span>
+                </button>
+              </div>
+            </div>
+
             <p v-if="submitForm.errors.session_date" class="mt-1 text-sm text-red-400">
               {{ submitForm.errors.session_date }}
             </p>

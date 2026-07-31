@@ -102,6 +102,10 @@ class ProgramSchedule
         AthleteProgramAssignment $assignment,
         CarbonInterface $date,
     ): ?ProgramTrainingDay {
+        if (! self::isDateWithinAssignment($assignment, $date)) {
+            return null;
+        }
+
         $week = self::weekForAssignmentOnDate($assignment, $date);
         if ($week === null) {
             return null;
