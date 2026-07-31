@@ -33,6 +33,7 @@ use App\Http\Controllers\Web\DemoController;
 use App\Http\Controllers\Web\RegisterController;
 use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\LoginController;
+use App\Http\Controllers\Web\PrivateMediaController;
 use App\Http\Controllers\Web\SessionFeedbackVideoUploadController;
 use App\Http\Controllers\Web\SessionFeedbackWebController;
 use Illuminate\Support\Facades\Route;
@@ -103,6 +104,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             ->name('feedbacks.video-uploads.store');
         Route::post('/feedbacks/video-uploads/{media}/complete', [SessionFeedbackVideoUploadController::class, 'complete'])
             ->name('feedbacks.video-uploads.complete');
+        Route::get('/media/session-feedback/{media}', [PrivateMediaController::class, 'showSessionFeedbackMedia'])
+            ->name('media.session-feedback.show');
+        Route::get('/media/messages/{media}', [PrivateMediaController::class, 'showMessageMedia'])
+            ->name('media.messages.show');
 
         Route::get('/athletes/{athlete}', [AppPageController::class, 'athlete'])->name('athletes.show');
         Route::post('/athletes/{athlete}/training-sessions', [AthleteDataWebController::class, 'storeTrainingSession'])
@@ -185,6 +190,8 @@ Route::middleware(['auth', 'verified', 'coach', 'billing'])->group(function (): 
         ->name('coach.program-blocks.import.template');
     Route::get('/coach/program-blocks/import/meta', [ProgramImportController::class, 'meta'])
         ->name('coach.program-blocks.import.meta');
+    Route::get('/coach/program-blocks/import/json-template', [ProgramImportController::class, 'jsonTemplate'])
+        ->name('coach.program-blocks.import.json-template');
     Route::get('/coach/program-blocks/{assignment}/export-pdf', ProgramPdfExportController::class)
         ->name('coach.program-blocks.export-pdf');
     Route::delete('/coach/program-blocks/{assignment}', [ProgramWebController::class, 'destroyBlock'])
@@ -205,6 +212,8 @@ Route::middleware(['auth', 'verified', 'coach', 'billing'])->group(function (): 
         ->name('coach.program-blocks.sessions.clear');
     Route::post('/coach/program-blocks/{assignment}/import/preview', [ProgramImportController::class, 'preview'])
         ->name('coach.program-blocks.import.preview');
+    Route::post('/coach/program-blocks/{assignment}/import/preview-json', [ProgramImportController::class, 'previewJson'])
+        ->name('coach.program-blocks.import.preview-json');
     Route::post('/coach/program-blocks/{assignment}/import/preview-photo', [ProgramImportController::class, 'previewPhoto'])
         ->name('coach.program-blocks.import.preview-photo');
     Route::post('/coach/program-blocks/{assignment}/import/apply', [ProgramImportController::class, 'apply'])

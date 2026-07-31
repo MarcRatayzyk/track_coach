@@ -5,6 +5,7 @@ namespace App\Actions;
 use App\Models\SessionFeedback;
 use App\Models\SessionFeedbackMedia;
 use App\Models\User;
+use App\Support\PrivateMediaDisk;
 use App\Support\VideoUploadDisk;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -104,7 +105,7 @@ class StoreSessionFeedbackMediaAction
         int $uploadedBy,
         array $seriesByPosition = [],
     ): array {
-        $disk = 'public';
+        $disk = PrivateMediaDisk::name();
         $stored = [];
 
         foreach (array_values($files) as $index => $file) {

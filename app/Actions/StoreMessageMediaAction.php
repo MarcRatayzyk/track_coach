@@ -4,7 +4,7 @@ namespace App\Actions;
 
 use App\Models\Message;
 use App\Models\MessageMedia;
-use App\Models\MessageThread;
+use App\Support\PrivateMediaDisk;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
@@ -16,7 +16,7 @@ class StoreMessageMediaAction
      */
     public function storeAudio(Message $message, array $files): array
     {
-        $disk = 'public';
+        $disk = PrivateMediaDisk::name();
         $stored = [];
 
         foreach (array_values($files) as $index => $file) {

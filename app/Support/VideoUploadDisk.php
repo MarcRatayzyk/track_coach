@@ -19,7 +19,7 @@ class VideoUploadDisk
 
     public static function diskName(): string
     {
-        return self::usesDirectUpload() ? 's3' : 'public';
+        return self::usesDirectUpload() ? 's3' : PrivateMediaDisk::NAME;
     }
 
     /**

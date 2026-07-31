@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PrivateMediaDisk;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -58,12 +59,10 @@ class SessionFeedbackMedia extends Model
 
     public function url(): string
     {
-        $disk = Storage::disk($this->disk);
-
-        if ($this->disk === 's3' || config("filesystems.disks.{$this->disk}.driver") === 's3') {
-            return $disk->temporaryUrl($this->path, now()->addHour());
+        if (PrivateMediaDisk::isObjectStore($this->disk)) {
+            return Storage::disk($this->disk)->temporaryUrl($this->path, now()->addHour());
         }
 
-        return $disk->url($this->path);
+        return route('media.session-feedback.show', $this);
     }
 }

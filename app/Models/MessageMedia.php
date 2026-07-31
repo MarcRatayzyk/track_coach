@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PrivateMediaDisk;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
@@ -30,6 +31,10 @@ class MessageMedia extends Model
 
     public function url(): string
     {
-        return Storage::disk($this->disk)->url($this->path);
+        if (PrivateMediaDisk::isObjectStore($this->disk)) {
+            return Storage::disk($this->disk)->temporaryUrl($this->path, now()->addHour());
+        }
+
+        return route('media.messages.show', $this);
     }
 }
