@@ -15,16 +15,22 @@ class ActiveProgramAssignmentSupport
     ): ?AthleteProgramAssignment {
         $date = ($date ?? now())->copy()->startOfDay();
 
-        return $athlete->programAssignments()
+        // date_start peut être en milieu de semaine : le calendrier (cellDate) couvre
+        // dès le lundi ISO, donc on élargit le filtre SQL puis on valide via ProgramSchedule.
+        $candidates = $athlete->programAssignments()
             ->where('status', 'active')
-            ->whereDate('date_start', '<=', $date->toDateString())
+            ->whereDate('date_start', '<=', $date->copy()->addDays(6)->toDateString())
             ->where(function ($query) use ($date): void {
                 $query->whereNull('date_end')
                     ->orWhereDate('date_end', '>=', $date->toDateString());
             })
             ->with($with)
             ->latest('date_start')
-            ->first();
+            ->get();
+
+        return $candidates->first(
+            fn (AthleteProgramAssignment $assignment): bool => ProgramSchedule::isDateOnSchedule($assignment, $date),
+        );
     }
 
     /**
