@@ -17,7 +17,7 @@ defineProps({
 
 <template>
   <div
-    class="flex h-[calc(100dvh-7.5rem)] min-h-[32rem] gap-3 lg:h-[calc(100dvh-8.5rem)] lg:gap-4"
+    class="tc-message-layout flex min-h-0 gap-3 lg:min-h-[32rem] lg:gap-4"
   >
     <!-- Colonne 1 : liste -->
     <div

@@ -143,54 +143,50 @@ const summary = computed(() => {
       </span>
     </div>
 
-    <div class="overflow-hidden rounded-[18px] border border-slate-800/80 bg-slate-950/40">
-      <div class="grid grid-cols-[1fr_1fr_auto] gap-2 border-b border-slate-800 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_7.5rem]">
-        <span>Exercice</span>
-        <span class="hidden sm:inline">Prévu</span>
-        <span class="hidden sm:inline">Réalisé</span>
-        <span class="sm:hidden">Comparaison</span>
-        <span class="text-right">Statut</span>
-      </div>
-
-      <ul class="divide-y divide-slate-800/80">
-        <li
-          v-for="(row, index) in rows"
-          :key="row.id ?? index"
-          class="grid grid-cols-1 gap-2 px-3 py-3 transition duration-200 hover:bg-slate-900/40 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_7.5rem] sm:items-center"
+    <div class="overflow-x-auto rounded-[18px] border border-slate-800/80 bg-slate-950/40 [scrollbar-width:thin]">
+      <div class="min-w-[32rem]">
+        <div
+          class="grid grid-cols-[minmax(4.5rem,0.65fr)_minmax(0,1.25fr)_minmax(0,1.25fr)_5.25rem] gap-2 border-b border-slate-800 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
         >
-          <div class="min-w-0">
-            <p class="truncate text-sm font-medium text-slate-100" :title="title(row)">{{ title(row) }}</p>
-            <p v-if="deltaLabel(row)" class="mt-0.5 text-[11px] font-medium text-blue-300/90">
-              {{ deltaLabel(row) }}
-            </p>
-          </div>
+          <span>Exercice</span>
+          <span>Prévu</span>
+          <span>Réalisé</span>
+          <span class="text-right">Statut</span>
+        </div>
 
-          <div class="sm:hidden">
-            <p class="text-[11px] text-slate-500">Prévu · {{ plannedLine(row) }}</p>
-            <p class="mt-0.5 text-[11px] text-slate-300">
-              Réalisé · {{ actualLine(row) || 'Non logué' }}
-            </p>
-          </div>
-
-          <p class="hidden font-mono text-xs tabular-nums text-slate-400 sm:block">
-            {{ plannedLine(row) }}
-          </p>
-          <p
-            class="hidden font-mono text-xs tabular-nums sm:block"
-            :class="row.actual ? 'text-slate-200' : 'text-slate-600'"
+        <ul class="divide-y divide-slate-800/80">
+          <li
+            v-for="(row, index) in rows"
+            :key="row.id ?? index"
+            class="grid grid-cols-[minmax(4.5rem,0.65fr)_minmax(0,1.25fr)_minmax(0,1.25fr)_5.25rem] items-center gap-2 px-3 py-2.5 transition duration-200 hover:bg-slate-900/40"
           >
-            {{ actualLine(row) || 'Non logué' }}
-          </p>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-medium text-slate-100" :title="title(row)">{{ title(row) }}</p>
+              <p v-if="deltaLabel(row)" class="mt-0.5 truncate text-[11px] font-medium text-blue-300/90">
+                {{ deltaLabel(row) }}
+              </p>
+            </div>
 
-          <span
-            class="inline-flex w-fit items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:justify-self-end"
-            :class="statusFor(row).class"
-          >
-            <span aria-hidden="true">{{ statusFor(row).icon }}</span>
-            {{ statusFor(row).label }}
-          </span>
-        </li>
-      </ul>
+            <p class="min-w-0 truncate whitespace-nowrap font-mono text-[11px] tabular-nums text-slate-400">
+              {{ plannedLine(row) }}
+            </p>
+            <p
+              class="min-w-0 truncate whitespace-nowrap font-mono text-[11px] tabular-nums"
+              :class="row.actual ? 'text-slate-200' : 'text-slate-600'"
+            >
+              {{ actualLine(row) || 'Non logué' }}
+            </p>
+
+            <span
+              class="inline-flex w-fit max-w-full items-center gap-1 justify-self-end truncate rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
+              :class="statusFor(row).class"
+            >
+              <span aria-hidden="true">{{ statusFor(row).icon }}</span>
+              {{ statusFor(row).label }}
+            </span>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>

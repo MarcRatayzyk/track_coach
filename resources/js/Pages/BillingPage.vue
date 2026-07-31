@@ -148,7 +148,7 @@ function openPortal() {
                     <span class="text-base font-medium text-slate-400">/ mois</span>
                 </p>
                 <p class="mt-2 text-sm text-slate-400">{{ plan.description }}</p>
-                <ul class="mt-4 space-y-2">
+                <ul class="mt-4 flex-1 space-y-2">
                     <li
                         v-for="feature in planFeatures"
                         :key="feature"
@@ -164,15 +164,19 @@ function openPortal() {
                 </ul>
                 <p
                     v-if="sharedBilling?.requiredPlan === plan.key"
-                    class="mt-3 text-xs font-medium text-blue-300"
+                    class="mt-4 text-xs font-medium text-blue-300"
                 >
                     Recommandé pour ton roster actuel
                 </p>
                 <button
                     v-if="!isDemo"
                     type="button"
-                    class="mt-auto pt-6 inline-flex w-full justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-                    :disabled="form.processing || !stripeConfigured"
+                    class="mt-5 flex h-11 w-full shrink-0 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="
+                        form.processing ||
+                        !stripeConfigured ||
+                        (sharedBilling?.status === 'subscribed' && sharedBilling?.plan === plan.key)
+                    "
                     @click="checkout(plan.key)"
                 >
                     {{

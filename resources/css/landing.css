@@ -132,15 +132,33 @@
 }
 
 /* Buttons */
-.lp-btn-primary {
+.lp-btn-primary,
+.lp-btn-secondary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     border-radius: 16px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.lp-btn-primary svg,
+.lp-btn-secondary svg {
+    display: block;
+    flex-shrink: 0;
+    width: 1em;
+    height: 1em;
+}
+
+.lp-btn-primary {
     background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 45%, #2563eb 100%);
     color: #fff;
-    font-weight: 600;
     box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.2) inset,
         0 12px 32px -8px rgba(37, 99, 235, 0.65),
@@ -162,15 +180,9 @@
 }
 
 .lp-btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: 16px;
     border: 1px solid rgba(148, 163, 184, 0.22);
     background: rgba(15, 23, 42, 0.45);
     color: #e2e8f0;
-    font-weight: 600;
     backdrop-filter: blur(12px);
     transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, background 0.25s ease;
 }

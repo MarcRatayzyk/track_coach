@@ -38,14 +38,14 @@ function trackCta(ctaId) {
                         <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
                             <a
                                 href="/register"
-                                class="lp-btn-primary px-10 py-4 text-base sm:text-lg"
+                                class="lp-btn-primary px-10 py-4 text-base leading-none sm:text-lg"
                                 @click="trackCta('final_register')"
                             >
                                 Essai 14 jours
                             </a>
                             <a
                                 href="/demo"
-                                class="lp-btn-secondary px-10 py-4 text-base sm:text-lg"
+                                class="lp-btn-secondary px-10 py-4 text-base leading-none sm:text-lg"
                                 @click="trackCta('final_demo')"
                             >
                                 Sandbox démo

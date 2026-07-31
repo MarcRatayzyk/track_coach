@@ -22,7 +22,7 @@ class BulkUpsertProgramSessionsRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'operations' => ['required', 'array', 'min:1', 'max:56'],
+            'operations' => ['required', 'array', 'min:1', 'max:84'],
             'operations.*.week_number' => ['required', 'integer', 'min:1'],
             'operations.*.weekday' => ['required', 'integer', 'min:1', 'max:7'],
         ];

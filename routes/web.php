@@ -27,6 +27,7 @@ use App\Http\Controllers\Web\Coach\MessageWebController;
 use App\Http\Controllers\Web\Coach\CoachChartTemplateWebController;
 use App\Http\Controllers\Web\Coach\CoachStatsDashboardWebController;
 use App\Http\Controllers\Web\Coach\DayTableLayoutWebController;
+use App\Http\Controllers\Web\Coach\ProgramImportController;
 use App\Http\Controllers\Web\Coach\ProgramWebController;
 use App\Http\Controllers\Web\DemoController;
 use App\Http\Controllers\Web\RegisterController;
@@ -180,6 +181,10 @@ Route::middleware(['auth', 'verified', 'coach', 'billing'])->group(function (): 
         ->name('coach.session-feedback-annotations.destroy');
     Route::post('/coach/program-blocks', [ProgramWebController::class, 'storeBlock'])
         ->name('coach.program-blocks.store');
+    Route::get('/coach/program-blocks/import/template', [ProgramImportController::class, 'template'])
+        ->name('coach.program-blocks.import.template');
+    Route::get('/coach/program-blocks/import/meta', [ProgramImportController::class, 'meta'])
+        ->name('coach.program-blocks.import.meta');
     Route::get('/coach/program-blocks/{assignment}/export-pdf', ProgramPdfExportController::class)
         ->name('coach.program-blocks.export-pdf');
     Route::delete('/coach/program-blocks/{assignment}', [ProgramWebController::class, 'destroyBlock'])
@@ -198,6 +203,12 @@ Route::middleware(['auth', 'verified', 'coach', 'billing'])->group(function (): 
         ->name('coach.program-blocks.sessions.bulk');
     Route::delete('/coach/program-blocks/{assignment}/sessions', [ProgramWebController::class, 'clearSession'])
         ->name('coach.program-blocks.sessions.clear');
+    Route::post('/coach/program-blocks/{assignment}/import/preview', [ProgramImportController::class, 'preview'])
+        ->name('coach.program-blocks.import.preview');
+    Route::post('/coach/program-blocks/{assignment}/import/preview-photo', [ProgramImportController::class, 'previewPhoto'])
+        ->name('coach.program-blocks.import.preview-photo');
+    Route::post('/coach/program-blocks/{assignment}/import/apply', [ProgramImportController::class, 'apply'])
+        ->name('coach.program-blocks.import.apply');
 
     Route::post('/coach/day-table-layouts', [DayTableLayoutWebController::class, 'store'])
         ->name('coach.day-table-layouts.store');

@@ -31,20 +31,56 @@ class AthleteWrappedPresenter
             return ['weekly' => null, 'monthly' => null];
         }
 
-        $today = $date->copy()->startOfDay();
+        $now = $date->copy();
+        $today = $now->copy()->startOfDay();
 
         return [
-            'weekly' => $this->weeklyWrapped($athlete, $assignment, $today),
+            'weekly' => $this->weeklyWrapped($athlete, $assignment, $now),
             'monthly' => $this->monthlyWrapped($athlete, $assignment, $today),
         ];
     }
 
     /**
+     * Fenêtre d’affichage dashboard : dimanche 19:00 → lundi 19:00 (exclu).
+     */
+    public static function isInWeeklyWrappedWindow(CarbonInterface $now): bool
+    {
+        if ($now->isSunday()) {
+            return $now->gte($now->copy()->startOfDay()->setTime(19, 0));
+        }
+
+        if ($now->isMonday()) {
+            return $now->lt($now->copy()->startOfDay()->setTime(19, 0));
+        }
+
+        return false;
+    }
+
+    /**
+     * Semaine couverte par le wrapped pendant la fenêtre dimanche→lundi.
+     *
+     * @return array{0: CarbonInterface, 1: CarbonInterface}
+     */
+    public static function weeklyWrappedPeriod(CarbonInterface $now): array
+    {
+        // Lundi avant 19h → semaine qui vient de se terminer (lundi→dimanche précédent).
+        if ($now->isMonday()) {
+            return FeedbackFrequencySupport::weekBounds($now->copy()->subDay());
+        }
+
+        return FeedbackFrequencySupport::weekBounds($now);
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
-    private function weeklyWrapped(User $athlete, AthleteProgramAssignment $assignment, CarbonInterface $today): ?array
+    private function weeklyWrapped(User $athlete, AthleteProgramAssignment $assignment, CarbonInterface $now): ?array
     {
-        [$start, $end] = FeedbackFrequencySupport::weekBounds($today);
+        if (! self::isInWeeklyWrappedWindow($now)) {
+            return null;
+        }
+
+        [$start, $end] = self::weeklyWrappedPeriod($now);
 
         if (! $this->allPlannedSessionsCompleted($athlete->id, $assignment, $start, $end)) {
             return null;

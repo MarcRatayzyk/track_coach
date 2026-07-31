@@ -90,7 +90,7 @@ const filtered = computed(() => {
 </script>
 
 <template>
-  <aside class="flex h-full min-h-0 w-full flex-col lg:w-[16rem] xl:w-[17rem]">
+  <aside class="flex h-full min-h-0 w-full flex-col lg:w-[14rem] xl:w-[15rem]">
     <ReviewFilters
       :model-value="filter"
       :search="search"

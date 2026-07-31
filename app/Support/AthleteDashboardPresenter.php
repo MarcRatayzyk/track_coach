@@ -31,7 +31,8 @@ class AthleteDashboardPresenter
 
     public static function forAthlete(User $athlete, ?CarbonInterface $date = null): array
     {
-        $date = ($date ?? now())->copy()->startOfDay();
+        $now = ($date ?? now())->copy();
+        $date = $now->copy()->startOfDay();
         $todayString = $date->toDateString();
 
         $athlete->loadMissing(['latestPr', 'upcomingCompetition']);
@@ -49,7 +50,7 @@ class AthleteDashboardPresenter
         $todayLoggedSession = self::todayLoggedSession($athlete, $todayString);
         $feedbackDueToday = self::feedbackDueToday($athlete, $activeAssignment, $date);
         $shareHighlights = self::shareHighlights($athlete, $activeAssignment, $latestPr, $date);
-        $wrapped = app(AthleteWrappedPresenter::class)->forAthlete($athlete, $activeAssignment, $date);
+        $wrapped = app(AthleteWrappedPresenter::class)->forAthlete($athlete, $activeAssignment, $now);
 
         $followUpStartedAt = $athlete->coaches()
             ->wherePivot('status', 'active')

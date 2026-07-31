@@ -65,7 +65,7 @@ const pains = [
                     </div>
                     <a
                         href="/register"
-                        class="lp-btn-primary shrink-0 px-7 py-3.5 text-[15px]"
+                        class="lp-btn-primary shrink-0 px-7 py-3.5 text-[15px] leading-none"
                     >
                         Passer à Power Roster
                     </a>

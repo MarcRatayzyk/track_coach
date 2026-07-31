@@ -29,6 +29,7 @@ import ProgramBlockCalendar from '../Components/ProgramBlockCalendar.vue';
 import ProgramBlockTableBuilder from '../Components/ProgramBlockTableBuilder.vue';
 import ProgramBlockTableBuilderV2 from '../Components/ProgramBlockTableBuilderV2.vue';
 import ProgramPasteIncrementModal from '../Components/ProgramPasteIncrementModal.vue';
+import ProgramImportModal from '../Components/ProgramImportModal.vue';
 
 import ProgramBlockStatsTab from '../Components/ProgramBlockStatsTab.vue';
 import SessionEditorPanel from '../Components/SessionEditorPanel.vue';
@@ -138,6 +139,7 @@ const pasting = ref(false);
 
 const pasteMode = ref(false);
 const customExercisesOpen = ref(false);
+const importModalOpen = ref(false);
 const activeTab = ref(
   ['calendar', 'table', 'table_v2', 'stats'].includes(initialTab) ? initialTab : 'table_v2',
 );
@@ -840,6 +842,14 @@ function clearClipboard() {
         >
           Mes exercices
         </button>
+        <button
+          v-if="activeBlock?.id"
+          type="button"
+          class="rounded-xl border border-blue-500/50 bg-blue-500/10 px-3 py-2 text-sm font-semibold text-blue-200 hover:border-blue-400 hover:bg-blue-500/20"
+          @click="importModalOpen = true"
+        >
+          Importer
+        </button>
         <a
           v-if="activeBlock?.id"
           :href="`/coach/program-blocks/${activeBlock.id}/export-pdf`"
@@ -1163,6 +1173,16 @@ function clearClipboard() {
     />
 
     <CustomExercisesModal v-model:open="customExercisesOpen" />
+
+    <ProgramImportModal
+      v-if="activeBlock?.id"
+      :open="importModalOpen"
+      :assignment-id="activeBlock.id"
+      :builder-tab="activeTab"
+      :week-count="activeBlock.week_count ?? 0"
+      @close="importModalOpen = false"
+      @imported="afterSessionChange"
+    />
 
   </div>
 

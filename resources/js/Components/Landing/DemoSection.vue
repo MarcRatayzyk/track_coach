@@ -136,7 +136,7 @@ function select(i) {
                         </p>
                         <a
                             href="/demo"
-                            class="lp-btn-primary mt-6 inline-flex px-5 py-2.5 text-sm"
+                            class="lp-btn-primary mt-6 inline-flex px-5 py-2.5 text-sm leading-none"
                         >
                             Ouvrir la sandbox démo
                         </a>

@@ -53,7 +53,7 @@ const links = [
                 </a>
                 <a
                     href="/register"
-                    class="lp-btn-primary px-3.5 py-2 text-xs sm:px-5 sm:py-2.5 sm:text-sm"
+                    class="lp-btn-primary px-3.5 py-2 text-xs leading-none sm:px-5 sm:py-2.5 sm:text-sm"
                     @click="trackCta('nav_register')"
                 >
                     Créer un compte

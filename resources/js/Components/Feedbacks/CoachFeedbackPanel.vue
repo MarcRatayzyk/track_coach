@@ -59,7 +59,7 @@ function sendReply() {
 
 <template>
   <aside
-    class="flex h-full min-h-0 w-full flex-col rounded-[18px] border border-slate-800/80 bg-slate-900/50 shadow-xl backdrop-blur-sm lg:w-[16rem] xl:w-[17rem]"
+    class="flex h-full min-h-0 w-full flex-col rounded-[18px] border border-slate-800/80 bg-slate-900/50 shadow-xl backdrop-blur-sm lg:w-[18rem] xl:w-[20rem]"
   >
     <div class="border-b border-slate-800/80 p-4">
       <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">

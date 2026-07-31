@@ -12,18 +12,25 @@ use Illuminate\Validation\ValidationException;
 
 class BulkUpsertProgramSessionsAction
 {
-    public function execute(BulkUpsertProgramSessionsRequest $request, AthleteProgramAssignment $assignment): int
+    /**
+     * @param  BulkUpsertProgramSessionsRequest|array{operations: list<array<string, mixed>>}  $request
+     */
+    public function execute(BulkUpsertProgramSessionsRequest|array $request, AthleteProgramAssignment $assignment): int
     {
-        return DB::transaction(function () use ($request, $assignment): int {
+        $operations = $request instanceof BulkUpsertProgramSessionsRequest
+            ? $request->input('operations')
+            : ($request['operations'] ?? []);
+
+        return DB::transaction(function () use ($operations, $assignment): int {
             $weeksByNumber = ProgramWeek::query()
                 ->where('template_id', $assignment->template_id)
-                ->whereIn('week_number', collect($request->input('operations'))->pluck('week_number')->unique())
+                ->whereIn('week_number', collect($operations)->pluck('week_number')->unique())
                 ->get()
                 ->keyBy('week_number');
 
             $count = 0;
 
-            foreach ($request->input('operations') as $operation) {
+            foreach ($operations as $operation) {
                 $weekNumber = (int) $operation['week_number'];
                 $week = $weeksByNumber->get($weekNumber);
 

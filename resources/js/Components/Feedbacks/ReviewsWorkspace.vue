@@ -136,16 +136,16 @@ function backToList() {
 
     <div
       v-if="mobilePane === 'reply'"
-      class="fixed inset-0 z-40 flex bg-slate-950/80 p-3 backdrop-blur-sm xl:hidden"
+      class="fixed inset-0 z-40 flex flex-col bg-slate-950/80 p-3 backdrop-blur-sm xl:hidden"
     >
-      <div class="relative flex min-h-0 w-full flex-1">
-        <button
-          type="button"
-          class="absolute left-3 top-3 z-10 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300"
-          @click="mobilePane = 'analysis'"
-        >
-          Fermer
-        </button>
+      <button
+        type="button"
+        class="mb-2 self-start rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-slate-300"
+        @click="mobilePane = 'analysis'"
+      >
+        Fermer
+      </button>
+      <div class="flex min-h-0 w-full flex-1">
         <CoachFeedbackPanel
           class="!w-full"
           :feedback="activeFeedback"

@@ -77,35 +77,35 @@ const items = computed(() => {
 </script>
 
 <template>
-  <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
     <motion.div
       v-for="(item, index) in items"
       :key="item.key"
       :initial="{ opacity: 0, y: 10 }"
       :animate="{ opacity: 1, y: 0 }"
       :transition="{ duration: 0.28, delay: index * 0.04 }"
-      class="relative overflow-hidden rounded-[18px] border bg-gradient-to-br from-slate-900/80 via-slate-900/50 to-slate-950/60 p-4 shadow-lg backdrop-blur-sm transition duration-200 hover:shadow-[0_0_24px_rgba(59,130,246,0.12)]"
+      class="relative overflow-hidden rounded-xl border bg-gradient-to-br from-slate-900/80 via-slate-900/50 to-slate-950/60 p-2.5 shadow-lg backdrop-blur-sm transition duration-200 hover:shadow-[0_0_24px_rgba(59,130,246,0.12)]"
       :class="item.accentClass"
     >
       <div
-        class="pointer-events-none absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-30 blur-2xl"
+        class="pointer-events-none absolute -right-4 -top-4 h-14 w-14 rounded-full opacity-30 blur-2xl"
         :style="{ background: item.color }"
         aria-hidden="true"
       />
       <span
-        class="relative flex h-9 w-9 items-center justify-center rounded-[12px]"
+        class="relative flex h-7 w-7 items-center justify-center rounded-lg"
         :class="item.iconClass"
       >
-        <UiIcon :name="item.icon" class="h-4 w-4" />
+        <UiIcon :name="item.icon" class="h-3.5 w-3.5" />
       </span>
-      <p class="relative mt-2.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+      <p class="relative mt-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">
         {{ item.label }}
       </p>
-      <p v-if="item.hint" class="relative text-[10px] text-slate-400">{{ item.hint }}</p>
-      <p class="relative mt-0.5 text-2xl font-bold tabular-nums tracking-tight text-white">
+      <p v-if="item.hint" class="relative text-[10px] leading-tight text-slate-400">{{ item.hint }}</p>
+      <p class="relative mt-0.5 text-xl font-bold tabular-nums tracking-tight text-white">
         <AnimatedCounter :value="item.value" />
       </p>
-      <div class="relative mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-300">
+      <div class="relative mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-300">
         <span class="tabular-nums">
           <span class="text-slate-300">Journalier</span>
           <span class="ml-1 font-semibold text-white">{{ item.daily }}</span>

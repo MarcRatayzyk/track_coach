@@ -111,7 +111,7 @@ const plans = [
 
                         <a
                             :href="plan.href"
-                            class="lp-btn-primary mt-8 inline-flex justify-center px-5 py-3 text-sm"
+                            class="lp-btn-primary mt-8 flex w-full items-center justify-center px-5 py-3.5 text-sm leading-none"
                         >
                             {{ plan.cta }}
                         </a>

@@ -15,6 +15,16 @@ body {
     @apply bg-slate-950 text-slate-100 antialiased;
 }
 
+/* Centrage optique du label dans les CTA primaires (Inter) */
+a.lp-btn-primary,
+a.lp-btn-secondary,
+button.bg-blue-600,
+button[class*='from-blue-600'],
+a.bg-blue-600,
+a[class*='from-blue-600'] {
+    line-height: 1;
+}
+
 @media (max-width: 1023px) {
     :root {
         --tc-mobile-safe-top: max(0.5rem, env(safe-area-inset-top, 0px));
@@ -48,10 +58,20 @@ body {
     }
 }
 
+@media (max-width: 1023px) {
+    .tc-message-layout {
+        height: calc(
+            100dvh
+            - 3rem - var(--tc-mobile-safe-top, 0.5rem)
+            - 3.75rem - var(--tc-mobile-safe-bottom, 0.5rem)
+            - 2.5rem
+        );
+    }
+}
+
 @media (min-width: 1024px) {
-    .tc-app-content {
-        padding-top: 0;
-        padding-bottom: 0;
+    .tc-message-layout {
+        height: calc(100dvh - 8.5rem);
     }
 }
 

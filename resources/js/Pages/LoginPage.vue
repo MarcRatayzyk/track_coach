@@ -245,7 +245,7 @@ function submit() {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-4 text-base font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500 disabled:opacity-60"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-4 text-base font-semibold leading-none text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500 disabled:opacity-60"
                     >
                         <span v-if="form.processing">Connexion…</span>
                         <span v-else>Se connecter</span>
