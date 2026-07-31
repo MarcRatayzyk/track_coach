@@ -7,11 +7,13 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { Capacitor } from '@capacitor/core';
+import { VideoEditor } from '@whiteguru/capacitor-plugin-video-editor';
 import { resolveUploadBlob } from './compressVideo';
 
 const FFMPEG_CORE_BASE = `${typeof window !== 'undefined' ? window.location.origin : ''}/ffmpeg`;
 const TRIM_TIMEOUT_MS = 4 * 60 * 1000;
 const MIN_DURATION_SEC = 0.5;
+const NATIVE_TRIM_TIMEOUT_MS = 3 * 60 * 1000;
 
 /** @type {FFmpeg|null} */
 let ffmpegInstance = null;
@@ -118,12 +120,10 @@ export async function trimVideo(source, options = {}) {
 
   onProgress(0.02);
 
-  // Natif : ne pas passer par MediaRecorder (captureStream = images hachées / frames perdues
-  // dans le WebView Capacitor). FFmpeg.wasm est aussi exclus (OOM).
+  // Natif Capacitor : trim hardware (LiTr) — pas de FFmpeg.wasm (OOM) ni MediaRecorder
+  // (captureStream haché dans le WebView).
   if (Capacitor.isNativePlatform()) {
-    throw new Error(
-      'Rognage indisponible sur mobile. Utilisez « Envoyer toute la vidéo », ou rognez avant l’import.',
-    );
+    return trimWithNativeEditor(source, range, onProgress, originalBytes);
   }
 
   // Chemin rapide web : enregistrement de la sélection (MP4).
@@ -144,6 +144,123 @@ export async function trimVideo(source, options = {}) {
   }
 
   return trimWithFfmpeg(source, range, onProgress, originalBytes);
+}
+
+/**
+ * Rognage natif Android/iOS via @whiteguru/capacitor-plugin-video-editor.
+ * @param {{ name?: string, size?: number, type?: string, file?: Blob, path?: string }} source
+ * @param {{ startSec: number, endSec: number }} range
+ * @param {(ratio: number) => void} onProgress
+ * @param {number} originalBytes
+ */
+async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
+  const path = normalizeNativeVideoPath(source.path);
+  if (!path) {
+    throw new Error(
+      'Rognage mobile : chemin vidéo introuvable. Réessayez ou utilisez « toute la vidéo ».',
+    );
+  }
+
+  let listener = null;
+  let timeoutId = 0;
+
+  try {
+    listener = await VideoEditor.addListener('transcodeProgress', (info) => {
+      const raw = typeof info?.progress === 'number' ? info.progress : 0;
+      const ratio = raw > 1 ? raw / 100 : raw;
+      onProgress(Math.min(0.95, Math.max(0.05, ratio)));
+    });
+
+    onProgress(0.05);
+
+    const result = await Promise.race([
+      VideoEditor.edit({
+        path,
+        trim: {
+          startsAt: Math.round(range.startSec * 1000),
+          endsAt: Math.round(range.endSec * 1000),
+        },
+        // Plafond 720p : assez net pour le coach, plus rapide qu’un export full-res.
+        transcode: {
+          width: 720,
+          height: 720,
+          keepAspectRatio: true,
+          fps: 30,
+        },
+      }),
+      new Promise((_, reject) => {
+        timeoutId = window.setTimeout(
+          () => reject(new Error('Rognage mobile trop long')),
+          NATIVE_TRIM_TIMEOUT_MS,
+        );
+      }),
+    ]);
+
+    const out = result?.file;
+    if (!out?.path) {
+      throw new Error('Rognage mobile sans fichier de sortie.');
+    }
+
+    const outPath = String(out.path);
+    const outputBytes = typeof out.size === 'number' && out.size > 0
+      ? out.size
+      : originalBytes || 0;
+
+    onProgress(1);
+
+    return {
+      source: {
+        name: out.name || `${(source.name || 'video').replace(/\.[^.]+$/, '')}-trim.mp4`,
+        size: outputBytes,
+        type: out.type || 'video/mp4',
+        path: outPath,
+        isTemp: true,
+      },
+      trimmed: true,
+      originalBytes: originalBytes || outputBytes,
+      outputBytes,
+    };
+  } catch (error) {
+    console.warn('[trimVideo] native editor failed', error);
+    const message = error?.message || String(error || '');
+    if (/not implemented|plugin|unavailable/i.test(message)) {
+      throw new Error(
+        'Rognage mobile nécessite la dernière version de l’app. Mettez à jour, ou envoyez toute la vidéo.',
+      );
+    }
+    throw error instanceof Error
+      ? error
+      : new Error('Échec du rognage vidéo sur mobile.');
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    try {
+      await listener?.remove();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+/**
+ * @param {string|undefined} path
+ * @returns {string|null}
+ */
+function normalizeNativeVideoPath(path) {
+  if (!path || typeof path !== 'string') {
+    return null;
+  }
+  if (path.startsWith('blob:') || path.startsWith('data:') || path.startsWith('http')) {
+    return null;
+  }
+  if (path.startsWith('file://') || path.startsWith('content://')) {
+    return path;
+  }
+  if (path.startsWith('/')) {
+    return `file://${path}`;
+  }
+  return path;
 }
 
 /**
