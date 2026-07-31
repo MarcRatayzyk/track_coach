@@ -18,6 +18,8 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 COPY package.json package-lock.json ./
 # postinstall lance scripts/sync-ffmpeg-core.mjs — nécessaire avant npm ci
 COPY scripts ./scripts
+# Dépendance locale file:plugins/capacitor-video-stream-trim (npm ci avant COPY .)
+COPY plugins ./plugins
 RUN npm ci
 
 COPY . .
