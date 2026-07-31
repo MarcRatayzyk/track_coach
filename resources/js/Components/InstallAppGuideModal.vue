@@ -16,8 +16,8 @@ defineProps({
 
 const emit = defineEmits(['close']);
 
-const APK_DOWNLOAD_URL =
-    'https://github.com/MarcRatayzyk/track_coach/releases/latest/download/power-roster.apk';
+// Route Laravel : sert le fichier local (Render) ou bascule sur la release GitHub.
+const APK_DOWNLOAD_URL = '/downloads/power-roster.apk';
 
 function trackApkDownload() {
     track('apk_download_clicked', { source: 'install_guide' });

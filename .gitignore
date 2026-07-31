@@ -5,6 +5,7 @@
 /public/ffmpeg/
 /public/downloads/*.apk
 !/public/downloads/.gitkeep
+!/public/downloads/power-roster.apk
 /storage/*.key
 /vendor
 .env
