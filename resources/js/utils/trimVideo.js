@@ -9,6 +9,7 @@ import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { Capacitor } from '@capacitor/core';
 import { VideoEditor } from '@whiteguru/capacitor-plugin-video-editor';
 import { resolveUploadBlob } from './compressVideo';
+import { materializeNativeVideoPath } from './nativeVideoFile';
 
 const FFMPEG_CORE_BASE = `${typeof window !== 'undefined' ? window.location.origin : ''}/ffmpeg`;
 const TRIM_TIMEOUT_MS = 4 * 60 * 1000;
@@ -154,7 +155,18 @@ export async function trimVideo(source, options = {}) {
  * @param {number} originalBytes
  */
 async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
-  const path = normalizeNativeVideoPath(source.path);
+  let path = null;
+  try {
+    onProgress(0.03);
+    path = await materializeNativeVideoPath(source);
+  } catch (error) {
+    console.warn('[trimVideo] materialize failed', error);
+    throw new Error(
+      error?.message ||
+        'Impossible d’accéder à la vidéo. Réessayez ou utilisez « toute la vidéo ».',
+    );
+  }
+
   if (!path) {
     throw new Error(
       'Rognage mobile : chemin vidéo introuvable. Réessayez ou utilisez « toute la vidéo ».',
@@ -168,10 +180,10 @@ async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
     listener = await VideoEditor.addListener('transcodeProgress', (info) => {
       const raw = typeof info?.progress === 'number' ? info.progress : 0;
       const ratio = raw > 1 ? raw / 100 : raw;
-      onProgress(Math.min(0.95, Math.max(0.05, ratio)));
+      onProgress(Math.min(0.95, Math.max(0.08, ratio)));
     });
 
-    onProgress(0.05);
+    onProgress(0.08);
 
     const result = await Promise.race([
       VideoEditor.edit({
@@ -223,6 +235,11 @@ async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
   } catch (error) {
     console.warn('[trimVideo] native editor failed', error);
     const message = error?.message || String(error || '');
+    if (/Cannot read input file/i.test(message)) {
+      throw new Error(
+        'Impossible de lire cette vidéo. Réessayez, ou utilisez « toute la vidéo ».',
+      );
+    }
     if (/not implemented|plugin|unavailable/i.test(message)) {
       throw new Error(
         'Rognage mobile nécessite la dernière version de l’app. Mettez à jour, ou envoyez toute la vidéo.',
@@ -241,26 +258,6 @@ async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
       // ignore
     }
   }
-}
-
-/**
- * @param {string|undefined} path
- * @returns {string|null}
- */
-function normalizeNativeVideoPath(path) {
-  if (!path || typeof path !== 'string') {
-    return null;
-  }
-  if (path.startsWith('blob:') || path.startsWith('data:') || path.startsWith('http')) {
-    return null;
-  }
-  if (path.startsWith('file://') || path.startsWith('content://')) {
-    return path;
-  }
-  if (path.startsWith('/')) {
-    return `file://${path}`;
-  }
-  return path;
 }
 
 /**

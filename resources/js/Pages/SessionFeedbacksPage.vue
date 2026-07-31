@@ -8,11 +8,12 @@ export default {
 
 <script setup>
 import { router, useForm } from '@inertiajs/vue3';
-import { computed, ref, useTemplateRef, watch } from 'vue';
+import { computed, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { Capacitor } from '@capacitor/core';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { formatCalendarFr } from '../utils/formatDates';
 import { cleanupSource, compressVideo, formatMb, resolveUploadBlob } from '../utils/compressVideo';
+import { isVirtualNativePath, materializeNativeVideoPath } from '../utils/nativeVideoFile';
 import VideoFeedbackSlider from '../Components/VideoFeedbackSlider.vue';
 import SeriesComparisonCard from '../Components/SeriesComparisonCard.vue';
 import SeriesPickerModal from '../Components/SeriesPickerModal.vue';
@@ -163,14 +164,14 @@ const showProgressBar = computed(
     isCompressing.value ||
     isUploading.value ||
     progressPercent.value > 0 ||
-    Boolean(uploadStatus.value && (submitForm.processing || isUploading.value || isCompressing.value)),
+    Boolean(submitForm.processing || isUploading.value || isCompressing.value),
 );
 
 const statusLine = computed(() => {
-  if (isCompressing.value) {
-    return uploadStatus.value || 'Compression en cours…';
+  if (!showProgressBar.value) {
+    return '';
   }
-  return uploadStatus.value;
+  return `${progressPercent.value}%`;
 });
 
 const submitBusy = computed(
@@ -180,6 +181,43 @@ const submitBusy = computed(
     isCompressing.value ||
     trimQueueIndex.value !== null,
 );
+
+/** @type {WakeLockSentinel|null} */
+let wakeLock = null;
+
+async function acquireWakeLock() {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.wakeLock?.request) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch {
+    // ignore (permission / unsupported)
+  }
+}
+
+async function releaseWakeLock() {
+  try {
+    await wakeLock?.release();
+  } catch {
+    // ignore
+  }
+  wakeLock = null;
+}
+
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible' && submitBusy.value) {
+    acquireWakeLock();
+  }
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', onVisibilityChange);
+}
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', onVisibilityChange);
+  releaseWakeLock();
+});
 
 function feedbackUrl(id) {
   return `/feedbacks?feedback=${id}`;
@@ -317,7 +355,7 @@ function onVideoChange(event) {
   }
 }
 
-// Natif : picker qui renvoie un chemin de fichier (aucun chargement mémoire).
+// Natif : picker qui renvoie un chemin ; on copie vers le cache si photopicker/content://.
 async function pickNativeVideos() {
   if (selectedVideos.value.length >= MAX_VIDEOS.value) {
     submitForm.setError('videos', `Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
@@ -325,12 +363,28 @@ async function pickNativeVideos() {
   }
   try {
     const result = await FilePicker.pickVideos({ readData: false });
-    const sources = (result?.files ?? []).map((f) => ({
-      name: f.name || 'video.mp4',
-      size: f.size ?? 0,
-      type: f.mimeType || 'video/mp4',
-      path: f.path,
-    }));
+    const sources = [];
+    for (const f of result?.files ?? []) {
+      let path = f.path;
+      if (path && isVirtualNativePath(path)) {
+        try {
+          path = await materializeNativeVideoPath({
+            path,
+            name: f.name || 'video.mp4',
+            type: f.mimeType || 'video/mp4',
+          });
+        } catch (copyError) {
+          console.warn('[pickNativeVideos] copy to cache failed', copyError);
+        }
+      }
+      sources.push({
+        name: f.name || 'video.mp4',
+        size: f.size ?? 0,
+        type: f.mimeType || 'video/mp4',
+        path,
+        isTemp: Boolean(path && path !== f.path),
+      });
+    }
     if (sources.length) {
       applySelectedVideos(sources);
     }
@@ -461,7 +515,7 @@ async function uploadVideosDirectly(sources) {
 
     isCompressing.value = true;
     isUploading.value = false;
-    uploadStatus.value = `Compression ${index + 1}/${total}…`;
+    uploadStatus.value = '';
     const result = await compressVideo(original, {
       onProgress: (ratio) => setPipelineProgress(index, total, ratio * 0.5),
     });
@@ -472,7 +526,7 @@ async function uploadVideosDirectly(sources) {
 
     isCompressing.value = false;
     isUploading.value = true;
-    uploadStatus.value = `Préparation ${index + 1}/${total}…`;
+    uploadStatus.value = '';
     const presign = await jsonRequest('/feedbacks/video-uploads', 'POST', {
       filename: prepared.name,
       mime_type: prepared.type || 'video/mp4',
@@ -480,7 +534,7 @@ async function uploadVideosDirectly(sources) {
     });
 
     const blob = await resolveUploadBlob(prepared);
-    uploadStatus.value = `Envoi ${index + 1}/${total}…`;
+    uploadStatus.value = '';
     await putFileToSignedUrl(
       presign.upload_url,
       blob,
@@ -488,7 +542,7 @@ async function uploadVideosDirectly(sources) {
       (ratio) => setPipelineProgress(index, total, 0.5 + ratio * 0.5),
     );
 
-    uploadStatus.value = `Finalisation ${index + 1}/${total}…`;
+    uploadStatus.value = '';
     await jsonRequest(`/feedbacks/video-uploads/${presign.id}/complete`, 'POST');
     ids.push(presign.id);
 
@@ -497,7 +551,7 @@ async function uploadVideosDirectly(sources) {
 
   compressionSummary.value = summaries.length ? `Compressé : ${summaries.join(' · ')}` : '';
   pipelineProgress.value = 100;
-  uploadStatus.value = 'Vidéos envoyées.';
+  uploadStatus.value = '';
   return ids;
 }
 
@@ -509,7 +563,7 @@ async function prepareLocalFiles(sources) {
 
   for (let index = 0; index < total; index += 1) {
     isCompressing.value = true;
-    uploadStatus.value = `Compression ${index + 1}/${total}…`;
+    uploadStatus.value = '';
     const result = await compressVideo(sources[index], {
       onProgress: (ratio) => setPipelineProgress(index, total, ratio),
     });
@@ -539,6 +593,7 @@ async function submitFeedback() {
   }
 
   submitForm.clearErrors();
+  await acquireWakeLock();
 
   const hasVideos = selectedVideos.value.length > 0;
 
@@ -554,12 +609,11 @@ async function submitFeedback() {
       isUploading.value = false;
       isCompressing.value = false;
       submitForm.setError('videos', error?.message || 'Échec de la préparation des vidéos.');
+      await releaseWakeLock();
       return;
     }
 
-    uploadStatus.value = filesToSend.length
-      ? 'Envoi en cours (cela peut prendre une minute)…'
-      : 'Envoi en cours…';
+    uploadStatus.value = '';
     submitForm.videos = filesToSend;
     submitForm.video_upload_ids = [];
     submitForm.video_series = seriesPayload();
@@ -589,9 +643,8 @@ async function submitFeedback() {
       },
       onFinish: () => {
         isUploading.value = false;
-        if (uploadStatus.value.startsWith('Envoi')) {
-          uploadStatus.value = '';
-        }
+        uploadStatus.value = '';
+        releaseWakeLock();
       },
     });
     return;
@@ -649,6 +702,8 @@ async function submitFeedback() {
     }
     isUploading.value = false;
     isCompressing.value = false;
+  } finally {
+    await releaseWakeLock();
   }
 }
 
@@ -713,6 +768,7 @@ function seriesPayload() {
     :feedbacks="feedbacks"
     :active-feedback="activeFeedback"
     :can-submit="eligibleSessions.length > 0"
+    :busy="submitBusy"
   >
     <template #submit-form>
       <div
@@ -836,7 +892,15 @@ function seriesPayload() {
             :disabled="submitBusy"
             class="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_0_24px_rgba(59,130,246,0.25)] hover:from-blue-500 hover:to-blue-400 disabled:opacity-50"
           >
-            {{ isCompressing ? 'Compression…' : isUploading || submitForm.processing ? 'Envoi en cours…' : 'Envoyer au coach' }}
+            {{
+              submitBusy && progressPercent > 0
+                ? `${progressPercent}%`
+                : isCompressing
+                  ? '…'
+                  : isUploading || submitForm.processing
+                    ? '…'
+                    : 'Envoyer au coach'
+            }}
           </button>
         </form>
       </div>

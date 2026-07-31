@@ -11,6 +11,8 @@ const props = defineProps({
   activeFeedback: { type: Object, default: null },
   canSubmit: { type: Boolean, default: false },
   tab: { type: String, default: 'submit' },
+  /** Empêche de quitter l’onglet d’envoi pendant compression / upload. */
+  busy: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:tab']);
@@ -33,7 +35,7 @@ watch(
   (id) => {
     if (id) {
       mobilePane.value = 'analysis';
-      if (activeTab.value !== 'history') {
+      if (!props.busy && activeTab.value !== 'history') {
         activeTab.value = 'history';
       }
     }
@@ -41,6 +43,9 @@ watch(
 );
 
 function setTab(tab) {
+  if (props.busy && tab !== 'submit') {
+    return;
+  }
   activeTab.value = tab;
   if (tab === 'submit') {
     mobilePane.value = 'list';
@@ -97,11 +102,14 @@ function urgencyFor(item) {
         type="button"
         role="tab"
         :aria-selected="activeTab === 'history'"
+        :disabled="busy"
         class="flex-1 rounded-[10px] px-3 py-2.5 text-sm font-semibold transition duration-200"
         :class="
           activeTab === 'history'
             ? 'bg-blue-600 text-white shadow-[0_0_16px_rgba(59,130,246,0.25)]'
-            : 'text-slate-400 hover:bg-slate-900/80 hover:text-slate-200'
+            : busy
+              ? 'cursor-not-allowed text-slate-600'
+              : 'text-slate-400 hover:bg-slate-900/80 hover:text-slate-200'
         "
         @click="setTab('history')"
       >
@@ -113,7 +121,7 @@ function urgencyFor(item) {
       </button>
     </div>
 
-    <div v-if="activeTab === 'submit'" class="space-y-3">
+    <div v-show="activeTab === 'submit'" class="space-y-3">
       <slot v-if="canSubmit" name="submit-form" />
       <EmptyState
         v-else
@@ -124,7 +132,7 @@ function urgencyFor(item) {
     </div>
 
     <div
-      v-else
+      v-show="activeTab === 'history'"
       class="flex min-h-[calc(100dvh-18rem)] flex-col gap-3 lg:h-[calc(100dvh-16rem)] lg:min-h-[36rem] lg:flex-row lg:gap-4"
     >
       <div
