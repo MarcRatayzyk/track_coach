@@ -1,0 +1,23 @@
+{
+  "name": "capacitor-video-stream-trim",
+  "version": "1.0.0",
+  "description": "Fast video trim via Android MediaMuxer stream-copy (no reencode)",
+  "main": "dist/plugin.cjs.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/"
+  ],
+  "author": "Track Coach",
+  "license": "MIT",
+  "peerDependencies": {
+    "@capacitor/core": ">=8.0.0"
+  },
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  }
+}

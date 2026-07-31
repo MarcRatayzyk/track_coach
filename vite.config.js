@@ -31,6 +31,7 @@ export default defineConfig({
             '@ffmpeg/util',
             '@ffmpeg/core',
             'capacitor-native-video-compressor',
+            'capacitor-video-stream-trim',
         ],
     },
     assetsInclude: ['**/*.wasm'],

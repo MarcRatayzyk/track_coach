@@ -8,6 +8,7 @@ import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { Capacitor } from '@capacitor/core';
 import { VideoEditor } from '@whiteguru/capacitor-plugin-video-editor';
+import { VideoStreamTrim } from 'capacitor-video-stream-trim';
 import { resolveUploadBlob } from './compressVideo';
 import { materializeNativeVideoPath } from './nativeVideoFile';
 
@@ -173,6 +174,68 @@ async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
     );
   }
 
+  // 1) Stream-copy rapide (MediaMuxer) — pas de réencodage.
+  try {
+    const copied = await trimWithNativeStreamCopy(path, range, onProgress, originalBytes, source.name);
+    if (copied) {
+      return copied;
+    }
+  } catch (error) {
+    console.warn('[trimVideo] stream-copy indisponible, fallback transcode', error);
+  }
+
+  // 2) Fallback : transcode LiTr (plus lent, plus compatible).
+  return trimWithNativeTranscode(path, range, onProgress, originalBytes, source.name);
+}
+
+/**
+ * Trim sans réencodage via capacitor-video-stream-trim.
+ * @returns {Promise<object|null>}
+ */
+async function trimWithNativeStreamCopy(path, range, onProgress, originalBytes, sourceName) {
+  onProgress(0.1);
+  const result = await Promise.race([
+    VideoStreamTrim.trim({
+      path,
+      startMs: Math.round(range.startSec * 1000),
+      endMs: Math.round(range.endSec * 1000),
+    }),
+    new Promise((_, reject) => {
+      window.setTimeout(() => reject(new Error('Stream-copy timeout')), 60_000);
+    }),
+  ]);
+
+  if (!result?.success || !result.path) {
+    return null;
+  }
+
+  const outputBytes = typeof result.size === 'number' && result.size > 0
+    ? result.size
+    : originalBytes || 0;
+
+  if (outputBytes < 1024) {
+    return null;
+  }
+
+  onProgress(1);
+  return {
+    source: {
+      name: result.name || `${(sourceName || 'video').replace(/\.[^.]+$/, '')}-trim.mp4`,
+      size: outputBytes,
+      type: result.type || 'video/mp4',
+      path: String(result.path),
+      isTemp: true,
+    },
+    trimmed: true,
+    originalBytes: originalBytes || outputBytes,
+    outputBytes,
+  };
+}
+
+/**
+ * Trim + transcode via VideoEditor (LiTr).
+ */
+async function trimWithNativeTranscode(path, range, onProgress, originalBytes, sourceName) {
   let listener = null;
   let timeoutId = 0;
 
@@ -180,10 +243,10 @@ async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
     listener = await VideoEditor.addListener('transcodeProgress', (info) => {
       const raw = typeof info?.progress === 'number' ? info.progress : 0;
       const ratio = raw > 1 ? raw / 100 : raw;
-      onProgress(Math.min(0.95, Math.max(0.08, ratio)));
+      onProgress(Math.min(0.95, Math.max(0.12, ratio)));
     });
 
-    onProgress(0.08);
+    onProgress(0.12);
 
     const result = await Promise.race([
       VideoEditor.edit({
@@ -192,7 +255,6 @@ async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
           startsAt: Math.round(range.startSec * 1000),
           endsAt: Math.round(range.endSec * 1000),
         },
-        // Plafond 720p : assez net pour le coach, plus rapide qu’un export full-res.
         transcode: {
           width: 720,
           height: 720,
@@ -222,7 +284,7 @@ async function trimWithNativeEditor(source, range, onProgress, originalBytes) {
 
     return {
       source: {
-        name: out.name || `${(source.name || 'video').replace(/\.[^.]+$/, '')}-trim.mp4`,
+        name: out.name || `${(sourceName || 'video').replace(/\.[^.]+$/, '')}-trim.mp4`,
         size: outputBytes,
         type: out.type || 'video/mp4',
         path: outPath,

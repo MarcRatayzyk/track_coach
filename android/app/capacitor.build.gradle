@@ -15,6 +15,7 @@ dependencies {
     implementation project(':capawesome-capacitor-file-picker')
     implementation project(':whiteguru-capacitor-plugin-video-editor')
     implementation project(':capacitor-native-video-compressor')
+    implementation project(':capacitor-video-stream-trim')
 
 }
 

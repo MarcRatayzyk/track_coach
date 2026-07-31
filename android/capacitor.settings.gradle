@@ -19,3 +19,6 @@ project(':whiteguru-capacitor-plugin-video-editor').projectDir = new File('../no
 
 include ':capacitor-native-video-compressor'
 project(':capacitor-native-video-compressor').projectDir = new File('../node_modules/capacitor-native-video-compressor/android')
+
+include ':capacitor-video-stream-trim'
+project(':capacitor-video-stream-trim').projectDir = new File('../plugins/capacitor-video-stream-trim/android')
