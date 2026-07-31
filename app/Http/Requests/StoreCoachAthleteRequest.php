@@ -21,6 +21,7 @@ class StoreCoachAthleteRequest extends FormRequest
         return [
             'first_name' => ['required', 'string', 'max:120'],
             'last_name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'feedback_frequency' => [
                 'required',
                 'string',
@@ -35,6 +36,9 @@ class StoreCoachAthleteRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'email.required' => 'L’adresse e-mail de l’athlète est obligatoire.',
+            'email.email' => 'L’adresse e-mail n’est pas valide.',
+            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'feedback_frequency.required' => 'Choisis le type de coaching.',
             'feedback_frequency.in' => 'Choisis un type de coaching valide.',
         ];

@@ -43,10 +43,11 @@ class CoachAthleteRosterController extends Controller
         $first = trim($request->validated('first_name'));
         $last = trim($request->validated('last_name'));
         $displayName = trim($first.' '.$last);
+        $email = strtolower(trim($request->validated('email')));
 
         $athlete = User::query()->create([
             'name' => $displayName,
-            'email' => User::pendingAthleteEmail(),
+            'email' => $email,
             'password' => Str::password(48),
             'role' => 'athlete',
             'initial_setup_completed_at' => null,
@@ -66,8 +67,10 @@ class CoachAthleteRosterController extends Controller
         $emailSent = ActivationDelivery::sendAthleteInvitation($athlete, $coach, $setupUrl);
 
         return back()
-            ->with('success', ActivationDelivery::athleteInvitationSuccessMessage($athlete->name, $emailSent, true))
+            ->with('success', ActivationDelivery::athleteInvitationSuccessMessage($athlete->name, $emailSent, false))
             ->with('first_login_url', $setupUrl)
+            ->with('invitation_email', $email)
+            ->with('invitation_email_sent', $emailSent)
             ->with('invited_athlete_id', $athlete->id);
     }
 
@@ -91,6 +94,8 @@ class CoachAthleteRosterController extends Controller
         return back()
             ->with('success', ActivationDelivery::athleteResendSuccessMessage($label, $emailSent, $athlete->hasPendingEmail()))
             ->with('first_login_url', $setupUrl)
+            ->with('invitation_email', $athlete->displayEmail())
+            ->with('invitation_email_sent', $emailSent)
             ->with('invited_athlete_id', $athlete->id);
     }
 

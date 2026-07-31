@@ -16,6 +16,10 @@ defineProps({
     type: String,
     default: null,
   },
+  trialDays: {
+    type: Number,
+    default: 14,
+  },
 });
 
 const form = useForm({});
@@ -33,6 +37,16 @@ function resend() {
       <p class="mt-3 text-slate-400">
         Nous t’avons envoyé un lien de confirmation. Clique dessus pour accéder à ton dashboard.
       </p>
+      <p class="mt-3 text-sm text-slate-500">
+        Ton essai gratuit de {{ trialDays }} jours est déjà actif — il te reste à confirmer ton e-mail.
+      </p>
+
+      <div
+        v-if="$page.props.flash?.success"
+        class="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200"
+      >
+        {{ $page.props.flash.success }}
+      </div>
 
       <p
         v-if="status === 'verification-link-sent'"
@@ -42,10 +56,10 @@ function resend() {
       </p>
 
       <p
-        v-if="mailError"
+        v-if="mailError || $page.props.flash?.error"
         class="mt-4 rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200"
       >
-        {{ mailError }}
+        {{ mailError || $page.props.flash?.error }}
       </p>
 
       <button

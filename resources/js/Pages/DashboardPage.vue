@@ -13,6 +13,7 @@ import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
 import CoachOnboardingTour from '../Components/CoachOnboardingTour.vue';
 import CoachRosterAwardsModal from '../Components/CoachRosterAwardsModal.vue';
 import CompetitionCalendarModal from '../Components/CompetitionCalendarModal.vue';
+import DemoWelcomeModal from '../Components/DemoWelcomeModal.vue';
 import FeedbackBreakdownModal from '../Components/FeedbackBreakdownModal.vue';
 import OnboardingChecklist from '../Components/OnboardingChecklist.vue';
 import UiIcon from '../Components/UiIcon.vue';
@@ -230,6 +231,7 @@ onMounted(() => {
       v-model="showAddAthleteModal"
       @invited="onAthleteInvited"
     />
+    <DemoWelcomeModal />
 
     <template v-if="!hasAthletes">
       <div

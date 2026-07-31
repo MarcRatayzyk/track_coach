@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'manual_activation_links' => env('MANUAL_ACTIVATION_LINKS', true),
+    'manual_activation_links' => env('MANUAL_ACTIVATION_LINKS', false),
 
     /*
     |--------------------------------------------------------------------------

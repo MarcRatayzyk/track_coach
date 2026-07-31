@@ -6,6 +6,7 @@ use App\Mail\CoachInvitationMail;
 use App\Models\User;
 use App\Support\AccountSetupUrlGenerator;
 use App\Support\ActivationDelivery;
+use App\Support\MailSendSupport;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -39,24 +40,36 @@ class InviteCoachCommand extends Command
             $name = Str::before($email, '@');
         }
 
+        $trialDays = (int) config('billing.trial_days', 14);
+
         $coach = User::query()->create([
             'name' => $name,
             'email' => $email,
             'password' => Str::password(48),
             'role' => 'coach',
             'initial_setup_completed_at' => null,
+            'trial_ends_at' => now()->addDays($trialDays),
+            'is_demo' => false,
         ]);
 
         $setupUrl = AccountSetupUrlGenerator::signedSetupUrl($coach);
 
         if (! ActivationDelivery::usesManualLinks()) {
-            Mail::to($coach)->send(new CoachInvitationMail($coach, $setupUrl));
-            $this->info("Invitation envoyée à {$email}.");
+            $sent = MailSendSupport::attempt(
+                fn () => Mail::to($coach)->send(new CoachInvitationMail($coach, $setupUrl)),
+            );
+
+            if ($sent) {
+                $this->info("Invitation envoyée à {$email}.");
+            } else {
+                $this->warn("Coach créé, mais l’e-mail n’a pas pu être envoyé.");
+            }
         } else {
-            $this->info("Coach créé (mode beta : pas d’e-mail).");
+            $this->info('Coach créé (mode liens manuels : pas d’e-mail).');
         }
 
         $this->line("Lien d’activation : {$setupUrl}");
+        $this->line("Essai gratuit : {$trialDays} jours (jusqu’au {$coach->trial_ends_at?->toDateString()}).");
 
         return self::SUCCESS;
     }

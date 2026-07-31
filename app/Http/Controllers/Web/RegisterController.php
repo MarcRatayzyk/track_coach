@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCoachRegistrationRequest;
+use App\Mail\CoachTrialStartedMail;
 use App\Models\User;
 use App\Support\ActivationDelivery;
 use App\Support\BillingPlans;
@@ -11,6 +12,7 @@ use App\Support\MailSendSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -42,13 +44,15 @@ class RegisterController extends Controller
             $plan = null;
         }
 
+        $trialDays = (int) config('billing.trial_days', 14);
+
         $coach = User::query()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
             'role' => 'coach',
             'initial_setup_completed_at' => now(),
-            'trial_ends_at' => now()->addDays((int) config('billing.trial_days', 14)),
+            'trial_ends_at' => now()->addDays($trialDays),
             'is_demo' => false,
         ]);
 
@@ -61,6 +65,15 @@ class RegisterController extends Controller
 
         $emailSent = ActivationDelivery::sendCoachEmailVerification($coach);
 
+        MailSendSupport::attempt(
+            fn () => Mail::to($coach)->send(new CoachTrialStartedMail(
+                $coach,
+                $trialDays,
+                $coach->trial_ends_at?->timezone(config('app.timezone'))->format('d/m/Y') ?? '',
+                route('dashboard'),
+            )),
+        );
+
         if ($plan) {
             return redirect()
                 ->route('billing.checkout.plan', ['plan' => $plan])
@@ -70,10 +83,17 @@ class RegisterController extends Controller
         if (ActivationDelivery::usesManualLinks()) {
             return redirect()
                 ->route('dashboard')
-                ->with('success', 'Compte créé. Invite tes athlètes et partage-leur le lien d’activation.');
+                ->with('success', "Compte créé. Essai gratuit de {$trialDays} jours activé. Invite tes athlètes par e-mail.");
         }
 
-        return redirect()->route('verification.notice')
-            ->with($emailSent ? [] : ['error' => MailSendSupport::DELIVERY_FAILED_MESSAGE]);
+        $redirect = redirect()
+            ->route('verification.notice')
+            ->with('success', "Compte créé. Essai gratuit de {$trialDays} jours activé — confirme ton e-mail pour accéder au dashboard.");
+
+        if (! $emailSent) {
+            $redirect = $redirect->with('error', MailSendSupport::DELIVERY_FAILED_MESSAGE);
+        }
+
+        return $redirect;
     }
 }

@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDemoSandboxRequest;
+use App\Mail\DemoWelcomeMail;
 use App\Models\User;
 use App\Services\DemoSandboxProvisioner;
+use App\Support\MailSendSupport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -43,8 +46,26 @@ class DemoController extends Controller
         Auth::login($coach);
         $request->session()->regenerate();
 
+        $expiresLabel = $coach->demo_expires_at
+            ?->timezone(config('app.timezone'))
+            ->format('d/m/Y H:i') ?? '';
+
+        MailSendSupport::attempt(
+            fn () => Mail::to($coach)->send(new DemoWelcomeMail(
+                $coach,
+                $hours,
+                $expiresLabel,
+                route('dashboard'),
+            )),
+        );
+
         return redirect()
             ->route('dashboard')
-            ->with('success', "Sandbox démo prête — expire dans {$hours} h. Explore librement, les données seront purgées ensuite.");
+            ->with('success', "Sandbox démo prête — expire dans {$hours} h. Explore librement, les données seront purgées ensuite.")
+            ->with('demo_welcome', [
+                'hours' => $hours,
+                'expires_label' => $expiresLabel,
+                'email' => $coach->email,
+            ]);
     }
 }

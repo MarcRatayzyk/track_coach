@@ -61,6 +61,9 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'first_login_url' => fn () => $request->session()->get('first_login_url'),
+                'invitation_email' => fn () => $request->session()->get('invitation_email'),
+                'invitation_email_sent' => fn () => $request->session()->get('invitation_email_sent'),
+                'demo_welcome' => fn () => $request->session()->get('demo_welcome'),
             ],
             'appConfig' => [
                 'name' => config('app.name'),

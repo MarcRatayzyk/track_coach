@@ -66,7 +66,7 @@ class AccountSetupController extends Controller
 
         $validated = $user->role === 'coach'
             ? $request->validate((new StoreCoachAccountSetupRequest)->rules())
-            : $request->validate((new StoreAccountSetupRequest)->rules());
+            : $request->validate(StoreAccountSetupRequest::rulesForUser($user));
 
         $user->forceFill([
             'password' => $validated['password'],
@@ -74,10 +74,15 @@ class AccountSetupController extends Controller
         ])->save();
 
         if ($user->role === 'athlete') {
-            $user->forceFill([
-                'email' => $validated['email'],
+            $athleteFill = [
                 'email_verified_at' => now(),
-            ])->save();
+            ];
+
+            if ($user->hasPendingEmail()) {
+                $athleteFill['email'] = $validated['email'];
+            }
+
+            $user->forceFill($athleteFill)->save();
             $user->profile()->updateOrCreate(
                 ['user_id' => $user->id],
                 AthleteProfileSupport::attributesFromValidated($validated),

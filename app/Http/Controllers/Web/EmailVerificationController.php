@@ -28,6 +28,7 @@ class EmailVerificationController extends Controller
         return Inertia::render('VerifyEmailPage', [
             'status' => $request->session()->get('status'),
             'mailError' => $request->session()->get('error'),
+            'trialDays' => (int) config('billing.trial_days', 14),
         ]);
     }
 
