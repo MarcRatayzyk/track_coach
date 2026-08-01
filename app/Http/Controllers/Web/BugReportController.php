@@ -19,7 +19,6 @@ class BugReportController extends Controller
         $report = [
             'title' => $validated['title'],
             'category' => $validated['category'],
-            'severity' => $validated['severity'],
             'description' => $validated['description'],
             'page_url' => $validated['page_url'] ?? null,
             'user_agent' => $request->userAgent(),

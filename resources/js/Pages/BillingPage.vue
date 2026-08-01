@@ -81,7 +81,7 @@ function openPortal() {
             v-if="isDemo"
             class="mb-6 rounded-2xl border border-amber-500/40 bg-amber-950/30 p-5 text-sm text-amber-100"
         >
-            <p class="font-semibold text-amber-200">Compte démo sandbox</p>
+            <p class="font-semibold text-amber-200">Compte démo</p>
             <p class="mt-1 text-amber-100/80">
                 La démo ne peut pas être convertie en abonnement. Crée un vrai compte coach pour
                 démarrer l’essai de 14 jours.

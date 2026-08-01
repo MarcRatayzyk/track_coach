@@ -34,7 +34,7 @@ function submit() {
                 />
             </Link>
 
-            <h1 class="text-3xl font-black tracking-tight text-white">Sandbox démo</h1>
+            <h1 class="text-3xl font-black tracking-tight text-white">Démo</h1>
             <p class="mt-3 text-sm leading-relaxed text-slate-400">
                 Entre ton e-mail pour ouvrir un espace coach jetable rempli de données réalistes.
                 Chaque adresse ne peut lancer qu’une seule démo ({{ demoHours }} h).

@@ -12,6 +12,7 @@ export const METRIC_OPTIONS = [
   { value: 'tonnage', label: 'Tonnage (kg×séries)', unit: 'kg' },
   { value: 'avgLoad', label: 'Charge moyenne (kg)', unit: 'kg' },
   { value: 'e1rm', label: 'e1RM Epley (kg)', unit: 'kg' },
+  { value: 'avgRpe', label: 'RPE cible (moy.)', unit: 'RPE' },
   { value: 'setsCount', label: 'Nombre de séries', unit: 'séries' },
   { value: 'totalReps', label: 'Total reps', unit: 'reps' },
 ];

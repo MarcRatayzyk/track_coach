@@ -6,6 +6,7 @@ use App\Actions\BulkUpsertProgramSessionsAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ApplyProgramImportRequest;
 use App\Http\Requests\PreviewProgramImportRequest;
+use App\Http\Requests\PreviewProgramJsonImportRequest;
 use App\Models\AthleteProgramAssignment;
 use App\Support\ProgramImport\EnsureProgramWeeksForImport;
 use App\Support\ProgramImport\ExerciseNameMatcher;
@@ -13,8 +14,10 @@ use App\Support\ProgramImport\ImportedExerciseResolver;
 use App\Support\ProgramImport\ProgramAiImporter;
 use App\Support\ProgramImport\ProgramCsvColumns;
 use App\Support\ProgramImport\ProgramImportDraftBuilder;
+use App\Support\ProgramImport\ProgramJsonImportNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProgramImportController extends Controller
@@ -34,12 +37,57 @@ class ProgramImportController extends Controller
         );
     }
 
-    public function meta(ProgramAiImporter $ai): JsonResponse
+    public function meta(ProgramAiImporter $ai, Request $request): JsonResponse
     {
+        $weekCount = max(0, (int) $request->query('week_count', 0));
+        $daysPerWeek = max(1, min(7, (int) $request->query('days_per_week', 4)));
+        $normalizer = new ProgramJsonImportNormalizer;
+        $skeletonWeeks = $weekCount > 0 ? $weekCount : 5;
+
         return response()->json([
             'ai_enabled' => $ai->isConfigured(),
             'vision_enabled' => $ai->isConfigured(),
             'official_columns' => ProgramCsvColumns::official(),
+            'json_format' => ProgramJsonImportNormalizer::FORMAT,
+            'json_template' => $normalizer->skeleton($skeletonWeeks, $daysPerWeek),
+            'external_ai_prompt' => $normalizer->externalAiPrompt($weekCount > 0 ? $weekCount : $skeletonWeeks),
+        ]);
+    }
+
+    public function jsonTemplate(Request $request): JsonResponse
+    {
+        $weekCount = max(1, min(16, (int) $request->query('week_count', 5)));
+        $daysPerWeek = max(1, min(7, (int) $request->query('days_per_week', 4)));
+        $normalizer = new ProgramJsonImportNormalizer;
+
+        return response()->json([
+            'format' => ProgramJsonImportNormalizer::FORMAT,
+            'template' => $normalizer->skeleton($weekCount, $daysPerWeek),
+            'external_ai_prompt' => $normalizer->externalAiPrompt($weekCount),
+        ]);
+    }
+
+    public function previewJson(
+        PreviewProgramJsonImportRequest $request,
+        AthleteProgramAssignment $assignment,
+    ): JsonResponse {
+        $this->authorize('manage', $assignment);
+
+        try {
+            $rows = (new ProgramJsonImportNormalizer)->normalize($request->input('json'));
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'errors' => ['json' => [$e->getMessage()]],
+            ], 422);
+        }
+
+        $draft = $this->buildDraft($request->user(), $assignment, $rows);
+
+        return response()->json([
+            'status' => 'ready',
+            'source' => 'json',
+            ...$draft,
         ]);
     }
 
@@ -57,10 +105,12 @@ class ProgramImportController extends Controller
         @ini_set('max_execution_time', (string) ($seconds + 60));
 
         try {
-            $rows = $ai->extractRows($request->file('file'), (int) $request->user()->id);
+            $assignment->loadMissing('template.weeks');
+            $weekCount = (int) ($assignment->template?->weeks?->count() ?? 0);
+            $rows = $ai->extractRows($request->file('file'), (int) $request->user()->id, $weekCount);
         } catch (\App\Support\ProgramImport\ProgramAiResponseTruncated $e) {
             return response()->json([
-                'message' => 'Réponse IA encore trop longue après découpage. Réessaie avec un PDF (export Excel → PDF), ou un fichier plus court.',
+                'message' => 'Réponse IA encore trop longue après découpage. Réessaie avec un PDF, ou utilise l’onglet JSON (IA externe).',
             ], 422);
         } catch (\Throwable $e) {
             $message = $e->getMessage();

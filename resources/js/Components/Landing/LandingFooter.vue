@@ -5,7 +5,7 @@ const nav = [
     { href: '#fonctionnalites', label: 'Fonctionnalités' },
     { href: '#demo', label: 'Démo' },
     { href: '#pricing', label: 'Tarifs' },
-    { href: '/demo', label: 'Sandbox' },
+    { href: '/demo', label: 'Démo' },
     { href: '/register', label: 'Inscription' },
     { href: '/login', label: 'Connexion' },
     { href: '/confidentialite', label: 'Confidentialité' },

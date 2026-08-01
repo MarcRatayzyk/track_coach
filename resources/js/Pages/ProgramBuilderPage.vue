@@ -892,7 +892,7 @@ function clearClipboard() {
           "
           @click="activeTab = 'table_v2'"
         >
-          Tableur V2
+          Tableur
         </button>
         <button
           v-if="showCalendar"
@@ -935,6 +935,7 @@ function clearClipboard() {
 
     <template v-else>
       <BlockWarmupPanel
+        v-if="activeTab !== 'stats'"
         class="mb-4"
         :active-block="activeBlock"
         :builder-tab="activeTab"
@@ -948,9 +949,11 @@ function clearClipboard() {
         <ProgramBlockStatsTab
           coach-mode
           :sessions="activeBlock.sessions"
+          :training-sessions="activeBlock.training_sessions ?? []"
           :date-start="activeBlock.date_start"
           :athlete-one-rm="activeBlock.athlete_one_rm"
           :week-count="activeBlock.week_count"
+          :days-per-week="activeBlock.days_per_week"
           :chart-templates="chartTemplates"
           :stats-dashboard-items="statsDashboardItems"
           :assignment-id="activeBlock.id"

@@ -34,6 +34,7 @@ class NewSessionFeedbackNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("Nouveau retour vidéo — {$athleteName}")
             ->line("{$athleteName} a envoyé un retour vidéo pour la séance du {$sessionDate}.")
-            ->action('Voir le retour', url('/feedbacks/'.$this->feedback->id));
+            ->action('Voir le retour', url('/feedbacks/'.$this->feedback->id))
+            ->salutation("Cordialement,\nPower Roster");
     }
 }

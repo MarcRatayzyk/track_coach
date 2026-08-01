@@ -9,7 +9,7 @@ import ScreenFrame from './ScreenFrame.vue';
         <div class="lp-mockup-frame relative z-10">
             <ScreenFrame
                 src="/images/landing/actions.png"
-                alt="Dashboard coach Power Roster — actions prioritaires et retours à traiter"
+                alt="Dashboard coach Power Roster : actions prioritaires et retours à traiter"
                 label="app.powerroster.fr / dashboard"
                 loading="eager"
             />

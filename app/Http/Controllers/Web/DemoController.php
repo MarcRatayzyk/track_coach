@@ -61,7 +61,7 @@ class DemoController extends Controller
 
         return redirect()
             ->route('dashboard')
-            ->with('success', "Sandbox démo prête — expire dans {$hours} h. Explore librement, les données seront purgées ensuite.")
+            ->with('success', "Démo prête — expire dans {$hours} h. Explore librement, les données seront purgées ensuite.")
             ->with('demo_welcome', [
                 'hours' => $hours,
                 'expires_label' => $expiresLabel,

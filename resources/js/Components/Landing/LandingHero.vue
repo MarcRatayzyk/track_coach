@@ -42,7 +42,7 @@ function trackCta(ctaId) {
                     :transition="{ duration: 0.6, delay: 0.22 }"
                     class="mt-6 max-w-lg text-base leading-relaxed text-slate-400 sm:text-lg"
                 >
-                    Power Roster réunit la programmation, le suivi des performances, les vidéos annotées,
+                    Power Roster réunit la programmation, le suivi des performances et des facteurs externes, les retours vidéo,
                     les messages et les compétitions dans une seule plateforme.
                 </motion.p>
 
@@ -67,7 +67,7 @@ function trackCta(ctaId) {
                         class="lp-btn-secondary px-7 py-3.5 text-[15px] leading-none sm:px-8 sm:py-4 sm:text-base"
                         @click="trackCta('hero_demo')"
                     >
-                        Sandbox démo
+                        Démo
                     </a>
                 </motion.div>
 

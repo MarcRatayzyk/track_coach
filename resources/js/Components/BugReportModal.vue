@@ -16,7 +16,6 @@ const fileInput = ref(null);
 const form = useForm({
   title: '',
   category: 'bug',
-  severity: 'medium',
   description: '',
   page_url: '',
   screenshot: null,
@@ -29,7 +28,6 @@ watch(
       form.reset();
       form.clearErrors();
       form.category = 'bug';
-      form.severity = 'medium';
       form.page_url = typeof window !== 'undefined' ? window.location.href : '';
       form.screenshot = null;
       if (fileInput.value) {
@@ -63,7 +61,7 @@ function submit() {
   <Teleport to="body">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="bug-report-title"
@@ -79,7 +77,7 @@ function submit() {
               Signaler un problème
             </h2>
             <p class="mt-1 text-sm text-slate-400">
-              Bug, correctif ou idée — on lit chaque signalement.
+              Bug, correctif ou idée : on lit chaque signalement.
             </p>
           </div>
           <button
@@ -106,36 +104,20 @@ function submit() {
             <p v-if="form.errors.title" class="mt-1 text-sm text-red-400">{{ form.errors.title }}</p>
           </label>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block text-sm font-medium text-slate-400">
-              Catégorie
-              <select
-                v-model="form.category"
-                required
-                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              >
-                <option value="bug">Bug</option>
-                <option value="fix">Correctif</option>
-                <option value="idea">Idée</option>
-                <option value="other">Autre</option>
-              </select>
-              <p v-if="form.errors.category" class="mt-1 text-sm text-red-400">{{ form.errors.category }}</p>
-            </label>
-
-            <label class="block text-sm font-medium text-slate-400">
-              Sévérité
-              <select
-                v-model="form.severity"
-                required
-                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              >
-                <option value="low">Faible</option>
-                <option value="medium">Moyenne</option>
-                <option value="high">Haute</option>
-              </select>
-              <p v-if="form.errors.severity" class="mt-1 text-sm text-red-400">{{ form.errors.severity }}</p>
-            </label>
-          </div>
+          <label class="block text-sm font-medium text-slate-400">
+            Catégorie
+            <select
+              v-model="form.category"
+              required
+              class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+            >
+              <option value="bug">Bug</option>
+              <option value="fix">Correctif</option>
+              <option value="idea">Idée</option>
+              <option value="other">Autre</option>
+            </select>
+            <p v-if="form.errors.category" class="mt-1 text-sm text-red-400">{{ form.errors.category }}</p>
+          </label>
 
           <label class="block text-sm font-medium text-slate-400">
             Description

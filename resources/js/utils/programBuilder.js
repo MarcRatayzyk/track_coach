@@ -852,6 +852,10 @@ export function normalizeLineForSave(line) {
 }
 
 export function inferLoadMode(line) {
+  const explicit = line?.load_mode;
+  if (explicit === 'kg' || explicit === 'percent' || explicit === 'rpe') {
+    return explicit;
+  }
   if (line?.load_percent != null && line.load_percent !== '') {
     return 'percent';
   }

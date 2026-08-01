@@ -13,7 +13,7 @@ use Illuminate\Mail\Mailables\Envelope;
 class BugReportMail extends Mailable
 {
     /**
-     * @param  array{title: string, category: string, severity: string, description: string, page_url: ?string, user_agent: ?string}  $report
+     * @param  array{title: string, category: string, description: string, page_url: ?string, user_agent: ?string}  $report
      */
     public function __construct(
         public User $reporter,
@@ -24,10 +24,9 @@ class BugReportMail extends Mailable
     public function envelope(): Envelope
     {
         $category = $this->categoryLabel($this->report['category']);
-        $severity = $this->severityLabel($this->report['severity']);
 
         return new Envelope(
-            subject: "[Power Roster] {$category} · {$severity} — {$this->report['title']}",
+            subject: "[Power Roster] {$category} : {$this->report['title']}",
             replyTo: [
                 new Address($this->reporter->email, $this->reporter->name),
             ],
@@ -40,7 +39,6 @@ class BugReportMail extends Mailable
             view: 'mail.bug-report',
             with: [
                 'categoryLabel' => $this->categoryLabel($this->report['category']),
-                'severityLabel' => $this->severityLabel($this->report['severity']),
             ],
         );
     }
@@ -68,15 +66,6 @@ class BugReportMail extends Mailable
             'fix' => 'Correctif',
             'idea' => 'Idée',
             default => 'Autre',
-        };
-    }
-
-    private function severityLabel(string $severity): string
-    {
-        return match ($severity) {
-            'low' => 'Faible',
-            'high' => 'Haute',
-            default => 'Moyenne',
         };
     }
 }

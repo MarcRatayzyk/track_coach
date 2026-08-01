@@ -2,8 +2,7 @@
 <p style="margin:0 0 16px;color:#f8fafc;font-size:18px;font-weight:600;">Nouveau signalement</p>
 
 <p style="margin:0 0 8px;"><strong style="color:#f8fafc;">Titre :</strong> {{ $report['title'] }}</p>
-<p style="margin:0 0 8px;"><strong style="color:#f8fafc;">Catégorie :</strong> {{ $categoryLabel }}</p>
-<p style="margin:0 0 16px;"><strong style="color:#f8fafc;">Sévérité :</strong> {{ $severityLabel }}</p>
+<p style="margin:0 0 16px;"><strong style="color:#f8fafc;">Catégorie :</strong> {{ $categoryLabel }}</p>
 
 <p style="margin:0 0 8px;color:#f8fafc;font-weight:600;">Description</p>
 <p style="margin:0 0 20px;white-space:pre-wrap;">{{ $report['description'] }}</p>

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\AthleteProgramAssignment;
+use App\Models\TrainingSession;
 use Illuminate\Support\Collection;
 
 class ProgramBlockPresenter
@@ -41,6 +42,29 @@ class ProgramBlockPresenter
         $startsInFuture = $assignment->date_start !== null
             && $assignment->date_start->copy()->startOfDay()->gt($today);
 
+        $weekCount = $weeks->count();
+        $dateStart = $assignment->date_start;
+        $dateEnd = $assignment->date_end;
+        if ($dateEnd === null && $dateStart !== null && $weekCount > 0) {
+            $dateEnd = $dateStart->copy()->addWeeks($weekCount)->subDay();
+        }
+
+        $trainingSessions = [];
+        if ($assignment->athlete_id && $dateStart !== null) {
+            $trainingSessions = TrainingSession::query()
+                ->where('athlete_id', $assignment->athlete_id)
+                ->whereDate('session_date', '>=', $dateStart->toDateString())
+                ->when(
+                    $dateEnd !== null,
+                    fn ($query) => $query->whereDate('session_date', '<=', $dateEnd->toDateString()),
+                )
+                ->orderBy('session_date')
+                ->get()
+                ->map(fn (TrainingSession $session) => TrainingSessionSupport::toPayload($session))
+                ->values()
+                ->all();
+        }
+
         return [
             'id' => $assignment->id,
             'athlete_id' => $assignment->athlete_id,
@@ -53,12 +77,13 @@ class ProgramBlockPresenter
             'days_until_start' => $startsInFuture
                 ? (int) $today->diffInDays($assignment->date_start->copy()->startOfDay())
                 : 0,
-            'week_count' => $weeks->count(),
+            'week_count' => $weekCount,
             'days_per_week' => $daysPerWeek,
             'table_layout' => DayTableLayoutSupport::resolveSnapshot($template?->table_layout),
             'default_warmup_notes' => $template?->default_warmup_notes,
             'default_warmup_items' => $template?->default_warmup_items ?? [],
             'sessions' => $sessions,
+            'training_sessions' => $trainingSessions,
             'athlete_one_rm' => [
                 'squat' => (int) ($latestPr?->squat ?? 0),
                 'bench' => (int) ($latestPr?->bench ?? 0),

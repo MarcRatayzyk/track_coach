@@ -4,10 +4,10 @@ import FadeIn from './FadeIn.vue';
 const sharedFeatures = [
     'Programmation SBD & builder',
     'Suivi PRs, readiness & adhérence',
-    'Retours vidéo annotés',
+    'Retours de séance',
     'Messagerie coach ↔ athlète',
     'Compétitions & match plans',
-    'Dashboard & alertes',
+    'Dashboard coach',
 ];
 
 const plans = [
@@ -16,7 +16,7 @@ const plans = [
         name: 'Starter',
         price: '34,99',
         description: 'Jusqu’à 15 athlètes',
-        cta: 'S’abonner — 34,99 €/mois',
+        cta: 'S’abonner : 34,99 €/mois',
         href: '/subscribe/starter',
         highlight: false,
         features: [...sharedFeatures, 'Jusqu’à 15 athlètes actifs'],
@@ -26,7 +26,7 @@ const plans = [
         name: 'Growth',
         price: '49,99',
         description: 'De 16 à 40 athlètes',
-        cta: 'S’abonner — 49,99 €/mois',
+        cta: 'S’abonner : 49,99 €/mois',
         href: '/subscribe/growth',
         highlight: true,
         features: [...sharedFeatures, 'Jusqu’à 40 athlètes actifs'],
@@ -36,7 +36,7 @@ const plans = [
         name: 'Scale',
         price: '74,99',
         description: '41 athlètes et plus',
-        cta: 'S’abonner — 74,99 €/mois',
+        cta: 'S’abonner : 74,99 €/mois',
         href: '/subscribe/scale',
         highlight: false,
         features: [...sharedFeatures, 'Athlètes illimités'],
@@ -60,7 +60,7 @@ const plans = [
                     Simple : selon ton roster
                 </h2>
                 <p class="mx-auto mt-4 max-w-xl text-base text-slate-400 sm:text-lg">
-                    Toutes les fonctionnalités incluses. Tu paies selon le nombre d’athlètes actifs.
+                    Toutes les fonctionnalités incluses. Tarifs selon le nombre d’athlètes actifs.
                     Essai 14 jours sans carte à l’inscription.
                 </p>
             </FadeIn>
@@ -126,7 +126,7 @@ const plans = [
                     puis choisis un plan ci-dessus, ou
                     <a href="/subscribe/growth" class="font-semibold text-blue-400 hover:underline">reprendre Growth</a>
                     ·
-                    <a href="/demo" class="font-semibold text-blue-400 hover:underline">Sandbox démo</a>
+                    <a href="/demo" class="font-semibold text-blue-400 hover:underline">Démo</a>
                 </p>
             </FadeIn>
         </div>

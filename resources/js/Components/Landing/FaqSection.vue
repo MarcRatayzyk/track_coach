@@ -6,28 +6,20 @@ const openIndex = ref(0);
 
 const faqs = [
     {
-        q: 'Power Roster est-il réservé aux coachs ?',
-        a: 'Les coachs créent le compte et invitent leurs athlètes. Les athlètes activent leur espace via le lien d’invitation et accèdent à leurs programmes, PRs et messages.',
+        q: 'Comment les athlètes accèdent-ils à Power Roster ?',
+        a: 'Tu invites tes athlètes depuis ton compte coach. Ils téléchargent l’app, activent leur espace via le lien d’invitation, et retrouvent programmes, check-ins et messages.',
     },
     {
-        q: 'Dois-je abandonner Excel immédiatement ?',
-        a: 'Non. Tu peux démarrer avec quelques athlètes, migrer progressivement, puis laisser Excel derrière une fois la roster en place.',
+        q: 'Dois-je tout migrer d’un coup ?',
+        a: 'Non. Tu peux démarrer avec quelques athlètes, migrer progressivement, puis tout centraliser une fois la roster en place.',
     },
     {
         q: 'Les athlètes doivent-ils payer ?',
-        a: 'Ton compte coach te permet d’inviter tes athlètes. Ils rejoignent gratuitement via ton invitation — pas de compte séparé à acheter.',
-    },
-    {
-        q: 'Est-ce adapté à la compétition IPF / FFForce ?',
-        a: 'Oui. Suivi SBD, objectifs de total, calendrier de meets et peak : tout est pensé pour le powerlifting de compétition.',
-    },
-    {
-        q: 'Puis-je annoter les vidéos de séance ?',
-        a: 'Oui. Tes athlètes envoient leurs vidéos, tu annotes image par image et tu renvoies un feedback technique précis.',
+        a: 'Ton compte coach te permet d’inviter tes athlètes. Ils rejoignent gratuitement via ton invitation : pas de compte séparé à acheter.',
     },
     {
         q: 'Combien de temps pour être opérationnel ?',
-        a: 'Compte créé en quelques minutes. Invite ton premier athlète, assigne un programme, et tu coaches dès aujourd’hui.',
+        a: 'Compte créé en quelques minutes. L’importation de programme se fait en quelques clics. Invite ton premier athlète, assigne un programme, et tu coaches dès aujourd’hui.',
     },
 ];
 

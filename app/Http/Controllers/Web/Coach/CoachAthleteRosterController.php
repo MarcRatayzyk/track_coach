@@ -26,7 +26,7 @@ class CoachAthleteRosterController extends Controller
             if ($coach->is_demo) {
                 return back()->with(
                     'error',
-                    'La sandbox démo ne permet pas d’ajouter d’athlètes. Crée un vrai compte pour gérer ton roster.',
+                    'La démo ne permet pas d’ajouter d’athlètes. Crée un vrai compte pour gérer ton roster.',
                 );
             }
 
@@ -43,11 +43,13 @@ class CoachAthleteRosterController extends Controller
         $first = trim($request->validated('first_name'));
         $last = trim($request->validated('last_name'));
         $displayName = trim($first.' '.$last);
-        $email = strtolower(trim($request->validated('email')));
+        $rawEmail = $request->validated('email');
+        $email = is_string($rawEmail) ? strtolower(trim($rawEmail)) : '';
+        $emailPending = $email === '';
 
         $athlete = User::query()->create([
             'name' => $displayName,
-            'email' => $email,
+            'email' => $emailPending ? User::pendingAthleteEmail() : $email,
             'password' => Str::password(48),
             'role' => 'athlete',
             'initial_setup_completed_at' => null,
@@ -67,9 +69,9 @@ class CoachAthleteRosterController extends Controller
         $emailSent = ActivationDelivery::sendAthleteInvitation($athlete, $coach, $setupUrl);
 
         return back()
-            ->with('success', ActivationDelivery::athleteInvitationSuccessMessage($athlete->name, $emailSent, false))
+            ->with('success', ActivationDelivery::athleteInvitationSuccessMessage($athlete->name, $emailSent, $emailPending))
             ->with('first_login_url', $setupUrl)
-            ->with('invitation_email', $email)
+            ->with('invitation_email', $emailPending ? null : $email)
             ->with('invitation_email_sent', $emailSent)
             ->with('invited_athlete_id', $athlete->id);
     }

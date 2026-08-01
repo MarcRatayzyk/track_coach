@@ -11,7 +11,7 @@ class PurgeExpiredDemoAccountsCommand extends Command
 {
     protected $signature = 'demo:purge-expired';
 
-    protected $description = 'Delete expired demo sandbox coaches and their demo athletes';
+    protected $description = 'Delete expired demo coaches and their demo athletes';
 
     public function handle(DeleteUserAccountAction $deleteAccount): int
     {

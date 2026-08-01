@@ -6,6 +6,8 @@ import CoachChartTemplatesPanel from './CoachChartTemplatesPanel.vue';
 import CustomChartCard from './CustomChartCard.vue';
 import DefaultBuiltinChart from './DefaultBuiltinChart.vue';
 import { BUILTIN_CHART_KEYS } from '../config/chartBuilderOptions';
+import { mapTrainingSessionsToBlockSessions } from '../utils/trainingVolume';
+
 const ATHLETE_DEFAULT_KEYS = [
   BUILTIN_CHART_KEYS.VOLUME_WEEKLY,
   BUILTIN_CHART_KEYS.TOPSET_E1RM,
@@ -18,6 +20,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  trainingSessions: {
+    type: Array,
+    default: () => [],
+  },
   dateStart: {
     type: String,
     default: '',
@@ -29,6 +35,10 @@ const props = defineProps({
   weekCount: {
     type: Number,
     default: 0,
+  },
+  daysPerWeek: {
+    type: Number,
+    default: 7,
   },
   coachMode: {
     type: Boolean,
@@ -48,9 +58,25 @@ const props = defineProps({
   },
 });
 
+const statsMode = ref('cible');
 const builderOpen = ref(false);
 const templatesPanelOpen = ref(false);
 const editingTemplate = ref(null);
+
+const realizedSessions = computed(() =>
+  mapTrainingSessionsToBlockSessions(
+    props.trainingSessions,
+    props.dateStart,
+    props.weekCount,
+    props.daysPerWeek || 7,
+  ),
+);
+
+const chartSessions = computed(() =>
+  statsMode.value === 'realise' ? realizedSessions.value : props.sessions,
+);
+
+const realizedSessionCount = computed(() => Object.keys(realizedSessions.value).length);
 
 const dashboardItems = computed(() => {
   if (!props.coachMode) {
@@ -110,6 +136,43 @@ function moveDashboardItem(item, direction) {
 
 <template>
   <div class="space-y-4">
+    <div class="flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+      <button
+        type="button"
+        class="rounded-lg px-3 py-2 text-sm font-medium transition"
+        :class="
+          statsMode === 'cible'
+            ? 'bg-blue-600 text-white'
+            : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+        "
+        @click="statsMode = 'cible'"
+      >
+        Cible
+      </button>
+      <button
+        type="button"
+        class="rounded-lg px-3 py-2 text-sm font-medium transition"
+        :class="
+          statsMode === 'realise'
+            ? 'bg-blue-600 text-white'
+            : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+        "
+        @click="statsMode = 'realise'"
+      >
+        Réalisé
+      </button>
+    </div>
+
+    <p class="text-sm text-slate-400">
+      <template v-if="statsMode === 'cible'">
+        Graphiques basés sur le programme prescrit (charges, reps et RPE cibles).
+      </template>
+      <template v-else>
+        Graphiques basés sur les séances loguées par l’athlète
+        <span v-if="realizedSessionCount"> ({{ realizedSessionCount }} séance{{ realizedSessionCount > 1 ? 's' : '' }})</span>.
+      </template>
+    </p>
+
     <div
       v-if="coachMode"
       class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3"
@@ -134,14 +197,21 @@ function moveDashboardItem(item, direction) {
     </div>
 
     <p
-      v-if="coachMode && dashboardItems.length === 0"
+      v-if="statsMode === 'realise' && realizedSessionCount === 0"
+      class="rounded-xl border border-dashed border-slate-700 px-4 py-10 text-center text-sm text-slate-500"
+    >
+      Aucune séance réalisée sur ce bloc pour le moment. Dès que l’athlète loggue ses entraînements, les graphiques apparaîtront ici.
+    </p>
+
+    <p
+      v-else-if="coachMode && dashboardItems.length === 0"
       class="rounded-xl border border-dashed border-slate-700 px-4 py-10 text-center text-sm text-slate-500"
     >
       Aucun graphique affiché. Ajoute un graphique par défaut via « Mes modèles » ou crée-en un nouveau.
     </p>
 
     <div v-else class="grid gap-4 lg:grid-cols-2">
-      <div v-for="(item, index) in dashboardItems" :key="item.id" class="relative">
+      <div v-for="(item, index) in dashboardItems" :key="`${statsMode}-${item.id}`" class="relative">
         <div
           v-if="coachMode"
           class="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-slate-700/80 bg-slate-900/90 p-1 shadow-lg"
@@ -177,7 +247,7 @@ function moveDashboardItem(item, direction) {
         <DefaultBuiltinChart
           v-if="item.item_type === 'builtin'"
           :builtin-key="item.builtin_key"
-          :sessions="sessions"
+          :sessions="chartSessions"
           :date-start="dateStart"
           :athlete-one-rm="athleteOneRm"
         />
@@ -186,7 +256,7 @@ function moveDashboardItem(item, direction) {
           v-else-if="item.template"
           :name="item.template.name"
           :config="item.template.config"
-          :sessions="sessions"
+          :sessions="chartSessions"
           :date-start="dateStart"
           :athlete-one-rm="athleteOneRm"
         />
@@ -197,7 +267,7 @@ function moveDashboardItem(item, direction) {
       :open="builderOpen"
       :templates="chartTemplates"
       :editing-template="editingTemplate"
-      :sessions="sessions"
+      :sessions="chartSessions"
       :date-start="dateStart"
       :athlete-one-rm="athleteOneRm"
       :assignment-id="assignmentId"

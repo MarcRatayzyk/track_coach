@@ -4,6 +4,7 @@ import dashboardIconUrl from '../../images/icons8-gouvernail-de-bateau-80.png';
 import programsIconUrl from '../../images/icons8-musculation-100.png';
 import personIconUrl from '../../images/icons8-personne-homme-64.png';
 import smsIconUrl from '../../images/sms.png';
+import trophyIconUrl from '../../images/icons8-trophee-96.png';
 
 const props = defineProps({
     name: {
@@ -34,6 +35,7 @@ const personMaskStyle = maskStyle(personIconUrl);
 const programsMaskStyle = maskStyle(programsIconUrl);
 const cameraMaskStyle = maskStyle(cameraIconUrl);
 const smsMaskStyle = maskStyle(smsIconUrl);
+const trophyMaskStyle = maskStyle(trophyIconUrl);
 </script>
 
 <template>
@@ -102,21 +104,13 @@ const smsMaskStyle = maskStyle(smsIconUrl);
             d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5"
         />
     </svg>
-    <!-- Trophée / PR -->
-    <svg
+    <!-- Compétitions / trophée -->
+    <span
         v-else-if="name === 'trophy'"
-        :class="props.class"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="1.5"
-        stroke="currentColor"
-    >
-        <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M16.5 18.75h-9m9 0a3 3 0 003-3h-15a3 3 0 003 3m9 0v.008c0 .414-.168.75-.375.75H9.375a.375.375 0 01-.375-.375V18.75zM4.875 15.75h14.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H4.875c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125zM6.75 7.5V6a2.25 2.25 0 012.25-2.25h6A2.25 2.25 0 0117.25 6v1.5M6.75 7.5h10.5v3a3 3 0 01-3 3h-4.5a3 3 0 01-3-3v-3z"
-        />
-    </svg>
+        :class="['inline-block shrink-0 bg-current opacity-90', props.class]"
+        :style="trophyMaskStyle"
+        aria-hidden="true"
+    />
     <!-- Liste / tâches -->
     <svg
         v-else-if="name === 'list'"

@@ -26,6 +26,7 @@ class ResetPasswordNotification extends BaseResetPassword implements ShouldQueue
             ->line('Tu reçois cet e-mail car nous avons reçu une demande de réinitialisation de mot de passe pour ton compte.')
             ->action('Réinitialiser le mot de passe', $url)
             ->line('Ce lien expirera dans '.config('auth.passwords.'.config('auth.defaults.passwords').'.expire').' minutes.')
-            ->line('Si tu n’as pas demandé de réinitialisation, ignore cet e-mail.');
+            ->line('Si tu n’as pas demandé de réinitialisation, ignore cet e-mail.')
+            ->salutation("Cordialement,\nPower Roster");
     }
 }

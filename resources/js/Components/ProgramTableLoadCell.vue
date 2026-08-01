@@ -31,17 +31,21 @@ const modes = [
 ];
 
 function inferMode(row) {
-  if (row?.rpe !== '' && row?.rpe != null) {
-    return LOAD_MODE_RPE;
-  }
-  if (row?.load_percent !== '' && row?.load_percent != null) {
-    return LOAD_MODE_PERCENT;
+  const explicit = row?.load_mode;
+  if (explicit === LOAD_MODE_KG || explicit === LOAD_MODE_PERCENT || explicit === LOAD_MODE_RPE) {
+    return explicit;
   }
   if (row?.load !== '' && row?.load != null) {
     return LOAD_MODE_KG;
   }
+  if (row?.load_percent !== '' && row?.load_percent != null) {
+    return LOAD_MODE_PERCENT;
+  }
+  if (row?.rpe !== '' && row?.rpe != null) {
+    return LOAD_MODE_RPE;
+  }
 
-  return row?.load_mode ?? props.defaultLoadMode ?? LOAD_MODE_KG;
+  return props.defaultLoadMode ?? LOAD_MODE_KG;
 }
 
 const activeMode = ref(inferMode(props.row));
@@ -65,13 +69,21 @@ watch(
 
 function setMode(mode) {
   activeMode.value = mode;
-  emit('update', {
+  const next = {
     ...props.row,
     load_mode: mode,
-    load: '',
-    load_percent: '',
-    rpe: '',
-  });
+  };
+
+  if (mode === LOAD_MODE_RPE) {
+    next.load = '';
+    next.load_percent = '';
+  } else if (mode === LOAD_MODE_KG) {
+    next.load_percent = '';
+  } else if (mode === LOAD_MODE_PERCENT) {
+    next.load = '';
+  }
+
+  emit('update', next);
 }
 
 function updateField(field, value) {
@@ -79,10 +91,8 @@ function updateField(field, value) {
 
   if (field === 'load') {
     next.load_percent = '';
-    next.rpe = '';
   } else if (field === 'load_percent') {
     next.load = '';
-    next.rpe = '';
   } else if (field === 'rpe') {
     next.load = '';
     next.load_percent = '';

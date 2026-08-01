@@ -28,16 +28,20 @@ const GENERIC_COLORS = [
 ];
 
 function inferLoadMode(line) {
-  if (line?.rpe != null && line.rpe !== '') {
-    return 'rpe';
-  }
-  if (line?.load_percent != null && line.load_percent !== '') {
-    return 'percent';
+  const explicit = line?.load_mode;
+  if (explicit === 'kg' || explicit === 'percent' || explicit === 'rpe') {
+    return explicit;
   }
   if (line?.load != null && line.load !== '') {
     return 'kg';
   }
-  return line?.load_mode ?? null;
+  if (line?.load_percent != null && line.load_percent !== '') {
+    return 'percent';
+  }
+  if (line?.rpe != null && line.rpe !== '') {
+    return 'rpe';
+  }
+  return null;
 }
 
 function isRpeLine(line) {
@@ -78,7 +82,7 @@ function applyFilters(flatItems, filters = {}) {
 function rowMetricValues(row, metric, oneRm) {
   const line = row.line;
 
-  if (metric !== 'setsCount' && metric !== 'totalReps' && isRpeLine(line)) {
+  if (metric !== 'setsCount' && metric !== 'totalReps' && metric !== 'avgRpe' && isRpeLine(line)) {
     return null;
   }
 
@@ -98,6 +102,10 @@ function rowMetricValues(row, metric, oneRm) {
     case 'e1rm': {
       const load = resolveLoadKg(line, oneRm, row.mainLift);
       return epleyE1rm(load, line?.reps);
+    }
+    case 'avgRpe': {
+      const rpe = Number(line?.rpe);
+      return Number.isFinite(rpe) && rpe > 0 ? rpe : null;
     }
     case 'setsCount': {
       const sets = Number(line?.sets ?? 0);
@@ -180,7 +188,7 @@ function aggregateMetric(values, metric) {
     return null;
   }
 
-  if (metric === 'avgLoad') {
+  if (metric === 'avgLoad' || metric === 'avgRpe') {
     const sum = valid.reduce((acc, value) => acc + value, 0);
     return Math.round((sum / valid.length) * 10) / 10;
   }

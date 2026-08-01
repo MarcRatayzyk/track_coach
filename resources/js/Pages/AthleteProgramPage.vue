@@ -227,9 +227,11 @@ onMounted(() => {
       >
         <ProgramBlockStatsTab
           :sessions="programBlock.sessions"
+          :training-sessions="programBlock.training_sessions ?? []"
           :date-start="programBlock.date_start"
           :athlete-one-rm="programBlock.athlete_one_rm"
           :week-count="programBlock.week_count"
+          :days-per-week="programBlock.days_per_week"
         />
       </section>
 

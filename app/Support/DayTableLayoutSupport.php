@@ -12,7 +12,7 @@ class DayTableLayoutSupport
      */
     public static function allowedColumnIds(): array
     {
-        return ['section', 'sets', 'reps', 'load', 'rest', 'muscles'];
+        return ['section', 'sets', 'reps', 'load', 'rpe', 'rest', 'muscles'];
     }
 
     /**

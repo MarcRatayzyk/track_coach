@@ -5,6 +5,8 @@ import LandingNav from '../Components/Landing/LandingNav.vue';
 import LandingHero from '../Components/Landing/LandingHero.vue';
 import PainPointsSection from '../Components/Landing/PainPointsSection.vue';
 import FeaturesSection from '../Components/Landing/FeaturesSection.vue';
+import ModularitySection from '../Components/Landing/ModularitySection.vue';
+import AthleteAppSection from '../Components/Landing/AthleteAppSection.vue';
 import DemoSection from '../Components/Landing/DemoSection.vue';
 import BenefitsSection from '../Components/Landing/BenefitsSection.vue';
 import StatsSection from '../Components/Landing/StatsSection.vue';
@@ -17,13 +19,13 @@ import LandingFooter from '../Components/Landing/LandingFooter.vue';
 
 <template>
     <Head>
-        <title>Power Roster — Coaching powerlifting structuré</title>
+        <title>Power Roster : Coaching powerlifting structuré</title>
         <meta
             head-key="description"
             name="description"
             content="Power Roster réunit programmation, suivi SBD, vidéos annotées, messagerie et compétitions pour les coachs de powerlifting. Une seule plateforme."
         />
-        <meta head-key="og:title" property="og:title" content="Power Roster — Structure ton coaching powerlifting" />
+        <meta head-key="og:title" property="og:title" content="Power Roster : Structure ton coaching powerlifting" />
         <meta
             head-key="og:description"
             property="og:description"
@@ -40,6 +42,8 @@ import LandingFooter from '../Components/Landing/LandingFooter.vue';
             <LandingHero />
             <PainPointsSection />
             <FeaturesSection />
+            <ModularitySection />
+            <AthleteAppSection />
             <DemoSection />
             <BenefitsSection />
             <StatsSection />

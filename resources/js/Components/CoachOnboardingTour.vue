@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { markCoachOnboardingDone } from '../utils/coachOnboarding';
 import { track } from '../utils/analytics';
+import AppLogo from './AppLogo.vue';
 import UiIcon from './UiIcon.vue';
 
 const props = defineProps({
@@ -17,7 +18,7 @@ const currentStep = ref(0);
 
 const steps = [
   {
-    icon: 'bolt',
+    icon: 'logo',
     title: 'Bienvenue sur Power Roster',
     description:
       'Tu viens de créer ton espace coach. En quelques étapes, découvre comment structurer ton coaching powerlifting.',
@@ -28,7 +29,7 @@ const steps = [
     icon: 'users',
     title: 'Ta roster d’athlètes',
     description:
-      'Ajoute tes athlètes : un lien d’activation est généré à partager (WhatsApp, SMS…).',
+      'Ajoute tes athlètes : un lien d’activation est toujours généré pour toi (WhatsApp, SMS…). Si tu renseignes leur e-mail, l’invitation part aussi par mail.',
     accent: 'text-emerald-400',
     ring: 'border-emerald-500/30 bg-emerald-600/10',
   },
@@ -135,6 +136,13 @@ function back() {
         </div>
 
         <div
+          v-if="step.icon === 'logo'"
+          class="mt-6"
+        >
+          <AppLogo :with-wordmark="false" mark-class="h-16 w-16" />
+        </div>
+        <div
+          v-else
           class="mt-6 flex h-14 w-14 items-center justify-center rounded-2xl border"
           :class="step.ring"
         >

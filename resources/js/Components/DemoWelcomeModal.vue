@@ -34,7 +34,7 @@ function close() {
         @click.stop
       >
         <div class="flex items-start justify-between gap-4">
-          <h2 class="text-base font-semibold text-white">Sandbox démo activée</h2>
+          <h2 class="text-base font-semibold text-white">Démo activée</h2>
           <button
             type="button"
             class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"

@@ -234,7 +234,7 @@ class DemoSandboxProvisioner
     {
         $template = ProgramTemplate::query()->create([
             'coach_id' => $coach->id,
-            'name' => 'Démo sandbox — Peak 2 semaines',
+            'name' => 'Démo — Peak 2 semaines',
             'goal' => 'Aperçu programmation SBD',
             'level' => 'intermediate',
         ]);
@@ -344,7 +344,7 @@ class DemoSandboxProvisioner
         Message::query()->create([
             'thread_id' => $thread->id,
             'sender_id' => $coach->id,
-            'content' => 'OK pour moi, on reste sur le plan. (réponse sandbox)',
+            'content' => 'OK pour moi, on reste sur le plan. (réponse démo)',
         ]);
     }
 

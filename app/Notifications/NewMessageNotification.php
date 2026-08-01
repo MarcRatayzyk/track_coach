@@ -33,6 +33,7 @@ class NewMessageNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("Nouveau message de {$senderName}")
             ->line("{$senderName} t’a envoyé un message sur Power Roster.")
-            ->action('Ouvrir la messagerie', url('/messaging?thread='.$this->message->thread_id));
+            ->action('Ouvrir la messagerie', url('/messaging?thread='.$this->message->thread_id))
+            ->salutation("Cordialement,\nPower Roster");
     }
 }

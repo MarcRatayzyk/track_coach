@@ -1,17 +1,17 @@
 <script setup>
 import FadeIn from './FadeIn.vue';
 
-const columns = ['Power Roster', 'Excel', 'WhatsApp', 'Google Drive', 'Notion'];
+const columns = ['Power Roster', 'Autres outils'];
 
 const rows = [
-    { feature: 'Programmation SBD', values: [true, 'partiel', false, false, 'partiel'] },
-    { feature: 'Suivi PRs automatique', values: [true, false, false, false, false] },
-    { feature: 'Vidéos annotées', values: [true, false, false, false, false] },
-    { feature: 'Messagerie contextualisée', values: [true, false, true, false, false] },
-    { feature: 'Gestion des meets', values: [true, false, false, false, 'partiel'] },
-    { feature: 'Dashboard coach', values: [true, false, false, false, 'partiel'] },
-    { feature: 'Espace athlète dédié', values: [true, false, false, false, false] },
-    { feature: 'Tout au même endroit', values: [true, false, false, false, false] },
+    { feature: 'Programmation SBD', values: [true, 'partiel'] },
+    { feature: 'Suivi PRs automatique', values: [true, false] },
+    { feature: 'Messagerie contextualisée', values: [true, 'partiel'] },
+    { feature: 'Gestion des meets', values: [true, 'partiel'] },
+    { feature: 'Dashboard coach', values: [true, 'partiel'] },
+    { feature: 'Espace athlète dédié', values: [true, false] },
+    { feature: 'Tout au même endroit', values: [true, false] },
+    { feature: 'Modularité', values: [true, false] },
 ];
 </script>
 
@@ -27,12 +27,12 @@ const rows = [
                     Power Roster vs le bricolage
                 </h2>
                 <p class="mt-4 max-w-lg text-base text-slate-400">
-                    Ce que tu perds en multipliant les outils — et ce que tu gagnes en centralisant.
+                    Ce que tu perds en multipliant les outils, et ce que tu gagnes en centralisant.
                 </p>
             </FadeIn>
 
             <FadeIn :delay="0.12" class-name="mt-10 overflow-x-auto">
-                <div class="lp-glass min-w-[720px] overflow-hidden rounded-[22px]">
+                <div class="lp-glass overflow-hidden rounded-[22px]">
                     <table class="w-full text-left text-sm">
                         <thead>
                             <tr class="border-b border-white/[0.08]">
@@ -61,7 +61,7 @@ const rows = [
                                     :class="i === 0 ? 'bg-blue-500/[0.06]' : ''"
                                 >
                                     <span v-if="val === true" class="lp-check inline-flex text-lg" aria-label="Oui">✓</span>
-                                    <span v-else-if="val === false" class="lp-cross inline-flex text-lg" aria-label="Non">—</span>
+                                    <span v-else-if="val === false" class="lp-cross inline-flex text-lg" aria-label="Non">✕</span>
                                     <span v-else class="text-[11px] font-medium text-slate-500">Partiel</span>
                                 </td>
                             </tr>

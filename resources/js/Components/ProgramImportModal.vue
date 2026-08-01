@@ -24,12 +24,13 @@ const props = defineProps({
 const emit = defineEmits(['close', 'imported']);
 
 const step = ref('source'); // source | review
+const sourceMode = ref('json'); // json only for now (file AI = bientôt)
 const loading = ref(false);
 const errorMessage = ref('');
-const aiEnabled = ref(false);
+const copyFeedback = ref('');
 
-const selectedFile = ref(null);
-const fileInputKey = ref(0);
+const pastedJson = ref('');
+const externalAiPrompt = ref('');
 
 const operations = ref([]);
 const warnings = ref([]);
@@ -39,7 +40,6 @@ const sessionCount = ref(0);
 const exerciseCount = ref(0);
 
 const canConfirm = computed(() => operations.value.length > 0 && !loading.value);
-
 function csrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 }
@@ -57,10 +57,11 @@ function xsrfTokenFromCookie() {
   }
 }
 
-function importRequestHeaders() {
+function importRequestHeaders(extra = {}) {
   const headers = {
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
+    ...extra,
   };
 
   const metaToken = csrfToken();
@@ -78,7 +79,12 @@ function importRequestHeaders() {
 
 async function loadMeta() {
   try {
-    const response = await fetch('/coach/program-blocks/import/meta', {
+    const params = new URLSearchParams();
+    if (props.weekCount > 0) {
+      params.set('week_count', String(props.weekCount));
+    }
+    const qs = params.toString();
+    const response = await fetch(`/coach/program-blocks/import/meta${qs ? `?${qs}` : ''}`, {
       headers: { Accept: 'application/json' },
       credentials: 'same-origin',
     });
@@ -86,7 +92,7 @@ async function loadMeta() {
       return;
     }
     const data = await response.json();
-    aiEnabled.value = Boolean(data.ai_enabled ?? data.vision_enabled);
+    externalAiPrompt.value = data.external_ai_prompt ?? '';
   } catch {
     // ignore
   }
@@ -94,10 +100,11 @@ async function loadMeta() {
 
 function resetState() {
   step.value = 'source';
+  sourceMode.value = 'json';
   loading.value = false;
   errorMessage.value = '';
-  selectedFile.value = null;
-  fileInputKey.value += 1;
+  copyFeedback.value = '';
+  pastedJson.value = '';
   operations.value = [];
   warnings.value = [];
   unmatchedExercises.value = [];
@@ -120,9 +127,21 @@ function close() {
   emit('close');
 }
 
-function onFileChange(event) {
-  selectedFile.value = event.target.files?.[0] ?? null;
-  errorMessage.value = '';
+async function copyText(text, label) {
+  if (!text) {
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    copyFeedback.value = `${label} copié`;
+    window.setTimeout(() => {
+      if (copyFeedback.value === `${label} copié`) {
+        copyFeedback.value = '';
+      }
+    }, 2000);
+  } catch {
+    errorMessage.value = 'Impossible de copier dans le presse-papiers.';
+  }
 }
 
 async function parseJsonResponse(response) {
@@ -139,6 +158,7 @@ async function parseJsonResponse(response) {
     }
     const message =
       data?.message
+      || data?.errors?.json?.[0]
       || data?.errors?.file?.[0]
       || Object.values(data?.errors ?? {})?.[0]?.[0]
       || 'Import impossible.';
@@ -157,13 +177,10 @@ function applyReadyDraft(data) {
   step.value = 'review';
 }
 
-async function analyze() {
-  if (!aiEnabled.value) {
-    errorMessage.value = 'Configurez PROGRAM_IMPORT_OPENAI_API_KEY dans .env pour l’analyse IA.';
-    return;
-  }
-  if (!selectedFile.value) {
-    errorMessage.value = 'Choisissez un fichier (CSV, XLSX, photo ou PDF).';
+async function importPastedJson() {
+  const raw = pastedJson.value.trim();
+  if (!raw) {
+    errorMessage.value = 'Colle le JSON rempli par ton IA.';
     return;
   }
 
@@ -171,24 +188,20 @@ async function analyze() {
   errorMessage.value = '';
 
   try {
-    const body = new FormData();
-    body.append('file', selectedFile.value);
-    const token = csrfToken() || xsrfTokenFromCookie();
-    if (token) {
-      body.append('_token', token);
-    }
-
-    const response = await fetch(`/coach/program-blocks/${props.assignmentId}/import/preview`, {
+    const response = await fetch(`/coach/program-blocks/${props.assignmentId}/import/preview-json`, {
       method: 'POST',
-      headers: importRequestHeaders(),
+      headers: importRequestHeaders({ 'Content-Type': 'application/json' }),
       credentials: 'same-origin',
-      body,
+      body: JSON.stringify({
+        json: raw,
+        _token: csrfToken() || xsrfTokenFromCookie(),
+      }),
     });
 
     const data = await parseJsonResponse(response);
     applyReadyDraft(data);
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Analyse impossible.';
+    errorMessage.value = error instanceof Error ? error.message : 'Import JSON impossible.';
   } finally {
     loading.value = false;
   }
@@ -264,7 +277,7 @@ function itemSummary(operation) {
             Importer un programme
           </h2>
           <p class="mt-0.5 text-sm text-slate-400">
-            Analyse IA (CSV, Excel, photo ou PDF) — revue avant écriture
+            Import JSON via ChatGPT / Claude — revue avant écriture
             <span v-if="weekCount">(bloc {{ weekCount }} sem.)</span>.
           </p>
         </div>
@@ -281,25 +294,66 @@ function itemSummary(operation) {
         <p v-if="errorMessage" class="mb-3 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
           {{ errorMessage }}
         </p>
+        <p v-if="copyFeedback" class="mb-3 text-sm text-emerald-300">
+          {{ copyFeedback }}
+        </p>
 
         <template v-if="step === 'source'">
-          <p v-if="!aiEnabled" class="mb-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-            Clé OpenAI manquante : ajoutez <code class="text-amber-50">PROGRAM_IMPORT_OPENAI_API_KEY</code> dans `.env`.
-          </p>
+          <div class="mb-4 flex gap-2">
+            <button
+              type="button"
+              class="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white"
+              @click="sourceMode = 'json'; errorMessage = ''"
+            >
+              JSON (ChatGPT / Claude)
+            </button>
+            <button
+              type="button"
+              class="cursor-not-allowed rounded-lg bg-slate-800/80 px-3 py-1.5 text-sm font-medium text-slate-500"
+              disabled
+              title="Bientôt disponible"
+            >
+              IA intégrée
+              <span class="ml-1 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-300">
+                Bientôt
+              </span>
+            </button>
+          </div>
 
-          <p class="mb-3 text-sm text-slate-300">
-            Formats : <strong class="font-medium text-slate-100">PDF</strong> (recommandé), CSV, Excel ou photo.
-            Exporte ton programme Excel en PDF puis importe-le — l’IA lit le document page par page.
-            Les exercices inconnus seront ajoutés à la banque (mouvement parent + variante).
-          </p>
+          <template v-if="sourceMode === 'json'">
+            <ol class="mb-4 list-decimal space-y-1 pl-5 text-sm text-slate-300">
+              <li>Copie le prompt (le format JSON est déjà dedans)</li>
+              <li>Colle-le dans ChatGPT / Claude avec ta photo, ton PDF ou ton Excel</li>
+              <li>Colle ici le JSON renvoyé, puis importe</li>
+            </ol>
 
-          <input
-            :key="fileInputKey"
-            type="file"
-            class="block w-full text-sm text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-slate-600"
-            accept=".csv,.txt,.xlsx,.pdf,image/*,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf"
-            @change="onFileChange"
-          >
+            <p class="mb-3 text-sm text-slate-400">
+              S’adapte à n’importe quel programme : 2–6 jours/semaine, colonnes différentes (RPE, tempo, %), templates variés.
+            </p>
+
+            <div class="mb-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+                :disabled="!externalAiPrompt"
+                @click="copyText(externalAiPrompt, 'Prompt')"
+              >
+                Copier le prompt
+              </button>
+            </div>
+
+            <label class="mb-1 block text-sm font-medium text-slate-300" for="program-import-json">
+              JSON rempli
+            </label>
+            <textarea
+              id="program-import-json"
+              v-model="pastedJson"
+              rows="12"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-slate-200 placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
+              placeholder='{ "format": "track_coach_program_v1", "weeks": [ ... ] }'
+              @input="errorMessage = ''"
+            />
+          </template>
         </template>
 
         <template v-else>
@@ -356,7 +410,7 @@ function itemSummary(operation) {
           </div>
 
           <p v-if="!operations.length" class="text-sm text-slate-400">
-            Aucune séance détectée. Réessayez avec un autre fichier ou une photo plus nette.
+            Aucune séance détectée. Vérifie le JSON ou réessaie avec un autre fichier.
           </p>
         </template>
       </div>
@@ -383,10 +437,10 @@ function itemSummary(operation) {
           v-if="step === 'source'"
           type="button"
           class="rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-          :disabled="loading || !selectedFile || !aiEnabled"
-          @click="analyze"
+          :disabled="loading || !pastedJson.trim()"
+          @click="importPastedJson"
         >
-          {{ loading ? 'Analyse IA en cours (1–3 min)…' : 'Analyser avec l’IA' }}
+          {{ loading ? 'Lecture du JSON…' : 'Importer le JSON' }}
         </button>
         <button
           v-else

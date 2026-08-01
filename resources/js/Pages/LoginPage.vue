@@ -129,6 +129,19 @@ function submit() {
                 </p>
 
                 <div
+                    v-if="!isMobileApp"
+                    class="mt-6 rounded-xl border border-blue-500/30 bg-blue-950/30 px-4 py-3.5 text-sm leading-relaxed text-blue-100"
+                >
+                    <p class="font-semibold text-white">Essai coach 14 jours</p>
+                    <p class="mt-1 text-blue-100/85">
+                        Pas encore de compte ? Tu démarres un essai gratuit de 14 jours, sans carte bancaire.
+                        <Link href="/register" class="font-medium text-blue-300 underline-offset-2 hover:text-blue-200 hover:underline">
+                            Créer mon compte
+                        </Link>
+                    </p>
+                </div>
+
+                <div
                     v-if="$page.props.flash?.error"
                     class="mt-6 rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-200"
                 >
@@ -256,9 +269,9 @@ function submit() {
                 <p v-if="!isMobileApp" class="mt-8 text-center text-sm text-slate-500">
                     Coach ?
                     <Link href="/register" class="font-medium text-blue-400 hover:text-blue-300">
-                        Créer un compte
+                        Essai gratuit 14 jours
                     </Link>
-                    — Athlète ? Utilise le lien d’activation transmis par ton coach.
+                    · Athlète ? Utilise le lien d’activation transmis par ton coach.
                 </p>
                 <p v-else class="mt-8 text-center text-sm text-slate-500">
                     Athlète ? Utilise le lien d’activation transmis par ton coach si tu n’as pas encore activé ton compte.

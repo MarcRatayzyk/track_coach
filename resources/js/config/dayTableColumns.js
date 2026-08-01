@@ -5,7 +5,7 @@ export const LOAD_MODE_KG = 'kg';
 export const LOAD_MODE_PERCENT = 'percent';
 export const LOAD_MODE_RPE = 'rpe';
 
-export const OPTIONAL_COLUMN_IDS = ['section', 'sets', 'reps', 'load', 'rest', 'muscles'];
+export const OPTIONAL_COLUMN_IDS = ['section', 'sets', 'reps', 'load', 'rpe', 'rest', 'muscles'];
 
 export const PRESCRIPTION_COLUMN_IDS = ['sets', 'reps', 'load'];
 
@@ -57,6 +57,12 @@ export const DAY_TABLE_COLUMNS = {
     id: 'load',
     label: 'Charge',
     widthClass: 'w-28',
+    align: 'center',
+  },
+  rpe: {
+    id: 'rpe',
+    label: 'RPE cible',
+    widthClass: 'w-16',
     align: 'center',
   },
   rest: {
@@ -126,6 +132,7 @@ const SPACED_COLUMN_WEIGHTS = {
   sets: 1.2,
   reps: 1.2,
   load: 2.8,
+  rpe: 1.0,
   rest: 1.0,
   muscles: 1.3,
 };
@@ -163,6 +170,7 @@ const ATHLETE_COLUMN_WEIGHTS = {
   sets: 1.0,
   reps: 1.0,
   load: 2.0,
+  rpe: 0.9,
   rest: 0.9,
   muscles: 1.1,
 };
@@ -175,6 +183,7 @@ const ATHLETE_COLUMN_HEADER_SHORT = {
   sets: 'Sér.',
   reps: 'R.',
   load: 'Ch.',
+  rpe: 'RPE',
   rest: 'Repos',
   muscles: 'Mus.',
 };

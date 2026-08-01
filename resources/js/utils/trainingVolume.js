@@ -168,6 +168,60 @@ export function flattenBlockItems(sessions = {}, dateStart = '') {
   });
 }
 
+/**
+ * Mappe les séances loguées par l’athlète sur la grille semaine/jour du bloc.
+ * @param {Array<object>} trainingSessions
+ * @param {string} dateStart
+ * @param {number} weekCount
+ * @param {number} [daysPerWeek=7]
+ * @returns {Record<string, object>}
+ */
+export function mapTrainingSessionsToBlockSessions(
+  trainingSessions = [],
+  dateStart = '',
+  weekCount = 0,
+  daysPerWeek = 7,
+) {
+  if (!dateStart || !weekCount) {
+    return {};
+  }
+
+  const maxDays = Math.max(1, Number(daysPerWeek) || 7);
+  const dateToKey = new Map();
+
+  for (let week = 1; week <= weekCount; week += 1) {
+    for (let weekday = 1; weekday <= maxDays; weekday += 1) {
+      dateToKey.set(cellDate(dateStart, week, weekday), `${week}-${weekday}`);
+    }
+  }
+
+  const sessions = {};
+
+  for (const trainingSession of trainingSessions ?? []) {
+    const date = String(trainingSession?.session_date ?? '').slice(0, 10);
+    const key = dateToKey.get(date);
+    if (!key) {
+      continue;
+    }
+
+    const items = Array.isArray(trainingSession.items) ? trainingSession.items : [];
+
+    if (sessions[key]) {
+      sessions[key].items = [...(sessions[key].items ?? []), ...items];
+      continue;
+    }
+
+    sessions[key] = {
+      session_label: trainingSession.session_label ?? null,
+      main_lift: trainingSession.main_lift ?? 'squat',
+      items: [...items],
+      notes: trainingSession.notes ?? null,
+    };
+  }
+
+  return sessions;
+}
+
 function matchesFormatFilter(format, filter) {
   if (!filter || filter === 'all') {
     return true;

@@ -408,7 +408,7 @@ watch(() => page.url, () => {
         >
             <div class="min-w-0 flex-1 px-6">
                 <template v-if="isDemoAccount">
-                    Compte démo sandbox
+                    Compte démo
                     <span v-if="demoExpiresLabel"> — expire le {{ demoExpiresLabel }}</span>
                     ·
                     <Link href="/register" class="font-semibold underline hover:no-underline">

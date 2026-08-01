@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
+import BugReportModal from './BugReportModal.vue';
 import ProgramTableDynamicCell from './ProgramTableDynamicCell.vue';
 import {
   EXERCISE_MODE_OPTIONS,
@@ -32,6 +33,7 @@ const emit = defineEmits(['close']);
 const selectedLayoutId = ref(null);
 const isCreating = ref(false);
 const clientErrors = ref([]);
+const showBugReportModal = ref(false);
 
 const form = useForm({
   name: '',
@@ -257,6 +259,16 @@ const canDelete = computed(
                 />
                 {{ option.label }}
               </label>
+              <p class="pt-1 text-xs text-slate-500">
+                Une colonne te manque ?
+                <button
+                  type="button"
+                  class="text-slate-400 underline decoration-slate-600 underline-offset-2 transition hover:text-slate-300"
+                  @click="showBugReportModal = true"
+                >
+                  Signale-la-nous
+                </button>
+              </p>
             </fieldset>
 
             <label class="flex items-center gap-2 text-sm text-slate-300">
@@ -295,7 +307,7 @@ const canDelete = computed(
                         :column-id="column.id"
                         :row="previewRow"
                         default-lift="squat"
-                        :preview="!['load', 'section'].includes(column.id)"
+                        :preview="!['load', 'section', 'rpe'].includes(column.id)"
                         @update="updatePreviewRow"
                       />
                     </td>
@@ -304,7 +316,8 @@ const canDelete = computed(
               </table>
             </div>
             <p class="text-xs text-slate-500">
-              L’aperçu montre une ligne fictive. La colonne Charge permet de choisir kg, % ou RPE par exercice.
+              L’aperçu montre une ligne fictive. La colonne Charge permet de choisir kg, % ou RPE.
+              La colonne RPE cible peut coexister avec une charge en kg ou %.
             </p>
           </div>
         </div>
@@ -350,4 +363,6 @@ const canDelete = computed(
       </div>
     </div>
   </Teleport>
+
+  <BugReportModal v-model="showBugReportModal" />
 </template>

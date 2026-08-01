@@ -75,7 +75,7 @@ function onRowClick(event) {
       class="border-b border-slate-800 px-1"
       :class="[
         index < visibleColumns.length - 1 ? 'border-r' : '',
-        ['sets', 'reps', 'load', 'rest'].includes(column.id) ? 'py-0.5' : 'py-1',
+        ['sets', 'reps', 'load', 'rpe', 'rest'].includes(column.id) ? 'py-0.5' : 'py-1',
         layoutVariant === 'spaced' && ['sets', 'reps', 'load', 'section'].includes(column.id)
           ? 'text-center'
           : '',

@@ -32,7 +32,7 @@ function trackCta(ctaId) {
                             Prêt à transformer ton coaching&nbsp;?
                         </h2>
                         <p class="mx-auto mt-5 max-w-lg text-base text-slate-300 sm:text-lg">
-                            14 jours d’essai sans carte. Ou ouvre une sandbox démo avec ton e-mail pour tester
+                            14 jours d’essai sans carte. Ou ouvre une démo avec ton e-mail pour tester
                             le produit immédiatement.
                         </p>
                         <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
@@ -48,7 +48,7 @@ function trackCta(ctaId) {
                                 class="lp-btn-secondary px-10 py-4 text-base leading-none sm:text-lg"
                                 @click="trackCta('final_demo')"
                             >
-                                Sandbox démo
+                                Démo
                             </a>
                         </div>
                     </div>

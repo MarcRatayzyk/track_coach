@@ -59,8 +59,8 @@ class ActivationDelivery
         }
 
         return $emailSent
-            ? "Invitation envoyée par e-mail à {$label}. L’athlète pourra choisir son mot de passe et compléter son profil à la première visite."
-            : "Athlète ajouté, mais l’e-mail d’invitation n’a pas pu être envoyé. Utilise « Renvoyer l’invitation » ou partage le lien d’activation ci-dessous.";
+            ? "Invitation envoyée par e-mail. Tu as aussi le lien d’activation ci-dessous à partager si besoin."
+            : "Athlète ajouté, mais l’e-mail d’invitation n’a pas pu être envoyé. Partage le lien d’activation ci-dessous.";
     }
 
     public static function athleteResendSuccessMessage(string $label, ?bool $emailSent, bool $emailPending = false): string

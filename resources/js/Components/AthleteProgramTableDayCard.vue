@@ -73,6 +73,8 @@ function cellValue(row, columnId) {
       return row.reps ?? '—';
     case 'load':
       return loadLabel(row);
+    case 'rpe':
+      return row.rpe != null && row.rpe !== '' ? String(row.rpe) : '—';
     case 'rest':
       return row.rest_seconds != null ? `${row.rest_seconds}s` : '—';
     case 'muscles':
@@ -89,7 +91,14 @@ function loadLabel(row) {
   if (row.load_percent != null && row.load_percent !== '') {
     return `${row.load_percent}%`;
   }
-  if (row.rpe != null && row.rpe !== '') {
+  if (
+    row.rpe != null
+    && row.rpe !== ''
+    && (
+      row.load_mode === 'rpe'
+      || ((row.load == null || row.load === '') && (row.load_percent == null || row.load_percent === ''))
+    )
+  ) {
     return `RPE ${row.rpe}`;
   }
   return '—';
@@ -146,7 +155,7 @@ function cellTitle(row, columnId) {
 }
 
 function isPrescriptionColumn(columnId) {
-  return ['sets', 'reps', 'load', 'rest', 'section'].includes(columnId);
+  return ['sets', 'reps', 'load', 'rpe', 'rest', 'section'].includes(columnId);
 }
 </script>
 

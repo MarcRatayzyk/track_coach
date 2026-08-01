@@ -6,7 +6,6 @@ const stats = [
     { value: '24/7', label: 'Accès coach & athlètes' },
     { value: '100%', label: 'Focus powerlifting' },
     { value: '1', label: 'Plateforme unique' },
-    { value: '0', label: 'Feuille Excel' },
 ];
 
 const visible = ref(false);
@@ -31,7 +30,7 @@ onUnmounted(() => observer?.disconnect());
         <div ref="el" class="mx-auto w-full max-w-[1280px]">
             <FadeIn>
                 <div
-                    class="grid grid-cols-2 gap-px overflow-hidden rounded-[24px] border border-white/[0.08] bg-white/[0.06] sm:grid-cols-4"
+                    class="grid grid-cols-3 gap-px overflow-hidden rounded-[24px] border border-white/[0.08] bg-white/[0.06]"
                     :class="visible ? 'opacity-100' : 'opacity-90'"
                 >
                     <div

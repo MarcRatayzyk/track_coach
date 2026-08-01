@@ -22,7 +22,7 @@ return [
     'max_csv_bytes' => (int) env('PROGRAM_IMPORT_MAX_CSV_BYTES', 5 * 1024 * 1024),
     'max_tokens' => (int) env('PROGRAM_IMPORT_MAX_TOKENS', 16384),
     'timeout_seconds' => (int) env('PROGRAM_IMPORT_TIMEOUT', 180),
-    'weeks_per_batch' => (int) env('PROGRAM_IMPORT_WEEKS_PER_BATCH', 2),
+    'weeks_per_batch' => (int) env('PROGRAM_IMPORT_WEEKS_PER_BATCH', 1),
     'verify_numbers' => filter_var(env('PROGRAM_IMPORT_VERIFY_NUMBERS', true), FILTER_VALIDATE_BOOLEAN),
     'max_source_chars' => (int) env('PROGRAM_IMPORT_MAX_SOURCE_CHARS', 200000),
     /** Retries with backoff when OpenAI returns 429 Too Many Requests. */

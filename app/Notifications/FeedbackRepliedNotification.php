@@ -33,6 +33,7 @@ class FeedbackRepliedNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("{$coachName} a répondu à ton retour")
             ->line("{$coachName} a répondu à ton retour vidéo.")
-            ->action('Voir la réponse', url('/messaging?thread='.$this->message->thread_id));
+            ->action('Voir la réponse', url('/messaging?thread='.$this->message->thread_id))
+            ->salutation("Cordialement,\nPower Roster");
     }
 }

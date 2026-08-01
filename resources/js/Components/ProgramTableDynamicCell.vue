@@ -52,6 +52,16 @@ function parseInteger(value) {
   return Number.isNaN(parsed) ? '' : parsed;
 }
 
+function parseDecimal(value) {
+  if (value === '' || value === null || typeof value === 'undefined') {
+    return '';
+  }
+
+  const parsed = Number(String(value).replace(',', '.'));
+
+  return Number.isNaN(parsed) ? '' : parsed;
+}
+
 function onExerciseSelect(payload) {
   emit('update', {
     ...props.row,
@@ -140,6 +150,20 @@ function onLiftChange(lift) {
       :default-load-mode="defaultLoadMode"
       :preview="preview"
       @update="emit('update', $event)"
+    />
+  </template>
+
+  <template v-else-if="columnId === 'rpe'">
+    <input
+      :value="row.rpe"
+      type="number"
+      min="1"
+      max="10"
+      step="0.5"
+      placeholder="8"
+      :readonly="preview"
+      :class="PRESCRIPTION_VALUE_INPUT_CLASS"
+      @input="updateField('rpe', parseDecimal($event.target.value))"
     />
   </template>
 

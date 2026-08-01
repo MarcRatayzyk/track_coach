@@ -3,22 +3,14 @@ import FadeIn from './FadeIn.vue';
 
 const pains = [
     {
-        title: 'Données éparpillées',
+        title: 'Contexte fragmenté',
         description:
-            'PRs dans un Excel, programmes dans un Drive, notes partout. Impossible d’avoir une vision claire de ta roster.',
-        icon: 'data',
+            'Programmes ici, notes ailleurs, feedback encore ailleurs. Tu jongles entre outils, et tu perds le fil de chaque athlète.',
     },
     {
-        title: 'Vidéos dans WhatsApp',
+        title: 'Vision floue',
         description:
-            'Les séances se noient dans les fils. Tu perds le contexte, le timing et la qualité du feedback technique.',
-        icon: 'video',
-    },
-    {
-        title: 'Suivi impossible',
-        description:
-            'Sans historique centralisé, tu coches des cases au feeling. La progression réelle reste floue.',
-        icon: 'track',
+            'Impossible de voir d’un coup d’œil où en est un athlète : charge, technique, récupération. Tout est éparpillé, rien n’est relié.',
     },
 ];
 </script>
@@ -32,11 +24,11 @@ const pains = [
                     id="pain-heading"
                     class="mt-3 max-w-2xl text-3xl font-black tracking-[-0.03em] text-white sm:text-4xl"
                 >
-                    Pourquoi les coachs abandonnent les feuilles Excel&nbsp;?
+                    Pourquoi le coaching se perd entre plusieurs outils&nbsp;?
                 </h2>
             </FadeIn>
 
-            <div class="mt-12 grid gap-5 md:grid-cols-3">
+            <div class="mt-12 grid gap-5 md:grid-cols-2">
                 <FadeIn
                     v-for="(pain, i) in pains"
                     :key="pain.title"
@@ -59,8 +51,8 @@ const pains = [
                             Power Roster. Une plateforme. Zéro friction.
                         </h3>
                         <p class="mt-3 text-base leading-relaxed text-slate-400">
-                            Remplace Excel, WhatsApp et Drive par un outil pensé pour le powerlifting :
-                            roster, programmes SBD, vidéos annotées, messages et meets — synchronisés.
+                            Tout le coaching d’un athlète au même endroit : roster, programmes SBD,
+                            messages et meets, pour une vision claire et un contexte toujours à portée de main.
                         </p>
                     </div>
                     <a

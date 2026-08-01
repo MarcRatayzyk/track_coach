@@ -41,27 +41,20 @@ watch(
 );
 
 const inviteTitle = computed(() => {
-  if (manualActivationLinks.value) {
-    return 'Lien d’activation';
+  if (invitationEmail.value && invitationEmailSent.value !== false && !manualActivationLinks.value) {
+    return 'Invitation envoyée';
   }
-  if (invitationEmailSent.value === false) {
-    return 'E-mail non envoyé';
-  }
-  return 'Invitation envoyée';
+  return 'Lien d’activation';
 });
 
 const inviteMessage = computed(() => {
-  if (manualActivationLinks.value) {
-    return 'Copie le lien ci-dessous et envoie-le à l’athlète (WhatsApp, SMS, etc.). Valable 14 jours.';
+  if (invitationEmail.value && invitationEmailSent.value === true && !manualActivationLinks.value) {
+    return `Un e-mail d’activation a été envoyé à ${invitationEmail.value}. Tu as aussi le lien ci-dessous à partager (WhatsApp, SMS…). Valable 14 jours.`;
   }
-  if (invitationEmailSent.value === false) {
-    return invitationEmail.value
-      ? `Impossible d’envoyer l’e-mail à ${invitationEmail.value}. Copie le lien d’activation ci-dessous (valable 14 jours).`
-      : 'Impossible d’envoyer l’e-mail. Copie le lien d’activation ci-dessous (valable 14 jours).';
+  if (invitationEmail.value && invitationEmailSent.value === false && !manualActivationLinks.value) {
+    return `Impossible d’envoyer l’e-mail à ${invitationEmail.value}. Copie le lien d’activation ci-dessous (valable 14 jours).`;
   }
-  return invitationEmail.value
-    ? `Un e-mail d’activation a été envoyé à ${invitationEmail.value}. Tu peux aussi copier le lien en secours (valable 14 jours).`
-    : 'L’invitation a été envoyée. Tu peux aussi copier le lien ci-dessous en secours (valable 14 jours).';
+  return 'Copie le lien ci-dessous et envoie-le à l’athlète (WhatsApp, SMS, etc.). Valable 14 jours.';
 });
 
 function closeModal() {
@@ -79,7 +72,7 @@ function submitNewAthlete() {
     onSuccess: (page) => {
       track('athlete_invited');
       invitationUrl.value = page.props.flash?.first_login_url ?? '';
-      invitationEmail.value = page.props.flash?.invitation_email ?? form.email;
+      invitationEmail.value = page.props.flash?.invitation_email ?? '';
       invitationEmailSent.value = page.props.flash?.invitation_email_sent ?? null;
       modalStep.value = 'invite';
       form.reset();
@@ -130,8 +123,8 @@ async function copyInvitation() {
 
         <template v-if="modalStep === 'form'">
           <p class="mt-3 text-slate-400">
-            Renseigne le prénom, le nom, l’e-mail et le type de coaching. Un e-mail d’activation
-            sera envoyé pour que l’athlète choisisse son mot de passe et complète son profil.
+            Renseigne le prénom, le nom et le type de coaching. Un lien d’activation te sera
+            toujours donné. Si tu ajoutes un e-mail, l’invitation part aussi par mail.
           </p>
           <form class="mt-4 space-y-4" @submit.prevent="submitNewAthlete">
             <label class="block text-sm font-medium text-slate-400">
@@ -162,14 +155,17 @@ async function copyInvitation() {
             </label>
             <label class="block text-sm font-medium text-slate-400">
               E-mail
+              <span class="font-normal text-slate-500"> (optionnel)</span>
               <input
                 v-model="form.email"
                 type="email"
-                required
                 autocomplete="email"
                 class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
                 placeholder="athlete@email.fr"
               >
+              <p class="mt-1 text-xs text-slate-500">
+                Si rempli, l’athlète reçoit aussi le lien d’activation par e-mail.
+              </p>
               <p v-if="form.errors.email" class="mt-1 text-sm text-red-400">
                 {{ form.errors.email }}
               </p>

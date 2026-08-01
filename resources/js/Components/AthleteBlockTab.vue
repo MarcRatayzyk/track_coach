@@ -105,9 +105,11 @@ const overviewStats = computed(() =>
     <ProgramBlockStatsTab
       v-if="programBlock"
       :sessions="programBlock.sessions ?? {}"
+      :training-sessions="programBlock.training_sessions ?? trainingSessions"
       :date-start="programBlock.date_start ?? ''"
       :athlete-one-rm="programBlock.athlete_one_rm ?? {}"
       :week-count="programBlock.week_count ?? 0"
+      :days-per-week="programBlock.days_per_week ?? 7"
     />
   </div>
 </template>

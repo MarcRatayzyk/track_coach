@@ -20,7 +20,7 @@ class ChartTemplateSupport
      */
     public static function allowedMetrics(): array
     {
-        return ['volume', 'avgLoad', 'e1rm', 'setsCount', 'totalReps', 'tonnage'];
+        return ['volume', 'avgLoad', 'e1rm', 'avgRpe', 'setsCount', 'totalReps', 'tonnage'];
     }
 
     /**

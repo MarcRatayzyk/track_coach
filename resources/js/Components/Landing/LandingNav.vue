@@ -9,6 +9,7 @@ function trackCta(ctaId) {
 
 const links = [
     { href: '#fonctionnalites', label: 'Fonctionnalités' },
+    { href: '#modularite', label: 'Modularité' },
     { href: '#demo', label: 'Démo' },
     { href: '#pricing', label: 'Tarifs' },
     { href: '#faq', label: 'FAQ' },
@@ -25,7 +26,7 @@ const links = [
         <div
             class="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-4 px-5 py-3.5 sm:px-8 lg:px-10"
         >
-            <a href="/" class="flex min-w-0 items-center gap-2.5" aria-label="Power Roster — Accueil">
+            <a href="/" class="flex min-w-0 items-center gap-2.5" aria-label="Power Roster : Accueil">
                 <AppLogo
                     mark-class="h-14 w-14 sm:h-16 sm:w-16"
                     wordmark-class="truncate text-lg font-bold tracking-tight text-white sm:text-2xl"

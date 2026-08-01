@@ -21,7 +21,7 @@ class StoreCoachAthleteRequest extends FormRequest
         return [
             'first_name' => ['required', 'string', 'max:120'],
             'last_name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['nullable', 'string', 'email', 'max:255', 'unique:users,email'],
             'feedback_frequency' => [
                 'required',
                 'string',
@@ -30,13 +30,19 @@ class StoreCoachAthleteRequest extends FormRequest
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('email') && is_string($this->input('email')) && trim($this->input('email')) === '') {
+            $this->merge(['email' => null]);
+        }
+    }
+
     /**
      * @return array<string, string>
      */
     public function messages(): array
     {
         return [
-            'email.required' => 'L’adresse e-mail de l’athlète est obligatoire.',
             'email.email' => 'L’adresse e-mail n’est pas valide.',
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'feedback_frequency.required' => 'Choisis le type de coaching.',
