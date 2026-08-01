@@ -47,13 +47,15 @@ class RegisterController extends Controller
         $wantsTrial = $plan === null;
         $trialDays = (int) config('billing.trial_days', 14);
 
+        // Paid signup path: mark trial as already consumed (trial_ends_at = now)
+        // so abandoning Stripe checkout cannot unlock a free 14-day trial later.
         $coach = User::query()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
             'role' => 'coach',
             'initial_setup_completed_at' => now(),
-            'trial_ends_at' => $wantsTrial ? now()->addDays($trialDays) : null,
+            'trial_ends_at' => $wantsTrial ? now()->addDays($trialDays) : now(),
             'is_demo' => false,
         ]);
 

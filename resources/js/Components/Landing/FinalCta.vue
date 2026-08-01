@@ -37,7 +37,7 @@ function trackCta(ctaId) {
                         </p>
                         <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
                             <a
-                                href="/register"
+                                href="/start-trial"
                                 class="lp-btn-primary px-10 py-4 text-base leading-none sm:text-lg"
                                 @click="trackCta('final_register')"
                             >

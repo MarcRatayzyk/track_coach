@@ -26,7 +26,7 @@ class EnsureCoachHasBillingAccess
                 return $next($request);
             }
 
-            return redirect()->route('billing.index');
+            return $this->deny($request, 'billing.index');
         }
 
         if ($user->role === 'athlete') {
@@ -34,9 +34,41 @@ class EnsureCoachHasBillingAccess
                 return $next($request);
             }
 
-            return redirect()->route('subscription.blocked');
+            return $this->deny($request, 'subscription.blocked');
         }
 
-        return $next($request);
+        // Fail-closed for unknown roles: no app access without a known billed role.
+        return $this->denyForbidden($request);
+    }
+
+    private function deny(Request $request, string $redirectRoute): Response
+    {
+        if ($this->wantsJsonDenial($request)) {
+            return response()->json([
+                'message' => 'Un abonnement actif est requis pour accéder à cette ressource.',
+                'code' => 'subscription_required',
+            ], 403);
+        }
+
+        return redirect()->route($redirectRoute);
+    }
+
+    private function denyForbidden(Request $request): Response
+    {
+        if ($this->wantsJsonDenial($request)) {
+            return response()->json([
+                'message' => 'Accès refusé.',
+                'code' => 'forbidden',
+            ], 403);
+        }
+
+        abort(403);
+    }
+
+    private function wantsJsonDenial(Request $request): bool
+    {
+        return $request->expectsJson()
+            || $request->is('api/*')
+            || $request->ajax();
     }
 }

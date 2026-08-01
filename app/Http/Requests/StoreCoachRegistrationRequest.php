@@ -31,7 +31,7 @@ class StoreCoachRegistrationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+            'email.unique' => 'Cette adresse e-mail est déjà utilisée. Connecte-toi : si tu n’as pas encore payé, tu pourras démarrer ton essai 14 jours depuis Abonnement.',
             'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
             'password.min' => 'Le mot de passe doit contenir au moins :min caractères.',
             'password.mixed' => 'Le mot de passe doit contenir au moins une majuscule et une minuscule.',

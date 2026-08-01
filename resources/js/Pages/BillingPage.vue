@@ -60,6 +60,10 @@ function checkout(planKey) {
     form.post('/billing/checkout');
 }
 
+function startTrial() {
+    form.post('/billing/start-trial');
+}
+
 function openPortal() {
     form.post('/billing/portal');
 }
@@ -73,8 +77,8 @@ function openPortal() {
             <h1 class="text-2xl font-bold tracking-tight text-white">Abonnement</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
                 Choisis un plan selon le nombre d’athlètes actifs. L’essai 14 jours se lance uniquement
-                à l’inscription via « Essai 14j ». Après expiration ou sans abonnement, l’accès est bloqué
-                jusqu’au paiement.
+                à l’inscription via « Essai 14j ». Après expiration ou sans abonnement, l’accès à
+                l’application est bloqué jusqu’au paiement.
             </p>
         </header>
 
@@ -107,6 +111,18 @@ function openPortal() {
                         Essai jusqu’au
                         {{ new Date(sharedBilling.trialEndsAt).toLocaleDateString('fr-FR') }}
                     </p>
+                    <p
+                        v-if="sharedBilling?.status === 'trial_expired'"
+                        class="mt-1 text-sm text-amber-300/90"
+                    >
+                        Ton essai est terminé. Abonne-toi pour retrouver l’accès.
+                    </p>
+                    <p
+                        v-else-if="sharedBilling?.status === 'inactive' && sharedBilling?.canStartTrial"
+                        class="mt-1 text-sm text-slate-400"
+                    >
+                        Tu n’as pas encore utilisé ton essai gratuit.
+                    </p>
                     <p class="mt-2 text-sm text-slate-400">
                         {{ sharedBilling?.athleteCount ?? 0 }} athlète(s) actif(s)
                         <span v-if="sharedBilling?.seatLimit != null">
@@ -115,15 +131,26 @@ function openPortal() {
                         <span v-else-if="sharedBilling?.status === 'subscribed'"> · illimité</span>
                     </p>
                 </div>
-                <button
-                    v-if="sharedBilling?.status === 'subscribed' && stripeConfigured"
-                    type="button"
-                    class="rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-800"
-                    :disabled="form.processing"
-                    @click="openPortal"
-                >
-                    Gérer mon abonnement
-                </button>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        v-if="sharedBilling?.canStartTrial"
+                        type="button"
+                        class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+                        :disabled="form.processing"
+                        @click="startTrial"
+                    >
+                        Démarrer l’essai 14 jours
+                    </button>
+                    <button
+                        v-if="sharedBilling?.status === 'subscribed' && stripeConfigured"
+                        type="button"
+                        class="rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+                        :disabled="form.processing"
+                        @click="openPortal"
+                    >
+                        Gérer mon abonnement
+                    </button>
+                </div>
             </div>
             <p v-if="!stripeConfigured" class="mt-4 text-sm text-amber-300">
                 Stripe n’est pas encore configuré sur cet environnement (clés / price IDs manquants).
@@ -191,7 +218,10 @@ function openPortal() {
             </article>
         </div>
 
-        <p class="mt-6 text-center text-sm text-slate-500">
+        <p
+            v-if="sharedBilling?.hasAccess"
+            class="mt-6 text-center text-sm text-slate-500"
+        >
             <Link href="/dashboard" class="text-blue-400 hover:underline">Retour au dashboard</Link>
         </p>
     </div>

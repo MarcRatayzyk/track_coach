@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Mail\CoachTrialStartedMail;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 
 class BillingAccess
 {
@@ -27,11 +29,11 @@ class BillingAccess
             return $coach->demo_expires_at !== null && $coach->demo_expires_at->isFuture();
         }
 
-        if ($coach->onGenericTrial()) {
+        if ($coach->subscribed('default')) {
             return true;
         }
 
-        return $coach->subscribed('default');
+        return $coach->onGenericTrial();
     }
 
     public static function status(User $coach): string
@@ -44,12 +46,12 @@ class BillingAccess
             return 'demo_expired';
         }
 
-        if ($coach->onGenericTrial()) {
-            return 'trial';
-        }
-
         if ($coach->subscribed('default')) {
             return 'subscribed';
+        }
+
+        if ($coach->onGenericTrial()) {
+            return 'trial';
         }
 
         if ($coach->hasExpiredGenericTrial()) {
@@ -57,6 +59,88 @@ class BillingAccess
         }
 
         return 'inactive';
+    }
+
+    /**
+     * Un seul essai par e-mail : jamais démarré (trial_ends_at null),
+     * pas abonné, pas démo.
+     */
+    public static function canStartGenericTrial(User $coach): bool
+    {
+        if ($coach->role !== 'coach' || $coach->is_demo) {
+            return false;
+        }
+
+        if ($coach->subscribed('default')) {
+            return false;
+        }
+
+        if ($coach->onGenericTrial() || $coach->hasExpiredGenericTrial()) {
+            return false;
+        }
+
+        return $coach->trial_ends_at === null;
+    }
+
+    /**
+     * @return array{ok: bool, trial_days: int, message: string}
+     */
+    public static function startGenericTrial(User $coach, bool $sendMail = true): array
+    {
+        $trialDays = (int) config('billing.trial_days', 14);
+
+        if (! self::canStartGenericTrial($coach)) {
+            if ($coach->onGenericTrial()) {
+                return [
+                    'ok' => true,
+                    'trial_days' => $trialDays,
+                    'message' => 'Ton essai gratuit est déjà actif.',
+                ];
+            }
+
+            if ($coach->hasExpiredGenericTrial()) {
+                return [
+                    'ok' => false,
+                    'trial_days' => $trialDays,
+                    'message' => 'Tu as déjà utilisé ton essai gratuit de '.$trialDays.' jours. Choisis un abonnement pour continuer.',
+                ];
+            }
+
+            if ($coach->subscribed('default')) {
+                return [
+                    'ok' => false,
+                    'trial_days' => $trialDays,
+                    'message' => 'Tu as déjà un abonnement actif.',
+                ];
+            }
+
+            return [
+                'ok' => false,
+                'trial_days' => $trialDays,
+                'message' => 'Impossible de démarrer un essai sur ce compte.',
+            ];
+        }
+
+        $coach->forceFill([
+            'trial_ends_at' => now()->addDays($trialDays),
+        ])->save();
+
+        if ($sendMail) {
+            MailSendSupport::attempt(
+                fn () => Mail::to($coach)->send(new CoachTrialStartedMail(
+                    $coach,
+                    $trialDays,
+                    $coach->trial_ends_at?->timezone(config('app.timezone'))->format('d/m/Y') ?? '',
+                    route('dashboard'),
+                )),
+            );
+        }
+
+        return [
+            'ok' => true,
+            'trial_days' => $trialDays,
+            'message' => "Essai gratuit de {$trialDays} jours activé.",
+        ];
     }
 
     /**
@@ -68,13 +152,17 @@ class BillingAccess
             return 0;
         }
 
+        if ($coach->subscribed('default')) {
+            $planKey = BillingPlans::currentPlanKey($coach);
+
+            return BillingPlans::seatLimitForPlan($planKey);
+        }
+
         if ($coach->onGenericTrial()) {
             return (int) config('billing.trial_max_athletes', 15);
         }
 
-        $planKey = BillingPlans::currentPlanKey($coach);
-
-        return BillingPlans::seatLimitForPlan($planKey);
+        return 0;
     }
 
     public static function canAddAthlete(User $coach): bool
@@ -97,7 +185,17 @@ class BillingAccess
      */
     public static function sharedProps(?User $user): ?array
     {
-        if (! $user || $user->role !== 'coach') {
+        if (! $user) {
+            return null;
+        }
+
+        if ($user->role === 'athlete') {
+            return [
+                'hasAccess' => self::hasAppAccess($user),
+            ];
+        }
+
+        if ($user->role !== 'coach') {
             return null;
         }
 
@@ -109,6 +207,7 @@ class BillingAccess
         return [
             'hasAccess' => self::coachHasAppAccess($user),
             'status' => self::status($user),
+            'canStartTrial' => self::canStartGenericTrial($user),
             'trialEndsAt' => optional($user->trial_ends_at)?->toIso8601String(),
             'demoExpiresAt' => optional($user->demo_expires_at)?->toIso8601String(),
             'isDemo' => (bool) $user->is_demo,

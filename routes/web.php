@@ -49,6 +49,9 @@ Route::get('/subscribe/{plan}', [BillingController::class, 'subscribe'])
     ->whereIn('plan', ['starter', 'growth', 'scale'])
     ->name('subscribe');
 
+Route::get('/start-trial', [BillingController::class, 'startTrialIntent'])
+    ->name('trial.start');
+
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:login');
@@ -163,6 +166,9 @@ Route::middleware(['auth', 'verified', 'coach'])->group(function (): void {
         ->name('billing.checkout.plan');
     Route::get('/billing/success', [BillingController::class, 'success'])->name('billing.success');
     Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+    Route::post('/billing/start-trial', [BillingController::class, 'startTrial'])
+        ->middleware('throttle:5,1')
+        ->name('billing.start-trial');
 });
 
 Route::middleware(['auth', 'verified', 'coach', 'billing'])->group(function (): void {

@@ -69,14 +69,26 @@ class HandleInertiaRequests extends Middleware
                 'name' => config('app.name'),
                 'manualActivationLinks' => fn () => ActivationDelivery::usesManualLinks(),
             ],
-            'messagingInbox' => fn () => match ($request->user()?->role) {
-                'athlete' => MessagingInboxSupport::athleteInboxSummary($request->user()),
-                'coach' => MessagingInboxSupport::coachInboxSummary($request->user()),
-                default => null,
+            'messagingInbox' => function () use ($request) {
+                $user = $request->user();
+                if (! $user || ! BillingAccess::hasAppAccess($user)) {
+                    return null;
+                }
+
+                return match ($user->role) {
+                    'athlete' => MessagingInboxSupport::athleteInboxSummary($user),
+                    'coach' => MessagingInboxSupport::coachInboxSummary($user),
+                    default => null,
+                };
             },
-            'exerciseLibrary' => fn () => $request->user()?->role === 'coach'
-                ? Exercise::query()->forCoach($request->user())->with('variants')->orderBy('name')->get()
-                : [],
+            'exerciseLibrary' => function () use ($request) {
+                $user = $request->user();
+                if (! $user || $user->role !== 'coach' || ! BillingAccess::coachHasAppAccess($user)) {
+                    return [];
+                }
+
+                return Exercise::query()->forCoach($user)->with('variants')->orderBy('name')->get();
+            },
         ]);
     }
 }

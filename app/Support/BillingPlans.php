@@ -61,14 +61,16 @@ class BillingPlans
 
     public static function seatLimitForPlan(?string $planKey): ?int
     {
+        // Unmapped / unknown Stripe prices must never become "unlimited".
+        // Fall back to Starter seat cap until the price ID is configured.
         if ($planKey === null) {
-            return null;
+            return (int) (self::get(self::STARTER)['max_athletes'] ?? 15);
         }
 
         $plan = self::get($planKey);
 
         if ($plan === null) {
-            return null;
+            return (int) (self::get(self::STARTER)['max_athletes'] ?? 15);
         }
 
         $max = $plan['max_athletes'] ?? null;
@@ -105,19 +107,19 @@ class BillingPlans
             return null;
         }
 
+        $subscription = $coach->subscription('default');
+
+        if ($subscription && $subscription->valid()) {
+            $priceId = $subscription->stripe_price
+                ?? $subscription->items->first()?->stripe_price;
+
+            return self::planKeyFromPriceId($priceId);
+        }
+
         if ($coach->onGenericTrial()) {
             return self::STARTER;
         }
 
-        $subscription = $coach->subscription('default');
-
-        if (! $subscription || ! $subscription->valid()) {
-            return null;
-        }
-
-        $priceId = $subscription->stripe_price
-            ?? $subscription->items->first()?->stripe_price;
-
-        return self::planKeyFromPriceId($priceId);
+        return null;
     }
 }

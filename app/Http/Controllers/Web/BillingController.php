@@ -18,6 +18,58 @@ use Throwable;
 class BillingController extends Controller
 {
     /**
+     * Landing / CTA « Essai 14j » : inscription si invité, sinon démarrage d’essai unique.
+     */
+    public function startTrialIntent(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return redirect()->route('register');
+        }
+
+        if ($user->role !== 'coach') {
+            return redirect()->route('athlete.dashboard');
+        }
+
+        if ($user->is_demo) {
+            return redirect()
+                ->route('register')
+                ->with('error', 'La démo ne peut pas démarrer un essai. Crée un vrai compte coach.');
+        }
+
+        $result = BillingAccess::startGenericTrial($user);
+
+        if ($result['ok'] && BillingAccess::coachHasAppAccess($user->fresh())) {
+            return redirect()
+                ->route('dashboard')
+                ->with('success', $result['message']);
+        }
+
+        return redirect()
+            ->route('billing.index')
+            ->with($result['ok'] ? 'success' : 'error', $result['message']);
+    }
+
+    public function startTrial(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->role === 'coach', 403);
+
+        $result = BillingAccess::startGenericTrial($user);
+
+        if ($result['ok'] && BillingAccess::coachHasAppAccess($user->fresh())) {
+            return redirect()
+                ->route('dashboard')
+                ->with('success', $result['message']);
+        }
+
+        return redirect()
+            ->route('billing.index')
+            ->with($result['ok'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
      * Landing CTA: remember plan, then register or go straight to Stripe Checkout.
      */
     public function subscribe(Request $request, string $plan): RedirectResponse|SymfonyResponse
@@ -182,9 +234,9 @@ class BillingController extends Controller
         $user = $request->user();
         abort_unless($user && $user->role === 'coach', 403);
 
-        // Clear generic trial once they subscribe so status reflects the paid plan.
-        if ($user->subscribed('default') && $user->trial_ends_at) {
-            $user->forceFill(['trial_ends_at' => null])->save();
+        // Fin d’essai dès le paiement : on garde une date passée pour empêcher un 2e essai.
+        if ($user->subscribed('default') && $user->trial_ends_at && $user->trial_ends_at->isFuture()) {
+            $user->forceFill(['trial_ends_at' => now()])->save();
         }
 
         return redirect()

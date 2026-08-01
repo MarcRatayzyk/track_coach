@@ -122,7 +122,7 @@ const plans = [
             <FadeIn :delay="0.25" class-name="mt-10 text-center">
                 <p class="text-sm text-slate-500">
                     Pas encore prêt à payer ?
-                    <a href="/register" class="font-semibold text-blue-400 hover:underline">Essai 14 jours</a>
+                    <a href="/start-trial" class="font-semibold text-blue-400 hover:underline">Essai 14 jours</a>
                     · Déjà un compte ?
                     <a href="/login" class="font-semibold text-blue-400 hover:underline">Se connecter</a>
                     ·

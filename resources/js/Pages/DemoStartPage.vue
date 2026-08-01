@@ -81,7 +81,7 @@ function submit() {
                 Déjà un compte ?
                 <Link href="/login" class="text-blue-400 hover:underline">Se connecter</Link>
                 ·
-                <Link href="/register" class="text-blue-400 hover:underline">Essai 14 jours</Link>
+                <Link href="/start-trial" class="text-blue-400 hover:underline">Essai 14 jours</Link>
             </p>
         </div>
     </div>

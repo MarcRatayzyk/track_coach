@@ -178,6 +178,11 @@ function setupMessagingRealtime() {
 
     leaveMessagingChannels();
 
+    // Do not poll / subscribe to messaging while the paywall is up.
+    if (billing.value?.hasAccess === false) {
+        return;
+    }
+
     const threadIds = isCoach.value
         ? (messagingInbox.value?.thread_ids ?? [])
         : messagingInbox.value?.thread_id
@@ -218,6 +223,15 @@ const coachNav = [
 
 const billing = computed(() => page.props.billing ?? null);
 const isDemoAccount = computed(() => Boolean(user.value?.is_demo || billing.value?.isDemo));
+const homeHref = computed(() => {
+    if (isCoach.value) {
+        return billing.value?.hasAccess ? '/dashboard' : '/billing';
+    }
+    return billing.value?.hasAccess === false ? '/subscription/blocked' : '/athlete/dashboard';
+});
+const showSidebarProfile = computed(
+    () => Boolean(user.value && sidebarProfile.value && billing.value?.hasAccess !== false),
+);
 const BILLING_BANNER_DISMISS_KEY = 'tc-billing-banner-dismissed';
 const billingBannerDismissed = ref(
     typeof window !== 'undefined' && window.localStorage.getItem(BILLING_BANNER_DISMISS_KEY) === '1',
@@ -267,6 +281,10 @@ const navItems = computed(() => {
         return [];
     }
     if (!isCoach.value) {
+        if (billing.value?.hasAccess === false) {
+            return [];
+        }
+
         return [
             {
                 label: 'Accueil',
@@ -308,6 +326,12 @@ const navItems = computed(() => {
             },
         ];
     }
+
+    // Paywall: only Abonnement is reachable until subscription / trial is active.
+    if (!billing.value?.hasAccess) {
+        return coachNav.filter((item) => item.pattern === '/billing');
+    }
+
     return coachNav.map((item) => {
         if (item.pattern !== '/messaging') {
             return item;
@@ -437,7 +461,7 @@ watch(() => page.url, () => {
             :class="showBillingBanner ? 'top-9' : 'top-0'"
         >
             <Link
-                :href="isCoach ? '/dashboard' : '/athlete/dashboard'"
+                :href="homeHref"
                 class="flex min-w-0 items-center gap-2"
             >
                 <AppLogo
@@ -472,7 +496,7 @@ watch(() => page.url, () => {
             :class="isMobileMenuOpen ? 'visible opacity-100' : 'pointer-events-none invisible opacity-0'"
         >
             <Link
-                v-if="user && sidebarProfile"
+                v-if="showSidebarProfile"
                 :href="sidebarProfile.href"
                 class="mb-1 block rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2.5"
                 @click="closeMobileMenu"
@@ -528,7 +552,7 @@ watch(() => page.url, () => {
         >
             <div class="flex items-center gap-2">
                 <Link
-                    :href="isCoach ? '/dashboard' : '/athlete/dashboard'"
+                    :href="homeHref"
                     class="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2.5 transition hover:border-blue-500/50 hover:bg-slate-800/70"
                 >
                     <AppLogo
@@ -539,7 +563,7 @@ watch(() => page.url, () => {
             </div>
 
             <Link
-                v-if="user && sidebarProfile"
+                v-if="showSidebarProfile"
                 :href="sidebarProfile.href"
                 class="mt-5 flex gap-2.5 rounded-xl border border-slate-700/80 bg-slate-950/50 p-3 transition hover:border-blue-500/40 hover:bg-slate-900/80"
             >

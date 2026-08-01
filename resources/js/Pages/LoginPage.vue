@@ -135,7 +135,7 @@ function submit() {
                     <p class="font-semibold text-white">Essai coach 14 jours</p>
                     <p class="mt-1 text-blue-100/85">
                         Pas encore de compte ? Tu démarres un essai gratuit de 14 jours, sans carte bancaire.
-                        <Link href="/register" class="font-medium text-blue-300 underline-offset-2 hover:text-blue-200 hover:underline">
+                        <Link href="/start-trial" class="font-medium text-blue-300 underline-offset-2 hover:text-blue-200 hover:underline">
                             Créer mon compte
                         </Link>
                     </p>
@@ -268,7 +268,7 @@ function submit() {
 
                 <p v-if="!isMobileApp" class="mt-8 text-center text-sm text-slate-500">
                     Coach ?
-                    <Link href="/register" class="font-medium text-blue-400 hover:text-blue-300">
+                    <Link href="/start-trial" class="font-medium text-blue-400 hover:text-blue-300">
                         Essai gratuit 14 jours
                     </Link>
                     · Athlète ? Utilise le lien d’activation transmis par ton coach.

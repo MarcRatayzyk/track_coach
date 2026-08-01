@@ -63,7 +63,7 @@ function trackCta(ctaId) {
                         </svg>
                     </a>
                     <a
-                        href="/register"
+                        href="/start-trial"
                         class="lp-btn-secondary px-7 py-3.5 text-[15px] leading-none sm:px-8 sm:py-4 sm:text-base"
                         @click="trackCta('hero_trial')"
                     >
