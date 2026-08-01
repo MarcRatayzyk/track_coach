@@ -60,7 +60,12 @@ function submit() {
                     Lance ton espace coach en quelques minutes.
                 </h1>
                 <p class="mt-5 max-w-md text-lg leading-relaxed text-slate-400">
-                    Crée ton compte, puis finalise le paiement Stripe pour le plan choisi.
+                    <template v-if="selectedPlanMeta">
+                        Crée ton compte, puis finalise le paiement Stripe pour le plan choisi.
+                    </template>
+                    <template v-else>
+                        Crée ton compte et démarre un essai gratuit de 14 jours, sans carte bancaire.
+                    </template>
                 </p>
             </div>
             <ol class="relative mt-12 space-y-4 text-slate-300">
@@ -70,7 +75,8 @@ function submit() {
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">2</span>
-                    <span>Paiement sécurisé via Stripe</span>
+                    <span v-if="selectedPlanMeta">Paiement sécurisé via Stripe</span>
+                    <span v-else>Essai 14 jours activé immédiatement</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">3</span>
@@ -106,8 +112,15 @@ function submit() {
                 >
                     Plan sélectionné :
                     <strong class="text-white">{{ selectedPlanMeta.name }}</strong>
-                    — {{ formatPrice(selectedPlanMeta.price_eur) }} €/mois.
-                    Après inscription, tu seras redirigé vers le paiement Stripe.
+                    : {{ formatPrice(selectedPlanMeta.price_eur) }} €/mois.
+                    Après inscription, tu seras redirigé vers le paiement Stripe (sans essai automatique).
+                </div>
+
+                <div
+                    v-else
+                    class="mt-6 rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-100/90"
+                >
+                    Essai gratuit 14 jours, sans carte. Tu pourras t’abonner plus tard depuis Abonnement.
                 </div>
 
                 <form class="mt-8 space-y-5" @submit.prevent="submit">
@@ -174,13 +187,13 @@ function submit() {
                     >
                         <span v-if="form.processing">Création du compte…</span>
                         <span v-else-if="selectedPlanMeta">Créer mon compte et payer</span>
-                        <span v-else>Créer mon compte coach</span>
+                        <span v-else>Démarrer l’essai 14 jours</span>
                         <span v-if="!form.processing" aria-hidden="true">→</span>
                     </button>
                 </form>
 
                 <p class="mt-8 text-center text-sm text-slate-500">
-                    Tu es athlète ? Demande à ton coach de t’inviter — il te transmettra un lien pour activer ton
+                    Tu es athlète ? Demande à ton coach de t’inviter : il te transmettra un lien pour activer ton
                     compte.
                 </p>
             </div>

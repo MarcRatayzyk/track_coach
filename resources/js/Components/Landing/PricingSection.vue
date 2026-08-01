@@ -61,7 +61,7 @@ const plans = [
                 </h2>
                 <p class="mx-auto mt-4 max-w-xl text-base text-slate-400 sm:text-lg">
                     Toutes les fonctionnalités incluses. Tarifs selon le nombre d’athlètes actifs.
-                    Essai 14 jours sans carte à l’inscription.
+                    Ou commence par un essai 14 jours sans carte.
                 </p>
             </FadeIn>
 
@@ -121,10 +121,10 @@ const plans = [
 
             <FadeIn :delay="0.25" class-name="mt-10 text-center">
                 <p class="text-sm text-slate-500">
-                    Déjà un compte ?
+                    Pas encore prêt à payer ?
+                    <a href="/register" class="font-semibold text-blue-400 hover:underline">Essai 14 jours</a>
+                    · Déjà un compte ?
                     <a href="/login" class="font-semibold text-blue-400 hover:underline">Se connecter</a>
-                    puis choisis un plan ci-dessus, ou
-                    <a href="/subscribe/growth" class="font-semibold text-blue-400 hover:underline">reprendre Growth</a>
                     ·
                     <a href="/demo" class="font-semibold text-blue-400 hover:underline">Démo</a>
                 </p>

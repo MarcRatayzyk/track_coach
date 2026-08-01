@@ -97,7 +97,7 @@ class BillingController extends Controller
         if ($user->is_demo) {
             return redirect()
                 ->route('register')
-                ->with('error', 'Les comptes démo ne peuvent pas s’abonner. Crée un vrai compte coach (essai 14 jours).');
+                ->with('error', 'Les comptes démo ne peuvent pas s’abonner. Crée un vrai compte coach pour t’abonner, ou utilise l’essai 14 jours.');
         }
 
         if (! $this->stripeConfigured()) {

@@ -53,14 +53,21 @@ function trackCta(ctaId) {
                     class="mt-9 flex flex-wrap items-center gap-3 sm:gap-4"
                 >
                     <a
-                        href="/register"
+                        href="#pricing"
                         class="lp-btn-primary px-7 py-3.5 text-[15px] leading-none sm:px-8 sm:py-4 sm:text-base"
-                        @click="trackCta('hero_register')"
+                        @click="trackCta('hero_commencer')"
                     >
-                        <span>Essai 14 jours gratuit</span>
+                        <span>Commencer</span>
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                         </svg>
+                    </a>
+                    <a
+                        href="/register"
+                        class="lp-btn-secondary px-7 py-3.5 text-[15px] leading-none sm:px-8 sm:py-4 sm:text-base"
+                        @click="trackCta('hero_trial')"
+                    >
+                        Essai 14j
                     </a>
                     <a
                         href="/demo"

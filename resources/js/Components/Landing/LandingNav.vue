@@ -53,11 +53,11 @@ const links = [
                     Se connecter
                 </a>
                 <a
-                    href="/register"
+                    href="#pricing"
                     class="lp-btn-primary px-3.5 py-2 text-xs leading-none sm:px-5 sm:py-2.5 sm:text-sm"
-                    @click="trackCta('nav_register')"
+                    @click="trackCta('nav_commencer')"
                 >
-                    Créer un compte
+                    Commencer
                 </a>
             </div>
         </div>
