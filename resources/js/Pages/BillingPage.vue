@@ -76,9 +76,8 @@ function openPortal() {
         <header class="mb-8">
             <h1 class="text-2xl font-bold tracking-tight text-white">Abonnement</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Choisis un plan selon le nombre d’athlètes actifs. L’essai 14 jours se lance uniquement
-                à l’inscription via « Essai 14j ». Après expiration ou sans abonnement, l’accès à
-                l’application est bloqué jusqu’au paiement.
+                Choisis un plan selon le nombre d’athlètes actifs. Un seul essai 14 jours par compte :
+                après expiration, l’accès est bloqué jusqu’au paiement.
             </p>
         </header>
 

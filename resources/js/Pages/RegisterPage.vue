@@ -124,6 +124,7 @@ function submit() {
                 </div>
 
                 <form class="mt-8 space-y-5" @submit.prevent="submit">
+                    <input v-if="form.plan" type="hidden" name="plan" :value="form.plan" />
                     <div>
                         <label for="name" class="block text-sm font-medium text-slate-300">Nom affiché</label>
                         <input

@@ -54,7 +54,8 @@ class BillingAccess
             return 'trial';
         }
 
-        if ($coach->hasExpiredGenericTrial()) {
+        // Essai réellement consommé (pas juste marqué expiré à l'inscription abonnement).
+        if ($coach->hasExpiredGenericTrial() && ! self::trialWasNeverGranted($coach)) {
             return 'trial_expired';
         }
 
@@ -62,8 +63,7 @@ class BillingAccess
     }
 
     /**
-     * Un seul essai par e-mail : jamais démarré (trial_ends_at null),
-     * pas abonné, pas démo.
+     * Un seul essai par e-mail : jamais démarré, ou essai fictif (inscription « s'abonner » sans paiement).
      */
     public static function canStartGenericTrial(User $coach): bool
     {
@@ -75,11 +75,32 @@ class BillingAccess
             return false;
         }
 
-        if ($coach->onGenericTrial() || $coach->hasExpiredGenericTrial()) {
+        if ($coach->onGenericTrial()) {
             return false;
         }
 
-        return $coach->trial_ends_at === null;
+        if ($coach->trial_ends_at === null) {
+            return true;
+        }
+
+        // Ancien bug : trial_ends_at = now() dès l'inscription via s'abonner.
+        return self::trialWasNeverGranted($coach);
+    }
+
+    /**
+     * True si trial_ends_at a été posé sans réelle période d'essai (fin ≈ création du compte).
+     */
+    public static function trialWasNeverGranted(User $coach): bool
+    {
+        if ($coach->trial_ends_at === null || $coach->created_at === null) {
+            return false;
+        }
+
+        if ($coach->onGenericTrial()) {
+            return false;
+        }
+
+        return $coach->trial_ends_at->lte($coach->created_at->copy()->addMinutes(10));
     }
 
     /**
@@ -98,7 +119,7 @@ class BillingAccess
                 ];
             }
 
-            if ($coach->hasExpiredGenericTrial()) {
+            if ($coach->hasExpiredGenericTrial() && ! self::trialWasNeverGranted($coach)) {
                 return [
                     'ok' => false,
                     'trial_days' => $trialDays,
@@ -208,7 +229,9 @@ class BillingAccess
             'hasAccess' => self::coachHasAppAccess($user),
             'status' => self::status($user),
             'canStartTrial' => self::canStartGenericTrial($user),
-            'trialEndsAt' => optional($user->trial_ends_at)?->toIso8601String(),
+            'trialEndsAt' => self::trialWasNeverGranted($user)
+                ? null
+                : optional($user->trial_ends_at)?->toIso8601String(),
             'demoExpiresAt' => optional($user->demo_expires_at)?->toIso8601String(),
             'isDemo' => (bool) $user->is_demo,
             'plan' => $planKey,
