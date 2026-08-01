@@ -960,8 +960,14 @@ class DatabaseSeeder extends Seeder
                 ['sender' => 'athlete', 'content' => 'Oui, meilleure sensation aujourd’hui. Je t’envoie la vidéo du top set.'],
             ],
             'weekly' => [
-                ['sender' => 'athlete', 'content' => 'Semaine chargée, j’ai décalé la séance deadlift mais le bench était solide.'],
+                ['sender' => 'coach', 'content' => 'Salut Hugo, on attaque la phase d’intensification. Priorité : bench stable + squat propre sous fatigue.'],
+                ['sender' => 'athlete', 'content' => 'OK coach. Semaine chargée au taf, j’ai décalé le deadlift de samedi à dimanche.'],
                 ['sender' => 'coach', 'content' => 'Pas de souci pour le décalage. On protège la récup et on garde le bench en priorité.'],
+                ['sender' => 'athlete', 'content' => 'Bench d’hier au top, pause bien tenue. Je t’envoie la vidéo du top set ce soir.'],
+                ['sender' => 'coach', 'content' => 'Parfait. Sur le squat, pense à pousser les genoux dehors dès la descente — on en parle au point hebdo.'],
+                ['sender' => 'athlete', 'content' => 'Noté. Score readiness un peu bas ce matin (sommeil 6h), je reste prudent sur les accessoires.'],
+                ['sender' => 'coach', 'content' => 'Bonne lecture. Coupe les backoffs si RPE > 8.5, on ne sacrifie pas le top set.'],
+                ['sender' => 'athlete', 'content' => 'Match plan Coupe Grand Est reçu, ça me rassure pour les tentatives. Merci !'],
             ],
             'return' => [
                 ['sender' => 'coach', 'content' => 'On avance bien. Reste sur cette progressivité, surtout sur les descentes au squat.'],
