@@ -6,7 +6,7 @@ export default {
 
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
   LEVEL_OPTIONS,
   SEX_OPTIONS,
@@ -76,9 +76,27 @@ const needsEmail = computed(() => props.role === 'athlete' && (props.user.needs_
 
 const categoryOptions = computed(() => weightCategoriesForSex(form.sex));
 
+watch(
+  () => form.sex,
+  (sex, previousSex) => {
+    if (sex === previousSex) {
+      return;
+    }
+    const allowed = weightCategoriesForSex(sex).map((item) => item.value);
+    if (form.weight_category && !allowed.includes(form.weight_category)) {
+      form.weight_category = '';
+    }
+  },
+);
+
 const currentStep = computed(() => athleteSteps[stepIndex.value] ?? athleteSteps[0]);
 const isFirstStep = computed(() => stepIndex.value <= 0);
 const isLastStep = computed(() => stepIndex.value >= athleteSteps.length - 1);
+
+const choiceBtnClass = (selected) =>
+  selected
+    ? 'border-blue-500 bg-blue-600 text-white shadow-[0_0_12px_rgba(59,130,246,0.25)]'
+    : 'border-slate-700 bg-slate-950/60 text-slate-300 hover:border-slate-500 hover:text-white';
 
 const canGoNext = computed(() => {
     if (currentStep.value.id === 'welcome') {
@@ -119,7 +137,7 @@ const inputClass =
 </script>
 
 <template>
-    <div class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-blue-950/30 px-4 py-10 text-slate-100">
+    <div class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-blue-950/30 px-4 py-4 text-slate-100 sm:py-8 tc-native-safe-top">
         <Head :title="isCoach ? 'Activer mon compte coach' : 'Bienvenue sur Power Roster'" />
 
         <div class="mx-auto w-full max-w-lg">
@@ -234,17 +252,13 @@ const inputClass =
 
                         <template v-else-if="currentStep.id === 'practice'">
                             <p class="text-sm text-slate-400">Depuis combien de temps tu pratiques la force / powerlifting ?</p>
-                            <div class="grid grid-cols-2 gap-2">
+                            <div class="grid grid-cols-2 gap-2.5">
                                 <button
                                     v-for="option in trainingYearOptions"
                                     :key="option.value"
                                     type="button"
-                                    class="rounded-xl border px-3 py-2.5 text-sm font-medium transition"
-                                    :class="
-                                        form.years_training === option.value
-                                            ? 'border-blue-500 bg-blue-600 text-white'
-                                            : 'border-slate-700 text-slate-300 hover:border-slate-600'
-                                    "
+                                    class="rounded-xl border px-3 py-3 text-sm font-semibold transition"
+                                    :class="choiceBtnClass(form.years_training === option.value)"
                                     @click="form.years_training = option.value"
                                 >
                                     {{ option.label }}
@@ -287,15 +301,21 @@ const inputClass =
                                     :class="inputClass"
                                 />
                             </label>
-                            <label class="block text-sm font-medium text-slate-400">
-                                Sexe
-                                <select v-model="form.sex" :class="inputClass">
-                                    <option value="">—</option>
-                                    <option v-for="option in SEX_OPTIONS" :key="option.value" :value="option.value">
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Sexe</p>
+                                <div class="mt-2 grid grid-cols-2 gap-2.5">
+                                    <button
+                                        v-for="option in SEX_OPTIONS"
+                                        :key="option.value"
+                                        type="button"
+                                        class="rounded-xl border px-3 py-3 text-sm font-semibold transition"
+                                        :class="choiceBtnClass(form.sex === option.value)"
+                                        @click="form.sex = option.value"
+                                    >
                                         {{ option.label }}
-                                    </option>
-                                </select>
-                            </label>
+                                    </button>
+                                </div>
+                            </div>
                             <label class="block text-sm font-medium text-slate-400">
                                 Profession
                                 <input
@@ -305,28 +325,42 @@ const inputClass =
                                     placeholder="Ex. Étudiant, ingénieur…"
                                 />
                             </label>
-                            <label class="block text-sm font-medium text-slate-400">
-                                Catégorie de poids IPF
-                                <select v-model="form.weight_category" :class="inputClass">
-                                    <option value="">—</option>
-                                    <option
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Catégorie de poids IPF</p>
+                                <p v-if="!form.sex" class="mt-1 text-xs text-amber-300/90">
+                                    Choisis d’abord Homme ou Femme pour voir les bonnes catégories.
+                                </p>
+                                <div
+                                    v-else
+                                    class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3"
+                                >
+                                    <button
                                         v-for="option in categoryOptions"
                                         :key="option.value"
-                                        :value="option.value"
+                                        type="button"
+                                        class="rounded-xl border px-3 py-3 text-sm font-semibold transition"
+                                        :class="choiceBtnClass(form.weight_category === option.value)"
+                                        @click="form.weight_category = option.value"
                                     >
                                         {{ option.label }}
-                                    </option>
-                                </select>
-                            </label>
-                            <label class="block text-sm font-medium text-slate-400">
-                                Niveau
-                                <select v-model="form.level" :class="inputClass">
-                                    <option value="">—</option>
-                                    <option v-for="option in LEVEL_OPTIONS" :key="option.value" :value="option.value">
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Niveau</p>
+                                <div class="mt-2 grid grid-cols-2 gap-2.5">
+                                    <button
+                                        v-for="option in LEVEL_OPTIONS"
+                                        :key="option.value"
+                                        type="button"
+                                        class="rounded-xl border px-3 py-3 text-sm font-semibold transition"
+                                        :class="choiceBtnClass(form.level === option.value)"
+                                        @click="form.level = option.value"
+                                    >
                                         {{ option.label }}
-                                    </option>
-                                </select>
-                            </label>
+                                    </button>
+                                </div>
+                            </div>
                             <label class="block text-sm font-medium text-slate-400">
                                 Blessures / gênes récentes
                                 <textarea

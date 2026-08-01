@@ -391,7 +391,9 @@ const inputClass =
             {{ recapLine }}
           </p>
         </div>
-        <p class="text-xs text-emerald-300/90">Exercice validé — note optionnelle (non envoyée dans le retour).</p>
+        <p class="text-xs text-emerald-300/90">
+          Exercice validé — la note sera incluse dans le retour au coach.
+        </p>
         <label class="block text-xs font-medium text-slate-400">
           Note sur cet exercice
           <textarea

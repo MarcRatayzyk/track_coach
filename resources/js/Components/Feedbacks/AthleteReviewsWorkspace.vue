@@ -71,10 +71,10 @@ function urgencyFor(item) {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-3">
     <div>
-      <h1 class="text-2xl font-bold text-white">Retours de séance</h1>
-      <p class="mt-1 max-w-2xl text-sm text-slate-400">
+      <h1 class="text-xl font-bold text-white sm:text-2xl">Retours de séance</h1>
+      <p class="mt-0.5 max-w-2xl text-sm text-slate-400">
         Suivez vos retours, la séance réalisée et la réponse de votre coach.
       </p>
     </div>

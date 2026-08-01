@@ -41,8 +41,13 @@ a[class*='from-blue-600'] {
     }
 
     .tc-app-content {
-        padding-top: calc(3rem + var(--tc-mobile-safe-top));
+        padding-top: calc(2.75rem + var(--tc-mobile-safe-top));
         padding-bottom: calc(3.75rem + var(--tc-mobile-safe-bottom));
+    }
+
+    html.tc-native-app .tc-app-content {
+        padding-top: calc(2.5rem + var(--tc-mobile-safe-top));
+        padding-bottom: calc(3.5rem + var(--tc-mobile-safe-bottom));
     }
 
     .tc-app-content.tc-app-content--keyboard {

@@ -575,12 +575,16 @@ async function prepareLocalFiles(sources) {
 
 async function submitFeedback() {
   const notes = submitForm.athlete_notes?.trim() ?? '';
+  const hasLoggedNotes = selectedSessionLoggedNotes.value.length > 0;
   if (!submitForm.session_date) {
     submitForm.setError('session_date', 'Choisissez une séance.');
     return;
   }
-  if (!notes && selectedVideos.value.length === 0) {
-    submitForm.setError('athlete_notes', 'Ajoutez un message ou au moins une vidéo.');
+  if (!notes && selectedVideos.value.length === 0 && !hasLoggedNotes) {
+    submitForm.setError(
+      'athlete_notes',
+      'Ajoutez un message, des notes de séance ou au moins une vidéo.',
+    );
     return;
   }
 
@@ -772,26 +776,10 @@ function seriesPayload() {
         <form class="mt-4 space-y-4" @submit.prevent="submitFeedback">
           <div>
             <label class="block text-sm font-medium text-slate-300">
-              {{ isWeekly ? 'Semaine / séance' : 'Séances sans retour' }}
+              {{ isWeekly ? 'Retours à faire' : 'Séances sans retour' }}
             </label>
 
-            <select
-              v-if="isWeekly"
-              v-model="submitForm.session_date"
-              required
-              class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-            >
-              <option value="" disabled>Choisir une séance</option>
-              <option
-                v-for="s in eligibleSessions"
-                :key="s.session_date"
-                :value="s.session_date"
-              >
-                {{ s.session_label }}
-              </option>
-            </select>
-
-            <div v-else class="mt-2">
+            <div class="mt-2">
               <p
                 v-if="eligibleSessions.length === 0"
                 class="rounded-xl border border-dashed border-slate-700 bg-slate-950/40 px-4 py-3 text-sm text-slate-500"
@@ -801,8 +789,8 @@ function seriesPayload() {
               <div
                 v-else
                 role="listbox"
-                aria-label="Séances sans retour"
-                class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 snap-x snap-mandatory"
+                aria-label="Retours à faire"
+                class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 snap-x snap-mandatory [scrollbar-width:thin]"
               >
                 <button
                   v-for="s in eligibleSessions"
@@ -810,7 +798,7 @@ function seriesPayload() {
                   type="button"
                   role="option"
                   :aria-selected="submitForm.session_date === s.session_date"
-                  class="snap-start shrink-0 max-w-[11.5rem] rounded-xl border px-3 py-2.5 text-left transition duration-150"
+                  class="snap-start shrink-0 w-[min(16rem,78vw)] rounded-xl border px-3 py-2.5 text-left transition duration-150"
                   :class="
                     submitForm.session_date === s.session_date
                       ? 'border-blue-500 bg-blue-600/20 text-white shadow-[0_0_12px_rgba(59,130,246,0.2)]'
@@ -821,8 +809,14 @@ function seriesPayload() {
                   <span class="block text-xs font-medium text-slate-400">
                     {{ formatCalendarFr(s.session_date) }}
                   </span>
-                  <span class="mt-0.5 block truncate text-sm font-semibold">
+                  <span class="mt-0.5 block line-clamp-2 text-sm font-semibold leading-snug">
                     {{ s.session_label }}
+                  </span>
+                  <span
+                    v-if="(s.logged_notes || []).length"
+                    class="mt-1.5 inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300"
+                  >
+                    {{ s.logged_notes.length }} note{{ s.logged_notes.length > 1 ? 's' : '' }}
                   </span>
                 </button>
               </div>
@@ -843,20 +837,26 @@ function seriesPayload() {
             />
             <div
               v-if="selectedSessionLoggedNotes.length"
-              class="mt-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3"
+              class="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-950/20 p-3"
             >
-              <p class="text-xs font-medium text-slate-400">Notes prises pendant la séance</p>
-              <ul class="mt-2 space-y-1.5">
-                <li
+              <p class="text-xs font-medium text-emerald-300/90">
+                Notes prises pendant la séance
+                <span class="font-normal text-slate-400"> — incluses à l’envoi</span>
+              </p>
+              <div
+                class="-mx-0.5 mt-2 flex gap-2 overflow-x-auto px-0.5 pb-1 snap-x snap-mandatory [scrollbar-width:thin]"
+              >
+                <article
                   v-for="(entry, index) in selectedSessionLoggedNotes"
                   :key="`${entry.exercise_name}-${index}`"
-                  class="text-sm text-slate-200"
+                  class="snap-start shrink-0 w-[min(14rem,72vw)] rounded-xl border border-slate-700/80 bg-slate-950/70 px-3 py-2.5"
                 >
-                  <span class="font-medium text-slate-100">{{ entry.exercise_name }}</span>
-                  <span class="text-slate-500"> — </span>
-                  <span class="whitespace-pre-wrap text-slate-300">{{ entry.note }}</span>
-                </li>
-              </ul>
+                  <p class="text-xs font-semibold text-slate-100">{{ entry.exercise_name }}</p>
+                  <p class="mt-1 line-clamp-4 whitespace-pre-wrap text-sm leading-snug text-slate-300">
+                    {{ entry.note }}
+                  </p>
+                </article>
+              </div>
             </div>
             <p v-if="submitForm.errors.athlete_notes" class="mt-1 text-sm text-red-400">
               {{ submitForm.errors.athlete_notes }}

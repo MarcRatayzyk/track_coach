@@ -47,7 +47,11 @@ export function weightCategoriesForSex(sex) {
   if (sex === 'female') {
     return FEMALE_CATEGORIES;
   }
-  return [...MALE_CATEGORIES, ...FEMALE_CATEGORIES];
+
+  return [
+    ...FEMALE_CATEGORIES.map((item) => ({ ...item, label: `F · ${item.label}` })),
+    ...MALE_CATEGORIES.map((item) => ({ ...item, label: `H · ${item.label}` })),
+  ];
 }
 
 export function weightCategoryLabel(value) {

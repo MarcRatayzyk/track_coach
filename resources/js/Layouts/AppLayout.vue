@@ -723,7 +723,7 @@ watch(() => page.url, () => {
             </div>
 
             <main
-                class="app-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-b from-slate-950 to-slate-900/80 px-3 py-4 text-sm leading-relaxed text-slate-200 sm:px-4 sm:py-6 lg:px-8 lg:py-8"
+                class="app-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-b from-slate-950 to-slate-900/80 px-3 py-2 text-sm leading-relaxed text-slate-200 sm:px-4 sm:py-5 lg:px-8 lg:py-8"
             >
                 <div class="mx-auto" :class="contentWidthClasses">
                     <slot />

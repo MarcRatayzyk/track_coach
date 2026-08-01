@@ -460,15 +460,22 @@ function openNextCompetition() {
             </label>
             <label class="block text-xs text-slate-400">
               Sexe (catégorie IPF)
-              <select
-                v-model="editableProfile.sex"
-                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-              >
-                <option value="">—</option>
-                <option v-for="option in SEX_OPTIONS" :key="option.value" :value="option.value">
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <button
+                  v-for="option in SEX_OPTIONS"
+                  :key="option.value"
+                  type="button"
+                  class="rounded-lg border px-3 py-2.5 text-sm font-semibold transition"
+                  :class="
+                    editableProfile.sex === option.value
+                      ? 'border-blue-500 bg-blue-600 text-white'
+                      : 'border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500'
+                  "
+                  @click="editableProfile.sex = option.value"
+                >
                   {{ option.label }}
-                </option>
-              </select>
+                </button>
+              </div>
             </label>
             <label class="block text-xs text-slate-400">
               Profession
@@ -480,27 +487,44 @@ function openNextCompetition() {
             </label>
             <label class="block text-xs text-slate-400">
               Catégorie de poids IPF
-              <select
-                v-model="editableProfile.weight_category"
-                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-              >
-                <option value="">—</option>
-                <option v-for="option in categoryOptions" :key="option.value" :value="option.value">
+              <p v-if="!editableProfile.sex" class="mt-1 text-[11px] text-amber-300/90">
+                Choisis d’abord Homme ou Femme.
+              </p>
+              <div v-else class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <button
+                  v-for="option in categoryOptions"
+                  :key="option.value"
+                  type="button"
+                  class="rounded-lg border px-3 py-2.5 text-sm font-semibold transition"
+                  :class="
+                    editableProfile.weight_category === option.value
+                      ? 'border-blue-500 bg-blue-600 text-white'
+                      : 'border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500'
+                  "
+                  @click="editableProfile.weight_category = option.value"
+                >
                   {{ option.label }}
-                </option>
-              </select>
+                </button>
+              </div>
             </label>
             <label class="block text-xs text-slate-400">
               Niveau
-              <select
-                v-model="editableProfile.level"
-                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-              >
-                <option value="">—</option>
-                <option v-for="option in LEVEL_OPTIONS" :key="option.value" :value="option.value">
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <button
+                  v-for="option in LEVEL_OPTIONS"
+                  :key="option.value"
+                  type="button"
+                  class="rounded-lg border px-3 py-2.5 text-sm font-semibold transition"
+                  :class="
+                    editableProfile.level === option.value
+                      ? 'border-blue-500 bg-blue-600 text-white'
+                      : 'border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500'
+                  "
+                  @click="editableProfile.level = option.value"
+                >
                   {{ option.label }}
-                </option>
-              </select>
+                </button>
+              </div>
             </label>
             <label class="block text-xs text-slate-400">
               Blessures / gênes récentes
