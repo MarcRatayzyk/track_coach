@@ -1,9 +1,12 @@
 <script setup>
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AthleteMonthCalendar from '../AthleteMonthCalendar.vue';
 import SectionHeader from './SectionHeader.vue';
 import { cardShell } from './dashboardUi';
+
+const { t } = useI18n();
 
 defineProps({
   reminders: { type: Array, default: () => [] },
@@ -47,8 +50,8 @@ function submitReminder() {
 <template>
   <section :class="[cardShell, 'p-5']">
     <SectionHeader
-      eyebrow="Planning"
-      title="Calendrier"
+      :eyebrow="t('athleteUi.calendar.planningEyebrow')"
+      :title="t('athleteUi.calendar.calendarTitle')"
     >
       <template #actions>
         <button
@@ -56,7 +59,7 @@ function submitReminder() {
           class="rounded-xl border border-blue-500/40 bg-blue-950/30 px-3 py-1.5 text-xs font-semibold text-blue-200 transition hover:bg-blue-950/50"
           @click="openCreateForm"
         >
-          + Rappel
+          {{ t('athleteUi.calendar.addReminder') }}
         </button>
       </template>
     </SectionHeader>
@@ -66,10 +69,10 @@ function submitReminder() {
       class="mt-4 space-y-3 rounded-[1.15rem] border border-slate-800 bg-slate-950/50 p-4"
       @submit.prevent="submitReminder"
     >
-      <p class="text-xs font-semibold text-white">Nouveau rappel</p>
+      <p class="text-xs font-semibold text-white">{{ t('athleteUi.calendar.newReminder') }}</p>
       <div class="grid gap-3 sm:grid-cols-2">
         <label class="block text-xs text-slate-400">
-          Titre
+          {{ t('athleteUi.calendar.title') }}
           <input
             v-model="form.title"
             type="text"
@@ -78,7 +81,7 @@ function submitReminder() {
           />
         </label>
         <label class="block text-xs text-slate-400">
-          Date
+          {{ t('common.date') }}
           <input
             v-model="form.event_date"
             type="date"
@@ -87,19 +90,19 @@ function submitReminder() {
           />
         </label>
         <label class="block text-xs text-slate-400 sm:col-span-2">
-          Athlète (optionnel)
+          {{ t('athleteUi.calendar.athleteOptional') }}
           <select
             v-model="form.athlete_id"
             class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
           >
-            <option value="">Aucun</option>
+            <option value="">{{ t('athleteUi.calendar.none') }}</option>
             <option v-for="athlete in rosterAthletes" :key="athlete.id" :value="athlete.id">
               {{ athlete.name }}
             </option>
           </select>
         </label>
         <label class="block text-xs text-slate-400 sm:col-span-2">
-          Notes
+          {{ t('athleteUi.calendar.notes') }}
           <textarea
             v-model="form.notes"
             rows="2"
@@ -113,14 +116,14 @@ function submitReminder() {
           class="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500"
           :disabled="form.processing"
         >
-          Enregistrer
+          {{ t('common.save') }}
         </button>
         <button
           type="button"
           class="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800"
           @click="showForm = false"
         >
-          Annuler
+          {{ t('common.cancel') }}
         </button>
       </div>
     </form>

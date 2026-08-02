@@ -7,10 +7,12 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import { track } from '../utils/analytics';
+const { t } = useI18n();
 
 const props = defineProps({
   athlete: { type: Object, required: true },
@@ -103,7 +105,7 @@ onUnmounted(() => {
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <p class="text-sm text-slate-500">
-          <Link :href="`/athletes/${athlete.id}`" class="text-blue-400 hover:text-blue-300">← Fiche athlète</Link>
+          <Link :href="`/athletes/${athlete.id}`" class="text-blue-400 hover:text-blue-300">{{ t('app.competitions.athleteSheet') }}</Link>
         </p>
         <h1 class="mt-2 text-2xl font-bold text-white">Meet live — {{ competition.name }}</h1>
         <p class="mt-1 text-slate-400">
@@ -147,7 +149,7 @@ onUnmounted(() => {
 
     <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
       <div class="flex items-center justify-between gap-3">
-        <h2 class="text-sm font-semibold text-slate-300">Timer échauffement</h2>
+        <h2 class="text-sm font-semibold text-slate-300">{{ t('app.competitions.warmupTimer') }}</h2>
         <div class="flex items-center gap-2">
           <span class="font-mono text-lg text-white">{{ warmupLabel }}</span>
           <button type="button" class="rounded-lg border border-slate-600 px-3 py-1 text-sm" @click="toggleWarmup">

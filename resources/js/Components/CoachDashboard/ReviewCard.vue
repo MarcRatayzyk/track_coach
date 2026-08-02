@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import UiIcon from '../UiIcon.vue';
@@ -9,6 +10,8 @@ import {
 import { formatCalendarFr } from '../../utils/formatDates';
 import { isFeedbackOverdue } from '../../utils/feedbackUrgency';
 
+const { t } = useI18n();
+
 const props = defineProps({
   task: { type: Object, required: true },
   kind: { type: String, default: 'daily' },
@@ -18,26 +21,26 @@ const props = defineProps({
 
 function feedbackStatusBadge(task) {
   if (task.feedback_status === 'coach_replied') {
-    return { label: 'Répondu', class: 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30' };
+    return { label: t('app.coachDash.replied'), class: 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30' };
   }
   if (task.has_submission) {
-    return { label: 'Reçu', class: 'bg-blue-950/60 text-blue-300 border-blue-500/30' };
+    return { label: t('app.coachDash.received'), class: 'bg-blue-950/60 text-blue-300 border-blue-500/30' };
   }
   return {
-    label: "N'a pas encore envoyé",
+    label: t('app.coachDash.notSentYet'),
     class: 'bg-amber-950/60 text-amber-300 border-amber-500/40',
   };
 }
 
 const urgency = computed(() => {
   if (props.task.feedback_status === 'coach_replied') {
-    return { label: 'Traité', tone: 'emerald', level: 0 };
+    return { label: t('app.coachDash.treated'), tone: 'emerald', level: 0 };
   }
   if (isFeedbackOverdue({ ...props.task, _kind: props.kind }, props.today)) {
     return { label: 'En retard', tone: 'rose', level: 3 };
   }
   if (props.task.has_submission) {
-    return { label: 'À répondre', tone: 'amber', level: 2 };
+    return { label: t('app.coachDash.toReply'), tone: 'amber', level: 2 };
   }
   return { label: 'En attente', tone: 'slate', level: 1 };
 });

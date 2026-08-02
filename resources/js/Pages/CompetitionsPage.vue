@@ -7,11 +7,14 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import CompetitionAttemptsCell from '../Components/CompetitionAttemptsCell.vue';
 import { CATEGORY_LABELS } from '../config/ipfWeightCategories';
 import { defaultStructuredPlan, formatWeight } from '../utils/matchPlan';
+import { localeTag } from '../i18n';
+const { t, locale } = useI18n();
 
 const props = defineProps({
   upcoming: {
@@ -92,7 +95,7 @@ function formatDate(value) {
   if (Number.isNaN(date.getTime())) {
     return value;
   }
-  return date.toLocaleDateString('fr-FR', {
+  return date.toLocaleDateString(localeTag(locale.value), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -119,14 +122,14 @@ function formatTotal(value) {
 <template>
   <div class="mx-auto w-full max-w-[100rem] px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Compétitions</h1>
+      <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">{{ t('app.competitions.title') }}</h1>
       <button
         type="button"
         class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="athletes.length === 0"
         @click="openAddModal"
       >
-        + Ajouter une compétition
+        {{ t('app.competitions.add') }}
       </button>
     </div>
 
@@ -143,11 +146,11 @@ function formatTotal(value) {
           @click.stop
         >
           <div class="flex items-start justify-between gap-4">
-            <h2 class="text-lg font-semibold text-white">Nouvelle compétition</h2>
+            <h2 class="text-lg font-semibold text-white">{{ t('app.competitions.new') }}</h2>
             <button
               type="button"
               class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-              aria-label="Fermer"
+              :aria-label="t('common.close')"
               @click="closeAddModal"
             >
               ✕
@@ -156,13 +159,13 @@ function formatTotal(value) {
 
           <form class="mt-5 space-y-4" @submit.prevent="submitCompetition">
             <label class="block text-sm text-slate-400">
-              Athlète
+              {{ t('app.competitions.athlete') }}
               <select
                 v-model="form.athlete_id"
                 required
                 class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               >
-                <option disabled value="">Choisir un athlète</option>
+                <option disabled value="">{{ t('app.competitions.chooseAthlete') }}</option>
                 <option
                   v-for="athlete in athletes"
                   :key="athlete.id"
@@ -173,7 +176,7 @@ function formatTotal(value) {
               </select>
             </label>
             <label class="block text-sm text-slate-400">
-              Nom
+              {{ t('common.name') }}
               <input
                 v-model="form.name"
                 type="text"
@@ -182,7 +185,7 @@ function formatTotal(value) {
               />
             </label>
             <label class="block text-sm text-slate-400">
-              Date
+              {{ t('common.date') }}
               <input
                 v-model="form.competition_date"
                 type="date"
@@ -191,7 +194,7 @@ function formatTotal(value) {
               />
             </label>
             <label class="block text-sm text-slate-400">
-              Lieu
+              {{ t('app.competitions.venue') }}
               <input
                 v-model="form.location"
                 type="text"
@@ -199,7 +202,7 @@ function formatTotal(value) {
               />
             </label>
             <label class="block text-sm text-slate-400">
-              Objectif
+              {{ t('app.competitions.goal') }}
               <input
                 v-model="form.goal"
                 type="text"
@@ -215,14 +218,14 @@ function formatTotal(value) {
                 class="rounded-xl border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
                 @click="closeAddModal"
               >
-                Annuler
+                {{ t('common.cancel') }}
               </button>
               <button
                 type="submit"
                 :disabled="form.processing || !form.athlete_id"
                 class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
-                Enregistrer
+                {{ t('common.save') }}
               </button>
             </div>
           </form>
@@ -232,12 +235,12 @@ function formatTotal(value) {
 
     <section class="mb-10">
       <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">
-        À venir
+        {{ t('app.competitions.upcomingShort') }}
       </h2>
 
       <div class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 shadow-xl">
         <div v-if="upcoming.length === 0" class="px-6 py-12 text-center text-slate-500">
-          Aucune compétition à venir.
+          {{ t('modals.competitionCalendar.none') }}
         </div>
 
         <template v-else>
@@ -286,13 +289,13 @@ function formatTotal(value) {
             <table class="w-full min-w-[72rem] text-left text-sm">
               <thead>
                 <tr class="border-b border-slate-800 bg-slate-950/60 text-xs uppercase tracking-wide text-slate-500">
-                  <th class="px-5 py-3.5 font-semibold lg:px-6">Athlète</th>
-                  <th class="px-4 py-3.5 font-semibold">Catégorie</th>
-                  <th class="px-4 py-3.5 font-semibold">Poids</th>
-                  <th class="min-w-[22rem] px-4 py-3.5 font-semibold">Scénario</th>
-                  <th class="px-4 py-3.5 font-semibold text-right">Total estimé</th>
-                  <th class="px-4 py-3.5 font-semibold">Date</th>
-                  <th class="px-5 py-3.5 font-semibold lg:px-6">Lieu</th>
+                  <th class="px-5 py-3.5 font-semibold lg:px-6">{{ t('app.competitions.athlete') }}</th>
+                  <th class="px-4 py-3.5 font-semibold">{{ t('app.competitions.category') }}</th>
+                  <th class="px-4 py-3.5 font-semibold">{{ t('app.competitions.weight') }}</th>
+                  <th class="min-w-[22rem] px-4 py-3.5 font-semibold">{{ t('app.competitions.scenario') }}</th>
+                  <th class="px-4 py-3.5 font-semibold text-right">{{ t('app.competitions.estimatedTotal') }}</th>
+                  <th class="px-4 py-3.5 font-semibold">{{ t('app.competitions.date') }}</th>
+                  <th class="px-5 py-3.5 font-semibold lg:px-6">{{ t('app.competitions.venue') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-800/80">
@@ -324,7 +327,7 @@ function formatTotal(value) {
                       <button
                         type="button"
                         class="rounded-lg px-1.5 py-0.5 font-mono text-slate-200 transition hover:bg-slate-800 hover:text-white"
-                        :title="`Pesée du ${formatDate(row.athlete.last_body_weight.entry_date)}`"
+                        :title="t('app.competitions.weighInOf', { date: formatDate(row.athlete.last_body_weight.entry_date) })"
                         @click="toggleWeightDate('upcoming', row.id)"
                       >
                         {{ formatWeight(row.athlete.last_body_weight.weight_kg) }} kg
@@ -364,12 +367,12 @@ function formatTotal(value) {
 
     <section>
       <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">
-        Passées
+        {{ t('app.competitions.past') }}
       </h2>
 
       <div class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 shadow-xl">
         <div v-if="past.length === 0" class="px-6 py-12 text-center text-slate-500">
-          Aucune compétition passée.
+          {{ t('app.competitions.nonePast') }}
         </div>
 
         <template v-else>
@@ -416,13 +419,13 @@ function formatTotal(value) {
             <table class="w-full min-w-[72rem] text-left text-sm">
               <thead>
                 <tr class="border-b border-slate-800 bg-slate-950/60 text-xs uppercase tracking-wide text-slate-500">
-                  <th class="px-5 py-3.5 font-semibold lg:px-6">Athlète</th>
-                  <th class="px-4 py-3.5 font-semibold">Catégorie</th>
-                  <th class="px-4 py-3.5 font-semibold">Poids</th>
-                  <th class="min-w-[22rem] px-4 py-3.5 font-semibold">Résultats</th>
-                  <th class="px-4 py-3.5 font-semibold text-right">Total</th>
-                  <th class="px-4 py-3.5 font-semibold">Date</th>
-                  <th class="px-5 py-3.5 font-semibold lg:px-6">Lieu</th>
+                  <th class="px-5 py-3.5 font-semibold lg:px-6">{{ t('app.competitions.athlete') }}</th>
+                  <th class="px-4 py-3.5 font-semibold">{{ t('app.competitions.category') }}</th>
+                  <th class="px-4 py-3.5 font-semibold">{{ t('app.competitions.weight') }}</th>
+                  <th class="min-w-[22rem] px-4 py-3.5 font-semibold">{{ t('app.competitions.results') }}</th>
+                  <th class="px-4 py-3.5 font-semibold text-right">{{ t('app.competitions.total') }}</th>
+                  <th class="px-4 py-3.5 font-semibold">{{ t('app.competitions.date') }}</th>
+                  <th class="px-5 py-3.5 font-semibold lg:px-6">{{ t('app.competitions.venue') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-800/80">
@@ -454,7 +457,7 @@ function formatTotal(value) {
                       <button
                         type="button"
                         class="rounded-lg px-1.5 py-0.5 font-mono text-slate-200 transition hover:bg-slate-800 hover:text-white"
-                        :title="`Pesée du ${formatDate(row.athlete.last_body_weight.entry_date)}`"
+                        :title="t('app.competitions.weighInOf', { date: formatDate(row.athlete.last_body_weight.entry_date) })"
                         @click="toggleWeightDate('past', row.id)"
                       >
                         {{ formatWeight(row.athlete.last_body_weight.weight_kg) }} kg

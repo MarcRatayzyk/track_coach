@@ -1,21 +1,30 @@
 <script setup>
-defineProps({
+import { useI18n } from 'vue-i18n';
+import { computed } from 'vue';
+
+const { t } = useI18n();
+
+const props = defineProps({
   modelValue: {
     type: String,
     default: '',
   },
   placeholder: {
     type: String,
-    default: 'Rechercher une conversation…',
+    default: '',
   },
 });
 
 const emit = defineEmits(['update:modelValue']);
+
+const resolvedPlaceholder = computed(
+  () => props.placeholder || t('app.messaging.searchConversation'),
+);
 </script>
 
 <template>
   <label class="relative block">
-    <span class="sr-only">Rechercher</span>
+    <span class="sr-only">{{ t('app.messaging.search') }}</span>
     <svg
       class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
       fill="none"
@@ -33,7 +42,7 @@ const emit = defineEmits(['update:modelValue']);
     <input
       type="search"
       :value="modelValue"
-      :placeholder="placeholder"
+      :placeholder="resolvedPlaceholder"
       class="w-full rounded-[14px] border border-slate-800 bg-slate-950/80 py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-slate-600 shadow-inner transition duration-200 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
       @input="emit('update:modelValue', $event.target.value)"
     />

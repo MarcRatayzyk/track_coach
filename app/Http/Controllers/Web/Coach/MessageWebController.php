@@ -22,7 +22,7 @@ class MessageWebController extends Controller
             'athlete_id' => $athlete->id,
         ]);
 
-        return redirect()->route('messaging', ['thread' => $thread->id])->with('success', 'Conversation ouverte.');
+        return redirect()->route('messaging', ['thread' => $thread->id])->with('success', __('messages.messaging.conversation_opened'));
     }
 
     public function storeMessage(
@@ -47,6 +47,6 @@ class MessageWebController extends Controller
 
         return redirect()
             ->route('messaging', $params)
-            ->with('success', 'Message envoyé.');
+            ->with('success', __('messages.messaging.message_sent'));
     }
 }

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import PrEvolutionMiniCard from './charts/PrEvolutionMiniCard.vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import { buildPrEvolutionSeries, currentValueFromSeries } from '../utils/prEvolution';
@@ -14,6 +15,8 @@ import {
 } from '../config/ipfWeightCategories';
 import { formatAthleteCategoryLine, formatAthleteDisplayName } from '../utils/athleteDisplay';
 import UiIcon from './UiIcon.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   name: {
@@ -212,7 +215,7 @@ watch(
 const lifts = [
   { key: 'squat', label: 'Squat' },
   { key: 'bench', label: 'Bench' },
-  { key: 'deadlift', label: 'Terre' },
+  { key: 'deadlift', label: t('athleteUi.profile.terre') },
 ];
 
 const prEvolution = computed(() =>
@@ -288,15 +291,15 @@ function openNextCompetition() {
             v-if="isCoach && athleteId"
             :href="`/messaging?athlete=${athleteId}`"
             class="rounded-lg border border-slate-700/80 bg-slate-950/60 p-2 text-slate-400 transition hover:border-blue-500/40 hover:bg-slate-800 hover:text-blue-300"
-            aria-label="Ouvrir la conversation"
-            title="Messagerie"
+            :aria-label="t('athleteUi.profile.openConversation')"
+            :title="t('athleteUi.profile.messaging')"
           >
             <UiIcon name="chat" class="h-5 w-5" />
           </Link>
           <button
             type="button"
             class="rounded-lg border border-slate-700/80 bg-slate-950/60 p-2 text-slate-400 transition hover:border-slate-600 hover:bg-slate-800 hover:text-white"
-            aria-label="Voir le profil"
+            :aria-label="t('athleteUi.profile.viewProfile')"
             @click="showProfileModal = true"
           >
             <UiIcon name="user-circle" class="h-5 w-5" />
@@ -320,7 +323,7 @@ function openNextCompetition() {
             :href="programUrl"
             class="rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-3.5 py-1.5 text-sm font-semibold text-emerald-200 transition hover:border-emerald-400/70 hover:bg-emerald-500/25"
           >
-            Aller au programme
+            {{ t('athleteUi.profile.goToProgram') }}
           </Link>
         </div>
       </div>
@@ -362,7 +365,7 @@ function openNextCompetition() {
             <button
               type="button"
               class="shrink-0 rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-              aria-label="Fermer"
+              :aria-label="t('common.close')"
               @click="showProfileModal = false"
             >
               ✕
@@ -371,38 +374,38 @@ function openNextCompetition() {
 
           <dl class="mt-4 space-y-3 text-sm">
             <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-              <dt class="text-slate-500">Temps de pratique</dt>
+              <dt class="text-slate-500">{{ t('athleteUi.profile.practiceDuration') }}</dt>
               <dd class="font-semibold text-white">{{ practiceDurationLabel || '—' }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-              <dt class="text-slate-500">Âge</dt>
+              <dt class="text-slate-500">{{ t('athleteUi.profile.age') }}</dt>
               <dd class="font-semibold text-white">{{ ageLabel || '—' }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-              <dt class="text-slate-500">Taille</dt>
+              <dt class="text-slate-500">{{ t('athleteUi.profile.height') }}</dt>
               <dd class="font-semibold text-white">{{ heightLabel || '—' }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-              <dt class="text-slate-500">Profession</dt>
+              <dt class="text-slate-500">{{ t('athleteUi.profile.profession') }}</dt>
               <dd class="font-semibold text-white">{{ profession || '—' }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-              <dt class="text-slate-500">Catégorie</dt>
+              <dt class="text-slate-500">{{ t('athleteUi.profile.category') }}</dt>
               <dd class="font-semibold text-white">{{ weightClass || '—' }}</dd>
             </div>
             <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-              <dt class="text-slate-500">Niveau</dt>
+              <dt class="text-slate-500">{{ t('athleteUi.profile.level') }}</dt>
               <dd class="font-semibold text-white">{{ levelLabel || '—' }}</dd>
             </div>
             <div
               v-if="injuriesNotes && !canEditProfile"
               class="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2"
             >
-              <dt class="text-slate-500">Blessures / gênes</dt>
+              <dt class="text-slate-500">{{ t('athleteUi.profile.injuries') }}</dt>
               <dd class="mt-1 whitespace-pre-wrap text-white">{{ injuriesNotes }}</dd>
             </div>
             <div class="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-              <dt class="text-slate-500">Retours vidéo</dt>
+              <dt class="text-slate-500">{{ t('athleteUi.profile.videoFeedbacks') }}</dt>
               <dd class="mt-1 flex items-center justify-between gap-3">
                 <span class="font-semibold text-white">{{ feedbackFrequencyLabel }}</span>
                 <button
@@ -421,7 +424,7 @@ function openNextCompetition() {
             v-if="bio && !canEditProfile"
             class="mt-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5 text-sm text-slate-300"
           >
-            <p class="text-xs font-semibold text-slate-500">Objectifs</p>
+            <p class="text-xs font-semibold text-slate-500">{{ t('athleteUi.profile.goals') }}</p>
             <p class="mt-1 whitespace-pre-wrap">{{ bio }}</p>
           </div>
 
@@ -431,7 +434,7 @@ function openNextCompetition() {
             class="mt-4 w-full rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-2.5 text-sm font-semibold text-blue-300 transition hover:bg-blue-500/20"
             @click="showEditForm = true"
           >
-            Modifier le profil
+            {{ t('athleteUi.profile.editProfile') }}
           </button>
 
           <form
@@ -439,9 +442,9 @@ function openNextCompetition() {
             class="mt-4 space-y-3 rounded-lg border border-slate-800 bg-slate-950/50 p-3"
             @submit.prevent="emit('save-profile')"
           >
-            <p class="text-xs font-semibold text-white">Modifier le profil</p>
+            <p class="text-xs font-semibold text-white">{{ t('athleteUi.profile.editProfile') }}</p>
             <label class="block text-xs text-slate-400">
-              Date de naissance
+              {{ t('athleteUi.profile.birthDate') }}
               <input
                 v-model="editableProfile.birth_date"
                 type="date"
@@ -449,7 +452,7 @@ function openNextCompetition() {
               />
             </label>
             <label class="block text-xs text-slate-400">
-              Taille (cm)
+              {{ t('athleteUi.profile.heightCm') }}
               <input
                 v-model.number="editableProfile.height_cm"
                 type="number"
@@ -459,7 +462,7 @@ function openNextCompetition() {
               />
             </label>
             <label class="block text-xs text-slate-400">
-              Sexe (catégorie IPF)
+              {{ t('athleteUi.profile.sexIpf') }}
               <div class="mt-1 grid grid-cols-2 gap-2">
                 <button
                   v-for="option in SEX_OPTIONS"
@@ -478,7 +481,7 @@ function openNextCompetition() {
               </div>
             </label>
             <label class="block text-xs text-slate-400">
-              Profession
+              {{ t('athleteUi.profile.profession') }}
               <input
                 v-model="editableProfile.profession"
                 type="text"
@@ -486,9 +489,9 @@ function openNextCompetition() {
               />
             </label>
             <label class="block text-xs text-slate-400">
-              Catégorie de poids IPF
+              {{ t('athleteUi.profile.weightCategoryIpf') }}
               <p v-if="!editableProfile.sex" class="mt-1 text-[11px] text-amber-300/90">
-                Choisis d’abord Homme ou Femme.
+                {{ t('athleteUi.profile.chooseSexFirst') }}
               </p>
               <div v-else class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <button
@@ -508,7 +511,7 @@ function openNextCompetition() {
               </div>
             </label>
             <label class="block text-xs text-slate-400">
-              Niveau
+              {{ t('athleteUi.profile.level') }}
               <div class="mt-1 grid grid-cols-2 gap-2">
                 <button
                   v-for="option in LEVEL_OPTIONS"
@@ -527,16 +530,16 @@ function openNextCompetition() {
               </div>
             </label>
             <label class="block text-xs text-slate-400">
-              Blessures / gênes récentes
+              {{ t('athleteUi.profile.injuriesRecent') }}
               <textarea
                 v-model="editableProfile.injuries_notes"
                 rows="2"
                 class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-                placeholder="Douleur épaule droite, genou…"
+                :placeholder="t('athleteUi.profile.injuriesPlaceholder')"
               />
             </label>
             <label class="block text-xs text-slate-400">
-              Objectifs
+              {{ t('athleteUi.profile.goals') }}
               <textarea
                 v-model="editableProfile.bio"
                 rows="3"
@@ -547,20 +550,20 @@ function openNextCompetition() {
               type="submit"
               class="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500"
             >
-              Enregistrer
+              {{ t('common.save') }}
             </button>
           </form>
 
           <div class="mt-4 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <p class="text-xs font-semibold text-white">Prochaine compétition</p>
+                <p class="text-xs font-semibold text-white">{{ t('athleteUi.profile.nextCompetition') }}</p>
                 <template v-if="nextCompetition">
                   <p class="mt-1 text-lg font-bold tabular-nums text-white">{{ competitionCountdown }}</p>
                   <p class="truncate text-sm text-slate-300">{{ nextCompetition.name }}</p>
                   <p class="text-[11px] text-slate-500">{{ nextCompetitionDateLabel }}</p>
                   <p v-if="nextCompetition.goal" class="mt-0.5 text-xs text-slate-400">
-                    Objectif : {{ nextCompetition.goal }}
+                    {{ t('athleteUi.profile.goal', { goal: nextCompetition.goal }) }}
                   </p>
                 </template>
                 <p v-else class="mt-1 text-sm text-slate-500">—</p>
@@ -571,7 +574,7 @@ function openNextCompetition() {
                 :href="`/athletes/${athleteId}/competitions/${nextCompetition.id}/live`"
                 class="rounded-lg bg-emerald-600 px-2.5 py-1 text-center text-xs font-semibold text-white hover:bg-emerald-500"
               >
-                Meet live
+                {{ t('athleteUi.profile.meetLive') }}
               </Link>
               <button
                 v-if="nextCompetition"
@@ -579,7 +582,7 @@ function openNextCompetition() {
                 class="shrink-0 rounded-lg border border-amber-500/40 px-2.5 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-500/10"
                 @click="openNextCompetition"
               >
-                Voir
+                {{ t('athleteUi.profile.see') }}
               </button>
               <button
                 v-else-if="canManageCompetitions"
@@ -587,7 +590,7 @@ function openNextCompetition() {
                 class="shrink-0 rounded-lg border border-blue-500/40 px-2.5 py-1 text-xs font-semibold text-blue-300 hover:bg-blue-500/10"
                 @click="emit('add-competition')"
               >
-                Ajouter
+                {{ t('athleteUi.profile.add') }}
               </button>
               </div>
             </div>
@@ -595,14 +598,14 @@ function openNextCompetition() {
 
           <div class="mt-4 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5">
             <div class="flex items-center justify-between gap-2">
-              <p class="text-xs font-semibold text-white">Records personnels</p>
+              <p class="text-xs font-semibold text-white">{{ t('athleteUi.profile.personalRecords') }}</p>
               <button
                 v-if="canEditPrs && athleteId && !showPrForm"
                 type="button"
                 class="shrink-0 rounded-lg border border-slate-600/80 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:bg-slate-800/70 hover:text-white"
                 @click="openPrForm"
               >
-                Modifier
+                {{ t('athleteUi.profile.edit') }}
               </button>
             </div>
 
@@ -644,7 +647,7 @@ function openNextCompetition() {
                   />
                 </label>
                 <label class="text-[11px] text-slate-400">
-                  Terre
+                  {{ t('athleteUi.profile.terre') }}
                   <input
                     v-model.number="prForm.deadlift"
                     type="number"
@@ -655,7 +658,7 @@ function openNextCompetition() {
                 </label>
               </div>
               <label class="block text-[11px] text-slate-400">
-                Date
+                {{ t('common.date') }}
                 <input
                   v-model="prForm.reference_date"
                   type="date"
@@ -674,14 +677,14 @@ function openNextCompetition() {
                   class="rounded-lg border border-slate-600 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
                   @click="showPrForm = false"
                 >
-                  Annuler
+                  {{ t('common.cancel') }}
                 </button>
                 <button
                   type="submit"
                   :disabled="prForm.processing"
                   class="rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                 >
-                  Enregistrer
+                  {{ t('common.save') }}
                 </button>
               </div>
             </form>
@@ -689,7 +692,7 @@ function openNextCompetition() {
 
           <div class="mt-4 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5">
             <div class="flex flex-wrap items-baseline gap-x-2">
-              <p class="text-xs font-semibold text-white">Dernière compétition</p>
+              <p class="text-xs font-semibold text-white">{{ t('athleteUi.profile.lastCompetition') }}</p>
               <span class="text-[10px] text-slate-500">{{ latestCompetitionDateLabel }}</span>
             </div>
             <div class="mt-1.5 space-y-1 text-sm text-slate-300">

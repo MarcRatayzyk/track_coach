@@ -7,11 +7,13 @@ export default {
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLogo from '../Components/AppLogo.vue';
 import UiIcon from '../Components/UiIcon.vue';
 import { useNativeApp } from '../composables/useNativeApp';
 import { track } from '../utils/analytics';
 
+const { t } = useI18n();
 const { isMobileApp } = useNativeApp();
 
 const props = defineProps({
@@ -44,7 +46,7 @@ function submit() {
 </script>
 
 <template>
-    <Head title="Connexion" />
+    <Head :title="t('auth.login.pageTitle')" />
 
     <div class="min-h-screen bg-slate-950 text-slate-200 lg:grid lg:grid-cols-2 tc-native-safe-top">
         <!-- Panneau branding -->
@@ -62,11 +64,10 @@ function submit() {
                     />
                 </Link>
                 <h1 class="mt-14 max-w-lg text-4xl font-bold leading-tight text-white xl:text-5xl">
-                    Ton espace coach & athlète, prêt en quelques secondes.
+                    {{ t('auth.login.brandTitle') }}
                 </h1>
                 <p class="mt-5 max-w-md text-lg leading-relaxed text-slate-400">
-                    Roster, programmes, messagerie et suivi SBD — tout est centralisé pour un coaching
-                    powerlifting structuré.
+                    {{ t('auth.login.brandSubtitle') }}
                 </p>
             </div>
             <ul class="relative mt-12 space-y-4 text-slate-300">
@@ -76,7 +77,7 @@ function submit() {
                     >
                         <UiIcon name="dashboard" class="h-5 w-5" />
                     </span>
-                    Dashboard et tâches en un coup d’œil
+                    {{ t('auth.login.featureDashboard') }}
                 </li>
                 <li class="flex items-center gap-3">
                     <span
@@ -84,7 +85,7 @@ function submit() {
                     >
                         <UiIcon name="clipboard" class="h-5 w-5" />
                     </span>
-                    Programmes et assignations simplifiés
+                    {{ t('auth.login.featurePrograms') }}
                 </li>
                 <li class="flex items-center gap-3">
                     <span
@@ -92,7 +93,7 @@ function submit() {
                     >
                         <UiIcon name="trophy" class="h-5 w-5" />
                     </span>
-                    Records et objectifs de compétition
+                    {{ t('auth.login.featureRecords') }}
                 </li>
             </ul>
         </div>
@@ -115,28 +116,28 @@ function submit() {
                     class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-300"
                 >
                     <span aria-hidden="true">←</span>
-                    Retour à l’accueil
+                    {{ t('auth.login.backHome') }}
                 </Link>
 
                 <h2 :class="isMobileApp ? 'text-3xl font-bold tracking-tight text-white' : 'mt-6 text-3xl font-bold tracking-tight text-white'">
-                    Connexion
+                    {{ t('auth.login.title') }}
                 </h2>
                 <p v-if="isMobileApp" class="mt-2 text-base text-blue-300/90">
-                    Application mobile
+                    {{ t('auth.login.mobileApp') }}
                 </p>
                 <p class="mt-2 text-base text-slate-400">
-                    Accède à ton espace coach ou athlète avec ton e-mail et ton mot de passe.
+                    {{ t('auth.login.subtitle') }}
                 </p>
 
                 <div
                     v-if="!isMobileApp"
                     class="mt-6 rounded-xl border border-blue-500/30 bg-blue-950/30 px-4 py-3.5 text-sm leading-relaxed text-blue-100"
                 >
-                    <p class="font-semibold text-white">Essai coach 14 jours</p>
+                    <p class="font-semibold text-white">{{ t('auth.login.trialBadgeTitle') }}</p>
                     <p class="mt-1 text-blue-100/85">
-                        Pas encore de compte ? Tu démarres un essai gratuit de 14 jours, sans carte bancaire.
+                        {{ t('auth.login.trialBadgeBody') }}
                         <Link href="/start-trial" class="font-medium text-blue-300 underline-offset-2 hover:text-blue-200 hover:underline">
-                            Créer mon compte
+                            {{ t('auth.login.createAccount') }}
                         </Link>
                     </p>
                 </div>
@@ -158,7 +159,7 @@ function submit() {
                 <form class="mt-8 space-y-5" @submit.prevent="submit">
                     <div>
                         <label for="email" class="block text-sm font-medium text-slate-300">
-                            Adresse e-mail
+                            {{ t('auth.login.emailLabel') }}
                         </label>
                         <input
                             id="email"
@@ -169,7 +170,7 @@ function submit() {
                             autofocus
                             autocomplete="username"
                             class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3.5 text-base text-white placeholder-slate-500 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                            placeholder="coach@exemple.fr"
+                            :placeholder="t('auth.login.emailPlaceholder')"
                         />
                         <p v-if="form.errors.email" class="mt-2 text-sm text-red-400">
                             {{ form.errors.email }}
@@ -178,7 +179,7 @@ function submit() {
 
                     <div>
                         <label for="password" class="block text-sm font-medium text-slate-300">
-                            Mot de passe
+                            {{ t('auth.login.passwordLabel') }}
                         </label>
                         <div class="relative mt-2">
                             <input
@@ -194,7 +195,7 @@ function submit() {
                             <button
                                 type="button"
                                 class="absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400 transition hover:text-slate-200"
-                                :aria-label="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                                :aria-label="showPassword ? t('common.hidePassword') : t('common.showPassword')"
                                 :aria-pressed="showPassword"
                                 @click="showPassword = !showPassword"
                             >
@@ -240,7 +241,7 @@ function submit() {
                         </p>
                         <div class="mt-2 flex justify-end">
                             <Link href="/forgot-password" class="text-sm text-blue-400 hover:text-blue-300">
-                                Mot de passe oublié ?
+                                {{ t('auth.login.forgotPassword') }}
                             </Link>
                         </div>
                     </div>
@@ -252,7 +253,7 @@ function submit() {
                             name="remember"
                             class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500/40"
                         />
-                        <span class="text-sm text-slate-400">Rester connecté sur cet appareil</span>
+                        <span class="text-sm text-slate-400">{{ t('auth.login.rememberMe') }}</span>
                     </label>
 
                     <button
@@ -260,21 +261,21 @@ function submit() {
                         :disabled="form.processing"
                         class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-4 text-base font-semibold leading-none text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500 disabled:opacity-60"
                     >
-                        <span v-if="form.processing">Connexion…</span>
-                        <span v-else>Se connecter</span>
+                        <span v-if="form.processing">{{ t('auth.login.submitting') }}</span>
+                        <span v-else>{{ t('auth.login.submit') }}</span>
                         <span v-if="!form.processing" aria-hidden="true">→</span>
                     </button>
                 </form>
 
                 <p v-if="!isMobileApp" class="mt-8 text-center text-sm text-slate-500">
-                    Coach ?
+                    {{ t('auth.login.footerCoach') }}
                     <Link href="/start-trial" class="font-medium text-blue-400 hover:text-blue-300">
-                        Essai gratuit 14 jours
+                        {{ t('auth.login.footerTrial') }}
                     </Link>
-                    · Athlète ? Utilise le lien d’activation transmis par ton coach.
+                    · {{ t('auth.login.footerAthlete') }}
                 </p>
                 <p v-else class="mt-8 text-center text-sm text-slate-500">
-                    Athlète ? Utilise le lien d’activation transmis par ton coach si tu n’as pas encore activé ton compte.
+                    {{ t('auth.login.footerAthleteMobile') }}
                 </p>
             </div>
         </div>

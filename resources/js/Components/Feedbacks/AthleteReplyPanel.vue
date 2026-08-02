@@ -1,7 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { formatShortDateTimeFr } from '../../utils/formatDates';
 import FeedbackFrequencyPill from './FeedbackFrequencyPill.vue';
+const { t } = useI18n();
 
 const props = defineProps({
   feedback: { type: Object, default: null },
@@ -19,10 +21,10 @@ const waiting = computed(
   >
     <div class="border-b border-slate-800/80 p-4">
       <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        Réponse du coach
+        {{ t('app.feedbacks.coachReply') }}
       </h2>
       <p class="mt-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-white">
-        <span class="truncate">{{ feedback?.session_label || 'Sélectionnez un retour' }}</span>
+        <span class="truncate">{{ feedback?.session_label || t('app.feedbacks.selectFeedback') }}</span>
         <FeedbackFrequencyPill
           v-if="feedback?.feedback_frequency"
           :frequency="feedback.feedback_frequency"
@@ -37,7 +39,7 @@ const waiting = computed(
           v-if="hasReply"
           class="rounded-[14px] border border-emerald-500/25 bg-emerald-950/20 p-3"
         >
-          <p class="text-xs font-semibold text-emerald-400">Réponse reçue</p>
+          <p class="text-xs font-semibold text-emerald-400">{{ t('app.feedbacks.replyReceived') }}</p>
           <p
             v-if="feedback.reply?.body"
             class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-200"
@@ -62,9 +64,9 @@ const waiting = computed(
           v-else-if="waiting"
           class="rounded-[14px] border border-amber-500/25 bg-amber-950/15 p-4 text-center"
         >
-          <p class="text-sm font-medium text-amber-200">En attente du coach</p>
+          <p class="text-sm font-medium text-amber-200">{{ t('app.feedbacks.waitingForCoach') }}</p>
           <p class="mt-1.5 text-xs leading-relaxed text-slate-500">
-            Votre retour a bien été envoyé. La réponse apparaîtra ici.
+            {{ t('app.feedbacks.waitingForCoachHint') }}
           </p>
         </div>
 
@@ -72,7 +74,7 @@ const waiting = computed(
           v-else
           class="rounded-[14px] border border-slate-800 bg-slate-950/40 p-3 text-sm text-slate-500"
         >
-          Aucune réponse pour ce retour.
+          {{ t('app.feedbacks.noReplyForFeedback') }}
         </div>
       </template>
 
@@ -80,7 +82,7 @@ const waiting = computed(
         v-else
         class="rounded-[14px] border border-dashed border-slate-700 bg-slate-950/30 px-4 py-10 text-center text-sm text-slate-500"
       >
-        Sélectionnez un retour pour voir la réponse du coach.
+        {{ t('app.feedbacks.selectToSeeReply') }}
       </div>
     </div>
   </aside>

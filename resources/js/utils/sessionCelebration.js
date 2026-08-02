@@ -1,7 +1,14 @@
+import { localeTag, resolveLocale } from '../i18n';
 import { defaultLiftName } from './programBuilder';
 import { buildBarbellLoading, formatBarLoadKg } from './barbellLoading';
 import { scoreDayAdherence } from './sessionAdherence';
 import { lineVolume, resolveLoadKg } from './trainingVolume';
+
+function activeTag() {
+  const raw =
+    typeof document !== 'undefined' ? document.documentElement.lang : 'fr';
+  return localeTag(resolveLocale(raw));
+}
 
 function resolveTopsetLoadKg(line, oneRm, mainLift) {
   if (!line) {
@@ -159,7 +166,7 @@ export function buildSessionCelebrationPayload({
     mainLift,
   );
 
-  const tonnageLabel = tonnage > 0 ? `${Math.round(tonnage).toLocaleString('fr-FR')} kg` : '—';
+  const tonnageLabel = tonnage > 0 ? `${Math.round(tonnage).toLocaleString(activeTag())} kg` : '—';
   const repsLabel = totalReps > 0 ? `${totalReps}` : '—';
   const adherenceLabel = adherence.percentage != null ? `${adherence.percentage}%` : '—';
 

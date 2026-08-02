@@ -7,6 +7,7 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import AthleteMonthCalendar from '../Components/AthleteMonthCalendar.vue';
@@ -20,6 +21,7 @@ import { buildAthleteOverviewStats } from '../utils/athleteOverviewStats';
 import { levelLabel as formatLevelLabel, weightCategoryLabel } from '../config/ipfWeightCategories';
 import { formatCalendarFr } from '../utils/formatDates';
 import { defaultStructuredPlan, matchPlanFromCompetition } from '../utils/matchPlan';
+const { t } = useI18n();
 
 const props = defineProps({
   athlete: {
@@ -324,7 +326,7 @@ function deleteSelectedCompetition() {
   }
 
   const confirmed = window.confirm(
-    'Supprimer cette competition ? Cette action est irreversible.',
+    t('app.athleteDetail.deleteCompetitionConfirm'),
   );
 
   if (!confirmed) {
@@ -379,8 +381,8 @@ const editableProfileForm = computed(() => {
 const canEditProfile = computed(() => isOwnProfile.value || isCoach.value);
 
 const feedbackLabels = {
-  daily: 'Journalier',
-  weekly: 'Hebdomadaire',
+  daily: t('app.athleteDetail.daily'),
+  weekly: t('app.athleteDetail.weekly'),
 };
 
 const timeRange = ref('6m');
@@ -389,7 +391,7 @@ const timeRangeOptions = [
   { value: '1m', label: '1 mois' },
   { value: '6m', label: '6 mois' },
   { value: '1y', label: '1 an' },
-  { value: 'all', label: 'Depuis le début du suivi' },
+  { value: 'all', label: t('app.athleteDetail.sinceStart') },
 ];
 
 const currentFeedbackFrequency = computed(
@@ -402,8 +404,8 @@ const nextFeedbackFrequency = computed(() =>
 
 const nextFeedbackButtonLabel = computed(() =>
   nextFeedbackFrequency.value === 'daily'
-    ? 'Passer en Journalier'
-    : 'Passer en Hebdomadaire',
+    ? t('app.athleteDetail.switchDaily')
+    : t('app.athleteDetail.switchWeekly'),
 );
 
 const followUpStartedAtLabel = computed(() =>
@@ -552,9 +554,9 @@ const programUpcomingLabel = computed(() => {
   const days = Number(props.programBlock.days_until_start ?? 0);
   const dateLabel = formatCalendarFr(props.programBlock.date_start, 'medium');
   if (days <= 1) {
-    return `Démarre demain (${dateLabel})`;
+    return t('app.athleteProgram.startsTomorrow', { date: dateLabel });
   }
-  return `Démarre le ${dateLabel}`;
+  return t('app.athleteProgram.startsOn', { date: dateLabel });
 });
 
 function subtractMonths(date, months) {
@@ -727,7 +729,7 @@ onMounted(() => {
       />
 
       <section class="mt-3 min-w-0 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 pt-4 pb-2 shadow-lg lg:p-5 lg:pb-5">
-        <h2 class="text-sm font-semibold text-white">Calendrier</h2>
+        <h2 class="text-sm font-semibold text-white">{{ t('app.athleteDetail.calendar') }}</h2>
 
         <AthleteMonthCalendar
           class="mt-2"
@@ -755,9 +757,9 @@ onMounted(() => {
           class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2"
         >
           <p class="text-xs text-slate-400">
-            Formulaire facteurs externes de cet athlète
+            {{ t('app.athleteDetail.athleteReadinessForm') }}
             <span class="text-slate-500">
-              ({{ readinessForm?.fields?.length ?? 0 }} champs)
+              {{ t('app.athleteDetail.fieldsCount', { count: readinessForm?.fields?.length ?? 0 }) }}
             </span>
           </p>
           <button
@@ -765,7 +767,7 @@ onMounted(() => {
             class="rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-200 hover:bg-blue-500/20"
             @click="showReadinessBuilder = true"
           >
-            Modifier le formulaire
+            {{ t('app.athleteDetail.editForm') }}
           </button>
         </div>
         <AthleteStatsOverview
@@ -791,8 +793,8 @@ onMounted(() => {
         v-if="isCoach && programHistory.length"
         class="mt-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg lg:p-5"
       >
-        <h2 class="text-sm font-semibold text-white">Historique des blocs</h2>
-        <p class="mt-1 text-xs text-slate-500">Sélectionnez deux blocs pour les comparer.</p>
+        <h2 class="text-sm font-semibold text-white">{{ t('app.athleteDetail.blockHistory') }}</h2>
+        <p class="mt-1 text-xs text-slate-500">{{ t('app.athleteDetail.compareHint') }}</p>
 
         <ul class="mt-4 space-y-2">
           <li
@@ -804,8 +806,8 @@ onMounted(() => {
               <p class="font-medium text-white">{{ block.name }}</p>
               <p class="text-xs text-slate-500">
                 {{ block.date_start }} → {{ block.date_end }}
-                · Adhérence {{ block.adherence_percentage ?? '—' }}%
-                · Volume {{ block.volume_sets_reps }}
+                · {{ t('app.athleteDetail.adherence') }} {{ block.adherence_percentage ?? '—' }}%
+                · {{ t('app.athleteDetail.volumeShort', { value: block.volume_sets_reps }) }}
               </p>
             </div>
             <label class="flex items-center gap-2 text-xs text-slate-300">
@@ -814,7 +816,7 @@ onMounted(() => {
                 :checked="compareIds.includes(block.id)"
                 @change="toggleCompareId(block.id)"
               />
-              Comparer
+              {{ t('app.athleteDetail.compare') }}
             </label>
           </li>
         </ul>
@@ -823,31 +825,31 @@ onMounted(() => {
           <table class="min-w-full text-left text-sm">
             <thead>
               <tr class="border-b border-slate-800 text-slate-400">
-                <th class="px-2 py-2">Métrique</th>
+                <th class="px-2 py-2">{{ t('app.athleteDetail.metric') }}</th>
                 <th v-for="block in comparisonBlocks" :key="block.id" class="px-2 py-2">{{ block.name }}</th>
               </tr>
             </thead>
             <tbody class="text-slate-200">
               <tr class="border-b border-slate-900">
-                <td class="px-2 py-2 text-slate-400">Période</td>
+                <td class="px-2 py-2 text-slate-400">{{ t('app.athleteDetail.period') }}</td>
                 <td v-for="block in comparisonBlocks" :key="`p-${block.id}`" class="px-2 py-2">
                   {{ block.date_start }} → {{ block.date_end }}
                 </td>
               </tr>
               <tr class="border-b border-slate-900">
-                <td class="px-2 py-2 text-slate-400">Adhérence</td>
+                <td class="px-2 py-2 text-slate-400">{{ t('app.athleteDetail.adherence') }}</td>
                 <td v-for="block in comparisonBlocks" :key="`a-${block.id}`" class="px-2 py-2">
                   {{ block.adherence_percentage ?? '—' }} %
                 </td>
               </tr>
               <tr class="border-b border-slate-900">
-                <td class="px-2 py-2 text-slate-400">Volume (séries×reps)</td>
+                <td class="px-2 py-2 text-slate-400">{{ t('app.athleteDetail.volume') }}</td>
                 <td v-for="block in comparisonBlocks" :key="`v-${block.id}`" class="px-2 py-2">
                   {{ block.volume_sets_reps }}
                 </td>
               </tr>
               <tr>
-                <td class="px-2 py-2 text-slate-400">Total SBD (1RM)</td>
+                <td class="px-2 py-2 text-slate-400">{{ t('app.athleteDetail.totalSbd') }}</td>
                 <td v-for="block in comparisonBlocks" :key="`t-${block.id}`" class="px-2 py-2">
                   {{ block.sbd_total }} kg
                 </td>
@@ -872,12 +874,12 @@ onMounted(() => {
         >
           <div class="flex items-start justify-between gap-4">
             <h2 class="text-base font-semibold text-white">
-              {{ addingCompetition ? 'Ajouter une compétition' : 'Détail compétition' }}
+              {{ addingCompetition ? t('app.athleteDetail.addCompetition') : t('app.athleteDetail.competitionDetail') }}
             </h2>
             <button
               type="button"
               class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-              aria-label="Fermer"
+              :aria-label="t('common.close')"
               @click="closeCompModal"
             >
               ✕
@@ -890,7 +892,7 @@ onMounted(() => {
             @submit.prevent="submitComp"
           >
             <label class="block text-sm text-slate-400">
-              Nom
+              {{ t('common.name') }}
               <input
                 v-model="compForm.name"
                 type="text"
@@ -899,7 +901,7 @@ onMounted(() => {
               />
             </label>
             <label class="block text-sm text-slate-400">
-              Date
+              {{ t('common.date') }}
               <input
                 v-model="compForm.competition_date"
                 type="date"
@@ -908,7 +910,7 @@ onMounted(() => {
               />
             </label>
             <label class="block text-sm text-slate-400">
-              Lieu
+              {{ t('app.competitions.venue') }}
               <input
                 v-model="compForm.location"
                 type="text"
@@ -916,7 +918,7 @@ onMounted(() => {
               />
             </label>
             <label class="block text-sm text-slate-400">
-              Objectif
+              {{ t('app.competitions.goal') }}
               <input
                 v-model="compForm.goal"
                 type="text"
@@ -924,7 +926,7 @@ onMounted(() => {
               />
             </label>
             <div class="block text-sm text-slate-400">
-              <span class="block">Plan de match (optionnel)</span>
+              <span class="block">{{ t('app.athleteDetail.matchPlanOptional') }}</span>
               <MatchPlanBuilder v-model="compForm.match_plan_data" class="mt-3" />
             </div>
             <p v-if="Object.keys(compForm.errors).length" class="text-sm text-red-400">
@@ -936,14 +938,14 @@ onMounted(() => {
                 class="rounded-xl border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
                 @click="closeCompModal"
               >
-                Annuler
+                {{ t('common.cancel') }}
               </button>
               <button
                 type="submit"
                 :disabled="compForm.processing"
                 class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
-                Enregistrer
+                {{ t('common.save') }}
               </button>
             </div>
           </form>
@@ -954,7 +956,7 @@ onMounted(() => {
             @submit.prevent="submitEditCompetition"
           >
             <label class="block text-sm text-slate-400">
-              Nom
+              {{ t('common.name') }}
               <input
                 v-model="editCompForm.name"
                 type="text"
@@ -963,7 +965,7 @@ onMounted(() => {
               />
             </label>
             <label class="block text-sm text-slate-400">
-              Date
+              {{ t('common.date') }}
               <input
                 v-model="editCompForm.competition_date"
                 type="date"
@@ -972,7 +974,7 @@ onMounted(() => {
               />
             </label>
             <label class="block text-sm text-slate-400">
-              Lieu
+              {{ t('app.competitions.venue') }}
               <input
                 v-model="editCompForm.location"
                 type="text"
@@ -980,7 +982,7 @@ onMounted(() => {
               />
             </label>
             <label class="block text-sm text-slate-400">
-              Objectif
+              {{ t('app.competitions.goal') }}
               <input
                 v-model="editCompForm.goal"
                 type="text"
@@ -988,7 +990,7 @@ onMounted(() => {
               />
             </label>
             <div class="block text-sm text-slate-400">
-              <span class="block">Plan de match</span>
+              <span class="block">{{ t('app.athleteDetail.matchPlan') }}</span>
               <MatchPlanBuilder v-model="editCompForm.match_plan_data" class="mt-3" />
             </div>
             <p v-if="Object.keys(editCompForm.errors).length" class="text-sm text-red-400">
@@ -1001,21 +1003,21 @@ onMounted(() => {
                 class="rounded-xl border border-red-500/50 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-50"
                 @click="deleteSelectedCompetition"
               >
-                Supprimer
+                {{ t('common.delete') }}
               </button>
               <button
                 type="button"
                 class="rounded-xl border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
                 @click="editingComp = false"
               >
-                Annuler
+                {{ t('common.cancel') }}
               </button>
               <button
                 type="submit"
                 :disabled="editCompForm.processing"
                 class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
-                Enregistrer
+                {{ t('common.save') }}
               </button>
             </div>
           </form>
@@ -1026,7 +1028,7 @@ onMounted(() => {
             @submit.prevent="submitMatchPlan"
           >
             <p class="text-sm text-slate-400">
-              Propose tes barres visées pour {{ selectedCompetition.name }}.
+              {{ t('app.athleteDetail.proposeBarsHint', { name: selectedCompetition.name }) }}
             </p>
             <MatchPlanBuilder v-model="matchPlanForm.match_plan_data" />
             <p v-if="Object.keys(matchPlanForm.errors).length" class="text-sm text-red-400">
@@ -1038,14 +1040,14 @@ onMounted(() => {
                 class="rounded-xl border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
                 @click="cancelEditMatchPlan"
               >
-                Annuler
+                {{ t('common.cancel') }}
               </button>
               <button
                 type="submit"
                 :disabled="matchPlanForm.processing"
                 class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
-                Enregistrer le plan
+                {{ t('app.athleteDetail.savePlan') }}
               </button>
             </div>
           </form>
@@ -1058,7 +1060,7 @@ onMounted(() => {
               class="mt-6 rounded-xl border border-blue-500/50 bg-blue-600/15 px-4 py-2 text-sm font-semibold text-blue-200 hover:bg-blue-600/25"
               @click="startEditMatchPlan"
             >
-              {{ competitionHasMatchPlan(selectedCompetition) ? 'Mettre à jour mon plan' : 'Proposer mon plan de match' }}
+              {{ competitionHasMatchPlan(selectedCompetition) ? t('app.athleteDetail.updateMatchPlan') : t('app.athleteDetail.proposeMatchPlan') }}
             </button>
             <button
               v-if="canManageCompetitions"
@@ -1066,7 +1068,7 @@ onMounted(() => {
               class="mt-6 rounded-xl border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
               @click="startEditCompetition"
             >
-              Modifier
+              {{ t('common.edit') }}
             </button>
             <button
               v-if="canManageCompetitions"
@@ -1074,7 +1076,7 @@ onMounted(() => {
               class="mt-3 rounded-xl border border-red-500/50 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-500/10"
               @click="deleteSelectedCompetition"
             >
-              Supprimer
+              {{ t('common.delete') }}
             </button>
           </template>
         </div>
@@ -1085,7 +1087,7 @@ onMounted(() => {
       :open="showReadinessBuilder"
       mode="athlete"
       :athlete-id="athlete.id"
-      title="Formulaire facteurs externes de l'athlète"
+      :title="t('app.athleteDetail.athleteReadinessForm')"
       :initial-fields="readinessForm?.fields ?? []"
       @close="showReadinessBuilder = false"
     />

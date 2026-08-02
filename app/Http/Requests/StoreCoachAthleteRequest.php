@@ -43,10 +43,10 @@ class StoreCoachAthleteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.email' => 'L’adresse e-mail n’est pas valide.',
-            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-            'feedback_frequency.required' => 'Choisis le type de coaching.',
-            'feedback_frequency.in' => 'Choisis un type de coaching valide.',
+            'email.email' => __('messages.validation.email_invalid'),
+            'email.unique' => __('messages.validation.email_unique'),
+            'feedback_frequency.required' => __('messages.validation.feedback_frequency_required'),
+            'feedback_frequency.in' => __('messages.validation.feedback_frequency_in'),
         ];
     }
 }

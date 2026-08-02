@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { motion } from 'motion-v';
@@ -6,6 +7,7 @@ import UiIcon from '../UiIcon.vue';
 import SectionHeader from './SectionHeader.vue';
 import { cardShell } from './dashboardUi';
 import { useDismissedAlerts } from '../../composables/useDismissedAlerts';
+const { t } = useI18n();
 
 const props = defineProps({
   alerts: { type: Array, default: () => [] },
@@ -131,13 +133,13 @@ async function shareAlert() {
         text: shareText,
         url: `${window.location.origin}${sharePreview.value.shareUrl}`,
       });
-      shareFeedback.value = 'Partagé avec succès.';
+      shareFeedback.value = t('app.coachDash.sharedOk');
       return;
     }
     await navigator.clipboard.writeText(shareText);
-    shareFeedback.value = 'Texte copié. Tu peux le coller où tu veux.';
+    shareFeedback.value = t('app.coachDash.copiedOk');
   } catch {
-    shareFeedback.value = 'Partage annulé ou impossible sur cet appareil.';
+    shareFeedback.value = t('app.coachDash.shareFailed');
   }
 }
 </script>

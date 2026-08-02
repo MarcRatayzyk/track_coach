@@ -1,10 +1,13 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { filterEntriesByRange } from '../utils/athleteOverviewStats';
 import ReadinessDynamicFields from './ReadinessDynamicFields.vue';
 import ReadinessWeekTable from './ReadinessWeekTable.vue';
 import { emptyValuesForFields } from '../config/readinessFormFields';
+
+const { t } = useI18n();
 
 const props = defineProps({
   athleteId: {
@@ -88,11 +91,11 @@ function submitBodyWeight() {
     :class="compact ? 'p-3' : 'flex h-full flex-col p-4'"
   >
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-sm font-semibold text-white">Facteurs externes</h2>
+      <h2 class="text-sm font-semibold text-white">{{ t('athleteUi.readiness.externalFactors') }}</h2>
       <div
         class="rounded-lg border border-emerald-500/30 bg-emerald-950/20 px-2.5 py-1.5 text-center"
       >
-        <p class="text-[9px] uppercase tracking-wide text-emerald-400/80">Check-in 7j</p>
+        <p class="text-[9px] uppercase tracking-wide text-emerald-400/80">{{ t('athleteUi.readiness.checkIn7d') }}</p>
         <p class="text-sm font-bold text-emerald-200">{{ checkins7d }}/7</p>
       </div>
     </div>
@@ -108,12 +111,12 @@ function submitBodyWeight() {
         v-if="!compact"
         class="block rounded-lg border border-slate-800 bg-slate-950/40 p-3 text-xs font-medium text-slate-400"
       >
-        Notes
+        {{ t('athleteUi.readiness.notes') }}
         <textarea
           v-model="readinessFormState.notes"
           rows="3"
           maxlength="500"
-          placeholder="Sommeil, courbatures…"
+          :placeholder="t('athleteUi.readiness.notesPlaceholder')"
           class="mt-2 w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
         />
       </label>
@@ -123,7 +126,7 @@ function submitBodyWeight() {
         :disabled="readinessFormState.processing"
         class="w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
       >
-        {{ todayReadiness ? 'Mettre à jour' : 'Enregistrer' }}
+        {{ todayReadiness ? t('athleteUi.readiness.update') : t('common.save') }}
       </button>
     </form>
 
@@ -134,17 +137,17 @@ function submitBodyWeight() {
       :entries="readinessRecent"
     />
 
-    <p v-else-if="!canEdit && !compact" class="mt-3 text-xs text-slate-500">Aucune saisie récente.</p>
+    <p v-else-if="!canEdit && !compact" class="mt-3 text-xs text-slate-500">{{ t('athleteUi.readiness.noRecent') }}</p>
 
     <div
       v-if="canEdit"
       class="border-t border-slate-800"
       :class="compact ? 'mt-3 pt-3' : 'mt-4 pt-4'"
     >
-      <h3 class="text-xs font-semibold text-white">Poids du corps</h3>
+      <h3 class="text-xs font-semibold text-white">{{ t('athleteUi.readiness.bodyWeight') }}</h3>
       <form class="mt-2 flex items-end gap-2" @submit.prevent="submitBodyWeight">
         <label class="min-w-0 flex-1 text-[11px] text-slate-400">
-          Aujourd'hui (kg)
+          {{ t('athleteUi.readiness.todayKg') }}
           <input
             v-model="bodyWeightForm.weight_kg"
             type="number"
@@ -164,7 +167,7 @@ function submitBodyWeight() {
           :disabled="bodyWeightForm.processing"
           class="shrink-0 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
         >
-          {{ todayBodyWeight ? 'MAJ' : 'OK' }}
+          {{ todayBodyWeight ? t('athleteUi.readiness.maj') : t('athleteUi.readiness.ok') }}
         </button>
       </form>
     </div>

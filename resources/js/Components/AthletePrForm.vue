@@ -1,6 +1,9 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   athleteId: {
@@ -17,13 +20,18 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: 'Enregistrer un PR officiel',
+    default: '',
   },
   description: {
     type: String,
-    default: 'Squat, bench et terre — utilisés pour les charges du programme.',
+    default: '',
   },
 });
+
+const displayTitle = computed(() => props.title || t('app.athletePr.titleDefault'));
+const displayDescription = computed(
+  () => props.description || t('app.athletePr.subtitleDefault'),
+);
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -64,12 +72,12 @@ function submit() {
     class="rounded-xl border border-slate-800 bg-slate-950/40 p-4"
     @submit.prevent="submit"
   >
-    <h3 class="text-sm font-semibold text-white">{{ title }}</h3>
-    <p class="mt-1 text-xs text-slate-500">{{ description }}</p>
+    <h3 class="text-sm font-semibold text-white">{{ displayTitle }}</h3>
+    <p class="mt-1 text-xs text-slate-500">{{ displayDescription }}</p>
 
     <div class="mt-3 grid gap-3 sm:grid-cols-4">
       <label class="text-xs text-slate-400">
-        Squat
+        {{ t('config.lifts.squat') }}
         <input
           v-model.number="form.squat"
           type="number"
@@ -79,7 +87,7 @@ function submit() {
         <p v-if="form.errors.squat" class="mt-1 text-xs text-red-400">{{ form.errors.squat }}</p>
       </label>
       <label class="text-xs text-slate-400">
-        Bench
+        {{ t('config.lifts.bench') }}
         <input
           v-model.number="form.bench"
           type="number"
@@ -89,7 +97,7 @@ function submit() {
         <p v-if="form.errors.bench" class="mt-1 text-xs text-red-400">{{ form.errors.bench }}</p>
       </label>
       <label class="text-xs text-slate-400">
-        Terre
+        {{ t('config.lifts.deadlift') }}
         <input
           v-model.number="form.deadlift"
           type="number"
@@ -99,7 +107,7 @@ function submit() {
         <p v-if="form.errors.deadlift" class="mt-1 text-xs text-red-400">{{ form.errors.deadlift }}</p>
       </label>
       <label class="text-xs text-slate-400">
-        Date
+        {{ t('common.date') }}
         <input
           v-model="form.reference_date"
           type="date"
@@ -113,7 +121,7 @@ function submit() {
           :disabled="form.processing"
           class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
         >
-          Enregistrer
+          {{ t('common.save') }}
         </button>
       </div>
     </div>

@@ -1,7 +1,10 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -38,23 +41,23 @@ function close() {
 
 function statusLabel(item) {
   if (item.feedback_status === 'coach_replied') {
-    return 'Répondu par le coach';
+    return t('app.feedbacks.coachReplied');
   }
   if (item.session_feedback_id) {
-    return 'Envoyé · en attente de réponse';
+    return t('app.feedbacks.sentAwaitingReply');
   }
   if (item.is_overdue) {
-    return 'En retard';
+    return t('app.feedbacks.overdue');
   }
-  return "N'a pas encore envoyé";
+  return t('app.coachDash.notSentYet');
 }
 
 function dateLabel(item) {
   if (item.session_date) {
-    return `Séance du ${formatCalendarFr(item.session_date)}`;
+    return t('app.dashboard.sessionOf', { date: formatCalendarFr(item.session_date) });
   }
   if (item.period_week_start) {
-    return `Semaine du ${formatCalendarFr(item.period_week_start)}`;
+    return t('app.dashboard.weekOf', { date: formatCalendarFr(item.period_week_start) });
   }
   return '';
 }
@@ -81,7 +84,7 @@ function dateLabel(item) {
           <button
             type="button"
             class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-            aria-label="Fermer"
+            :aria-label="t('common.close')"
             @click="close"
           >
             ✕
@@ -90,14 +93,14 @@ function dateLabel(item) {
 
         <section class="mt-6">
           <h3 class="text-sm font-semibold text-amber-300">
-            Doit encore envoyer un retour
+            {{ t('app.feedbacks.stillMustSend') }}
             <span class="font-normal text-slate-500">({{ pending.length }})</span>
           </h3>
           <p
             v-if="pending.length === 0"
             class="mt-3 rounded-lg border border-dashed border-slate-700 bg-slate-950/40 px-4 py-6 text-center text-sm text-slate-500"
           >
-            Tous les athlètes attendus ont envoyé leur retour.
+            {{ t('app.feedbacks.allAthletesSent') }}
           </p>
           <ul v-else class="mt-3 space-y-2">
             <li
@@ -112,7 +115,7 @@ function dateLabel(item) {
                     :href="`/athletes/${item.athlete_id}`"
                     class="text-sm font-semibold text-white hover:text-blue-300"
                   >
-                    {{ item.athlete_name ?? 'Athlète' }}
+                    {{ item.athlete_name ?? t('common.athlete') }}
                   </Link>
                   <p v-if="dateLabel(item)" class="mt-0.5 text-xs text-slate-400">
                     {{ dateLabel(item) }}
@@ -135,14 +138,14 @@ function dateLabel(item) {
 
         <section class="mt-8 border-t border-slate-800 pt-6">
           <h3 class="text-sm font-semibold text-emerald-300">
-            Retour déjà envoyé
+            {{ t('app.feedbacks.alreadySent') }}
             <span class="font-normal text-slate-500">({{ submitted.length }})</span>
           </h3>
           <p
             v-if="submitted.length === 0"
             class="mt-3 rounded-lg border border-dashed border-slate-700 bg-slate-950/40 px-4 py-6 text-center text-sm text-slate-500"
           >
-            Aucun retour reçu pour cette période.
+            {{ t('app.feedbacks.noneReceivedPeriod') }}
           </p>
           <ul v-else class="mt-3 space-y-2">
             <li
@@ -157,7 +160,7 @@ function dateLabel(item) {
                     :href="`/athletes/${item.athlete_id}`"
                     class="text-sm font-semibold text-white hover:text-blue-300"
                   >
-                    {{ item.athlete_name ?? 'Athlète' }}
+                    {{ item.athlete_name ?? t('common.athlete') }}
                   </Link>
                   <p v-if="dateLabel(item)" class="mt-0.5 text-xs text-slate-400">
                     {{ dateLabel(item) }}
@@ -179,7 +182,7 @@ function dateLabel(item) {
                 :href="`/feedbacks?feedback=${item.session_feedback_id}`"
                 class="mt-2 inline-block text-xs font-medium text-blue-400 hover:text-blue-300"
               >
-                Voir le retour →
+                {{ t('app.dashboard.seeFeedback') }}
               </Link>
             </li>
           </ul>
@@ -191,7 +194,7 @@ function dateLabel(item) {
             class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
             @click="close"
           >
-            Ouvrir tous les retours
+            {{ t('app.feedbacks.openAllFeedbacks') }}
           </Link>
         </div>
       </div>

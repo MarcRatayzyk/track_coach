@@ -1,6 +1,9 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import { formatCalendarFr } from '../utils/formatDates';
+
+const { t } = useI18n();
 
 defineProps({
   recentFeedbacks: {
@@ -15,9 +18,9 @@ defineProps({
 
 function statusLabel(status) {
   if (status === 'coach_replied') {
-    return 'Réponse coach';
+    return t('athleteUi.dashboard.coachReply');
   }
-  return 'En attente';
+  return t('athleteUi.dashboard.pending');
 }
 
 function statusClass(status) {
@@ -34,9 +37,9 @@ function statusClass(status) {
     class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg"
   >
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-sm font-semibold text-white">Retours vidéo</h2>
+      <h2 class="text-sm font-semibold text-white">{{ t('athleteUi.dashboard.videoFeedbacks') }}</h2>
       <Link href="/feedbacks" class="text-xs font-medium text-blue-400 hover:text-blue-300">
-        Voir tout →
+        {{ t('athleteUi.dashboard.seeAll') }}
       </Link>
     </div>
 
@@ -44,8 +47,7 @@ function statusClass(status) {
       v-if="feedbackSummary.pending_reply > 0"
       class="mt-2 text-xs text-amber-300"
     >
-      {{ feedbackSummary.pending_reply }} retour{{ feedbackSummary.pending_reply > 1 ? 's' : '' }}
-      en attente de réponse coach
+      {{ t('athleteUi.dashboard.pendingReply', feedbackSummary.pending_reply) }}
     </p>
 
     <ul v-if="recentFeedbacks.length" class="mt-3 space-y-2">
@@ -63,7 +65,7 @@ function statusClass(status) {
             </p>
             <p class="text-xs text-slate-500">
               {{ formatCalendarFr(feedback.session_date, 'medium') }}
-              <span v-if="feedback.video_count" class="ml-1">· {{ feedback.video_count }} vidéo{{ feedback.video_count > 1 ? 's' : '' }}</span>
+              <span v-if="feedback.video_count" class="ml-1">· {{ t('athleteUi.dashboard.videos', feedback.video_count) }}</span>
             </p>
           </div>
           <span class="shrink-0 text-xs font-semibold" :class="statusClass(feedback.status)">

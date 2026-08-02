@@ -1,9 +1,12 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { motion } from 'motion-v';
 import FilePreview from './FilePreview.vue';
 import MessageReaction from './MessageReaction.vue';
 import { messagingClock, messagingInitials } from '../../utils/messagingFormat';
+
+const { t } = useI18n();
 
 const props = defineProps({
   message: {
@@ -75,7 +78,7 @@ const readState = computed(() => {
         <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
           <path d="M10 2a1 1 0 0 1 1 1v5.586l1.707-1.707a1 1 0 1 1 1.414 1.414l-3.5 3.5a1 1 0 0 1-1.414 0l-3.5-3.5a1 1 0 0 1 1.414-1.414L9 8.586V3a1 1 0 0 1 1-1Z" />
         </svg>
-        Message épinglé
+        {{ t('app.messaging.pinnedMessage') }}
       </div>
 
       <div
@@ -99,7 +102,7 @@ const readState = computed(() => {
           class="mb-2 inline-block rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
           :class="mine ? 'text-blue-100' : 'text-blue-300'"
         >
-          Retour séance
+          {{ t('app.messaging.sessionFeedbackBadge') }}
         </span>
 
         <p v-if="message.content" class="whitespace-pre-wrap">{{ message.content }}</p>
@@ -117,8 +120,16 @@ const readState = computed(() => {
             {{ time }}
           </span>
           <span v-if="readState === 'sending'" class="text-[10px] text-blue-100/60">…</span>
-          <span v-else-if="readState === 'sent'" class="text-[10px] text-blue-100/70" title="Envoyé">✓</span>
-          <span v-else-if="readState === 'read'" class="text-[10px] text-blue-200" title="Lu">✓✓</span>
+          <span
+            v-else-if="readState === 'sent'"
+            class="text-[10px] text-blue-100/70"
+            :title="t('app.messaging.sent')"
+          >✓</span>
+          <span
+            v-else-if="readState === 'read'"
+            class="text-[10px] text-blue-200"
+            :title="t('app.messaging.read')"
+          >✓✓</span>
         </div>
       </div>
 

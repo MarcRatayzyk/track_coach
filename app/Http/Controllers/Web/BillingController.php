@@ -35,7 +35,7 @@ class BillingController extends Controller
         if ($user->is_demo) {
             return redirect()
                 ->route('register')
-                ->with('error', 'La démo ne peut pas démarrer un essai. Crée un vrai compte coach.');
+                ->with('error', __('messages.billing.demo_cannot_start_trial'));
         }
 
         $result = BillingAccess::startGenericTrial($user);
@@ -89,7 +89,7 @@ class BillingController extends Controller
         if ($user && $user->is_demo) {
             return redirect()
                 ->route('register', ['plan' => $plan])
-                ->with('error', 'Crée un vrai compte coach pour t’abonner (la démo ne peut pas payer).');
+                ->with('error', __('messages.billing.demo_cannot_subscribe'));
         }
 
         return redirect()->route('register', ['plan' => $plan]);
@@ -149,13 +149,13 @@ class BillingController extends Controller
         if ($user->is_demo) {
             return redirect()
                 ->route('register')
-                ->with('error', 'Les comptes démo ne peuvent pas s’abonner. Crée un vrai compte coach pour t’abonner, ou utilise l’essai 14 jours.');
+                ->with('error', __('messages.billing.demo_cannot_subscribe_long'));
         }
 
         if (! $this->stripeConfigured()) {
             return redirect()
                 ->route('billing.index')
-                ->with('error', 'Stripe n’est pas configuré. Renseigne STRIPE_KEY / STRIPE_SECRET et les price IDs.');
+                ->with('error', __('messages.billing.stripe_not_configured'));
         }
 
         $athleteCount = $user->activeAthleteCount();
@@ -166,7 +166,7 @@ class BillingController extends Controller
                 ->route('billing.index')
                 ->with(
                     'error',
-                    "Avec {$athleteCount} athlète(s), le plan minimum est « ".BillingPlans::get($required)['name'].' ».',
+                    __('messages.billing.plan_minimum_required', ['count' => $athleteCount, 'plan' => BillingPlans::get($required)['name']]),
                 );
         }
 
@@ -174,7 +174,7 @@ class BillingController extends Controller
         if (! $priceId) {
             return redirect()
                 ->route('billing.index')
-                ->with('error', 'Price ID Stripe manquant pour ce plan (STRIPE_PRICE_*).');
+                ->with('error', __('messages.billing.stripe_price_missing'));
         }
 
         $request->session()->forget('subscribe_plan');
@@ -186,7 +186,7 @@ class BillingController extends Controller
 
                 return redirect()
                     ->route('billing.index')
-                    ->with('success', 'Abonnement mis à jour.');
+                    ->with('success', __('messages.billing.subscription_updated'));
             }
 
             return $this->redirectToCheckout(
@@ -204,7 +204,7 @@ class BillingController extends Controller
         } catch (Throwable $exception) {
             report($exception);
 
-            $message = 'Impossible de démarrer le paiement Stripe. Réessaie ou contacte le support.';
+            $message = __('messages.billing.checkout_failed');
             if (config('app.debug')) {
                 $message .= ' ('.$exception->getMessage().')';
             }
@@ -241,7 +241,7 @@ class BillingController extends Controller
 
         return redirect()
             ->route('dashboard')
-            ->with('success', 'Abonnement activé. Bienvenue !');
+            ->with('success', __('messages.billing.subscription_activated'));
     }
 
     public function portal(Request $request): SymfonyResponse|RedirectResponse
@@ -254,7 +254,7 @@ class BillingController extends Controller
         }
 
         if (! $this->stripeConfigured() || ! $user->stripe_id) {
-            return back()->with('error', 'Aucun client Stripe associé à ce compte.');
+            return back()->with('error', __('messages.billing.no_stripe_customer'));
         }
 
         return $user->redirectToBillingPortal(route('billing.index'));

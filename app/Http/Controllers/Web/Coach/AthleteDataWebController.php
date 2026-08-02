@@ -39,7 +39,7 @@ class AthleteDataWebController extends Controller
 
         return redirect()
             ->route('athletes.show', $athlete)
-            ->with('success', 'Profil athlète mis à jour.');
+            ->with('success', __('messages.athletes.profile_updated'));
     }
 
     public function updateOwnProfile(UpdateOwnAthleteProfileRequest $request, User $athlete): RedirectResponse
@@ -51,7 +51,7 @@ class AthleteDataWebController extends Controller
             AthleteProfileSupport::attributesFromValidated($validated),
         );
 
-        return back()->with('success', 'Profil mis à jour.');
+        return back()->with('success', __('messages.athletes.profile_updated_self'));
     }
 
     public function storePr(StorePersonalRecordRequest $request, User $athlete): RedirectResponse
@@ -73,7 +73,7 @@ class AthleteDataWebController extends Controller
             ? back()
             : redirect()->route('athletes.show', $athlete);
 
-        return $redirect->with('success', 'PR ajouté.');
+        return $redirect->with('success', __('messages.records.pr_added'));
     }
 
     public function storeCompetition(StoreCompetitionRequest $request, User $athlete): RedirectResponse
@@ -86,7 +86,7 @@ class AthleteDataWebController extends Controller
         ]);
 
         return $this->competitionRedirect($request->user(), $athlete)
-            ->with('success', 'Compétition ajoutée.');
+            ->with('success', __('messages.competitions.added'));
     }
 
     public function updateCompetition(
@@ -103,7 +103,7 @@ class AthleteDataWebController extends Controller
         $competition->update($request->competitionPayload());
 
         return $this->competitionRedirect($request->user(), $athlete)
-            ->with('success', 'Compétition mise à jour.');
+            ->with('success', __('messages.competitions.updated'));
     }
 
     public function destroyCompetition(User $athlete, Competition $competition): RedirectResponse
@@ -118,7 +118,7 @@ class AthleteDataWebController extends Controller
         $competition->delete();
 
         return $this->competitionRedirect($user, $athlete)
-            ->with('success', 'Compétition supprimée.');
+            ->with('success', __('messages.competitions.deleted'));
     }
 
     public function storeTrainingSession(UpsertTrainingSessionRequest $request, User $athlete): RedirectResponse
@@ -130,7 +130,7 @@ class AthleteDataWebController extends Controller
         $session->save();
 
         return $this->trainingSessionRedirect($request->user(), $athlete)
-            ->with('success', 'Séance enregistrée.');
+            ->with('success', __('messages.sessions.saved'));
     }
 
     public function updateTrainingSession(
@@ -148,7 +148,7 @@ class AthleteDataWebController extends Controller
         $trainingSession->save();
 
         return $this->trainingSessionRedirect($request->user(), $athlete)
-            ->with('success', 'Séance mise à jour.');
+            ->with('success', __('messages.sessions.updated'));
     }
 
     public function destroyTrainingSession(
@@ -170,7 +170,7 @@ class AthleteDataWebController extends Controller
         $trainingSession->delete();
 
         return $this->trainingSessionRedirect($user, $athlete)
-            ->with('success', 'Séance supprimée.');
+            ->with('success', __('messages.sessions.deleted'));
     }
 
     private function trainingSessionRedirect(User $user, User $athlete): RedirectResponse

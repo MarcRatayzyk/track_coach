@@ -1,5 +1,7 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
+const { t } = useI18n();
 
 const props = defineProps({
   modelValue: { type: String, default: 'all' },
@@ -22,21 +24,21 @@ const emit = defineEmits(['update:modelValue', 'update:search']);
 const filters = computed(() => {
   if (props.mode === 'athlete') {
     return [
-      { value: 'all', label: 'Tous' },
-      { value: 'pending', label: 'En attente' },
-      { value: 'done', label: 'Répondus' },
+      { value: 'all', label: t('app.feedbacks.filterAll') },
+      { value: 'pending', label: t('app.dashboard.waiting') },
+      { value: 'done', label: t('app.feedbacks.replied') },
     ];
   }
   return [
-    { value: 'all', label: 'Tous' },
-    { value: 'today', label: 'Aujourd’hui' },
-    { value: 'overdue', label: 'En retard' },
-    { value: 'done', label: 'Répondus' },
+    { value: 'all', label: t('app.feedbacks.filterAll') },
+    { value: 'today', label: t('app.dashboard.today') },
+    { value: 'overdue', label: t('app.feedbacks.overdue') },
+    { value: 'done', label: t('app.feedbacks.replied') },
   ];
 });
 
 const searchPlaceholder = computed(() =>
-  props.mode === 'athlete' ? 'Rechercher une séance…' : 'Rechercher un athlète…',
+  props.mode === 'athlete' ? t('app.feedbacks.searchSession') : t('app.feedbacks.searchAthlete'),
 );
 </script>
 

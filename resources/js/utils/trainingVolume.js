@@ -1,23 +1,28 @@
+import i18n from '../i18n';
 import { cellDate, cellKey, WEEKDAY_LABELS } from './programBuilder';
 import { formatCalendarFr } from './formatDates';
+
+function tt(key) {
+  return i18n.global.t(key);
+}
 
 const LIFTS = ['squat', 'bench', 'deadlift'];
 
 export const REP_FORMAT_OPTIONS = [
-  { value: 'all', label: 'Tous' },
-  { value: 'single', label: 'Single' },
-  { value: 'double', label: 'Double' },
-  { value: 'triple', label: 'Triple' },
-  { value: '4', label: '4 reps' },
-  { value: '5', label: '5 reps' },
-  { value: '6plus', label: '6 reps+' },
+  { value: 'all', get label() { return tt('config.lifts.all'); } },
+  { value: 'single', get label() { return tt('config.repFormats.single'); } },
+  { value: 'double', get label() { return tt('config.repFormats.double'); } },
+  { value: 'triple', get label() { return tt('config.repFormats.triple'); } },
+  { value: '4', get label() { return tt('config.repFormats.four'); } },
+  { value: '5', get label() { return tt('config.repFormats.five'); } },
+  { value: '6plus', get label() { return tt('config.repFormats.sixPlus'); } },
 ];
 
 export const MAIN_LIFT_FILTER_OPTIONS = [
-  { value: 'all', label: 'Tous' },
-  { value: 'squat', label: 'Squat' },
-  { value: 'bench', label: 'Bench' },
-  { value: 'deadlift', label: 'Terre' },
+  { value: 'all', get label() { return tt('config.lifts.all'); } },
+  { value: 'squat', get label() { return tt('config.lifts.squat'); } },
+  { value: 'bench', get label() { return tt('config.lifts.bench'); } },
+  { value: 'deadlift', get label() { return tt('config.lifts.deadlift'); } },
 ];
 
 export function repFormatBucket(reps) {

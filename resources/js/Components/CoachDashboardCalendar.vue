@@ -4,6 +4,11 @@ import { router, useForm } from '@inertiajs/vue3';
 import AthleteMonthCalendar from './AthleteMonthCalendar.vue';
 import SectionHeader from './Dashboard/SectionHeader.vue';
 import { formatCalendarFr } from '../utils/formatDates';
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../i18n';
+
+const { t, locale } = useI18n();
+
 
 const props = defineProps({
   reminders: {
@@ -43,17 +48,17 @@ onMounted(() => {
   }
 });
 
-const views = [
-  { key: 'agenda', label: 'Agenda' },
-  { key: 'month', label: 'Mois' },
-  { key: 'planning', label: 'Planning' },
-];
+const views = computed(() => [
+  { key: 'agenda', label: t('athleteUi.calendar.agenda') },
+  { key: 'month', label: t('athleteUi.calendar.month') },
+  { key: 'planning', label: t('athleteUi.calendar.planning') },
+]);
 
-const ranges = [
-  { key: 'today', label: "Aujourd'hui" },
-  { key: 'week', label: 'Cette semaine' },
-  { key: 'month', label: 'Ce mois' },
-];
+const ranges = computed(() => [
+  { key: 'today', label: t('athleteUi.calendar.today') },
+  { key: 'week', label: t('athleteUi.calendar.thisWeek') },
+  { key: 'month', label: t('athleteUi.calendar.thisMonth') },
+]);
 
 function openCreateForm() {
   editingReminder.value = null;
@@ -100,7 +105,7 @@ function submitReminder() {
 }
 
 function deleteReminder(reminder) {
-  if (!window.confirm('Supprimer ce rappel ?')) {
+  if (!window.confirm(t('athleteUi.calendar.confirmDeleteReminder'))) {
     return;
   }
 
@@ -143,38 +148,38 @@ function inRange(dateStr) {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 }
 
-const typeMeta = {
+const typeMeta = computed(() => ({
   competition: {
-    label: 'Compétition',
+    label: t('athleteUi.calendar.typeCompetition'),
     class: 'border-rose-500/35 bg-rose-950/25 text-rose-200',
     dot: 'bg-rose-400',
   },
   reminder: {
-    label: 'Rappel',
+    label: t('athleteUi.calendar.typeReminder'),
     class: 'border-blue-500/35 bg-blue-950/25 text-blue-200',
     dot: 'bg-blue-400',
   },
   block_start: {
-    label: 'Début de programme',
+    label: t('athleteUi.calendar.typeBlockStart'),
     class: 'border-emerald-500/35 bg-emerald-950/20 text-emerald-200',
     dot: 'bg-emerald-400',
   },
   block_end: {
-    label: 'Fin de bloc',
+    label: t('athleteUi.calendar.typeBlockEnd'),
     class: 'border-amber-500/35 bg-amber-950/20 text-amber-200',
     dot: 'bg-amber-400',
   },
   feedback_due: {
-    label: 'Retour attendu',
+    label: t('athleteUi.calendar.typeFeedbackDue'),
     class: 'border-indigo-500/35 bg-indigo-950/20 text-indigo-200',
     dot: 'bg-indigo-400',
   },
   session: {
-    label: 'Séance importante',
+    label: t('athleteUi.calendar.typeImportantSession'),
     class: 'border-violet-500/35 bg-violet-950/20 text-violet-200',
     dot: 'bg-violet-400',
   },
-};
+}));
 
 const unifiedEvents = computed(() => {
   const events = [];
@@ -183,7 +188,7 @@ const unifiedEvents = computed(() => {
     events.push({
       id: `comp-${c.id ?? c.name}-${c.competition_date ?? c.date}`,
       date: dateKey(c.competition_date ?? c.date),
-      title: c.name ?? 'Compétition',
+      title: c.name ?? t('athleteUi.calendar.competition'),
       subtitle: c.athlete?.name ?? c.athlete_name ?? '',
       type: 'competition',
       raw: c,
@@ -208,7 +213,7 @@ const unifiedEvents = computed(() => {
     events.push({
       id: `block-${b.id ?? b.date}-${b.title ?? b.label}`,
       date: dateKey(b.date ?? b.event_date ?? b.start_date),
-      title: b.title ?? b.label ?? (isEnd ? 'Fin de bloc' : 'Début de programme'),
+      title: b.title ?? b.label ?? (isEnd ? t('athleteUi.calendar.typeBlockEnd') : t('athleteUi.calendar.typeBlockStart')),
       subtitle: b.athlete_name ?? b.athlete?.name ?? '',
       type: isEnd ? 'block_end' : 'block_start',
       raw: b,
@@ -230,7 +235,7 @@ const planningDays = computed(() => {
     const key = d.toISOString().slice(0, 10);
     return {
       key,
-      label: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }),
+      label: d.toLocaleDateString(localeTag(locale.value), { weekday: 'short', day: 'numeric' }),
       isToday: key === today,
       events: unifiedEvents.value.filter((e) => e.date === key),
     };
@@ -247,8 +252,8 @@ watch(view, (v) => {
 <template>
   <section class="rounded-[20px] border border-slate-800/80 bg-slate-900/50 p-4 shadow-lg backdrop-blur-sm sm:p-5">
     <SectionHeader
-      eyebrow="Planning"
-      title="Calendrier"
+      :eyebrow="t('athleteUi.calendar.planningEyebrow')"
+      :title="t('athleteUi.calendar.calendarTitle')"
     >
       <template #actions>
         <button
@@ -256,7 +261,7 @@ watch(view, (v) => {
           class="rounded-[12px] border border-blue-500/40 bg-blue-950/30 px-3 py-1.5 text-xs font-semibold text-blue-200 transition hover:bg-blue-950/50"
           @click="openCreateForm"
         >
-          + Rappel
+          {{ t('athleteUi.calendar.addReminder') }}
         </button>
       </template>
     </SectionHeader>
@@ -313,10 +318,10 @@ watch(view, (v) => {
       @submit.prevent="submitReminder"
     >
       <p class="text-xs font-semibold text-white">
-        {{ editingReminder ? 'Modifier le rappel' : 'Nouveau rappel' }}
+        {{ editingReminder ? t('athleteUi.calendar.editReminder') : t('athleteUi.calendar.newReminder') }}
       </p>
       <label class="block text-xs text-slate-400">
-        Titre
+        {{ t('athleteUi.calendar.title') }}
         <input
           v-model="form.title"
           type="text"
@@ -325,7 +330,7 @@ watch(view, (v) => {
         />
       </label>
       <label class="block text-xs text-slate-400">
-        Date
+        {{ t('common.date') }}
         <input
           v-model="form.event_date"
           type="date"
@@ -334,19 +339,19 @@ watch(view, (v) => {
         />
       </label>
       <label class="block text-xs text-slate-400">
-        Athlète (optionnel)
+        {{ t('athleteUi.calendar.athleteOptional') }}
         <select
           v-model="form.athlete_id"
           class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
         >
-          <option value="">Aucun</option>
+          <option value="">{{ t('athleteUi.calendar.none') }}</option>
           <option v-for="athlete in rosterAthletes" :key="athlete.id" :value="athlete.id">
             {{ athlete.name }}
           </option>
         </select>
       </label>
       <label class="block text-xs text-slate-400">
-        Notes
+        {{ t('athleteUi.calendar.notes') }}
         <textarea
           v-model="form.notes"
           rows="2"
@@ -359,7 +364,7 @@ watch(view, (v) => {
           class="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500"
           :disabled="form.processing"
         >
-          Enregistrer
+          {{ t('common.save') }}
         </button>
         <button
           v-if="editingReminder"
@@ -367,14 +372,14 @@ watch(view, (v) => {
           class="rounded-lg border border-red-500/30 px-3 py-2 text-xs text-red-300 hover:bg-red-500/10"
           @click="deleteReminder(editingReminder)"
         >
-          Supprimer
+          {{ t('common.delete') }}
         </button>
         <button
           type="button"
           class="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800"
           @click="showForm = false"
         >
-          Annuler
+          {{ t('common.cancel') }}
         </button>
       </div>
     </form>
@@ -385,7 +390,7 @@ watch(view, (v) => {
         v-if="!filteredEvents.length"
         class="rounded-[16px] border border-dashed border-slate-700 px-4 py-8 text-center text-sm text-slate-500"
       >
-        Aucun événement sur cette période.
+        {{ t('athleteUi.calendar.noEvents') }}
       </p>
       <button
         v-for="event in filteredEvents"
@@ -462,7 +467,7 @@ watch(view, (v) => {
         :reminders="reminders"
       />
       <div v-if="filteredEvents.length" class="mt-4 space-y-2">
-        <p class="text-xs font-semibold text-slate-400">Événements filtrés</p>
+        <p class="text-xs font-semibold text-slate-400">{{ t('athleteUi.calendar.filteredEvents') }}</p>
         <div class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           <div
             v-for="event in filteredEvents.slice(0, 12)"

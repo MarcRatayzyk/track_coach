@@ -1,5 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   file: {
@@ -30,7 +33,7 @@ const kind = computed(() => {
   return 'file';
 });
 
-const label = computed(() => props.file?.original_name || 'Fichier');
+const label = computed(() => props.file?.original_name || t('app.messaging.file'));
 </script>
 
 <template>
@@ -58,7 +61,7 @@ const label = computed(() => props.file?.original_name || 'Fichier');
       </div>
       <div class="min-w-0">
         <p class="truncate text-sm font-medium text-white">{{ label }}</p>
-        <p class="text-xs text-slate-500">Aperçu vidéo</p>
+        <p class="text-xs text-slate-500">{{ t('app.messaging.videoPreview') }}</p>
       </div>
     </a>
 
@@ -80,7 +83,7 @@ const label = computed(() => props.file?.original_name || 'Fichier');
       </div>
       <div class="min-w-0">
         <p class="truncate text-sm font-medium text-white">{{ label }}</p>
-        <p class="text-xs text-slate-500">Document PDF</p>
+        <p class="text-xs text-slate-500">{{ t('app.messaging.pdfDocument') }}</p>
       </div>
     </a>
 

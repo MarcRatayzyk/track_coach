@@ -1,6 +1,9 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   modelValue: {
@@ -74,16 +77,16 @@ function submit() {
         <div class="flex items-start justify-between gap-4">
           <div>
             <h2 id="bug-report-title" class="text-base font-semibold text-white">
-              Signaler un problème
+              {{ t('modals.bugReport.title') }}
             </h2>
             <p class="mt-1 text-sm text-slate-400">
-              Bug, correctif ou idée : on lit chaque signalement.
+              {{ t('modals.bugReport.subtitle') }}
             </p>
           </div>
           <button
             type="button"
             class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-            aria-label="Fermer"
+            :aria-label="t('modals.bugReport.close')"
             @click="closeModal"
           >
             ✕
@@ -92,49 +95,49 @@ function submit() {
 
         <form class="mt-5 space-y-4" @submit.prevent="submit">
           <label class="block text-sm font-medium text-slate-400">
-            Titre
+            {{ t('modals.bugReport.titleLabel') }}
             <input
               v-model="form.title"
               type="text"
               required
               maxlength="160"
               class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              placeholder="Ex. Impossible d’enregistrer un retour"
+              :placeholder="t('modals.bugReport.titlePlaceholder')"
             >
             <p v-if="form.errors.title" class="mt-1 text-sm text-red-400">{{ form.errors.title }}</p>
           </label>
 
           <label class="block text-sm font-medium text-slate-400">
-            Catégorie
+            {{ t('modals.bugReport.category') }}
             <select
               v-model="form.category"
               required
               class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
             >
-              <option value="bug">Bug</option>
-              <option value="fix">Correctif</option>
-              <option value="idea">Idée</option>
-              <option value="other">Autre</option>
+              <option value="bug">{{ t('modals.bugReport.categories.bug') }}</option>
+              <option value="fix">{{ t('modals.bugReport.categories.fix') }}</option>
+              <option value="idea">{{ t('modals.bugReport.categories.idea') }}</option>
+              <option value="other">{{ t('modals.bugReport.categories.other') }}</option>
             </select>
             <p v-if="form.errors.category" class="mt-1 text-sm text-red-400">{{ form.errors.category }}</p>
           </label>
 
           <label class="block text-sm font-medium text-slate-400">
-            Description
+            {{ t('modals.bugReport.description') }}
             <textarea
               v-model="form.description"
               required
               rows="5"
               maxlength="5000"
               class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              placeholder="Que s’est-il passé ? Sur quelle page ? Étapes pour reproduire…"
+              :placeholder="t('modals.bugReport.descriptionPlaceholder')"
             />
             <p v-if="form.errors.description" class="mt-1 text-sm text-red-400">{{ form.errors.description }}</p>
           </label>
 
           <label class="block text-sm font-medium text-slate-400">
-            Capture d’écran
-            <span class="font-normal text-slate-500">(optionnel, max 4 Mo)</span>
+            {{ t('modals.bugReport.screenshot') }}
+            <span class="font-normal text-slate-500">{{ t('modals.bugReport.screenshotHint') }}</span>
             <input
               ref="fileInput"
               type="file"
@@ -151,14 +154,14 @@ function submit() {
               :disabled="form.processing"
               class="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
             >
-              {{ form.processing ? 'Envoi…' : 'Envoyer' }}
+              {{ form.processing ? t('modals.bugReport.sending') : t('modals.bugReport.submit') }}
             </button>
             <button
               type="button"
               class="rounded-xl border border-slate-600 px-6 py-3 font-medium text-slate-200 hover:bg-slate-800"
               @click="closeModal"
             >
-              Annuler
+              {{ t('modals.bugReport.cancel') }}
             </button>
           </div>
         </form>

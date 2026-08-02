@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ExercisePrescriptionEditor from './ExercisePrescriptionEditor.vue';
 import { MAIN_LIFTS, defaultLiftName, emptyExerciseLine, formatPrescription } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const block = defineModel({ type: Object, required: true });
 
@@ -22,7 +25,7 @@ const summary = computed(() => {
       parts.push(`Acc: ${formatPrescription(acc)}`);
     }
   }
-  return parts.join(' · ') || 'Série vide';
+  return parts.join(' · ') || t('programBuilder.sessionLift.emptySeries');
 });
 
 function setLift(lift) {
@@ -77,21 +80,21 @@ function expandBlock() {
           class="text-xs font-medium text-blue-400 hover:text-blue-300"
           @click="expandBlock"
         >
-          Modifier
+          {{ t('programBuilder.sessionLift.edit') }}
         </button>
         <button
           type="button"
           class="text-xs text-red-400 hover:text-red-300"
           @click="emit('remove')"
         >
-          Supprimer
+          {{ t('common.delete') }}
         </button>
       </div>
     </div>
 
     <div v-else class="space-y-4 p-4">
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Main lift</p>
+        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ t('programBuilder.sessionLift.mainLift') }}</p>
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="lift in MAIN_LIFTS"
@@ -110,18 +113,18 @@ function expandBlock() {
         </div>
       </div>
 
-      <ExercisePrescriptionEditor v-model="block.topset" title="Top set" :lift="block.lift" accent="emerald" />
+      <ExercisePrescriptionEditor v-model="block.topset" :title="t('programBuilder.sessionLift.topSet')" :lift="block.lift" accent="emerald" />
 
       <div class="space-y-3">
         <div class="flex items-center justify-between gap-2">
-          <h4 class="text-sm font-semibold text-white">Backoff</h4>
+          <h4 class="text-sm font-semibold text-white">{{ t('programBuilder.sessionLift.backoff') }}</h4>
           <button
             v-if="!block.backoff"
             type="button"
             class="text-xs font-medium text-blue-400 hover:text-blue-300"
             @click="enableBackoff"
           >
-            + Ajouter backoff
+            {{ t('programBuilder.sessionLift.addBackoff') }}
           </button>
           <button
             v-else
@@ -129,13 +132,13 @@ function expandBlock() {
             class="text-xs text-red-400 hover:text-red-300"
             @click="removeBackoff"
           >
-            Retirer backoff
+            {{ t('programBuilder.sessionLift.removeBackoff') }}
           </button>
         </div>
         <ExercisePrescriptionEditor
           v-if="block.backoff"
           v-model="block.backoff"
-          title="Backoff"
+:title="t('programBuilder.sessionLift.backoff')"
           :lift="block.lift"
           accent="slate"
         />
@@ -143,13 +146,13 @@ function expandBlock() {
 
       <div class="space-y-3">
         <div class="flex items-center justify-between gap-2">
-          <h4 class="text-sm font-semibold text-white">Accessoires</h4>
+          <h4 class="text-sm font-semibold text-white">{{ t('programBuilder.sessionLift.accessories') }}</h4>
           <button
             type="button"
             class="text-xs font-medium text-blue-400 hover:text-blue-300"
             @click="addAccessory"
           >
-            + Accessoire
+            {{ t('programBuilder.sessionLift.addAccessory') }}
           </button>
         </div>
         <div v-if="block.accessories?.length" class="space-y-3">
@@ -167,13 +170,13 @@ function expandBlock() {
             </button>
             <ExercisePrescriptionEditor
               v-model="block.accessories[index]"
-              :title="`Accessoire ${index + 1}`"
+              :title="t('programBuilder.sessionLift.accessoryN', { n: index + 1 })"
               :lift="block.lift"
               accent="zinc"
             />
           </div>
         </div>
-        <p v-else class="text-xs text-slate-500">Aucun accessoire.</p>
+        <p v-else class="text-xs text-slate-500">{{ t('programBuilder.sessionLift.noAccessory') }}</p>
       </div>
 
       <div class="flex flex-wrap gap-2 border-t border-slate-800 pt-4">
@@ -182,14 +185,14 @@ function expandBlock() {
           class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
           @click="confirmBlock"
         >
-          Valider cette série
+          {{ t('programBuilder.sessionLift.confirmSeries') }}
         </button>
         <button
           type="button"
           class="rounded-xl border border-red-500/50 px-4 py-2 text-sm text-red-300 hover:bg-red-950/40"
           @click="emit('remove')"
         >
-          Annuler
+          {{ t('common.cancel') }}
         </button>
       </div>
     </div>

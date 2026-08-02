@@ -7,6 +7,7 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import CustomExercisesModal from '../Components/CustomExercisesModal.vue';
@@ -15,6 +16,7 @@ import ReadinessFormBuilderModal from '../Components/ReadinessFormBuilderModal.v
 import UiIcon from '../Components/UiIcon.vue';
 import { COACH_SPECIALTY_OPTIONS } from '../config/ipfWeightCategories';
 import { DAY_TABLE_COLUMNS } from '../config/dayTableColumns';
+const { t } = useI18n();
 
 const props = defineProps({
   coach: {
@@ -83,7 +85,7 @@ function columnLabel(columnId) {
 function layoutColumnsLabel(layout) {
   const columns = layout?.columns ?? [];
   if (!columns.length) {
-    return 'Aucune colonne';
+    return t('app.coachProfile.noColumns');
   }
   return columns.map(columnLabel).join(' · ');
 }
@@ -126,7 +128,7 @@ function submitProfile() {
     <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg">
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-widest text-blue-400">Profil coach</p>
+          <p class="text-xs font-semibold uppercase tracking-widest text-blue-400">{{ t('app.coachProfile.eyebrow') }}</p>
           <h1 class="mt-1 text-2xl font-bold text-white">{{ coach.name }}</h1>
           <p v-if="coach.club_gym" class="mt-1 text-sm text-slate-400">{{ coach.club_gym }}</p>
         </div>
@@ -151,7 +153,7 @@ function submitProfile() {
 
       <dl class="mt-4 space-y-3 text-sm">
         <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-          <dt class="text-slate-500">Expérience</dt>
+          <dt class="text-slate-500">{{ t('app.coachProfile.experience') }}</dt>
           <dd class="font-semibold text-white">
             <template v-if="coach.years_experience != null">
               {{ coach.years_experience }} an{{ coach.years_experience > 1 ? 's' : '' }}
@@ -160,13 +162,13 @@ function submitProfile() {
           </dd>
         </div>
         <div class="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-          <dt class="text-slate-500">Certifications</dt>
+          <dt class="text-slate-500">{{ t('app.coachProfile.certifications') }}</dt>
           <dd class="mt-1 whitespace-pre-wrap font-semibold text-white">
             {{ coach.certifications || '—' }}
           </dd>
         </div>
         <div class="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
-          <dt class="text-slate-500">Club / salle</dt>
+          <dt class="text-slate-500">{{ t('app.coachProfile.clubGym') }}</dt>
           <dd class="mt-1 font-semibold text-white">{{ coach.club_gym || '—' }}</dd>
         </div>
         <div class="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
@@ -181,7 +183,7 @@ function submitProfile() {
         class="mt-4 w-full rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-2.5 text-sm font-semibold text-blue-300 transition hover:bg-blue-500/20"
         @click="showEditForm = true"
       >
-        Modifier le profil
+        {{ t('app.coachProfile.editProfile') }}
       </button>
 
       <form
@@ -189,7 +191,7 @@ function submitProfile() {
         class="mt-4 space-y-3 rounded-lg border border-slate-800 bg-slate-950/50 p-3"
         @submit.prevent="submitProfile"
       >
-        <p class="text-xs font-semibold text-white">Modifier le profil</p>
+        <p class="text-xs font-semibold text-white">{{ t('app.coachProfile.editProfile') }}</p>
         <label class="block text-xs text-slate-400">
           Bio
           <textarea
@@ -199,7 +201,7 @@ function submitProfile() {
           />
         </label>
         <div>
-          <p class="text-xs text-slate-400">Spécialités</p>
+          <p class="text-xs text-slate-400">{{ t('app.coachProfile.specialties') }}</p>
           <div class="mt-2 flex flex-wrap gap-2">
             <button
               v-for="option in COACH_SPECIALTY_OPTIONS"
@@ -218,7 +220,7 @@ function submitProfile() {
           </div>
         </div>
         <label class="block text-xs text-slate-400">
-          Années d'expérience
+          {{ t('auth.accountSetup.yearsExperience') }}
           <input
             v-model.number="profileForm.years_experience"
             type="number"
@@ -228,7 +230,7 @@ function submitProfile() {
           />
         </label>
         <label class="block text-xs text-slate-400">
-          Certifications
+          {{ t('app.coachProfile.certifications') }}
           <textarea
             v-model="profileForm.certifications"
             rows="2"
@@ -236,7 +238,7 @@ function submitProfile() {
           />
         </label>
         <label class="block text-xs text-slate-400">
-          Club / salle
+          {{ t('app.coachProfile.clubGym') }}
           <input
             v-model="profileForm.club_gym"
             type="text"
@@ -249,34 +251,34 @@ function submitProfile() {
             class="flex-1 rounded-lg border border-slate-600 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800"
             @click="cancelEdit"
           >
-            Annuler
+            {{ t('common.cancel') }}
           </button>
           <button
             type="submit"
             class="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500"
             :disabled="profileForm.processing"
           >
-            Enregistrer
+            {{ t('common.save') }}
           </button>
         </div>
       </form>
     </div>
 
-    <!-- Configuration (uniquement pour le coach propriétaire) -->
+    <!-- {{ t('app.coachProfile.configuration') }} (uniquement pour le coach propriétaire) -->
     <template v-if="canEdit">
       <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg">
-        <h2 class="text-sm font-semibold text-white">Configuration</h2>
+        <h2 class="text-sm font-semibold text-white">{{ t('app.coachProfile.configuration') }}</h2>
         <p class="mt-1 text-xs text-slate-500">
           Paramètres par défaut appliqués à ta roster et à tes programmes.
         </p>
 
         <div class="mt-4 space-y-3">
-          <!-- Questionnaires quotidiens -->
+          <!-- {{ t('app.coachProfile.dailyQuestionnaires') }} -->
           <div
             class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3"
           >
             <div class="min-w-0">
-              <p class="text-sm font-medium text-white">Questionnaires quotidiens</p>
+              <p class="text-sm font-medium text-white">{{ t('app.coachProfile.dailyQuestionnaires') }}</p>
               <p class="mt-0.5 text-xs text-slate-400">
                 Formulaire facteurs externes par défaut
                 <span class="text-slate-500">({{ readinessFieldCount }} champs)</span>
@@ -295,7 +297,7 @@ function submitProfile() {
           <div class="rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div class="min-w-0">
-                <p class="text-sm font-medium text-white">Table programme</p>
+                <p class="text-sm font-medium text-white">{{ t('app.coachProfile.programTable') }}</p>
                 <p class="mt-0.5 text-xs text-slate-400">
                   Colonnes et modes d’affichage des séances
                 </p>
@@ -337,7 +339,7 @@ function submitProfile() {
             class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3"
           >
             <div class="min-w-0">
-              <p class="text-sm font-medium text-white">Banque d’exercices</p>
+              <p class="text-sm font-medium text-white">{{ t('app.coachProfile.exerciseBank') }}</p>
               <p class="mt-0.5 text-xs text-slate-400">
                 {{ exerciseCounts.total }} exercices
                 <span class="text-slate-500">
@@ -362,7 +364,7 @@ function submitProfile() {
       v-if="canEdit"
       :open="showReadinessBuilder"
       mode="template"
-      title="Formulaire facteurs externes par défaut"
+      :title="t('app.athletes.defaultReadinessForm')"
       :initial-fields="coachReadinessForm?.fields ?? []"
       @close="showReadinessBuilder = false"
     />

@@ -1,9 +1,12 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { markCoachOnboardingDone } from '../utils/coachOnboarding';
 import { track } from '../utils/analytics';
 import AppLogo from './AppLogo.vue';
 import UiIcon from './UiIcon.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   modelValue: {
@@ -16,59 +19,53 @@ const emit = defineEmits(['update:modelValue', 'skip', 'add-athlete']);
 
 const currentStep = ref(0);
 
-const steps = [
+const steps = computed(() => [
   {
     icon: 'logo',
-    title: 'Bienvenue sur Power Roster',
-    description:
-      'Tu viens de créer ton espace coach. En quelques étapes, découvre comment structurer ton coaching powerlifting.',
+    title: t('modals.onboarding.steps.welcomeTitle'),
+    description: t('modals.onboarding.steps.welcomeDesc'),
     accent: 'text-blue-400',
     ring: 'border-blue-500/30 bg-blue-600/10',
   },
   {
     icon: 'users',
-    title: 'Ta roster d’athlètes',
-    description:
-      'Ajoute tes athlètes : un lien d’activation est toujours généré pour toi (WhatsApp, SMS…). Si tu renseignes leur e-mail, l’invitation part aussi par mail.',
+    title: t('modals.onboarding.steps.rosterTitle'),
+    description: t('modals.onboarding.steps.rosterDesc'),
     accent: 'text-emerald-400',
     ring: 'border-emerald-500/30 bg-emerald-600/10',
   },
   {
     icon: 'clipboard',
-    title: 'Programmes & blocs',
-    description:
-      'Construis des templates de force dans le Program Builder, puis assigne-les à chaque athlète avec des dates de début et de fin.',
+    title: t('modals.onboarding.steps.programsTitle'),
+    description: t('modals.onboarding.steps.programsDesc'),
     accent: 'text-violet-400',
     ring: 'border-violet-500/30 bg-violet-600/10',
   },
   {
     icon: 'video',
-    title: 'Retours vidéo',
-    description:
-      'Tes athlètes envoient des vidéos de séance. Tu les retrouves sur le dashboard et tu peux y répondre via la messagerie.',
+    title: t('modals.onboarding.steps.videoTitle'),
+    description: t('modals.onboarding.steps.videoDesc'),
     accent: 'text-amber-400',
     ring: 'border-amber-500/30 bg-amber-600/10',
   },
   {
     icon: 'chat',
-    title: 'Messagerie intégrée',
-    description:
-      'Échange avec chaque athlète sans quitter l’app — consignes, retours audio et suivi au quotidien.',
+    title: t('modals.onboarding.steps.messagingTitle'),
+    description: t('modals.onboarding.steps.messagingDesc'),
     accent: 'text-cyan-400',
     ring: 'border-cyan-500/30 bg-cyan-600/10',
   },
   {
     icon: 'trophy',
-    title: 'C’est parti !',
-    description:
-      'Commence par inviter ton premier athlète. Le dashboard se remplira automatiquement au fur et à mesure.',
+    title: t('modals.onboarding.steps.readyTitle'),
+    description: t('modals.onboarding.steps.readyDesc'),
     accent: 'text-blue-400',
     ring: 'border-blue-500/30 bg-blue-600/10',
   },
-];
+]);
 
-const step = computed(() => steps[currentStep.value]);
-const isLastStep = computed(() => currentStep.value === steps.length - 1);
+const step = computed(() => steps.value[currentStep.value]);
+const isLastStep = computed(() => currentStep.value === steps.value.length - 1);
 const isFirstStep = computed(() => currentStep.value === 0);
 
 watch(
@@ -124,14 +121,14 @@ function back() {
       >
         <div class="flex items-start justify-between gap-4">
           <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">
-            Découverte · {{ currentStep + 1 }} / {{ steps.length }}
+            {{ t('modals.onboarding.discovery', { current: currentStep + 1, total: steps.length }) }}
           </p>
           <button
             type="button"
             class="rounded-lg px-2 py-1 text-sm text-slate-400 hover:bg-slate-800 hover:text-white"
             @click="skip"
           >
-            Passer
+            {{ t('modals.onboarding.skip') }}
           </button>
         </div>
 
@@ -172,7 +169,7 @@ function back() {
             class="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
             @click="back"
           >
-            Retour
+            {{ t('common.back') }}
           </button>
           <span v-else />
 
@@ -182,14 +179,14 @@ function back() {
               class="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
               @click="skip"
             >
-              Passer
+              {{ t('modals.onboarding.skip') }}
             </button>
             <button
               type="button"
               class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
               @click="next"
             >
-              {{ isLastStep ? 'Ajouter un athlète' : 'Suivant' }}
+              {{ isLastStep ? t('modals.onboarding.addAthlete') : t('common.next') }}
               <span v-if="!isLastStep" aria-hidden="true">→</span>
             </button>
           </div>

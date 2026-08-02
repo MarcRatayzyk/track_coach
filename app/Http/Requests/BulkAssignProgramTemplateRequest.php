@@ -37,7 +37,7 @@ class BulkAssignProgramTemplateRequest extends FormRequest
                 if (! in_array((int) $athleteId, $rosterIds, true)) {
                     $validator->errors()->add(
                         "athlete_ids.{$index}",
-                        'Un athlète sélectionné n’est pas dans votre roster.',
+                        __('messages.validation.athletes_not_in_roster'),
                     );
                 }
             }

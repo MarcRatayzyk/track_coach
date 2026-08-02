@@ -1,7 +1,13 @@
+import i18n from '../i18n';
+
+function tt(key, params) {
+  return i18n.global.t(key, params);
+}
+
 export const READINESS_FIELD_TYPES = [
-  { value: 'number', label: 'Numérique' },
-  { value: 'text', label: 'Texte' },
-  { value: 'select', label: 'Options' },
+  { value: 'number', get label() { return tt('config.readiness.types.number'); } },
+  { value: 'text', get label() { return tt('config.readiness.types.text'); } },
+  { value: 'select', get label() { return tt('config.readiness.types.select'); } },
 ];
 
 export const READINESS_OPTION_COLORS = [
@@ -15,65 +21,65 @@ export const READINESS_OPTION_COLORS = [
 
 /** Catalogue presets (miroir de ReadinessFormSupport::presetCatalog). */
 export const READINESS_PRESET_CATALOG = [
-  { key: 'steps', label: 'STEPS', type: 'number' },
-  { key: 'kcal', label: 'KCAL', type: 'text' },
+  { key: 'steps', get label() { return tt('config.readiness.presets.steps'); }, type: 'number' },
+  { key: 'kcal', get label() { return tt('config.readiness.presets.kcal'); }, type: 'text' },
   {
     key: 'sommeil',
-    label: 'SOMMEIL',
+    get label() { return tt('config.readiness.presets.sommeil'); },
     type: 'select',
     options: [
-      { value: 'lt_5h', label: '- 5H', color: '#991b1b' },
-      { value: '5_6h', label: '5-6H', color: '#ea580c' },
-      { value: '6_7h', label: '6-7H', color: '#ca8a04' },
-      { value: '7_8h', label: '7-8H', color: '#4ade80' },
-      { value: '8_9h', label: '8-9H', color: '#7dd3fc' },
+      { value: 'lt_5h', get label() { return tt('config.readiness.options.sleepLt5'); }, color: '#991b1b' },
+      { value: '5_6h', get label() { return tt('config.readiness.options.sleep5_6'); }, color: '#ea580c' },
+      { value: '6_7h', get label() { return tt('config.readiness.options.sleep6_7'); }, color: '#ca8a04' },
+      { value: '7_8h', get label() { return tt('config.readiness.options.sleep7_8'); }, color: '#4ade80' },
+      { value: '8_9h', get label() { return tt('config.readiness.options.sleep8_9'); }, color: '#7dd3fc' },
     ],
   },
   {
     key: 'alimentation',
-    label: 'ALIMENTATION',
+    get label() { return tt('config.readiness.presets.alimentation'); },
     type: 'select',
     options: [
-      { value: 'mauvaise', label: 'MAUVAISE', color: '#991b1b' },
-      { value: 'moyenne', label: 'MOYENNE', color: '#ca8a04' },
-      { value: 'bonne', label: 'BONNE', color: '#4ade80' },
+      { value: 'mauvaise', get label() { return tt('config.readiness.options.bad'); }, color: '#991b1b' },
+      { value: 'moyenne', get label() { return tt('config.readiness.options.average'); }, color: '#ca8a04' },
+      { value: 'bonne', get label() { return tt('config.readiness.options.good'); }, color: '#4ade80' },
     ],
   },
   {
     key: 'hydratation',
-    label: 'HYDRATATION',
+    get label() { return tt('config.readiness.presets.hydratation'); },
     type: 'select',
     options: [
-      { value: 'faible', label: 'FAIBLE <1.5L', color: '#991b1b' },
-      { value: 'moyenne', label: 'MOYENNE ~1.5-2L', color: '#ca8a04' },
-      { value: 'bonne', label: 'BON ~2L', color: '#4ade80' },
-      { value: 'excellente', label: 'EXCELLENTE +2.5L', color: '#7dd3fc' },
+      { value: 'faible', get label() { return tt('config.readiness.options.hydrationLow'); }, color: '#991b1b' },
+      { value: 'moyenne', get label() { return tt('config.readiness.options.hydrationMid'); }, color: '#ca8a04' },
+      { value: 'bonne', get label() { return tt('config.readiness.options.hydrationGood'); }, color: '#4ade80' },
+      { value: 'excellente', get label() { return tt('config.readiness.options.hydrationExcellent'); }, color: '#7dd3fc' },
     ],
   },
   {
     key: 'stress_global',
-    label: 'STRESS GLOBAL',
+    get label() { return tt('config.readiness.presets.stressGlobal'); },
     type: 'select',
     options: [
-      { value: 'eleve', label: 'ÉLEVÉ', color: '#991b1b' },
-      { value: 'moyen', label: 'MOYEN', color: '#4ade80' },
-      { value: 'bas', label: 'BAS', color: '#7dd3fc' },
+      { value: 'eleve', get label() { return tt('config.readiness.options.stressHigh'); }, color: '#991b1b' },
+      { value: 'moyen', get label() { return tt('config.readiness.options.stressMid'); }, color: '#4ade80' },
+      { value: 'bas', get label() { return tt('config.readiness.options.stressLow'); }, color: '#7dd3fc' },
     ],
   },
   {
     key: 'motivation',
-    label: 'MOTIVATION',
+    get label() { return tt('config.readiness.presets.motivation'); },
     type: 'select',
     options: [
-      { value: 'faible', label: 'FAIBLE', color: '#991b1b' },
-      { value: 'moyenne', label: 'MOYENNE', color: '#ca8a04' },
-      { value: 'bonne', label: 'BONNE', color: '#4ade80' },
-      { value: 'excellente', label: 'EXCELLENTE', color: '#7dd3fc' },
+      { value: 'faible', get label() { return tt('config.readiness.options.motivationLow'); }, color: '#991b1b' },
+      { value: 'moyenne', get label() { return tt('config.readiness.options.motivationMid'); }, color: '#ca8a04' },
+      { value: 'bonne', get label() { return tt('config.readiness.options.motivationGood'); }, color: '#4ade80' },
+      { value: 'excellente', get label() { return tt('config.readiness.options.motivationExcellent'); }, color: '#7dd3fc' },
     ],
   },
   {
     key: 'forme_physique',
-    label: 'FORME PHYSIQUE',
+    get label() { return tt('config.readiness.presets.formePhysique'); },
     type: 'select',
     options: [
       { value: '1', label: '1', color: '#991b1b' },
@@ -85,7 +91,7 @@ export const READINESS_PRESET_CATALOG = [
   },
   {
     key: 'forme_mentale',
-    label: 'FORME MENTALE',
+    get label() { return tt('config.readiness.presets.formeMentale'); },
     type: 'select',
     options: [
       { value: '1', label: '1', color: '#991b1b' },
@@ -124,7 +130,7 @@ export function cloneFields(fields) {
   return (fields ?? []).map((field, index) => ({
     id: field.id || createFieldId(),
     preset_key: field.preset_key ?? null,
-    label: field.label ?? 'Champ',
+    label: field.label ?? tt('config.readiness.field'),
     type: field.type ?? 'text',
     required: field.required !== false,
     sort_order: field.sort_order ?? index,
@@ -142,7 +148,7 @@ export function emptyCustomField(sortOrder = 0) {
   return {
     id: createFieldId(),
     preset_key: null,
-    label: 'Nouveau champ',
+    label: tt('config.readiness.newField'),
     type: 'text',
     required: true,
     sort_order: sortOrder,
@@ -153,7 +159,7 @@ export function emptyCustomField(sortOrder = 0) {
 export function emptySelectOption() {
   return {
     value: '',
-    label: 'Option',
+    label: tt('config.readiness.option'),
     color: '#64748b',
   };
 }
@@ -188,16 +194,16 @@ export function resolveOptionLabel(field, value) {
 export function validateReadinessFieldsDraft(fields) {
   const errors = [];
   if (!Array.isArray(fields) || fields.length === 0) {
-    errors.push('Ajoute au moins un champ.');
+    errors.push(tt('config.readiness.addAtLeastOne'));
     return errors;
   }
   for (const field of fields) {
     if (!String(field.label ?? '').trim()) {
-      errors.push('Chaque champ doit avoir un libellé.');
+      errors.push(tt('config.readiness.labelRequired'));
       break;
     }
     if (field.type === 'select' && (!field.options || field.options.length === 0)) {
-      errors.push(`« ${field.label} » : ajoute au moins une option.`);
+      errors.push(tt('config.readiness.optionRequired', { label: field.label }));
       break;
     }
   }

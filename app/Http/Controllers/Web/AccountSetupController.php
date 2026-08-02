@@ -21,7 +21,7 @@ class AccountSetupController extends Controller
     public function show(Request $request, User $user): Response|RedirectResponse
     {
         if (! $request->hasValidSignature()) {
-            abort(403, 'Lien invalide ou expiré.');
+            abort(403, __('messages.auth.link_invalid_or_expired'));
         }
 
         if (! in_array($user->role, ['coach', 'athlete'], true)) {
@@ -31,7 +31,7 @@ class AccountSetupController extends Controller
         if ($user->initial_setup_completed_at !== null) {
             return redirect()
                 ->route('login')
-                ->with('success', 'Ce compte est déjà activé. Tu peux te connecter avec ton e-mail et ton mot de passe.');
+                ->with('success', __('messages.auth.account_already_active_login'));
         }
 
         $this->clearAuthenticatedSession($request);
@@ -51,7 +51,7 @@ class AccountSetupController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         if (! $request->hasValidSignature()) {
-            abort(403, 'Lien invalide ou expiré.');
+            abort(403, __('messages.auth.link_invalid_or_expired'));
         }
 
         if (! in_array($user->role, ['coach', 'athlete'], true)) {
@@ -61,7 +61,7 @@ class AccountSetupController extends Controller
         if ($user->initial_setup_completed_at !== null) {
             return redirect()
                 ->route('login')
-                ->with('success', 'Ce compte est déjà activé. Connecte-toi avec ton e-mail et ton mot de passe.');
+                ->with('success', __('messages.auth.account_already_active_signin'));
         }
 
         $validated = $user->role === 'coach'
@@ -120,11 +120,11 @@ class AccountSetupController extends Controller
             $this->clearAuthenticatedSession($request);
 
             if (ActivationDelivery::usesManualLinks()) {
-                $message = 'Compte activé. Connecte-toi avec ton e-mail et ton mot de passe.';
+                $message = __('messages.auth.coach_activated_manual');
             } else {
                 $message = $emailSent
-                    ? 'Compte activé. Connecte-toi puis confirme ton e-mail pour accéder au dashboard.'
-                    : 'Compte activé. Connecte-toi — si tu ne reçois pas l\'e-mail de confirmation, utilise « Renvoyer » sur la page de vérification.';
+                    ? __('messages.auth.coach_activated_confirm_email')
+                    : __('messages.auth.coach_activated_resend_hint');
             }
 
             return redirect()
@@ -132,7 +132,7 @@ class AccountSetupController extends Controller
                 ->with('success', $message);
         }
 
-        $message = 'Compte activé. Tu peux maintenant te connecter avec ton e-mail et ton mot de passe.';
+        $message = __('messages.auth.athlete_activated');
 
         $this->clearAuthenticatedSession($request);
 

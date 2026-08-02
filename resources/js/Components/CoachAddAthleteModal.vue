@@ -1,8 +1,10 @@
 <script setup>
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { track } from '../utils/analytics';
 
+const { t } = useI18n();
 const page = usePage();
 const manualActivationLinks = computed(() => page.props.appConfig?.manualActivationLinks ?? false);
 
@@ -42,19 +44,19 @@ watch(
 
 const inviteTitle = computed(() => {
   if (invitationEmail.value && invitationEmailSent.value !== false && !manualActivationLinks.value) {
-    return 'Invitation envoyée';
+    return t('modals.addAthlete.inviteSentTitle');
   }
-  return 'Lien d’activation';
+  return t('modals.addAthlete.activationLinkTitle');
 });
 
 const inviteMessage = computed(() => {
   if (invitationEmail.value && invitationEmailSent.value === true && !manualActivationLinks.value) {
-    return `Un e-mail d’activation a été envoyé à ${invitationEmail.value}. Tu as aussi le lien ci-dessous à partager (WhatsApp, SMS…). Valable 14 jours.`;
+    return t('modals.addAthlete.inviteEmailSent', { email: invitationEmail.value });
   }
   if (invitationEmail.value && invitationEmailSent.value === false && !manualActivationLinks.value) {
-    return `Impossible d’envoyer l’e-mail à ${invitationEmail.value}. Copie le lien d’activation ci-dessous (valable 14 jours).`;
+    return t('modals.addAthlete.inviteEmailFailed', { email: invitationEmail.value });
   }
-  return 'Copie le lien ci-dessous et envoie-le à l’athlète (WhatsApp, SMS, etc.). Valable 14 jours.';
+  return t('modals.addAthlete.inviteLinkOnly');
 });
 
 function closeModal() {
@@ -89,7 +91,7 @@ async function copyInvitation() {
   try {
     await navigator.clipboard.writeText(invitationUrl.value);
   } catch {
-    window.prompt('Copie ce lien :', invitationUrl.value);
+    window.prompt(t('modals.addAthlete.copyPrompt'), invitationUrl.value);
   }
 }
 </script>
@@ -109,12 +111,12 @@ async function copyInvitation() {
       >
         <div class="flex items-start justify-between gap-4">
           <h2 class="text-base font-semibold text-white">
-            {{ modalStep === 'invite' ? inviteTitle : 'Nouvel athlète' }}
+            {{ modalStep === 'invite' ? inviteTitle : t('modals.addAthlete.title') }}
           </h2>
           <button
             type="button"
             class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-            aria-label="Fermer"
+            :aria-label="t('common.close')"
             @click="closeModal"
           >
             ✕
@@ -123,12 +125,11 @@ async function copyInvitation() {
 
         <template v-if="modalStep === 'form'">
           <p class="mt-3 text-slate-400">
-            Renseigne le prénom, le nom et le type de coaching. Un lien d’activation te sera
-            toujours donné. Si tu ajoutes un e-mail, l’invitation part aussi par mail.
+            {{ t('modals.addAthlete.intro') }}
           </p>
           <form class="mt-4 space-y-4" @submit.prevent="submitNewAthlete">
             <label class="block text-sm font-medium text-slate-400">
-              Prénom
+              {{ t('modals.addAthlete.firstName') }}
               <input
                 v-model="form.first_name"
                 type="text"
@@ -141,7 +142,7 @@ async function copyInvitation() {
               </p>
             </label>
             <label class="block text-sm font-medium text-slate-400">
-              Nom
+              {{ t('modals.addAthlete.lastName') }}
               <input
                 v-model="form.last_name"
                 type="text"
@@ -154,32 +155,32 @@ async function copyInvitation() {
               </p>
             </label>
             <label class="block text-sm font-medium text-slate-400">
-              E-mail
-              <span class="font-normal text-slate-500"> (optionnel)</span>
+              {{ t('modals.addAthlete.emailOptional') }}
+              <span class="font-normal text-slate-500"> ({{ t('common.optional') }})</span>
               <input
                 v-model="form.email"
                 type="email"
                 autocomplete="email"
                 class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-                placeholder="athlete@email.fr"
+                :placeholder="t('modals.addAthlete.emailPlaceholder')"
               >
               <p class="mt-1 text-xs text-slate-500">
-                Si rempli, l’athlète reçoit aussi le lien d’activation par e-mail.
+                {{ t('modals.addAthlete.emailHint') }}
               </p>
               <p v-if="form.errors.email" class="mt-1 text-sm text-red-400">
                 {{ form.errors.email }}
               </p>
             </label>
             <label class="block text-sm font-medium text-slate-400">
-              Type de coaching
+              {{ t('modals.addAthlete.coachingType') }}
               <select
                 v-model="form.feedback_frequency"
                 required
                 class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               >
-                <option value="" disabled>Choisir…</option>
-                <option value="daily">Journalier (retour à chaque séance)</option>
-                <option value="weekly">Hebdomadaire (1 retour par semaine)</option>
+                <option value="" disabled>{{ t('modals.addAthlete.choose') }}</option>
+                <option value="daily">{{ t('modals.addAthlete.daily') }}</option>
+                <option value="weekly">{{ t('modals.addAthlete.weekly') }}</option>
               </select>
               <p v-if="form.errors.feedback_frequency" class="mt-1 text-sm text-red-400">
                 {{ form.errors.feedback_frequency }}
@@ -192,14 +193,14 @@ async function copyInvitation() {
                 :disabled="form.processing"
                 class="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
-                Créer et inviter
+                {{ t('modals.addAthlete.createInvite') }}
               </button>
               <button
                 type="button"
                 class="rounded-xl border border-slate-600 px-6 py-3 font-medium text-slate-200 hover:bg-slate-800"
                 @click="closeModal"
               >
-                Annuler
+                {{ t('common.cancel') }}
               </button>
             </div>
           </form>
@@ -222,14 +223,14 @@ async function copyInvitation() {
               class="rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-500"
               @click="copyInvitation"
             >
-              Copier le lien
+              {{ t('modals.addAthlete.copyLink') }}
             </button>
             <button
               type="button"
               class="rounded-xl border border-slate-600 px-6 py-3 font-medium text-slate-200 hover:bg-slate-800"
               @click="closeModal"
             >
-              Fermer
+              {{ t('common.close') }}
             </button>
           </div>
         </template>

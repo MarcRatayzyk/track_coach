@@ -30,7 +30,7 @@ class CoachStatsDashboardWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($request))
-            ->with('success', 'Graphique ajouté au tableau de bord.');
+            ->with('success', __('messages.charts.added_to_dashboard'));
     }
 
     public function destroy(CoachStatsDashboardItem $item): RedirectResponse
@@ -40,7 +40,7 @@ class CoachStatsDashboardWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams(request()))
-            ->with('success', 'Graphique retiré du tableau de bord.');
+            ->with('success', __('messages.charts.removed_from_dashboard'));
     }
 
     public function move(MoveCoachStatsDashboardItemRequest $request, CoachStatsDashboardItem $item): RedirectResponse

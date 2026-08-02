@@ -34,9 +34,9 @@ class BugReportController extends Controller
         );
 
         if (! $sent) {
-            return back()->with('error', MailSendSupport::DELIVERY_FAILED_MESSAGE);
+            return back()->with('error', MailSendSupport::deliveryFailedMessage());
         }
 
-        return back()->with('success', 'Merci — ton signalement a bien été envoyé.');
+        return back()->with('success', __('messages.support.bug_report_sent'));
     }
 }

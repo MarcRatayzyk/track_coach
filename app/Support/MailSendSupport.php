@@ -7,7 +7,10 @@ use Throwable;
 
 class MailSendSupport
 {
-    public const DELIVERY_FAILED_MESSAGE = 'Impossible d\'envoyer l\'e-mail pour le moment. Réessaie dans quelques minutes.';
+    public static function deliveryFailedMessage(): string
+    {
+        return __('messages.mail.delivery_failed');
+    }
 
     public static function attempt(callable $callback): bool
     {

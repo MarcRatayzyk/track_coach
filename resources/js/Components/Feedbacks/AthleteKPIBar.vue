@@ -1,8 +1,11 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { motion } from 'motion-v';
 import UiIcon from '../UiIcon.vue';
 import AnimatedCounter from '../Dashboard/AnimatedCounter.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   feedbacks: { type: Array, default: () => [] },
@@ -25,7 +28,7 @@ const stats = computed(() => {
 const items = computed(() => [
   {
     key: 'total',
-    label: 'Mes retours',
+    label: t('app.feedbacks.myFeedbacks'),
     value: stats.value.total,
     icon: 'list',
     color: '#60a5fa',
@@ -34,7 +37,7 @@ const items = computed(() => [
   },
   {
     key: 'pending',
-    label: 'En attente',
+    label: t('app.dashboard.waiting'),
     value: stats.value.pending,
     icon: 'alert',
     color: '#fbbf24',
@@ -43,7 +46,7 @@ const items = computed(() => [
   },
   {
     key: 'done',
-    label: 'Répondus',
+    label: t('app.feedbacks.replied'),
     value: stats.value.done,
     icon: 'bolt',
     color: '#34d399',

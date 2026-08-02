@@ -93,7 +93,7 @@ class CoachMonthlyReadinessAwardsPresenter
             return null;
         }
 
-        $monthLabel = $start->locale('fr')->translatedFormat('F Y');
+        $monthLabel = $start->locale(app()->getLocale())->translatedFormat('F Y');
 
         return [
             'label' => 'Monthly Roster Awards',

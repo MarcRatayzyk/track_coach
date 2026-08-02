@@ -250,7 +250,7 @@ class CoachDashboardInsightsSupport
             $key = $day->toDateString();
             $feedbackSeries[] = [
                 'date' => $key,
-                'label' => $day->locale('fr')->isoFormat('dd'),
+                'label' => $day->locale(app()->getLocale())->isoFormat('dd'),
                 'value' => (int) ($feedbackByDay[$key] ?? 0),
             ];
         }

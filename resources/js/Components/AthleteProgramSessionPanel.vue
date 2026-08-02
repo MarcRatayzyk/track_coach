@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
   formatLineRecap,
@@ -7,6 +8,8 @@ import {
   sessionDayOrdinalInWeek,
 } from '../utils/programBuilder';
 import { sectionBadgeClass, sectionOption } from '../config/programTableSections';
+
+const { t } = useI18n();
 
 const props = defineProps({
   programBlock: {
@@ -35,10 +38,10 @@ const headerTitle = computed(() => {
   const label = props.session?.session_label?.trim();
 
   if (label) {
-    return `Semaine ${week} · Jour ${dayNum} — ${label}`;
+    return t('athleteUi.programSession.weekDayLabelNamed', { week, day: dayNum, label });
   }
 
-  return `Semaine ${week} · Jour ${dayNum}`;
+  return t('athleteUi.programSession.weekDayLabel', { week, day: dayNum });
 });
 
 const resolvedWarmup = computed(() => props.session?.warmup ?? null);
@@ -82,7 +85,7 @@ function sectionLabel(section) {
         class="text-xs text-slate-500 hover:text-slate-300"
         @click="emit('close')"
       >
-        Fermer
+        {{ t('common.close') }}
       </button>
     </div>
 
@@ -91,7 +94,7 @@ function sectionLabel(section) {
       class="mt-4 space-y-2 rounded-xl border border-sky-500/25 bg-sky-950/20 px-3 py-3"
     >
       <p class="text-[10px] font-semibold uppercase tracking-widest text-sky-300/90">
-        Échauffement
+        {{ t('athleteUi.programSession.warmup') }}
       </p>
       <p
         v-if="resolvedWarmup.notes?.trim()"
@@ -132,7 +135,7 @@ function sectionLabel(section) {
       v-else-if="!hasWarmup"
       class="mt-4 border-t border-slate-800 pt-4 text-sm text-slate-500"
     >
-      Aucune séance programmée pour ce jour.
+      {{ t('athleteUi.programSession.noSession') }}
     </p>
   </section>
 </template>

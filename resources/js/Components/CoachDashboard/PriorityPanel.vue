@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { motion } from 'motion-v';
@@ -6,6 +7,7 @@ import UiIcon from '../UiIcon.vue';
 import AnimatedCounter from './AnimatedCounter.vue';
 import SectionHeader from './SectionHeader.vue';
 import { cardHover, cardShell } from './dashboardUi';
+const { t } = useI18n();
 
 const props = defineProps({
   dailyPending: { type: Number, default: 0 },
@@ -29,8 +31,8 @@ function feedbackCard({
     key,
     title,
     value: remaining,
-    unit: 'à traiter',
-    emptyLabel: 'Tout est à jour',
+    unit: t('app.coachDash.toProcess'),
+    emptyLabel: t('app.coachDash.allUpToDate'),
     detail: null,
     href,
     cta: remaining > 0 ? 'Traiter maintenant' : 'Voir les retours',
@@ -64,10 +66,10 @@ const cards = computed(() => [
     emptyLabel: 'Aucune alerte',
     detail:
       props.alertsCount === 0
-        ? 'Rien à surveiller'
+        ? t('app.coachDash.nothingToWatch')
         : props.criticalAlerts > 0
           ? `${props.criticalAlerts} critique${props.criticalAlerts > 1 ? 's' : ''} · ${props.alertsCount} au total`
-          : `${props.alertsCount} à consulter · aucune critique`,
+          : t('app.coachDash.alertsToReview', { count: props.alertsCount }),
     href: '#dashboard-alerts',
     cta: props.alertsCount > 0 ? 'Voir les alertes' : 'Tout va bien',
     icon: 'alert',
@@ -78,7 +80,7 @@ const cards = computed(() => [
     title: 'Messagerie',
     value: props.unreadMessages,
     unit: 'non lus',
-    emptyLabel: 'Boîte à jour',
+    emptyLabel: t('app.coachDash.inboxUpToDate'),
     detail:
       props.unreadMessages > 0
         ? `${props.unreadMessages} conversation${props.unreadMessages > 1 ? 's' : ''} en attente de lecture`
@@ -94,7 +96,7 @@ const cards = computed(() => [
 <template>
   <section>
     <SectionHeader
-      eyebrow="Priorité"
+      :eyebrow="t('app.coachDash.priority')"
       title="Actions prioritaires"
     />
 

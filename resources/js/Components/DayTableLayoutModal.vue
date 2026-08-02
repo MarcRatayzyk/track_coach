@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router, useForm } from '@inertiajs/vue3';
 import BugReportModal from './BugReportModal.vue';
 import ProgramTableDynamicCell from './ProgramTableDynamicCell.vue';
@@ -12,6 +13,8 @@ import {
   validateTableLayoutDraft,
 } from '../config/dayTableColumns';
 import { sectionRowClass } from '../config/programTableSections';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -148,7 +151,7 @@ function deleteLayout() {
     return;
   }
 
-  if (!window.confirm(`Supprimer le tableau « ${form.name} » ?`)) {
+  if (!window.confirm(t('programBuilder.dayTableLayout.deleteConfirm', { name: form.name }))) {
     return;
   }
 
@@ -175,9 +178,9 @@ const canDelete = computed(
       >
         <div class="flex items-start justify-between gap-3 border-b border-slate-800 px-5 py-4">
           <div>
-            <h3 class="text-lg font-semibold text-white">Mon tableau jour</h3>
+<h3 class="text-lg font-semibold text-white">{{ t('programBuilder.dayTableLayout.title') }}</h3>
             <p class="mt-1 text-sm text-slate-400">
-              Choisis les colonnes visibles dans le tableur et prévisualise le résultat.
+              {{ t('programBuilder.dayTableLayout.subtitle') }}
             </p>
           </div>
           <button
@@ -203,32 +206,32 @@ const canDelete = computed(
             @click="loadLayout(layout)"
           >
             {{ layout.name }}
-            <span v-if="layout.is_default" class="ml-1 text-[10px] text-slate-500">(défaut)</span>
+<span v-if="layout.is_default" class="ml-1 text-[10px] text-slate-500">{{ t('programBuilder.shared.defaultSuffix') }}</span>
           </button>
           <button
             type="button"
             class="rounded-lg border border-dashed border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-slate-500 hover:text-white"
             @click="startNewLayout"
           >
-            + Nouveau
+            {{ t('programBuilder.dayTableLayout.new') }}
           </button>
         </div>
 
         <div class="grid flex-1 gap-6 overflow-y-auto px-5 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
           <div class="space-y-5">
             <label class="block text-sm text-slate-400">
-              Nom du tableau
+              {{ t('programBuilder.dayTableLayout.tableName') }}
               <input
                 v-model="form.name"
                 type="text"
                 maxlength="255"
-                placeholder="Ex. Mon tableur PL"
+:placeholder="t('programBuilder.dayTableLayout.tableNamePlaceholder')"
                 class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
               />
             </label>
 
             <fieldset class="space-y-3">
-              <legend class="text-sm font-medium text-white">Exercice</legend>
+<legend class="text-sm font-medium text-white">{{ t('programBuilder.shared.exercise') }}</legend>
               <label
                 v-for="option in EXERCISE_MODE_OPTIONS"
                 :key="option.value"
@@ -245,7 +248,7 @@ const canDelete = computed(
             </fieldset>
 
             <fieldset class="space-y-3">
-              <legend class="text-sm font-medium text-white">Colonnes</legend>
+<legend class="text-sm font-medium text-white">{{ t('programBuilder.dayTableLayout.columns') }}</legend>
               <label
                 v-for="option in OPTIONAL_COLUMN_OPTIONS"
                 :key="option.id"
@@ -260,25 +263,25 @@ const canDelete = computed(
                 {{ option.label }}
               </label>
               <p class="pt-1 text-xs text-slate-500">
-                Une colonne te manque ?
+                {{ t('programBuilder.dayTableLayout.missingColumn') }}
                 <button
                   type="button"
                   class="text-slate-400 underline decoration-slate-600 underline-offset-2 transition hover:text-slate-300"
                   @click="showBugReportModal = true"
                 >
-                  Signale-la-nous
+                  {{ t('programBuilder.dayTableLayout.reportIt') }}
                 </button>
               </p>
             </fieldset>
 
             <label class="flex items-center gap-2 text-sm text-slate-300">
               <input v-model="form.is_default" type="checkbox" class="accent-blue-500" />
-              Utiliser par défaut à la création de bloc
+              {{ t('programBuilder.dayTableLayout.useDefault') }}
             </label>
           </div>
 
           <div class="space-y-3">
-            <p class="text-sm font-medium text-white">Aperçu live</p>
+<p class="text-sm font-medium text-white">{{ t('programBuilder.dayTableLayout.livePreview') }}</p>
             <div class="overflow-x-auto rounded-xl border border-slate-700 bg-slate-950">
               <table class="w-full table-auto border-collapse">
                 <thead class="bg-slate-950">
@@ -316,8 +319,7 @@ const canDelete = computed(
               </table>
             </div>
             <p class="text-xs text-slate-500">
-              L’aperçu montre une ligne fictive. La colonne Charge permet de choisir kg, % ou RPE.
-              La colonne RPE cible peut coexister avec une charge en kg ou %.
+              {{ t('programBuilder.dayTableLayout.previewHint') }}
             </p>
           </div>
         </div>
@@ -337,7 +339,7 @@ const canDelete = computed(
               class="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 hover:bg-red-950/40"
               @click="deleteLayout"
             >
-              Supprimer
+              {{ t('common.delete') }}
             </button>
             <div v-else />
 
@@ -347,7 +349,7 @@ const canDelete = computed(
                 class="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
                 @click="closeModal"
               >
-                Annuler
+                {{ t('common.cancel') }}
               </button>
               <button
                 type="button"
@@ -355,7 +357,7 @@ const canDelete = computed(
                 :disabled="form.processing"
                 @click="saveLayout"
               >
-                {{ form.processing ? 'Enregistrement…' : 'Enregistrer' }}
+{{ form.processing ? t('programBuilder.shared.saving') : t('common.save') }}
               </button>
             </div>
           </div>

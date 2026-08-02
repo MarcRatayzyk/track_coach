@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { motion } from 'motion-v';
 import AnimatedCounter from './AnimatedCounter.vue';
@@ -6,6 +7,7 @@ import MiniSparkline from './MiniSparkline.vue';
 import ProgressRing from './ProgressRing.vue';
 import SectionHeader from './SectionHeader.vue';
 import { cardShell } from './dashboardUi';
+const { t } = useI18n();
 
 const props = defineProps({
   performance: {
@@ -60,7 +62,7 @@ function heatClass(value) {
         <p class="mt-1 text-[11px] text-slate-500">Nouveaux records</p>
       </div>
       <div class="rounded-[1.15rem] border border-slate-800/80 bg-slate-950/40 p-4">
-        <p class="text-xs text-slate-400">Taux d’adhérence</p>
+        <p class="text-xs text-slate-400">{{ t('app.coachDash.adherenceRate') }}</p>
         <p class="mt-2 text-2xl font-bold text-white">
           <template v-if="p.average_adherence != null">
             <AnimatedCounter :value="p.average_adherence" />%
@@ -77,7 +79,7 @@ function heatClass(value) {
         <p class="mt-1 text-[11px] text-slate-500">Aujourd’hui</p>
       </div>
       <div class="rounded-[1.15rem] border border-slate-800/80 bg-slate-950/40 p-4 sm:col-span-2 xl:col-span-1">
-        <p class="text-xs text-slate-400">Athlètes actifs</p>
+        <p class="text-xs text-slate-400">{{ t('app.coachDash.activeAthletes') }}</p>
         <p class="mt-2 text-2xl font-bold text-sky-200">
           <AnimatedCounter :value="p.active_athletes_7d ?? 0" />
         </p>
@@ -116,7 +118,7 @@ function heatClass(value) {
         class="rounded-[1.15rem] border border-slate-800/80 bg-slate-950/40 p-4"
       >
         <div class="flex items-center justify-between gap-3">
-          <p class="text-sm font-semibold text-white">Adhérence</p>
+          <p class="text-sm font-semibold text-white">{{ t('app.coachDash.adherence') }}</p>
           <ProgressRing
             :value="p.average_adherence ?? 0"
             :total="100"

@@ -2,6 +2,11 @@
 import { computed, ref, watch } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import { formatLineRecap, SESSION_SECTION_LABELS } from '../utils/programBuilder';
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../i18n';
+
+const { t, locale } = useI18n();
+
 
 const props = defineProps({
   sessions: {
@@ -24,12 +29,20 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selectedDay', 'edit-session']);
 
-const weekdayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const weekdayLabels = computed(() => [
+  t('athleteUi.calendar.weekdaysShort.mon'),
+  t('athleteUi.calendar.weekdaysShort.tue'),
+  t('athleteUi.calendar.weekdaysShort.wed'),
+  t('athleteUi.calendar.weekdaysShort.thu'),
+  t('athleteUi.calendar.weekdaysShort.fri'),
+  t('athleteUi.calendar.weekdaysShort.sat'),
+  t('athleteUi.calendar.weekdaysShort.sun'),
+]);
 
 const LIFTS = [
   { key: 'squat', label: 'Squat', short: 'S', bar: 'bg-violet-500', text: 'text-violet-300', ring: 'ring-violet-500/30' },
   { key: 'bench', label: 'Bench', short: 'B', bar: 'bg-blue-500', text: 'text-blue-300', ring: 'ring-blue-500/30' },
-  { key: 'deadlift', label: 'Terre', short: 'T', bar: 'bg-amber-500', text: 'text-amber-300', ring: 'ring-amber-500/30' },
+  { key: 'deadlift', label: t('athleteUi.calendar.terre'), short: 'T', bar: 'bg-amber-500', text: 'text-amber-300', ring: 'ring-amber-500/30' },
 ];
 
 function sessionDateKey(value) {
@@ -93,7 +106,7 @@ const calendarYear = ref(initialMonth().year);
 
 const monthLabel = computed(() => {
   const d = new Date(calendarYear.value, calendarMonth.value, 1);
-  return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return d.toLocaleDateString(localeTag(locale.value), { month: 'long', year: 'numeric' });
 });
 
 const calendarCells = computed(() => {
@@ -141,7 +154,7 @@ const selectedDayWeekday = computed(() => {
     return '';
   }
   const d = parseYmd(selectedDayLocal.value);
-  return d.toLocaleDateString('fr-FR', { weekday: 'long' });
+  return d.toLocaleDateString(localeTag(locale.value), { weekday: 'long' });
 });
 
 const sessionsInVisibleMonth = computed(() => {
@@ -405,7 +418,7 @@ watch(
                   v-if="daySessions.length > 1"
                   class="text-xs font-medium text-slate-500"
                 >
-                  Séance {{ sessionIndex + 1 }}
+                  {{ t('common.sessionN', { n: sessionIndex + 1 }) }}
                 </p>
                 <p
                   v-if="session.session_label?.trim()"
@@ -421,7 +434,7 @@ watch(
                 class="shrink-0 rounded-lg border border-blue-500/40 px-2.5 py-1 text-xs font-semibold text-blue-300 hover:bg-blue-500/10"
                 @click="emit('edit-session', session)"
               >
-                Modifier
+                {{ t('common.edit') }}
               </button>
             </div>
 
@@ -453,7 +466,7 @@ watch(
               v-if="sessionHasItemDetails(session) && sessionTotal(session) > 0"
               class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-800/80 pt-3"
             >
-              <p class="text-xs text-slate-500">Synthèse SBD</p>
+              <p class="text-xs text-slate-500">{{ t('athleteUi.calendar.sbdSummary') }}</p>
               <p class="font-mono text-sm text-slate-300">
                 S {{ session.squat }} · B {{ session.bench }} · T {{ session.deadlift }} kg
               </p>
@@ -465,7 +478,7 @@ watch(
             <template v-else>
             <div class="mt-3 flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p class="text-xs text-slate-500">Total séance</p>
+                <p class="text-xs text-slate-500">{{ t('athleteUi.calendar.sessionTotal') }}</p>
                 <p class="text-2xl font-bold tabular-nums text-white">
                   {{ sessionInsights(session).total }}
                   <span class="text-base font-semibold text-slate-400">kg</span>
@@ -484,7 +497,7 @@ watch(
                   "
                 >
                   {{ sessionInsights(session).totalDelta.text }}
-                  <span class="font-normal text-slate-500"> vs préc.</span>
+                  <span class="font-normal text-slate-500"> {{ t('athleteUi.calendar.vsPrev') }}</span>
                 </span>
                 <span
                   v-if="sessionInsights(session).isBestTotal"
@@ -555,7 +568,7 @@ watch(
               v-if="session.notes?.trim()"
               class="mt-3 rounded-lg border border-slate-700/60 bg-slate-950/50 px-3 py-2.5"
             >
-              <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Notes</p>
+              <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ t('athleteUi.calendar.notes') }}</p>
               <p class="mt-1 text-sm leading-relaxed text-slate-300 whitespace-pre-wrap">
                 {{ session.notes }}
               </p>
@@ -568,8 +581,8 @@ watch(
         v-else
         class="flex flex-1 flex-col items-center justify-center text-center text-sm text-slate-500"
       >
-        <p>Sélectionne un jour de séance</p>
-        <p class="mt-1 text-xs text-slate-600">Les jours en vert ont une séance enregistrée.</p>
+        <p>{{ t('athleteUi.calendar.selectDay') }}</p>
+        <p class="mt-1 text-xs text-slate-600">{{ t('athleteUi.calendar.greenDaysHint') }}</p>
       </div>
     </div>
   </div>

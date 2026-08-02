@@ -1,5 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import ScreenFrame from './ScreenFrame.vue';
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -9,7 +12,7 @@ import ScreenFrame from './ScreenFrame.vue';
         <div class="lp-mockup-frame relative z-10">
             <ScreenFrame
                 src="/images/landing/actions.png"
-                alt="Dashboard coach Power Roster : actions prioritaires et retours à traiter"
+                :alt="t('landing.mockup.alt')"
                 label="app.powerroster.fr / dashboard"
                 loading="eager"
             />

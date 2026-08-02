@@ -1,42 +1,47 @@
+import i18n from '../i18n';
 import { LIFT_LABELS } from '../utils/chartTheme';
 import { MAIN_LIFT_FILTER_OPTIONS, REP_FORMAT_OPTIONS } from '../utils/trainingVolume';
 
+function tt(key) {
+  return i18n.global.t(key);
+}
+
 export const CHART_TYPE_OPTIONS = [
-  { value: 'bar', label: 'Barres' },
-  { value: 'line', label: 'Courbe' },
-  { value: 'doughnut', label: 'Donut' },
+  { value: 'bar', get label() { return tt('config.charts.types.bar'); } },
+  { value: 'line', get label() { return tt('config.charts.types.line'); } },
+  { value: 'doughnut', get label() { return tt('config.charts.types.doughnut'); } },
 ];
 
 export const METRIC_OPTIONS = [
-  { value: 'volume', label: 'Volume (kg·reps)', unit: 'kg·reps' },
-  { value: 'tonnage', label: 'Tonnage (kg×séries)', unit: 'kg' },
-  { value: 'avgLoad', label: 'Charge moyenne (kg)', unit: 'kg' },
-  { value: 'e1rm', label: 'e1RM Epley (kg)', unit: 'kg' },
-  { value: 'avgRpe', label: 'RPE cible (moy.)', unit: 'RPE' },
-  { value: 'setsCount', label: 'Nombre de séries', unit: 'séries' },
-  { value: 'totalReps', label: 'Total reps', unit: 'reps' },
+  { value: 'volume', get label() { return tt('config.charts.metrics.volume'); }, unit: 'kg·reps' },
+  { value: 'tonnage', get label() { return tt('config.charts.metrics.tonnage'); }, unit: 'kg' },
+  { value: 'avgLoad', get label() { return tt('config.charts.metrics.avgLoad'); }, unit: 'kg' },
+  { value: 'e1rm', get label() { return tt('config.charts.metrics.e1rm'); }, unit: 'kg' },
+  { value: 'avgRpe', get label() { return tt('config.charts.metrics.avgRpe'); }, unit: 'RPE' },
+  { value: 'setsCount', get label() { return tt('config.charts.metrics.setsCount'); }, unit: 'séries' },
+  { value: 'totalReps', get label() { return tt('config.charts.metrics.totalReps'); }, unit: 'reps' },
 ];
 
 export const GROUP_BY_OPTIONS = [
-  { value: 'week', label: 'Par semaine' },
-  { value: 'day', label: 'Par jour' },
-  { value: 'lift', label: 'Par lift (S/B/T)' },
-  { value: 'section', label: 'Par type (topset/backoff/accessoire)' },
-  { value: 'exercise', label: 'Par exercice' },
+  { value: 'week', get label() { return tt('config.charts.groupBy.week'); } },
+  { value: 'day', get label() { return tt('config.charts.groupBy.day'); } },
+  { value: 'lift', get label() { return tt('config.charts.groupBy.lift'); } },
+  { value: 'section', get label() { return tt('config.charts.groupBy.section'); } },
+  { value: 'exercise', get label() { return tt('config.charts.groupBy.exercise'); } },
 ];
 
 export const SECTION_FILTER_OPTIONS = [
-  { value: 'all', label: 'Toutes sections' },
-  { value: 'topset', label: 'Topset' },
-  { value: 'backoff', label: 'Backoff' },
-  { value: 'accessory', label: 'Accessoire' },
-  { value: 'warmup', label: 'Échauffement' },
+  { value: 'all', get label() { return tt('config.charts.sections.all'); } },
+  { value: 'topset', get label() { return tt('config.charts.sections.topset'); } },
+  { value: 'backoff', get label() { return tt('config.charts.sections.backoff'); } },
+  { value: 'accessory', get label() { return tt('config.charts.sections.accessory'); } },
+  { value: 'warmup', get label() { return tt('config.charts.sections.warmup'); } },
 ];
 
 export const SERIES_LIFT_OPTIONS = [
-  { value: 'squat', label: LIFT_LABELS.squat },
-  { value: 'bench', label: LIFT_LABELS.bench },
-  { value: 'deadlift', label: LIFT_LABELS.deadlift },
+  { value: 'squat', get label() { return LIFT_LABELS.squat; } },
+  { value: 'bench', get label() { return LIFT_LABELS.bench; } },
+  { value: 'deadlift', get label() { return LIFT_LABELS.deadlift; } },
 ];
 
 export const BUILTIN_CHART_KEYS = {
@@ -48,22 +53,22 @@ export const BUILTIN_CHART_KEYS = {
 
 export const BUILTIN_CHART_META = {
   [BUILTIN_CHART_KEYS.VOLUME_WEEKLY]: {
-    title: 'Évolution du volume par semaine',
+    get title() { return tt('config.charts.builtin.volumeWeekly'); },
   },
   [BUILTIN_CHART_KEYS.TOPSET_E1RM]: {
-    title: 'Évolution du topset (e1RM Epley)',
+    get title() { return tt('config.charts.builtin.topsetE1rm'); },
   },
   [BUILTIN_CHART_KEYS.VOLUME_DISTRIBUTION]: {
-    title: 'Répartition du volume',
+    get title() { return tt('config.charts.builtin.volumeDistribution'); },
   },
   [BUILTIN_CHART_KEYS.AVG_LOAD_WEEKLY]: {
-    title: 'Charge moyenne par semaine',
+    get title() { return tt('config.charts.builtin.avgLoadWeekly'); },
   },
 };
 
 export const CHART_PRESETS = [
   {
-    label: 'Volume hebdomadaire',
+    get label() { return tt('config.charts.presets.volumeWeekly'); },
     config: {
       chartType: 'bar',
       metric: 'volume',
@@ -74,7 +79,7 @@ export const CHART_PRESETS = [
     },
   },
   {
-    label: 'e1RM topsets',
+    get label() { return tt('config.charts.presets.e1rmTopsets'); },
     config: {
       chartType: 'line',
       metric: 'e1rm',
@@ -85,7 +90,7 @@ export const CHART_PRESETS = [
     },
   },
   {
-    label: 'Répartition par lift',
+    get label() { return tt('config.charts.presets.byLift'); },
     config: {
       chartType: 'doughnut',
       metric: 'volume',
@@ -96,7 +101,7 @@ export const CHART_PRESETS = [
     },
   },
   {
-    label: 'Charge moyenne',
+    get label() { return tt('config.charts.presets.avgLoad'); },
     config: {
       chartType: 'line',
       metric: 'avgLoad',

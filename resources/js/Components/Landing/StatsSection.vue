@@ -1,12 +1,15 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
 
-const stats = [
-    { value: '24/7', label: 'Accès coach & athlètes' },
-    { value: '100%', label: 'Focus powerlifting' },
-    { value: '1', label: 'Plateforme unique' },
-];
+const { t } = useI18n();
+
+const stats = computed(() => [
+    { value: '24/7', label: t('landing.stats.access') },
+    { value: '100%', label: t('landing.stats.focus') },
+    { value: '1', label: t('landing.stats.platform') },
+]);
 
 const visible = ref(false);
 const el = ref(null);
@@ -26,7 +29,7 @@ onUnmounted(() => observer?.disconnect());
 </script>
 
 <template>
-    <section class="relative z-10 px-5 py-16 sm:px-8 lg:px-10 lg:py-20" aria-label="Chiffres clés">
+    <section class="relative z-10 px-5 py-16 sm:px-8 lg:px-10 lg:py-20" :aria-label="t('landing.stats.aria')">
         <div ref="el" class="mx-auto w-full max-w-[1280px]">
             <FadeIn>
                 <div

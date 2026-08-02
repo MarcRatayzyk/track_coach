@@ -1,7 +1,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AthleteProgramTableDayCard from './AthleteProgramTableDayCard.vue';
 import { sessionDayOrdinalInWeek } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   programBlock: {
@@ -57,10 +60,9 @@ const daysPerWeek = computed(() =>
 <template>
   <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-3 sm:p-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 class="text-sm font-semibold text-white">Vue tableur</h2>
+      <h2 class="text-sm font-semibold text-white">{{ t('athleteUi.programTable.spreadsheetView') }}</h2>
       <div class="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-1.5 text-xs text-slate-400">
-        <span class="font-medium text-white">{{ daysPerWeek }}</span>
-        jour{{ daysPerWeek > 1 ? 's' : '' }} max / semaine
+        {{ t('athleteUi.programTable.daysMaxWeek', daysPerWeek) }}
       </div>
     </div>
 
@@ -93,6 +95,6 @@ const daysPerWeek = computed(() =>
       />
     </div>
 
-    <p v-else class="mt-4 text-center text-xs text-slate-500">Aucune séance cette semaine.</p>
+    <p v-else class="mt-4 text-center text-xs text-slate-500">{{ t('athleteUi.programTable.noSessionsWeek') }}</p>
   </section>
 </template>

@@ -26,7 +26,10 @@ class BugReportMail extends Mailable
         $category = $this->categoryLabel($this->report['category']);
 
         return new Envelope(
-            subject: "[Power Roster] {$category} : {$this->report['title']}",
+            subject: __('mail.bug_report.subject', [
+                'category' => $category,
+                'title' => $this->report['title'],
+            ]),
             replyTo: [
                 new Address($this->reporter->email, $this->reporter->name),
             ],
@@ -62,10 +65,10 @@ class BugReportMail extends Mailable
     private function categoryLabel(string $category): string
     {
         return match ($category) {
-            'bug' => 'Bug',
-            'fix' => 'Correctif',
-            'idea' => 'Idée',
-            default => 'Autre',
+            'bug' => __('mail.bug_report.category_bug'),
+            'fix' => __('mail.bug_report.category_fix'),
+            'idea' => __('mail.bug_report.category_idea'),
+            default => __('mail.bug_report.category_other'),
         };
     }
 }

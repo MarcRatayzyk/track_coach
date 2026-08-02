@@ -1,6 +1,9 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router } from '@inertiajs/vue3';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -133,14 +136,14 @@ async function copyText(text, label) {
   }
   try {
     await navigator.clipboard.writeText(text);
-    copyFeedback.value = `${label} copié`;
+    copyFeedback.value = t('programBuilder.importModal.copied', { label });
     window.setTimeout(() => {
-      if (copyFeedback.value === `${label} copié`) {
+      if (copyFeedback.value === t('programBuilder.importModal.copied', { label })) {
         copyFeedback.value = '';
       }
     }, 2000);
   } catch {
-    errorMessage.value = 'Impossible de copier dans le presse-papiers.';
+    errorMessage.value = t('programBuilder.importModal.copyFailed');
   }
 }
 
@@ -148,12 +151,12 @@ async function parseJsonResponse(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 419) {
-      throw new Error('Session expirée (CSRF). Recharge la page puis réessaie.');
+      throw new Error(t('programBuilder.importModal.csrfExpired'));
     }
     if (response.status === 504) {
       throw new Error(
         data?.message
-        || 'Analyse trop longue. Réessaie, ou utilise un CSV/XLSX plutôt qu’une grosse capture d’écran.',
+        || t('programBuilder.importModal.timeout'),
       );
     }
     const message =
@@ -161,7 +164,7 @@ async function parseJsonResponse(response) {
       || data?.errors?.json?.[0]
       || data?.errors?.file?.[0]
       || Object.values(data?.errors ?? {})?.[0]?.[0]
-      || 'Import impossible.';
+      || t('programBuilder.importModal.importImpossible');
     throw new Error(message);
   }
   return data;
@@ -180,7 +183,7 @@ function applyReadyDraft(data) {
 async function importPastedJson() {
   const raw = pastedJson.value.trim();
   if (!raw) {
-    errorMessage.value = 'Colle le JSON rempli par ton IA.';
+    errorMessage.value = t('programBuilder.importModal.pasteJsonRequired');
     return;
   }
 
@@ -201,7 +204,7 @@ async function importPastedJson() {
     const data = await parseJsonResponse(response);
     applyReadyDraft(data);
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Import JSON impossible.';
+    errorMessage.value = error instanceof Error ? error.message : t('programBuilder.importModal.jsonImportFailed');
   } finally {
     loading.value = false;
   }
@@ -233,7 +236,7 @@ function confirmImport() {
         errorMessage.value =
           errors?.operations
           || Object.values(errors ?? {})[0]
-          || 'Impossible d’appliquer l’import.';
+          || t('programBuilder.importModal.applyFailed');
       },
       onFinish: () => {
         loading.value = false;
@@ -274,11 +277,11 @@ function itemSummary(operation) {
       <header class="flex items-start justify-between gap-3 border-b border-slate-800 px-4 py-3 sm:px-5">
         <div>
           <h2 id="program-import-title" class="text-base font-semibold text-white">
-            Importer un programme
+            {{ t('programBuilder.importModal.title') }}
           </h2>
           <p class="mt-0.5 text-sm text-slate-400">
-            Import JSON via ChatGPT / Claude — revue avant écriture
-            <span v-if="weekCount">(bloc {{ weekCount }} sem.)</span>.
+            {{ t('programBuilder.importModal.subtitle') }}
+            <span v-if="weekCount">{{ t('programBuilder.importModal.weekCount', { count: weekCount }) }}</span>.
           </p>
         </div>
         <button
@@ -286,7 +289,7 @@ function itemSummary(operation) {
           class="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-800 hover:text-white"
           @click="close"
         >
-          Fermer
+          {{ t('common.close') }}
         </button>
       </header>
 
@@ -305,30 +308,30 @@ function itemSummary(operation) {
               class="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white"
               @click="sourceMode = 'json'; errorMessage = ''"
             >
-              JSON (ChatGPT / Claude)
+              {{ t('programBuilder.importModal.jsonTab') }}
             </button>
             <button
               type="button"
               class="cursor-not-allowed rounded-lg bg-slate-800/80 px-3 py-1.5 text-sm font-medium text-slate-500"
               disabled
-              title="Bientôt disponible"
+:title="t('programBuilder.importModal.comingSoonTitle')"
             >
-              IA intégrée
+              {{ t('programBuilder.importModal.aiTab') }}
               <span class="ml-1 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-300">
-                Bientôt
+                {{ t('programBuilder.importModal.comingSoon') }}
               </span>
             </button>
           </div>
 
           <template v-if="sourceMode === 'json'">
             <ol class="mb-4 list-decimal space-y-1 pl-5 text-sm text-slate-300">
-              <li>Copie le prompt (le format JSON est déjà dedans)</li>
-              <li>Colle-le dans ChatGPT / Claude avec ta photo, ton PDF ou ton Excel</li>
-              <li>Colle ici le JSON renvoyé, puis importe</li>
+              <li>{{ t('programBuilder.importModal.step1') }}</li>
+              <li>{{ t('programBuilder.importModal.step2') }}</li>
+              <li>{{ t('programBuilder.importModal.step3') }}</li>
             </ol>
 
             <p class="mb-3 text-sm text-slate-400">
-              S’adapte à n’importe quel programme : 2–6 jours/semaine, colonnes différentes (RPE, tempo, %), templates variés.
+              {{ t('programBuilder.importModal.adapts') }}
             </p>
 
             <div class="mb-3 flex flex-wrap gap-2">
@@ -338,12 +341,12 @@ function itemSummary(operation) {
                 :disabled="!externalAiPrompt"
                 @click="copyText(externalAiPrompt, 'Prompt')"
               >
-                Copier le prompt
+                {{ t('programBuilder.importModal.copyPrompt') }}
               </button>
             </div>
 
             <label class="mb-1 block text-sm font-medium text-slate-300" for="program-import-json">
-              JSON rempli
+              {{ t('programBuilder.importModal.jsonFilled') }}
             </label>
             <textarea
               id="program-import-json"
@@ -358,13 +361,13 @@ function itemSummary(operation) {
 
         <template v-else>
           <div class="mb-3 flex flex-wrap gap-3 text-sm text-slate-300">
-            <span class="rounded-md bg-slate-800 px-2 py-1">{{ sessionCount }} séance(s)</span>
-            <span class="rounded-md bg-slate-800 px-2 py-1">{{ exerciseCount }} exercice(s)</span>
+<span class="rounded-md bg-slate-800 px-2 py-1">{{ t('programBuilder.importModal.sessionsBadge', { count: sessionCount }) }}</span>
+<span class="rounded-md bg-slate-800 px-2 py-1">{{ t('programBuilder.importModal.exercisesBadge', { count: exerciseCount }) }}</span>
             <span
               v-if="exercisesToCreate.length"
               class="rounded-md bg-emerald-500/15 px-2 py-1 text-emerald-200"
             >
-              {{ exercisesToCreate.length }} à créer dans la banque
+{{ t('programBuilder.importModal.toCreate', { count: exercisesToCreate.length }) }}
             </span>
           </div>
 
@@ -372,7 +375,7 @@ function itemSummary(operation) {
             v-if="warnings.length"
             class="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100"
           >
-            <p class="font-medium">Avertissements</p>
+<p class="font-medium">{{ t('programBuilder.importModal.warnings') }}</p>
             <ul class="mt-1 list-disc space-y-0.5 pl-4 text-amber-100/90">
               <li v-for="(warning, idx) in warnings" :key="idx">{{ warning }}</li>
             </ul>
@@ -382,7 +385,7 @@ function itemSummary(operation) {
             v-if="exercisesToCreate.length"
             class="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100"
           >
-            <p class="font-medium">Nouveaux exercices (parent + variante)</p>
+<p class="font-medium">{{ t('programBuilder.importModal.newExercises') }}</p>
             <ul class="mt-1 list-disc space-y-0.5 pl-4">
               <li v-for="(exo, idx) in exercisesToCreate" :key="idx">
                 {{ exo.parent_name }} → {{ exo.variant_name }}
@@ -398,7 +401,7 @@ function itemSummary(operation) {
               class="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2"
             >
               <p class="text-sm font-semibold text-white">
-                S{{ operation.week_number }} · Jour {{ operation.weekday }}
+                {{ t('programBuilder.importModal.weekDay', { week: operation.week_number, day: operation.weekday }) }}
                 <span v-if="operation.session_label" class="font-normal text-slate-400">
                   — {{ operation.session_label }}
                 </span>
@@ -410,7 +413,7 @@ function itemSummary(operation) {
           </div>
 
           <p v-if="!operations.length" class="text-sm text-slate-400">
-            Aucune séance détectée. Vérifie le JSON ou réessaie avec un autre fichier.
+            {{ t('programBuilder.importModal.noSessions') }}
           </p>
         </template>
       </div>
@@ -423,7 +426,7 @@ function itemSummary(operation) {
           :disabled="loading"
           @click="step = 'source'"
         >
-          Retour
+          {{ t('common.back') }}
         </button>
         <button
           type="button"
@@ -431,7 +434,7 @@ function itemSummary(operation) {
           :disabled="loading"
           @click="close"
         >
-          Annuler
+          {{ t('common.cancel') }}
         </button>
         <button
           v-if="step === 'source'"
@@ -440,7 +443,7 @@ function itemSummary(operation) {
           :disabled="loading || !pastedJson.trim()"
           @click="importPastedJson"
         >
-          {{ loading ? 'Lecture du JSON…' : 'Importer le JSON' }}
+{{ loading ? t('programBuilder.importModal.readingJson') : t('programBuilder.importModal.importJson') }}
         </button>
         <button
           v-else
@@ -449,7 +452,7 @@ function itemSummary(operation) {
           :disabled="!canConfirm"
           @click="confirmImport"
         >
-          {{ loading ? 'Import…' : 'Importer dans le bloc' }}
+{{ loading ? t('programBuilder.importModal.importing') : t('programBuilder.importModal.importIntoBlock') }}
         </button>
       </footer>
     </div>

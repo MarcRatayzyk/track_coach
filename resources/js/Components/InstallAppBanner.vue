@@ -1,9 +1,11 @@
 <script setup>
 import { watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import UiIcon from './UiIcon.vue';
 import { usePwaInstall } from '../composables/usePwaInstall';
 import { track } from '../utils/analytics';
 
+const { t } = useI18n();
 const { showBanner, platform, install, dismiss } = usePwaInstall();
 
 let bannerShownTracked = false;
@@ -38,20 +40,20 @@ async function acceptInstall() {
             </span>
 
             <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-white">Installer Track Coach</p>
+                <p class="text-sm font-semibold text-white">{{ t('modals.installBanner.title') }}</p>
 
                 <p v-if="platform === 'android'" class="mt-1 text-xs leading-relaxed text-slate-300">
-                    Ajoute l'app sur ton écran d'accueil pour un accès rapide, comme une application native.
+                    {{ t('modals.installBanner.androidBody') }}
                 </p>
 
                 <p v-else class="mt-1 text-xs leading-relaxed text-slate-300">
-                    Appuie sur
+                    {{ t('modals.installBanner.iosBodyBefore') }}
                     <span class="inline-flex items-center gap-1 font-medium text-white">
-                        Partager
+                        {{ t('modals.installBanner.share') }}
                         <UiIcon name="share" class="h-3.5 w-3.5" />
                     </span>
-                    puis sur
-                    <span class="font-medium text-white">Sur l'écran d'accueil</span>.
+                    {{ t('modals.installBanner.iosBodyMid') }}
+                    <span class="font-medium text-white">{{ t('modals.installBanner.addToHome') }}</span>.
                 </p>
 
                 <button
@@ -60,14 +62,14 @@ async function acceptInstall() {
                     class="mt-3 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-500"
                     @click="acceptInstall"
                 >
-                    Installer
+                    {{ t('modals.installBanner.install') }}
                 </button>
             </div>
 
             <button
                 type="button"
                 class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white"
-                aria-label="Fermer"
+                :aria-label="t('modals.installBanner.close')"
                 @click="dismiss"
             >
                 <UiIcon name="x-mark" class="h-4 w-4" />

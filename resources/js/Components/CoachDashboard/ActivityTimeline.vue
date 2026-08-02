@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { motion } from 'motion-v';
@@ -11,6 +12,8 @@ import {
   relativeTimeFr,
   timeOfDayFr,
 } from './dashboardUi';
+
+const { t } = useI18n();
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -32,7 +35,7 @@ const feed = computed(() => props.items ?? []);
   <section :class="[cardShell, 'p-5']">
     <SectionHeader
       eyebrow="Flux"
-      title="Activité récente"
+      :title="t('app.coachDash.recentActivity')"
     />
 
     <p

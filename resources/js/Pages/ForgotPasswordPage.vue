@@ -7,6 +7,9 @@ export default {
 <script setup>
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
     email: {
@@ -34,7 +37,7 @@ watch(
 
 const successMessage = computed(
     () => page.props.flash?.success
-        ?? 'Si un compte existe avec cet e-mail, tu recevras un lien de réinitialisation.',
+        ?? t('auth.forgotPassword.successDefault'),
 );
 
 function submit() {
@@ -49,9 +52,9 @@ function submit() {
 
 <template>
     <div class="min-h-screen bg-slate-950 px-4 py-12 text-slate-100">
-        <Head title="Mot de passe oublié" />
+        <Head :title="t('auth.forgotPassword.pageTitle')" />
         <div class="mx-auto w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-xl">
-            <h1 class="text-2xl font-bold text-white">Mot de passe oublié</h1>
+            <h1 class="text-2xl font-bold text-white">{{ t('auth.forgotPassword.title') }}</h1>
 
             <div
                 v-if="$page.props.flash?.error"
@@ -65,21 +68,21 @@ function submit() {
                     {{ successMessage }}
                 </div>
                 <p class="mt-4 text-slate-400">
-                    Vérifie ta boîte de réception (et les spams). Tu pourras choisir un nouveau mot de passe depuis le lien reçu.
+                    {{ t('auth.forgotPassword.checkInbox') }}
                 </p>
                 <p class="mt-6 text-center text-sm text-slate-500">
-                    <Link href="/login" class="text-blue-400 hover:text-blue-300">Retour à la connexion</Link>
+                    <Link href="/login" class="text-blue-400 hover:text-blue-300">{{ t('auth.forgotPassword.backToLogin') }}</Link>
                 </p>
             </template>
 
             <template v-else>
                 <p class="mt-2 text-slate-400">
-                    Saisis ton e-mail. Si un compte existe, tu recevras un lien pour choisir un nouveau mot de passe.
+                    {{ t('auth.forgotPassword.subtitle') }}
                 </p>
 
                 <form class="mt-8 space-y-5" @submit.prevent="submit">
                     <label class="block text-sm font-medium text-slate-400">
-                        E-mail
+                        {{ t('auth.forgotPassword.emailLabel') }}
                         <input
                             v-model="form.email"
                             type="email"
@@ -94,12 +97,12 @@ function submit() {
                         :disabled="form.processing"
                         class="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                     >
-                        Envoyer le lien
+                        {{ t('auth.forgotPassword.submit') }}
                     </button>
                 </form>
 
                 <p class="mt-6 text-center text-sm text-slate-500">
-                    <Link href="/login" class="text-blue-400 hover:text-blue-300">Retour à la connexion</Link>
+                    <Link href="/login" class="text-blue-400 hover:text-blue-300">{{ t('auth.forgotPassword.backToLogin') }}</Link>
                 </p>
             </template>
         </div>

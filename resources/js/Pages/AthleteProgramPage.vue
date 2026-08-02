@@ -7,6 +7,7 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, onMounted, ref } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import { BLOCK_TYPES, findCalendarCellByDate } from '../utils/programBuilder';
@@ -14,6 +15,7 @@ import AthleteProgramSessionPanel from '../Components/AthleteProgramSessionPanel
 import AthleteProgramTableView from '../Components/AthleteProgramTableView.vue';
 import ProgramBlockCalendar from '../Components/ProgramBlockCalendar.vue';
 import ProgramBlockStatsTab from '../Components/ProgramBlockStatsTab.vue';
+const { t } = useI18n();
 
 const props = defineProps({
   programBlock: { type: Object, default: null },
@@ -43,10 +45,10 @@ const programUpcomingLabel = computed(() => {
   const dateLabel = formatCalendarFr(props.programBlock.date_start, 'medium');
 
   if (days <= 1) {
-    return `Démarre demain (${dateLabel})`;
+    return t('app.athleteProgram.startsTomorrow', { date: dateLabel });
   }
 
-  return `Démarre le ${dateLabel}`;
+  return t('app.athleteProgram.startsOn', { date: dateLabel });
 });
 
 const blockTypeLabel = computed(() => {
@@ -137,11 +139,11 @@ onMounted(() => {
         <div class="min-w-0">
           <h1 class="text-lg font-bold text-white sm:text-xl">{{ programBlock.name }}</h1>
           <p class="mt-1 text-xs leading-relaxed text-slate-500">
-            Du {{ formatCalendarFr(programBlock.date_start, 'medium') }}
+            {{ t('app.athleteProgram.fromTo', { start: formatCalendarFr(programBlock.date_start, 'medium') }) }}
             <template v-if="programBlock.date_end">
-              au {{ formatCalendarFr(programBlock.date_end, 'medium') }}
+              {{ t('app.athleteProgram.to', { end: formatCalendarFr(programBlock.date_end, 'medium') }) }}
             </template>
-            · {{ programBlock.week_count }} semaine{{ programBlock.week_count > 1 ? 's' : '' }}
+            · {{ t('app.athleteProgram.weeks', programBlock.week_count) }}
           </p>
         </div>
         <span class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-1 text-xs font-medium text-slate-300">
@@ -151,7 +153,7 @@ onMounted(() => {
 
       <div v-if="blockProgress?.week_current" class="mt-3">
         <div class="flex items-center justify-between text-xs text-slate-500">
-          <span>Semaine {{ blockProgress.week_current }} / {{ blockProgress.week_count }}</span>
+          <span>{{ t('app.athleteProgram.weekProgress', { current: blockProgress.week_current, total: blockProgress.week_count }) }}</span>
           <span>{{ weekProgressPercent }}%</span>
         </div>
         <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-800">
@@ -167,9 +169,9 @@ onMounted(() => {
       v-else
       class="rounded-2xl border border-dashed border-slate-700 bg-slate-900/30 p-8 text-center"
     >
-      <h1 class="text-lg font-semibold text-white">Programme</h1>
+      <h1 class="text-lg font-semibold text-white">{{ t('app.athleteProgram.emptyTitle') }}</h1>
       <p class="mt-2 text-sm text-slate-500">
-        Aucun bloc actif pour le moment. Ton coach te l’assignera bientôt.
+        {{ t('app.athleteProgram.emptyBody') }}
       </p>
     </div>
 

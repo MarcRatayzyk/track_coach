@@ -7,13 +7,18 @@ import {
 } from './trainingVolume';
 import { LIFT_COLORS, LIFT_LABELS, baseChartOptions, doughnutChartOptions } from './chartTheme';
 import { metricUnit } from '../config/chartBuilderOptions';
+import i18n, { localeTag } from '../i18n';
+
+function activeTag() {
+  return localeTag(i18n.global.locale.value);
+}
 
 const LIFTS = ['squat', 'bench', 'deadlift'];
 const SECTION_LABELS = {
-  topset: 'Topset',
-  backoff: 'Backoff',
-  accessory: 'Accessoire',
-  warmup: 'Échauffement',
+  get topset() { return 'Topset'; },
+  get backoff() { return 'Backoff'; },
+  get accessory() { return i18n.global.t('charts.accessory'); },
+  get warmup() { return i18n.global.t('charts.warmup'); },
 };
 
 const GENERIC_COLORS = [
@@ -370,7 +375,7 @@ export function buildChartOptions(config) {
               const value = context.parsed ?? 0;
               const total = context.dataset.data.reduce((acc, item) => acc + (item ?? 0), 0);
               const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-              return `${context.label}: ${Math.round(value).toLocaleString('fr-FR')} (${pct} %)`;
+              return `${context.label}: ${Math.round(value).toLocaleString(activeTag())} (${pct} %)`;
             },
           },
         },
@@ -396,7 +401,7 @@ export function buildChartOptions(config) {
             if (value == null) {
               return `${context.dataset.label}: —`;
             }
-            return `${context.dataset.label}: ${value.toLocaleString('fr-FR')}${unit ? ` ${unit}` : ''}`;
+            return `${context.dataset.label}: ${value.toLocaleString(activeTag())}${unit ? ` ${unit}` : ''}`;
           },
         },
       },

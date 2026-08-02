@@ -1,7 +1,10 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import ProgramPasteIncrementModal from './ProgramPasteIncrementModal.vue';
 import ProgramTableWeekSection from './ProgramTableWeekSection.vue';
 import { useProgramTableBuilder } from '../composables/useProgramTableBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   activeBlock: {
@@ -50,15 +53,13 @@ const {
   <section class="space-y-6 rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 class="text-lg font-semibold text-white">Builder tableur</h2>
+        <h2 class="text-lg font-semibold text-white">{{ t('programBuilder.tableBuilder.title') }}</h2>
         <p class="mt-2 text-sm text-slate-400">
-          7 colonnes = une semaine calendaire. Clique sur Repos pour ajouter une séance.
+          {{ t('programBuilder.tableBuilder.subtitle') }}
         </p>
       </div>
       <div class="rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-slate-400">
-        Jusqu'à
-        <span class="font-medium text-white">{{ maxSessionsPerWeek }}</span>
-        séance{{ maxSessionsPerWeek > 1 ? 's' : '' }} par semaine
+        {{ t('programBuilder.tableBuilder.maxSessions', maxSessionsPerWeek, { named: { count: maxSessionsPerWeek } }) }}
       </div>
     </div>
 
@@ -67,7 +68,7 @@ const {
       class="rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-sm text-slate-400"
     >
       <span class="font-medium text-white">{{ clipboardStatus }}</span>
-      <span class="ml-2 text-slate-500">Le collage demandera des incréments (kg, %, RPE).</span>
+      <span class="ml-2 text-slate-500">{{ t('programBuilder.tableBuilder.pasteHint') }}</span>
     </div>
 
     <div class="space-y-8">

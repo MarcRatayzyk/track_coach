@@ -35,7 +35,7 @@ class StoreDemoSandboxRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique' => 'Cet e-mail est déjà utilisé. Connecte-toi, ou utilise une autre adresse pour la démo.',
+            'email.unique' => __('messages.validation.email_unique_demo'),
         ];
     }
 }

@@ -21,12 +21,14 @@ class ResetPasswordNotification extends BaseResetPassword implements ShouldQueue
             'email' => $notifiable->getEmailForPasswordReset(),
         ], false));
 
+        $minutes = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
+
         return (new MailMessage)
-            ->subject('Réinitialise ton mot de passe Power Roster')
-            ->line('Tu reçois cet e-mail car nous avons reçu une demande de réinitialisation de mot de passe pour ton compte.')
-            ->action('Réinitialiser le mot de passe', $url)
-            ->line('Ce lien expirera dans '.config('auth.passwords.'.config('auth.defaults.passwords').'.expire').' minutes.')
-            ->line('Si tu n’as pas demandé de réinitialisation, ignore cet e-mail.')
-            ->salutation("Cordialement,\nPower Roster");
+            ->subject(__('mail.reset_password.subject'))
+            ->line(__('mail.reset_password.line1'))
+            ->action(__('mail.reset_password.action'), $url)
+            ->line(__('mail.reset_password.expires', ['minutes' => $minutes]))
+            ->line(__('mail.reset_password.line2'))
+            ->salutation(__('mail.salutation'));
     }
 }

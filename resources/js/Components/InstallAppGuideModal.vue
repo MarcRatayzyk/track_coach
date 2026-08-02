@@ -1,6 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import UiIcon from './UiIcon.vue';
 import { track } from '../utils/analytics';
+
+const { t } = useI18n();
 
 defineProps({
     open: {
@@ -44,13 +47,13 @@ function trackApkDownload() {
                             <UiIcon name="bolt" class="h-5 w-5" />
                         </span>
                         <h2 id="install-guide-title" class="text-base font-semibold text-white">
-                            Installer Power Roster
+                            {{ t('modals.installGuide.title') }}
                         </h2>
                     </div>
                     <button
                         type="button"
                         class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white"
-                        aria-label="Fermer"
+                        :aria-label="t('modals.installGuide.close')"
                         @click="emit('close')"
                     >
                         <UiIcon name="x-mark" class="h-4 w-4" />
@@ -61,38 +64,36 @@ function trackApkDownload() {
                     v-if="guideType !== 'android'"
                     class="mt-3 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200"
                 >
-                    Un simple raccourci ouvre l’app dans le navigateur. Suis bien les étapes ci-dessous pour l’installer en plein écran.
+                    {{ t('modals.installGuide.shortcutWarning') }}
                 </p>
                 <p
                     v-else
                     class="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-200"
                 >
-                    Pour l’app native Android, télécharge l’APK ci-dessous. Tu peux aussi l’ajouter depuis Chrome.
+                    {{ t('modals.installGuide.androidHint') }}
                 </p>
 
                 <ol v-if="guideType === 'ios'" class="mt-4 space-y-3 text-sm text-slate-300">
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">1</span>
-                        <span>
-                            Utilise <strong class="text-white">Safari</strong> uniquement
-                            (Chrome sur iPhone ne crée qu’un raccourci navigateur).
-                        </span>
+                        <span>{{ t('modals.installGuide.ios1') }}</span>
                     </li>
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">2</span>
                         <span>
-                            Appuie sur
+                            {{ t('modals.installGuide.ios2Before') }}
                             <span class="inline-flex items-center gap-1 font-medium text-white">
-                                Partager
+                                {{ t('modals.installGuide.ios2Share') }}
                                 <UiIcon name="share" class="h-3.5 w-3.5" />
                             </span>
-                            en bas de l’écran.
+                            {{ t('modals.installGuide.ios2After') }}
                         </span>
                     </li>
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">3</span>
                         <span>
-                            Choisis <strong class="text-white">Sur l’écran d’accueil</strong>, puis confirme.
+                            {{ t('modals.installGuide.ios3Before') }}
+                            <strong class="text-white">{{ t('modals.installGuide.ios3Action') }}</strong>{{ t('modals.installGuide.ios3After') }}
                         </span>
                     </li>
                 </ol>
@@ -104,38 +105,28 @@ function trackApkDownload() {
                         @click="trackApkDownload"
                     >
                         <UiIcon name="download" class="h-4 w-4" />
-                        Télécharger l’app Android (APK)
+                        {{ t('modals.installGuide.downloadApk') }}
                     </a>
                     <p class="text-xs leading-relaxed text-slate-400">
-                        Après le téléchargement, ouvre le fichier et autorise l’installation depuis
-                        cette source si Android le demande.
+                        {{ t('modals.installGuide.afterDownload') }}
                     </p>
 
                     <div class="border-t border-slate-700/80 pt-4">
                         <p class="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-                            Ou installer via le navigateur
+                            {{ t('modals.installGuide.orBrowser') }}
                         </p>
                         <ol class="space-y-3 text-sm text-slate-300">
                             <li class="flex gap-3">
                                 <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">1</span>
-                                <span>
-                                    Dans <strong class="text-white">Chrome</strong>, accepte la proposition
-                                    <strong class="text-white">Installer l’application</strong> si elle apparaît.
-                                </span>
+                                <span>{{ t('modals.installGuide.android1') }}</span>
                             </li>
                             <li class="flex gap-3">
                                 <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">2</span>
-                                <span>
-                                    Sinon : menu <strong class="text-white">⋮</strong> →
-                                    <strong class="text-white">Installer l’application</strong>
-                                    (pas seulement « Ajouter à l’écran d’accueil »).
-                                </span>
+                                <span>{{ t('modals.installGuide.android2') }}</span>
                             </li>
                             <li class="flex gap-3">
                                 <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">3</span>
-                                <span>
-                                    Supprime l’ancien raccourci si besoin, puis réinstalle pour ouvrir sans barre d’adresse.
-                                </span>
+                                <span>{{ t('modals.installGuide.android3') }}</span>
                             </li>
                         </ol>
                     </div>
@@ -144,25 +135,15 @@ function trackApkDownload() {
                 <ol v-else class="mt-4 space-y-3 text-sm text-slate-300">
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">1</span>
-                        <span>
-                            Sur <strong class="text-white">Chrome</strong> ou <strong class="text-white">Edge</strong>,
-                            clique sur l’icône <strong class="text-white">Installer</strong> dans la barre d’adresse
-                            (à droite de l’URL).
-                        </span>
+                        <span>{{ t('modals.installGuide.desktop1') }}</span>
                     </li>
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">2</span>
-                        <span>
-                            Sinon : menu <strong class="text-white">⋮</strong> →
-                            <strong class="text-white">Installer Power Roster</strong>
-                            ou <strong class="text-white">Applications disponibles</strong>.
-                        </span>
+                        <span>{{ t('modals.installGuide.desktop2') }}</span>
                     </li>
                     <li class="flex gap-3">
                         <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300">3</span>
-                        <span>
-                            L’app installée s’ouvre sans barre d’adresse, comme une application native.
-                        </span>
+                        <span>{{ t('modals.installGuide.desktop3') }}</span>
                     </li>
                 </ol>
 
@@ -171,7 +152,7 @@ function trackApkDownload() {
                     class="mt-5 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
                     @click="emit('close')"
                 >
-                    Compris
+                    {{ t('modals.installGuide.understood') }}
                 </button>
             </div>
         </div>

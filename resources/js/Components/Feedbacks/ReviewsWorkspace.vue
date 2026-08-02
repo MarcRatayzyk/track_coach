@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import KPIBar from './KPIBar.vue';
@@ -6,6 +7,7 @@ import ReviewSidebar from './ReviewSidebar.vue';
 import SessionAnalysisPanel from './SessionAnalysisPanel.vue';
 import CoachFeedbackPanel from './CoachFeedbackPanel.vue';
 import EmptyState from './EmptyState.vue';
+const { t } = useI18n();
 
 const props = defineProps({
   feedbacks: { type: Array, default: () => [] },
@@ -69,8 +71,8 @@ function backToList() {
 
     <EmptyState
       v-if="allDone && !activeFeedback"
-      title="Tout est traité"
-      description="Bravo — plus aucun retour en attente. Les nouveaux envois apparaîtront ici."
+      :title="t('app.feedbacks.allDone')"
+      :description="t('app.feedbacks.allDoneDesc')"
       tone="success"
     />
 

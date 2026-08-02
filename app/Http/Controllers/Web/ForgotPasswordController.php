@@ -30,9 +30,9 @@ class ForgotPasswordController extends Controller
         );
 
         if (! $sent) {
-            return back()->with('error', MailSendSupport::DELIVERY_FAILED_MESSAGE);
+            return back()->with('error', MailSendSupport::deliveryFailedMessage());
         }
 
-        return back()->with('success', 'Si un compte existe avec cet e-mail, tu recevras un lien de réinitialisation.');
+        return back()->with('success', __('messages.auth.forgot_password_sent'));
     }
 }

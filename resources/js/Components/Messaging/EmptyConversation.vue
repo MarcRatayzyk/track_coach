@@ -1,5 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
+
+const { t } = useI18n();
 
 defineProps({
   isCoach: {
@@ -30,13 +33,13 @@ defineProps({
       <div class="absolute bottom-6 left-2 h-2 w-2 rounded-full bg-slate-600" />
     </div>
 
-    <h2 class="text-xl font-bold text-white">Sélectionne une conversation</h2>
+    <h2 class="text-xl font-bold text-white">{{ t('app.messaging.selectConversation') }}</h2>
     <p class="mt-3 max-w-sm text-sm leading-relaxed text-slate-400">
       <template v-if="isCoach">
-        Retrouve ici tous tes échanges avec tes athlètes.
+        {{ t('app.messaging.emptyCoachHint') }}
       </template>
       <template v-else>
-        Aucun coach associé pour le moment.
+        {{ t('app.messaging.emptyAthleteHint') }}
       </template>
     </p>
 
@@ -45,7 +48,7 @@ defineProps({
       href="/athletes"
       class="mt-6 inline-flex items-center gap-2 rounded-[14px] border border-blue-500/30 bg-blue-600/10 px-4 py-2.5 text-sm font-semibold text-blue-300 transition duration-200 hover:bg-blue-600/20 hover:text-blue-200"
     >
-      Ouvrir un profil
+      {{ t('app.messaging.openProfileShort') }}
     </Link>
   </div>
 </template>

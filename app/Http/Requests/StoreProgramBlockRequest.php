@@ -43,7 +43,7 @@ class StoreProgramBlockRequest extends FormRequest
                 ->exists();
 
             if (! $isOnRoster) {
-                $validator->errors()->add('athlete_id', 'Cet athlète n’est pas dans votre roster.');
+                $validator->errors()->add('athlete_id', __('messages.validation.athlete_not_in_roster'));
             }
         });
     }

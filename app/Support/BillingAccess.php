@@ -115,7 +115,7 @@ class BillingAccess
                 return [
                     'ok' => true,
                     'trial_days' => $trialDays,
-                    'message' => 'Ton essai gratuit est déjà actif.',
+                    'message' => __('messages.billing.trial_already_active'),
                 ];
             }
 
@@ -123,7 +123,7 @@ class BillingAccess
                 return [
                     'ok' => false,
                     'trial_days' => $trialDays,
-                    'message' => 'Tu as déjà utilisé ton essai gratuit de '.$trialDays.' jours. Choisis un abonnement pour continuer.',
+                    'message' => __('messages.billing.trial_already_used', ['days' => $trialDays]),
                 ];
             }
 
@@ -131,14 +131,14 @@ class BillingAccess
                 return [
                     'ok' => false,
                     'trial_days' => $trialDays,
-                    'message' => 'Tu as déjà un abonnement actif.',
+                    'message' => __('messages.billing.already_subscribed'),
                 ];
             }
 
             return [
                 'ok' => false,
                 'trial_days' => $trialDays,
-                'message' => 'Impossible de démarrer un essai sur ce compte.',
+                'message' => __('messages.billing.trial_cannot_start'),
             ];
         }
 
@@ -160,7 +160,7 @@ class BillingAccess
         return [
             'ok' => true,
             'trial_days' => $trialDays,
-            'message' => "Essai gratuit de {$trialDays} jours activé.",
+            'message' => __('messages.billing.trial_activated', ['days' => $trialDays]),
         ];
     }
 

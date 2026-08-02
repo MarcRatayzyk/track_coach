@@ -23,7 +23,7 @@ class CoachInvitationMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Active ton compte coach Power Roster',
+            subject: __('mail.coach_invitation.subject'),
         );
     }
 

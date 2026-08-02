@@ -55,22 +55,22 @@ class ActivationDelivery
     public static function athleteInvitationSuccessMessage(string $label, ?bool $emailSent, bool $emailPending = false): string
     {
         if (self::usesManualLinks() || $emailPending) {
-            return "Athlète ajouté. Copie le lien d’activation et transmets-le à {$label} (WhatsApp, SMS…).";
+            return __('messages.athletes.invitation_manual', ['name' => $label]);
         }
 
         return $emailSent
-            ? "Invitation envoyée par e-mail. Tu as aussi le lien d’activation ci-dessous à partager si besoin."
-            : "Athlète ajouté, mais l’e-mail d’invitation n’a pas pu être envoyé. Partage le lien d’activation ci-dessous.";
+            ? __('messages.athletes.invitation_email_sent')
+            : __('messages.athletes.invitation_email_failed');
     }
 
     public static function athleteResendSuccessMessage(string $label, ?bool $emailSent, bool $emailPending = false): string
     {
         if (self::usesManualLinks() || $emailPending) {
-            return "Lien d’activation régénéré pour {$label}. Copie-le et transmets-le à l’athlète.";
+            return __('messages.athletes.resend_manual', ['name' => $label]);
         }
 
         return $emailSent
-            ? "Invitation renvoyée à {$label}."
-            : "Impossible de renvoyer l’e-mail. Partage le lien d’activation ci-dessous.";
+            ? __('messages.athletes.resend_email_sent', ['name' => $label])
+            : __('messages.athletes.resend_email_failed');
     }
 }

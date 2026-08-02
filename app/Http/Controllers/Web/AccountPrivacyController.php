@@ -53,6 +53,6 @@ class AccountPrivacyController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('home')
-            ->with('success', 'Ton compte et toutes tes données ont été supprimés.');
+            ->with('success', __('messages.auth.account_deleted'));
     }
 }

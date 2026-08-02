@@ -74,7 +74,7 @@ class SessionFeedbackWebController extends Controller
 
         return redirect()
             ->route('feedbacks.index', ['feedback' => $feedback->id])
-            ->with('success', 'Retour envoyé au coach.');
+            ->with('success', __('messages.feedback.sent_to_coach'));
     }
 
     public function reply(
@@ -91,7 +91,7 @@ class SessionFeedbackWebController extends Controller
         $body = trim($data['content']);
         if ($body === '') {
             throw ValidationException::withMessages([
-                'content' => 'Écrivez votre retour avant de l’envoyer.',
+                'content' => __('messages.feedback.write_before_send'),
             ]);
         }
 
@@ -107,7 +107,7 @@ class SessionFeedbackWebController extends Controller
                 'feedback' => $feedback->id,
                 'filter' => $request->query('filter', 'all'),
             ])
-            ->with('success', 'Retour envoyé à l’athlète.');
+            ->with('success', __('messages.feedback.sent_to_athlete'));
     }
 
     private function coachIndex($coach, string $_filter, ?int $activeId): Response

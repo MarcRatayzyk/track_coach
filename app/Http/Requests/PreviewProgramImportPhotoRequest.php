@@ -28,9 +28,9 @@ class PreviewProgramImportPhotoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'file.required' => 'Choisissez une photo ou un PDF.',
-            'file.mimes' => 'Formats acceptés : JPG, PNG, WEBP, GIF, PDF.',
-            'file.max' => 'Le fichier est trop volumineux.',
+            'file.required' => __('messages.validation.file_required_photo'),
+            'file.mimes' => __('messages.validation.file_mimes_photo'),
+            'file.max' => __('messages.validation.file_too_large'),
         ];
     }
 }

@@ -1,40 +1,47 @@
 <script setup>
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
 import ScreenFrame from './ScreenFrame.vue';
 
-const pillars = [
-    {
-        title: 'Tableaux de programmation',
-        description: 'Colonnes, modes d’exercice, charge kg · % · RPE : chaque coach construit son tableur.',
-    },
-    {
-        title: 'Graphiques sur mesure',
-        description: 'Métriques, regroupements et filtres SBD : tu visualises ce qui compte pour ta méthode.',
-    },
-    {
-        title: 'Check-ins & formulaires',
-        description: 'Readiness et retours adaptés à ton suivi, pas un questionnaire figé pour tout le monde.',
-    },
-];
+const { t } = useI18n();
 
-const showcases = [
+const pillars = computed(() => [
     {
-        title: 'Ton tableau, tes colonnes',
-        description:
-            'Choisis ce qui apparaît dans le tableur jour : Type, Séries, Reps, Charge, RPE, Repos, Muscles… et prévisualise en live.',
+        key: 'tables',
+        title: t('landing.modularity.pillars.tables.title'),
+        description: t('landing.modularity.pillars.tables.description'),
+    },
+    {
+        key: 'charts',
+        title: t('landing.modularity.pillars.charts.title'),
+        description: t('landing.modularity.pillars.charts.description'),
+    },
+    {
+        key: 'checkins',
+        title: t('landing.modularity.pillars.checkins.title'),
+        description: t('landing.modularity.pillars.checkins.description'),
+    },
+]);
+
+const showcases = computed(() => [
+    {
+        key: 'dayTable',
+        title: t('landing.modularity.showcases.dayTable.title'),
+        description: t('landing.modularity.showcases.dayTable.description'),
         src: '/images/landing/day-table-layout.png',
-        alt: 'Configuration du tableau jour : colonnes et aperçu live',
-        label: 'Power Roster · Tableau jour',
+        alt: t('landing.modularity.showcases.dayTable.alt'),
+        label: t('landing.modularity.showcases.dayTable.label'),
     },
     {
-        title: 'Tes stats, ton angle',
-        description:
-            'Crée des graphiques volume, e1RM, RPE ou charge moyenne : par semaine, par lift, avec les filtres de ton choix.',
+        key: 'chartBuilder',
+        title: t('landing.modularity.showcases.chartBuilder.title'),
+        description: t('landing.modularity.showcases.chartBuilder.description'),
         src: '/images/landing/chart-builder.png',
-        alt: 'Constructeur de graphiques personnalisés avec aperçu',
-        label: 'Power Roster · Graphiques',
+        alt: t('landing.modularity.showcases.chartBuilder.alt'),
+        label: t('landing.modularity.showcases.chartBuilder.label'),
     },
-];
+]);
 </script>
 
 <template>
@@ -45,23 +52,22 @@ const showcases = [
     >
         <div class="mx-auto w-full max-w-[1280px]">
             <FadeIn>
-                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-400">Modularité</p>
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-400">{{ t('landing.modularity.eyebrow') }}</p>
                 <h2
                     id="modularity-heading"
                     class="mt-3 max-w-3xl text-3xl font-black tracking-[-0.03em] text-white sm:text-4xl"
                 >
-                    Une plateforme qui s’adapte à ta façon de coacher
+                    {{ t('landing.modularity.heading') }}
                 </h2>
                 <p class="mt-4 max-w-2xl text-base text-slate-400 sm:text-lg">
-                    Powerlifting, force, préparation spécifique : tu configures tableaux, graphiques et check-ins
-                    selon ta méthode, pas l’inverse.
+                    {{ t('landing.modularity.subtitle') }}
                 </p>
             </FadeIn>
 
             <div class="mt-12 grid gap-4 sm:grid-cols-3">
                 <FadeIn
                     v-for="(pillar, i) in pillars"
-                    :key="pillar.title"
+                    :key="pillar.key"
                     :delay="0.06 * i"
                     class-name="rounded-[18px] border border-white/[0.06] bg-white/[0.02] px-5 py-5"
                 >
@@ -73,7 +79,7 @@ const showcases = [
             <div class="mt-14 grid gap-10 lg:grid-cols-2 lg:gap-8">
                 <FadeIn
                     v-for="(item, i) in showcases"
-                    :key="item.title"
+                    :key="item.key"
                     :delay="0.08 + i * 0.1"
                     class-name="flex flex-col"
                 >

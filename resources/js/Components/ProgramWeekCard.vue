@@ -1,7 +1,10 @@
 <script setup>
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import TrainingDayEditor from './TrainingDayEditor.vue';
 import { BLOCK_TYPES, emptyDay } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const week = defineModel({ type: Object, required: true });
 
@@ -32,7 +35,7 @@ function removeDay(index) {
   <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="flex flex-wrap items-center gap-3">
-        <h3 class="text-base font-semibold text-white">Semaine {{ week.week_number }}</h3>
+        <h3 class="text-base font-semibold text-white">{{ t('programBuilder.shared.week', { n: week.week_number }) }}</h3>
         <select
           v-model="week.block_type"
           class="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 text-sm text-white"
@@ -43,7 +46,7 @@ function removeDay(index) {
         </select>
       </div>
       <button type="button" class="text-sm text-red-400 hover:text-red-300" @click="emit('remove')">
-        Supprimer la semaine
+        {{ t('programBuilder.weekCard.deleteWeek') }}
       </button>
     </div>
 
@@ -60,14 +63,14 @@ function removeDay(index) {
         "
         @click="activeDayIndex = index"
       >
-        Jour {{ day.day_number }}
+        {{ t('programBuilder.shared.day', { n: day.day_number }) }}
       </button>
       <button
         type="button"
         class="rounded-lg border border-dashed border-slate-600 px-3 py-1.5 text-sm text-slate-400 hover:border-blue-500/50 hover:text-blue-300"
         @click="addDay"
       >
-        + Jour
+        {{ t('programBuilder.weekCard.addDay') }}
       </button>
     </div>
 
@@ -79,7 +82,7 @@ function removeDay(index) {
           class="text-xs text-red-400 hover:text-red-300"
           @click="removeDay(activeDayIndex)"
         >
-          Supprimer ce jour
+          {{ t('programBuilder.weekCard.deleteDay') }}
         </button>
       </div>
       <TrainingDayEditor v-model="week.days[activeDayIndex]" />

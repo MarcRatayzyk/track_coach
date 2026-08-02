@@ -1,13 +1,16 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import UiIcon from './UiIcon.vue';
+
+const { t } = useI18n();
 
 const content = defineModel({ type: String, default: '' });
 
 const props = defineProps({
   placeholder: {
     type: String,
-    default: 'Écrire un message…',
+    default: '',
   },
   disabled: {
     type: Boolean,
@@ -34,6 +37,10 @@ const isRecording = ref(false);
 const recordError = ref('');
 let mediaRecorder = null;
 let chunks = [];
+
+const resolvedPlaceholder = computed(
+  () => props.placeholder || t('app.messaging.placeholder'),
+);
 
 const canSend = computed(() => {
   const hasText = Boolean(content.value?.trim());
@@ -93,7 +100,7 @@ async function startRecording() {
     mediaRecorder.start();
     isRecording.value = true;
   } catch {
-    recordError.value = 'Microphone inaccessible.';
+    recordError.value = t('app.messaging.micInaccessible');
   }
 }
 
@@ -130,7 +137,7 @@ onBeforeUnmount(() => {
         v-model="content"
         rows="1"
         :disabled="disabled || processing"
-        :placeholder="placeholder"
+        :placeholder="resolvedPlaceholder"
         class="max-h-40 min-h-[2.75rem] flex-1 resize-none bg-transparent py-2 text-base leading-relaxed text-white placeholder:text-slate-600 focus:outline-none disabled:opacity-50"
         @input="resizeTextarea"
         @keydown="onKeydown"
@@ -146,7 +153,7 @@ onBeforeUnmount(() => {
               ? 'bg-rose-600 text-white animate-pulse'
               : 'text-slate-400 hover:bg-slate-800 hover:text-white'
           "
-          :aria-label="isRecording ? 'Arrêter l’enregistrement' : 'Enregistrer un message vocal'"
+          :aria-label="isRecording ? t('app.messaging.stopRecording') : t('app.messaging.recordVoice')"
           :disabled="disabled || processing"
           @click="toggleRecording"
         >
@@ -156,7 +163,7 @@ onBeforeUnmount(() => {
         <button
           type="button"
           class="rounded-full bg-blue-600 p-2.5 text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Envoyer"
+          :aria-label="t('common.send')"
           :disabled="!canSend"
           @click="submit"
         >
@@ -166,7 +173,7 @@ onBeforeUnmount(() => {
     </div>
 
     <p v-if="isRecording" class="text-xs font-medium text-rose-400">
-      Enregistrement en cours… Appuie sur le micro pour arrêter.
+      {{ t('app.messaging.recordingInProgress') }}
     </p>
     <p v-if="recordError" class="text-xs text-red-400">{{ recordError }}</p>
 
@@ -181,7 +188,7 @@ onBeforeUnmount(() => {
         <button
           type="button"
           class="text-slate-500 hover:text-red-400"
-          aria-label="Retirer l’audio"
+          :aria-label="t('app.messaging.removeAudio')"
           @click="emit('remove-audio', index)"
         >
           ×

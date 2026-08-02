@@ -59,7 +59,7 @@ class StoreSessionFeedbackRequest extends FormRequest
                 if ($notes === '' && $videoCount === 0 && ! $hasLoggedNotes) {
                     $validator->errors()->add(
                         'athlete_notes',
-                        'Ajoutez un message, des notes de séance ou au moins une vidéo.',
+                        __('messages.validation.feedback_content_or_video'),
                     );
                 }
 
@@ -81,7 +81,7 @@ class StoreSessionFeedbackRequest extends FormRequest
                 if ($missing !== []) {
                     $validator->errors()->add(
                         'video_upload_ids',
-                        'Une ou plusieurs vidéos sont invalides ou non finalisées.',
+                        __('messages.validation.videos_invalid'),
                     );
                 }
 
@@ -93,7 +93,7 @@ class StoreSessionFeedbackRequest extends FormRequest
             if ($notes === '' && $videoCount === 0 && ! $hasLoggedNotes) {
                 $validator->errors()->add(
                     'athlete_notes',
-                    'Ajoutez un message, des notes de séance ou au moins une vidéo.',
+                    __('messages.validation.feedback_content_or_video'),
                 );
             }
         });
@@ -138,10 +138,10 @@ class StoreSessionFeedbackRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'videos.max' => 'Vous pouvez envoyer au maximum '.VideoUploadDisk::MAX_FILES.' vidéos.',
-            'videos.*.max' => 'Chaque vidéo ne doit pas dépasser 100 Mo.',
-            'videos.*.mimetypes' => 'Format vidéo non pris en charge (MP4, MOV, WebM, 3GP…).',
-            'video_upload_ids.max' => 'Vous pouvez envoyer au maximum '.VideoUploadDisk::MAX_FILES.' vidéos.',
+            'videos.max' => __('messages.validation.videos_max', ['max' => VideoUploadDisk::MAX_FILES]),
+            'videos.*.max' => __('messages.validation.video_max_size'),
+            'videos.*.mimetypes' => __('messages.validation.video_mimetypes'),
+            'video_upload_ids.max' => __('messages.validation.videos_max', ['max' => VideoUploadDisk::MAX_FILES]),
         ];
     }
 }

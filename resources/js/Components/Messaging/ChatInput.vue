@@ -1,13 +1,16 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import UiIcon from '../UiIcon.vue';
+
+const { t } = useI18n();
 
 const content = defineModel({ type: String, default: '' });
 
 const props = defineProps({
   placeholder: {
     type: String,
-    default: 'Écrire un message…',
+    default: '',
   },
   disabled: {
     type: Boolean,
@@ -33,6 +36,10 @@ const textareaRef = ref(null);
 const showEmoji = ref(false);
 
 const emojis = ['👍', '🔥', '💪', '✅', '🙌', '😂', '❤️', '👀', '🎯', '⚡'];
+
+const resolvedPlaceholder = computed(
+  () => props.placeholder || t('app.messaging.placeholder'),
+);
 
 const canSend = computed(() => {
   const hasText = Boolean(content.value?.trim());
@@ -90,7 +97,7 @@ onMounted(() => {
           <button
             type="button"
             class="rounded-full p-2 text-slate-400 transition duration-200 hover:bg-slate-800 hover:text-white"
-            aria-label="Emoji"
+            :aria-label="t('app.messaging.emoji')"
             @click="showEmoji = !showEmoji"
           >
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -123,7 +130,7 @@ onMounted(() => {
           v-model="content"
           rows="1"
           :disabled="disabled || processing"
-          :placeholder="placeholder"
+          :placeholder="resolvedPlaceholder"
           class="max-h-40 min-h-[2.75rem] flex-1 resize-none bg-transparent py-2 text-base leading-relaxed text-white placeholder:text-slate-600 focus:outline-none disabled:opacity-50"
           @input="resizeTextarea"
           @keydown="onKeydown"
@@ -133,7 +140,7 @@ onMounted(() => {
           <button
             type="button"
             class="rounded-full bg-blue-600 p-2.5 text-white shadow-lg shadow-blue-900/50 transition duration-200 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.45)] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-            aria-label="Envoyer"
+            :aria-label="t('common.send')"
             :disabled="!canSend"
             @click="submit"
           >

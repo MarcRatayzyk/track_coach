@@ -1,7 +1,10 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import UiIcon from './UiIcon.vue';
 import { useNativeApp } from '../composables/useNativeApp';
 import { usePwaInstall } from '../composables/usePwaInstall';
+
+const { t } = useI18n();
 
 const props = defineProps({
     variant: {
@@ -41,10 +44,10 @@ const buttonClasses = {
         v-if="!isInstalled && !isNative"
         type="button"
         :class="[buttonClasses[props.variant], props.variant === 'sidebar' && props.collapsed ? 'px-2' : '']"
-        :title="props.variant === 'sidebar' && props.collapsed ? 'Installer l\'app' : undefined"
+        :title="props.variant === 'sidebar' && props.collapsed ? t('modals.installButton.label') : undefined"
         @click="handleClick"
     >
         <UiIcon name="bolt" class="h-4 w-4 shrink-0 text-blue-300" />
-        <span v-if="props.variant !== 'sidebar' || !props.collapsed">Installer l'app</span>
+        <span v-if="props.variant !== 'sidebar' || !props.collapsed">{{ t('modals.installButton.label') }}</span>
     </button>
 </template>

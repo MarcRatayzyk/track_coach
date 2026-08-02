@@ -18,6 +18,6 @@ class DashboardTaskController extends Controller
             'completed_at' => now(),
         ]);
 
-        return back()->with('success', 'Retour marqué comme traité.');
+        return back()->with('success', __('messages.feedback.marked_done'));
     }
 }

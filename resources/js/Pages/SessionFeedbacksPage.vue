@@ -7,6 +7,9 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../i18n';
+const { t, locale } = useI18n();
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { Capacitor } from '@capacitor/core';
@@ -127,11 +130,11 @@ function openSeriesPicker(index) {
 function seriesLabelFor(index) {
   const id = videoSeries.value[index];
   if (id === '' || id === null || id === undefined) {
-    return 'Aucune série';
+    return t('app.feedbacks.noSets');
   }
   const exercise = sessionExercises.value.find((item) => Number(item.id) === Number(id));
   if (!exercise) {
-    return 'Aucune série';
+    return t('app.feedbacks.noSets');
   }
   return exercise.exercise_name || exercise.label;
 }
@@ -139,7 +142,7 @@ function seriesLabelFor(index) {
 function seriesSummaryFor(index) {
   const id = videoSeries.value[index];
   if (id === '' || id === null || id === undefined) {
-    return 'Optionnel — rattacher à un exercice';
+    return t('app.feedbacks.optionalAttach');
   }
   const exercise = sessionExercises.value.find((item) => Number(item.id) === Number(id));
   if (!exercise) {
@@ -235,7 +238,7 @@ function sendReply() {
   }
   const content = replyForm.content?.trim() ?? '';
   if (!content) {
-    replyForm.setError('content', 'Écrivez votre retour avant de l’envoyer.');
+    replyForm.setError('content', t('app.feedbacks.writeBeforeSend'));
     return;
   }
 
@@ -264,7 +267,7 @@ function isAllowedVideo(source) {
 function applySelectedVideos(sources) {
   const remaining = Math.max(0, MAX_VIDEOS.value - selectedVideos.value.length);
   if (remaining <= 0) {
-    submitForm.setError('videos', `Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
+    submitForm.setError('videos', t('app.feedbacks.maxVideos', { max: MAX_VIDEOS.value }));
     return;
   }
 
@@ -274,16 +277,16 @@ function applySelectedVideos(sources) {
   }
 
   if (incoming.some((s) => !isAllowedVideo(s))) {
-    submitForm.setError('videos', 'Format vidéo non pris en charge (MP4, MOV, WebM, 3GP…).');
+    submitForm.setError('videos', t('app.feedbacks.unsupportedFormat'));
     return;
   }
   if (incoming.some((s) => (s.size ?? 0) > MAX_VIDEO_BYTES.value)) {
-    submitForm.setError('videos', `Chaque vidéo ne doit pas dépasser ${maxVideoMbLabel.value} Mo.`);
+    submitForm.setError('videos', t('app.feedbacks.maxVideoSize', { mb: maxVideoMbLabel.value }));
     return;
   }
 
   if (sources.length > remaining) {
-    submitForm.setError('videos', `Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
+    submitForm.setError('videos', t('app.feedbacks.maxVideos', { max: MAX_VIDEOS.value }));
   } else {
     submitForm.clearErrors('videos');
     submitForm.clearErrors('video_upload_ids');
@@ -326,7 +329,7 @@ function onTrimConfirm(result) {
   if (result?.trimmed && result.source) {
     selectedVideos.value[index] = result.source;
     const parts = trimSummary.value ? trimSummary.value.split(' · ').filter(Boolean) : [];
-    parts.push(`${formatMb(result.originalBytes)} → ${formatMb(result.outputBytes)} (rogné)`);
+    parts.push(`${formatMb(result.originalBytes)} → ${formatMb(result.outputBytes)} ({t('app.feedbacks.trimmed'){'}'})`);
     trimSummary.value = parts.join(' · ');
   }
   advanceTrimQueue();
@@ -359,7 +362,7 @@ function onVideoChange(event) {
 // La copie cache (photopicker → fichier) part en arrière-plan pendant le clip.
 async function pickNativeVideos() {
   if (selectedVideos.value.length >= MAX_VIDEOS.value) {
-    submitForm.setError('videos', `Vous pouvez envoyer au maximum ${MAX_VIDEOS.value} vidéos.`);
+    submitForm.setError('videos', t('app.feedbacks.maxVideos', { max: MAX_VIDEOS.value }));
     return;
   }
   try {
@@ -384,7 +387,7 @@ async function pickNativeVideos() {
     const message = error?.message || '';
     // Annulation par l'utilisateur -> on ignore silencieusement.
     if (!/cancel/i.test(message)) {
-      submitForm.setError('videos', message || 'Sélection vidéo impossible.');
+      submitForm.setError('videos', message || t('app.feedbacks.selectVideoFailed'));
     }
   }
 }
@@ -442,7 +445,7 @@ async function jsonRequest(url, method, body = null) {
       data?.errors?.video?.[0] ||
       data?.errors?.mime_type?.[0] ||
       data?.errors?.video_upload_ids?.[0] ||
-      'Erreur lors de l’envoi de la vidéo.';
+      t('app.feedbacks.uploadFailed');
     throw new Error(message);
   }
 
@@ -472,14 +475,14 @@ function putFileToSignedUrl(url, blob, contentType, onProgress) {
       reject(
         new Error(
           xhr.status === 0
-            ? 'Échec CORS ou réseau vers le stockage. Vérifiez la config CORS du bucket R2.'
-            : `Échec de l’upload vers le stockage (HTTP ${xhr.status}).`,
+            ? t('app.feedbacks.corsFailed')
+            : t('app.feedbacks.uploadHttpFailed', { status: xhr.status }),
         ),
       );
     };
 
     xhr.onerror = () => {
-      reject(new Error('Échec CORS ou réseau vers le stockage. Vérifiez la config CORS du bucket R2.'));
+      reject(new Error(t('app.feedbacks.corsFailed')));
     };
 
     xhr.send(blob);
@@ -541,7 +544,7 @@ async function uploadVideosDirectly(sources) {
     await cleanupSource(prepared);
   }
 
-  compressionSummary.value = summaries.length ? `Compressé : ${summaries.join(' · ')}` : '';
+  compressionSummary.value = summaries.length ? t('app.feedbacks.compressed', { summary: summaries.join(' · ') }) : '';
   pipelineProgress.value = 100;
   uploadStatus.value = '';
   return ids;
@@ -569,7 +572,7 @@ async function prepareLocalFiles(sources) {
   }
 
   isCompressing.value = false;
-  compressionSummary.value = summaries.length ? `Compressé : ${summaries.join(' · ')}` : '';
+  compressionSummary.value = summaries.length ? t('app.feedbacks.compressed', { summary: summaries.join(' · ') }) : '';
   return files;
 }
 
@@ -577,13 +580,13 @@ async function submitFeedback() {
   const notes = submitForm.athlete_notes?.trim() ?? '';
   const hasLoggedNotes = selectedSessionLoggedNotes.value.length > 0;
   if (!submitForm.session_date) {
-    submitForm.setError('session_date', 'Choisissez une séance.');
+    submitForm.setError('session_date', t('app.feedbacks.chooseSession'));
     return;
   }
   if (!notes && selectedVideos.value.length === 0 && !hasLoggedNotes) {
     submitForm.setError(
       'athlete_notes',
-      'Ajoutez un message, des notes de séance ou au moins une vidéo.',
+      t('app.feedbacks.addContent'),
     );
     return;
   }
@@ -604,7 +607,7 @@ async function submitFeedback() {
     } catch (error) {
       isUploading.value = false;
       isCompressing.value = false;
-      submitForm.setError('videos', error?.message || 'Échec de la préparation des vidéos.');
+      submitForm.setError('videos', error?.message || t('app.feedbacks.prepFailed'));
       await releaseWakeLock();
       return;
     }
@@ -708,7 +711,7 @@ function formatSubmitted(iso) {
     return '';
   }
   try {
-    return new Date(iso).toLocaleString('fr-FR', {
+    return new Date(iso).toLocaleString(localeTag(locale.value), {
       day: 'numeric',
       month: 'short',
       hour: '2-digit',
@@ -776,7 +779,7 @@ function seriesPayload() {
         <form class="mt-4 space-y-4" @submit.prevent="submitFeedback">
           <div>
             <label class="block text-sm font-medium text-slate-300">
-              {{ isWeekly ? 'Retours à faire' : 'Séances sans retour' }}
+              {{ isWeekly ? t('app.feedbacks.due') : t('app.feedbacks.sessionsWithout') }}
             </label>
 
             <div class="mt-2">
@@ -789,7 +792,7 @@ function seriesPayload() {
               <div
                 v-else
                 role="listbox"
-                aria-label="Retours à faire"
+                :aria-label="t('app.feedbacks.due')"
                 class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 snap-x snap-mandatory [scrollbar-width:thin]"
               >
                 <button
@@ -828,11 +831,11 @@ function seriesPayload() {
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-slate-300">Message</label>
+            <label class="block text-sm font-medium text-slate-300">{{ t('app.feedbacks.message') }}</label>
             <textarea
               v-model="submitForm.athlete_notes"
               rows="4"
-              placeholder="Comment s’est passée la séance ?"
+              :placeholder="t('app.feedbacks.messagePlaceholder')"
               class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-600"
             />
             <div
@@ -840,8 +843,8 @@ function seriesPayload() {
               class="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-950/20 p-3"
             >
               <p class="text-xs font-medium text-emerald-300/90">
-                Notes prises pendant la séance
-                <span class="font-normal text-slate-400"> — incluses à l’envoi</span>
+                {{ t('app.feedbacks.sessionNotesTaken') }}
+                <span class="font-normal text-slate-400">{{ t('app.feedbacks.includedOnSend') }}</span>
               </p>
               <div
                 class="-mx-0.5 mt-2 flex gap-2 overflow-x-auto px-0.5 pb-1 snap-x snap-mandatory [scrollbar-width:thin]"
@@ -865,7 +868,7 @@ function seriesPayload() {
 
           <div>
             <label class="block text-sm font-medium text-slate-300">
-              Vidéos (optionnel, 1 à {{ MAX_VIDEOS }}, max {{ maxVideoMbLabel }} Mo)
+              {{ t('app.feedbacks.videosOptional', { max: MAX_VIDEOS, mb: maxVideoMbLabel }) }}
             </label>
             <input
               ref="videoInput"
@@ -882,16 +885,16 @@ function seriesPayload() {
               class="mt-1 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               @click="openVideoPicker"
             >
-              Ajouter une vidéo
+              {{ t('app.feedbacks.addVideo') }}
             </button>
             <p v-if="selectedVideos.length" class="mt-2 text-xs text-slate-500">
-              {{ selectedVideos.length }} / {{ MAX_VIDEOS }} vidéo{{ selectedVideos.length > 1 ? 's' : '' }}
+              {{ t('app.feedbacks.videosSelected', { count: selectedVideos.length, max: MAX_VIDEOS }) }}
             </p>
             <div
               v-if="selectedVideos.length && sessionExercises.length"
               class="mt-3 space-y-2 rounded-xl border border-slate-800 bg-slate-950/40 p-3"
             >
-              <p class="text-xs font-medium text-slate-400">Associez chaque vidéo à une série (optionnel)</p>
+              <p class="text-xs font-medium text-slate-400">{{ t('app.feedbacks.linkVideos') }}</p>
               <div v-for="(video, index) in selectedVideos" :key="index" class="flex flex-col gap-1.5">
                 <span class="min-w-0 truncate text-xs text-slate-300">{{ video.name }}</span>
                 <button
@@ -903,11 +906,11 @@ function seriesPayload() {
                     <span class="block truncate text-sm font-medium text-white">{{ seriesLabelFor(index) }}</span>
                     <span class="mt-0.5 block truncate text-xs text-slate-500">{{ seriesSummaryFor(index) }}</span>
                   </span>
-                  <span class="shrink-0 text-xs font-medium text-blue-300">Changer</span>
+                  <span class="shrink-0 text-xs font-medium text-blue-300">{{ t('app.feedbacks.change') }}</span>
                 </button>
               </div>
             </div>
-            <p v-if="trimSummary" class="mt-1 text-xs text-sky-400/90">Rogné : {{ trimSummary }}</p>
+            <p v-if="trimSummary" class="mt-1 text-xs text-sky-400/90">{{ t('app.feedbacks.trimmedPrefix', { summary: trimSummary }) }}</p>
             <p v-if="compressionSummary && !isCompressing" class="mt-1 text-xs text-emerald-400/90">{{ compressionSummary }}</p>
             <div v-if="showProgressBar" class="mt-3">
               <div class="h-2 overflow-hidden rounded-full bg-slate-800">
@@ -944,7 +947,7 @@ function seriesPayload() {
     v-model="seriesPickerValue"
     v-model:open="seriesPickerOpen"
     :exercises="sessionExercises"
-    title="Choisir une série"
+    :title="t('app.feedbacks.chooseSetTitle')"
   />
   <VideoTrimModal
     v-if="!isCoach"

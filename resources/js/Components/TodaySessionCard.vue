@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
@@ -18,6 +19,8 @@ import TodaySessionSetBlock from './TodaySessionSetBlock.vue';
 import SessionCelebrationModal from './SessionCelebrationModal.vue';
 import { buildSessionCelebrationPayload } from '../utils/sessionCelebration';
 import { track } from '../utils/analytics';
+
+const { t } = useI18n();
 
 const props = defineProps({
   todaySession: {
@@ -74,7 +77,7 @@ const sessionTitle = computed(() => {
   if (label) {
     return label;
   }
-  return 'Séance du jour';
+  return t('app.todaySession.title');
 });
 
 const sortedWorkItems = computed(() => {
@@ -352,15 +355,11 @@ function closeCelebration() {
 <template>
   <section class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
     <div class="flex flex-wrap items-start justify-between gap-2">
-      <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400/80">
-        Séance du jour
-      </p>
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400/80">{{ t('app.todaySession.title') }}</p>
       <span
         v-if="allSeriesValidated"
         class="rounded-lg border border-emerald-500/40 bg-emerald-950/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300"
-      >
-        Séance validée
-      </span>
+      >{{ t('app.todaySession.validated') }}</span>
       <span
         v-else-if="hasLoggedToday"
         class="rounded-lg border border-amber-500/40 bg-amber-950/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-300"
@@ -419,7 +418,7 @@ function closeCelebration() {
         />
       </div>
       <p v-else class="mt-3 border-t border-slate-800 pt-3 text-xs text-slate-500">
-        Séance prévue, exercices non renseignés.
+        {{ t('app.todaySession.noExercises') }}
       </p>
 
       <div class="mt-3 border-t border-slate-800 pt-3">
@@ -442,7 +441,7 @@ function closeCelebration() {
           </span>
         </template>
         <template v-else>
-          Aucune séance prévue sous 2 semaines.
+          {{ t('app.todaySession.noneUpcoming') }}
         </template>
       </p>
       <div class="mt-3 flex flex-wrap gap-2 border-t border-slate-800 pt-3">

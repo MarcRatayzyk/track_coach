@@ -1,5 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import UiIcon from './UiIcon.vue';
+
+const { t } = useI18n();
 
 defineProps({
     open: {
@@ -31,13 +34,13 @@ const emit = defineEmits(['close']);
                             <UiIcon name="bolt" class="h-5 w-5" />
                         </span>
                         <h2 id="ios-install-title" class="text-base font-semibold text-white">
-                            Installer Power Roster
+                            {{ t('modals.installGuide.title') }}
                         </h2>
                     </div>
                     <button
                         type="button"
                         class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white"
-                        aria-label="Fermer"
+                        :aria-label="t('modals.installGuide.close')"
                         @click="emit('close')"
                     >
                         <UiIcon name="x-mark" class="h-4 w-4" />
@@ -49,19 +52,19 @@ const emit = defineEmits(['close']);
                         <span
                             class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300"
                         >1</span>
-                        <span>Ouvre Power Roster dans <strong class="text-white">Safari</strong>.</span>
+                        <span>{{ t('modals.installGuide.iosOpenSafari') }}</span>
                     </li>
                     <li class="flex gap-3">
                         <span
                             class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300"
                         >2</span>
                         <span>
-                            Appuie sur
+                            {{ t('modals.installGuide.ios2Before') }}
                             <span class="inline-flex items-center gap-1 font-medium text-white">
-                                Partager
+                                {{ t('modals.installGuide.ios2Share') }}
                                 <UiIcon name="share" class="h-3.5 w-3.5" />
                             </span>
-                            en bas de l’écran.
+                            {{ t('modals.installGuide.ios2After') }}
                         </span>
                     </li>
                     <li class="flex gap-3">
@@ -69,9 +72,8 @@ const emit = defineEmits(['close']);
                             class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-blue-300"
                         >3</span>
                         <span>
-                            Choisis
-                            <strong class="text-white">Sur l’écran d’accueil</strong>,
-                            puis confirme.
+                            {{ t('modals.installGuide.ios3Before') }}
+                            <strong class="text-white">{{ t('modals.installGuide.ios3Action') }}</strong>{{ t('modals.installGuide.ios3After') }}
                         </span>
                     </li>
                 </ol>
@@ -81,7 +83,7 @@ const emit = defineEmits(['close']);
                     class="mt-5 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
                     @click="emit('close')"
                 >
-                    Compris
+                    {{ t('modals.installGuide.understood') }}
                 </button>
             </div>
         </div>

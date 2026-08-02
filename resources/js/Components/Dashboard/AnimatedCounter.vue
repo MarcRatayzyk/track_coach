@@ -1,5 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { localeTag } from '../../i18n';
+const { t, locale } = useI18n();
 
 const props = defineProps({
   value: {
@@ -51,7 +54,7 @@ onMounted(start);
 onUnmounted(() => cancelAnimationFrame(frame));
 
 const formatted = () =>
-  Number(display.value).toLocaleString('fr-FR', {
+  Number(display.value).toLocaleString(localeTag(locale.value), {
     maximumFractionDigits: props.decimals,
     minimumFractionDigits: props.decimals,
   });

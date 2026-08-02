@@ -1,9 +1,11 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { motion } from 'motion-v';
 import { formatCalendarFr, formatDateTimeFr } from '../../utils/formatDates';
 import { messagingInitials } from '../../utils/messagingFormat';
+const { t } = useI18n();
 
 const props = defineProps({
   task: {
@@ -18,18 +20,18 @@ const props = defineProps({
 
 const urgency = computed(() => {
   if (props.task.feedback_status === 'coach_replied') {
-    return { key: 'done', label: 'Traité', class: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300' };
+    return { key: 'done', label: t('app.dashboard.treated'), class: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300' };
   }
   if (props.task.has_submission) {
-    return { key: 'high', label: 'À répondre', class: 'border-amber-500/40 bg-amber-500/15 text-amber-200' };
+    return { key: 'high', label: t('app.dashboard.toReply'), class: 'border-amber-500/40 bg-amber-500/15 text-amber-200' };
   }
   // Sans envoi athlète : jamais « en retard » (alerte dashboard dédiée).
-  return { key: 'wait', label: 'En attente', class: 'border-slate-600 bg-slate-800/50 text-slate-400' };
+  return { key: 'wait', label: t('app.dashboard.waiting'), class: 'border-slate-600 bg-slate-800/50 text-slate-400' };
 });
 
 const timeLeft = computed(() => {
   if (!props.task.due_at) {
-    return props.type === 'weekly' ? 'Cette semaine' : 'Aujourd’hui';
+    return props.type === 'weekly' ? t('app.dashboard.thisWeek') : t('app.dashboard.today');
   }
   const due = Date.parse(props.task.due_at);
   if (Number.isNaN(due)) {
@@ -39,27 +41,27 @@ const timeLeft = computed(() => {
   if (diff < 0) {
     const hours = Math.ceil(Math.abs(diff) / 3600000);
     if (hours < 24) {
-      return `Retard ${hours}h`;
+      return t('app.dashboard.lateHours', { hours });
     }
-    return `Retard ${Math.ceil(hours / 24)}j`;
+    return t('app.dashboard.lateDays', { days: Math.ceil(hours / 24) });
   }
   const hours = Math.ceil(diff / 3600000);
   if (hours < 24) {
-    return `${hours}h restantes`;
+    return t('app.dashboard.hoursLeft', { hours });
   }
-  return `${Math.ceil(hours / 24)}j restants`;
+  return t('app.dashboard.daysLeft', { days: Math.ceil(hours / 24) });
 });
 
 const typeLabel = computed(() =>
-  props.type === 'weekly' ? 'Hebdomadaire' : 'Journalier',
+  props.type === 'weekly' ? t('app.athleteDetail.weekly') : t('app.athleteDetail.daily'),
 );
 
 const dateLabel = computed(() => {
   if (props.task.session_date) {
-    return `Séance du ${formatCalendarFr(props.task.session_date, 'medium')}`;
+    return t('app.dashboard.sessionOf', { date: formatCalendarFr(props.task.session_date, 'medium') });
   }
   if (props.task.period_week_start) {
-    return `Semaine du ${formatCalendarFr(props.task.period_week_start, 'medium')}`;
+    return t('app.dashboard.weekOf', { date: formatCalendarFr(props.task.period_week_start, 'medium') });
   }
   return '';
 });
@@ -132,7 +134,7 @@ const cardTone = computed(() => {
         class="text-xs font-semibold"
         :class="canOpen ? 'text-blue-400' : 'text-slate-600'"
       >
-        {{ canOpen ? 'Voir le retour →' : 'En attente d’envoi' }}
+        {{ canOpen ? t('app.dashboard.seeFeedback') : t('app.dashboard.waitingSend') }}
       </span>
     </div>
   </motion.article>

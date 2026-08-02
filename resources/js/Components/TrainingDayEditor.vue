@@ -1,5 +1,6 @@
 <script setup>
 import { computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ExercisePrescriptionEditor from './ExercisePrescriptionEditor.vue';
 import {
   createSessionItem,
@@ -8,6 +9,8 @@ import {
   itemSectionTitle,
   sessionItemHasContent,
 } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const day = defineModel({ type: Object, required: true });
 
@@ -45,7 +48,7 @@ const listedItems = computed(() =>
 const editingRecap = computed(() => formatLineRecap(editingItem.value?.line));
 
 const editingRecapText = computed(
-  () => editingRecap.value ?? 'Choisis un exercice, puis séries, reps et charge.',
+  () => editingRecap.value ?? t('programBuilder.trainingDay.chooseExerciseHint'),
 );
 
 const accentBySection = {
@@ -140,7 +143,7 @@ function itemIndex(itemId) {
       class="sticky top-0 z-10 -mx-1 rounded-xl border border-slate-700 bg-slate-900/80 px-2 py-3 backdrop-blur-sm"
     >
       <p v-if="items.length === 0" class="mb-2 text-sm text-slate-400">
-        Choisis ce que tu veux programmer pour ce jour.
+        {{ t('programBuilder.trainingDay.chooseWhat') }}
       </p>
       <div class="flex flex-wrap gap-2">
         <button
@@ -149,14 +152,14 @@ function itemIndex(itemId) {
           class="min-w-0 flex-1 rounded-xl border border-sky-600/60 bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-sky-200 hover:border-sky-500 sm:px-3 sm:text-sm"
           @click="startSection('warmup')"
         >
-          Ajouter échauffement
+          {{ t('programBuilder.trainingDay.addWarmup') }}
         </button>
         <button
           type="button"
           class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"
           @click="startSection('topset')"
         >
-          Ajouter top set
+          {{ t('programBuilder.trainingDay.addTopSet') }}
         </button>
         <button
           v-if="!items.some((item) => item.section === 'backoff')"
@@ -164,14 +167,14 @@ function itemIndex(itemId) {
           class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"
           @click="startSection('backoff')"
         >
-          Ajouter backoff
+          {{ t('programBuilder.trainingDay.addBackoff') }}
         </button>
         <button
           type="button"
           class="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white hover:border-slate-500 sm:px-3 sm:text-sm"
           @click="startSection('accessory')"
         >
-          Ajouter accessoire
+          {{ t('programBuilder.trainingDay.addAccessory') }}
         </button>
       </div>
     </div>
@@ -190,7 +193,7 @@ function itemIndex(itemId) {
             type="button"
             class="rounded-lg border border-slate-700 px-2 py-1 text-xs text-slate-400 hover:border-slate-500 hover:text-white disabled:opacity-30"
             :disabled="editingIndex === 0"
-            title="Monter"
+            :title="t('programBuilder.statsTab.moveUp')"
             @click="moveItem(editingIndex, -1)"
           >
             ↑
@@ -199,7 +202,7 @@ function itemIndex(itemId) {
             type="button"
             class="rounded-lg border border-slate-700 px-2 py-1 text-xs text-slate-400 hover:border-slate-500 hover:text-white disabled:opacity-30"
             :disabled="editingIndex === items.length - 1"
-            title="Descendre"
+            :title="t('programBuilder.statsTab.moveDown')"
             @click="moveItem(editingIndex, 1)"
           >
             ↓
@@ -208,7 +211,7 @@ function itemIndex(itemId) {
       </div>
 
       <div class="mb-3 rounded-lg border-2 border-blue-500/40 bg-blue-950/40 px-3 py-2.5">
-        <p class="text-xs font-medium uppercase tracking-wide text-blue-300">Récap</p>
+        <p class="text-xs font-medium uppercase tracking-wide text-blue-300">{{ t('programBuilder.trainingDay.recap') }}</p>
         <p
           class="mt-1 text-base font-semibold"
           :class="editingRecap ? 'text-white' : 'text-slate-500'"
@@ -232,14 +235,14 @@ function itemIndex(itemId) {
           class="rounded-xl border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
           @click="finishEditing"
         >
-          ← Retour
+          {{ t('programBuilder.trainingDay.backArrow') }}
         </button>
         <button
           type="button"
           class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
           @click="finishEditing"
         >
-          Valider
+          {{ t('common.validate') }}
         </button>
       </div>
     </div>
@@ -259,7 +262,7 @@ function itemIndex(itemId) {
             type="button"
             class="rounded-lg border border-slate-700 px-2 py-1 text-xs text-slate-400 hover:border-slate-500 hover:text-white disabled:opacity-30"
             :disabled="itemIndex(item.id) === 0"
-            title="Monter"
+            :title="t('programBuilder.statsTab.moveUp')"
             @click="moveItem(itemIndex(item.id), -1)"
           >
             ↑
@@ -268,7 +271,7 @@ function itemIndex(itemId) {
             type="button"
             class="rounded-lg border border-slate-700 px-2 py-1 text-xs text-slate-400 hover:border-slate-500 hover:text-white disabled:opacity-30"
             :disabled="itemIndex(item.id) === items.length - 1"
-            title="Descendre"
+            :title="t('programBuilder.statsTab.moveDown')"
             @click="moveItem(itemIndex(item.id), 1)"
           >
             ↓
@@ -280,17 +283,17 @@ function itemIndex(itemId) {
         <p class="text-sm font-semibold text-white">{{ itemRecap(item) }}</p>
         <div class="mt-2 flex flex-wrap gap-2">
           <button type="button" class="text-xs text-blue-400 hover:text-blue-300" @click="editItem(item.id)">
-            Modifier
+            {{ t('common.edit') }}
           </button>
           <button type="button" class="text-xs text-red-400 hover:text-red-300" @click="removeItem(item.id)">
-            Retirer
+            {{ t('common.remove') }}
           </button>
         </div>
       </template>
       <template v-else>
-        <p class="text-sm text-slate-500">En cours de saisie…</p>
+        <p class="text-sm text-slate-500">{{ t('programBuilder.trainingDay.drafting') }}</p>
         <button type="button" class="mt-2 text-xs text-blue-400 hover:text-blue-300" @click="editItem(item.id)">
-          Reprendre
+          {{ t('programBuilder.trainingDay.resume') }}
         </button>
       </template>
     </div>

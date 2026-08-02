@@ -1,3 +1,4 @@
+import { localeTag, resolveLocale } from '../i18n';
 import { cellDate } from './programBuilder';
 import { scorePlannedLine } from './sessionAdherence';
 import {
@@ -7,6 +8,12 @@ import {
   lineVolume,
   resolveLoadKg,
 } from './trainingVolume';
+
+function activeTag() {
+  const raw =
+    typeof document !== 'undefined' ? document.documentElement.lang : 'fr';
+  return localeTag(resolveLocale(raw));
+}
 
 const LIFT_LABELS = {
   squat: 'Squat',
@@ -86,7 +93,7 @@ function formatShortDate(value) {
     return '—';
   }
 
-  return date.toLocaleDateString('fr-FR', {
+  return date.toLocaleDateString(activeTag(), {
     day: 'numeric',
     month: 'short',
   });
@@ -98,7 +105,7 @@ function formatFullDate(value) {
     return '—';
   }
 
-  return date.toLocaleDateString('fr-FR', {
+  return date.toLocaleDateString(activeTag(), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',

@@ -1,3 +1,13 @@
+import i18n, { localeTag } from '../i18n';
+
+function activeTag() {
+  return localeTag(i18n.global.locale.value);
+}
+
+function tr(key) {
+  return i18n.global.t(key);
+}
+
 export function messagingInitials(name) {
   if (!name || typeof name !== 'string') {
     return '?';
@@ -29,7 +39,7 @@ export function messagingRelativeTime(iso) {
       date.getDate() === now.getDate();
 
     if (sameDay) {
-      return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString(activeTag(), { hour: '2-digit', minute: '2-digit' });
     }
 
     const yesterday = new Date(now);
@@ -40,10 +50,10 @@ export function messagingRelativeTime(iso) {
       date.getDate() === yesterday.getDate();
 
     if (isYesterday) {
-      return 'Hier';
+      return tr('app.messaging.yesterday');
     }
 
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString(activeTag(), { day: 'numeric', month: 'short' });
   } catch {
     return '';
   }
@@ -55,7 +65,7 @@ export function messagingClock(iso) {
   }
 
   try {
-    return new Date(iso).toLocaleTimeString('fr-FR', {
+    return new Date(iso).toLocaleTimeString(activeTag(), {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -91,7 +101,7 @@ export function messagingDateLabel(iso) {
       date.getDate() === now.getDate();
 
     if (sameDay) {
-      return "Aujourd'hui";
+      return tr('app.messaging.today');
     }
 
     const yesterday = new Date(now);
@@ -102,10 +112,10 @@ export function messagingDateLabel(iso) {
       date.getDate() === yesterday.getDate();
 
     if (isYesterday) {
-      return 'Hier';
+      return tr('app.messaging.yesterday');
     }
 
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(activeTag(), {
       weekday: 'long',
       day: 'numeric',
       month: 'long',

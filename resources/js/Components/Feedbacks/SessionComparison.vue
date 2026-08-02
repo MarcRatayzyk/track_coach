@@ -1,5 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   exercises: { type: Array, default: () => [] },
@@ -28,7 +31,7 @@ function parseNum(value) {
 }
 
 function title(row) {
-  return row.exercise_name || 'Exercice';
+  return row.exercise_name || t('app.feedbacks.exercise');
 }
 
 function plannedLine(row) {
@@ -51,7 +54,12 @@ function actualLine(row) {
 
 function statusFor(row) {
   if (!row.actual) {
-    return { key: 'missing', icon: '❌', label: 'Non réalisé', class: 'text-rose-300 bg-rose-500/10 border-rose-500/25' };
+    return {
+      key: 'missing',
+      icon: '❌',
+      label: t('app.feedbacks.notDone'),
+      class: 'text-rose-300 bg-rose-500/10 border-rose-500/25',
+    };
   }
 
   const plannedLoad = parseNum(row.planned?.load ?? row.load);
@@ -64,23 +72,48 @@ function statusFor(row) {
     matches.rpe !== false;
 
   if (allMatch && matches.load === true) {
-    return { key: 'ok', icon: '✔', label: 'Conforme', class: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25' };
+    return {
+      key: 'ok',
+      icon: '✔',
+      label: t('app.feedbacks.conforme', 1),
+      class: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25',
+    };
   }
 
   if (plannedLoad !== null && actualLoad !== null) {
     if (actualLoad > plannedLoad) {
-      return { key: 'heavier', icon: '⬆', label: 'Plus lourd', class: 'text-sky-300 bg-sky-500/10 border-sky-500/25' };
+      return {
+        key: 'heavier',
+        icon: '⬆',
+        label: t('app.feedbacks.heavier'),
+        class: 'text-sky-300 bg-sky-500/10 border-sky-500/25',
+      };
     }
     if (actualLoad < plannedLoad) {
-      return { key: 'lighter', icon: '⬇', label: 'Plus léger', class: 'text-amber-300 bg-amber-500/10 border-amber-500/25' };
+      return {
+        key: 'lighter',
+        icon: '⬇',
+        label: t('app.feedbacks.lighter'),
+        class: 'text-amber-300 bg-amber-500/10 border-amber-500/25',
+      };
     }
   }
 
   if (matches.load === false || matches.rpe === false || matches.sets === false || matches.reps === false) {
-    return { key: 'diff', icon: '⚠', label: 'Écart', class: 'text-amber-300 bg-amber-500/10 border-amber-500/25' };
+    return {
+      key: 'diff',
+      icon: '⚠',
+      label: t('app.feedbacks.diff'),
+      class: 'text-amber-300 bg-amber-500/10 border-amber-500/25',
+    };
   }
 
-  return { key: 'ok', icon: '✔', label: 'Conforme', class: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25' };
+  return {
+    key: 'ok',
+    icon: '✔',
+    label: t('app.feedbacks.conforme', 1),
+    class: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25',
+  };
 }
 
 function deltaLabel(row) {
@@ -121,25 +154,25 @@ const summary = computed(() => {
   <div v-if="rows.length" class="space-y-3">
     <div class="flex flex-wrap gap-2 text-[11px]">
       <span class="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-emerald-300">
-        ✔ {{ summary.ok }} conforme{{ summary.ok > 1 ? 's' : '' }}
+        ✔ {{ t('app.feedbacks.conformeCount', summary.ok, { n: summary.ok }) }}
       </span>
       <span
         v-if="summary.heavier"
         class="rounded-full border border-sky-500/25 bg-sky-500/10 px-2.5 py-1 text-sky-300"
       >
-        ⬆ {{ summary.heavier }} plus lourd
+        ⬆ {{ t('app.feedbacks.heavierCount', summary.heavier, { n: summary.heavier }) }}
       </span>
       <span
         v-if="summary.lighter"
         class="rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-amber-300"
       >
-        ⬇ {{ summary.lighter }} plus léger
+        ⬇ {{ t('app.feedbacks.lighterCount', summary.lighter, { n: summary.lighter }) }}
       </span>
       <span
         v-if="summary.missing"
         class="rounded-full border border-rose-500/25 bg-rose-500/10 px-2.5 py-1 text-rose-300"
       >
-        ❌ {{ summary.missing }} non réalisé{{ summary.missing > 1 ? 's' : '' }}
+        ❌ {{ t('app.feedbacks.notDoneCount', summary.missing, { n: summary.missing }) }}
       </span>
     </div>
 
@@ -148,10 +181,10 @@ const summary = computed(() => {
         <div
           class="grid grid-cols-[minmax(4.5rem,0.65fr)_minmax(0,1.25fr)_minmax(0,1.25fr)_5.25rem] gap-2 border-b border-slate-800 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
         >
-          <span>Exercice</span>
-          <span>Prévu</span>
-          <span>Réalisé</span>
-          <span class="text-right">Statut</span>
+          <span>{{ t('app.feedbacks.exercise') }}</span>
+          <span>{{ t('app.feedbacks.planned') }}</span>
+          <span>{{ t('app.feedbacks.actual') }}</span>
+          <span class="text-right">{{ t('app.feedbacks.status') }}</span>
         </div>
 
         <ul class="divide-y divide-slate-800/80">
@@ -174,7 +207,7 @@ const summary = computed(() => {
               class="min-w-0 truncate whitespace-nowrap font-mono text-[11px] tabular-nums"
               :class="row.actual ? 'text-slate-200' : 'text-slate-600'"
             >
-              {{ actualLine(row) || 'Non logué' }}
+              {{ actualLine(row) || t('app.feedbacks.notLogged') }}
             </p>
 
             <span

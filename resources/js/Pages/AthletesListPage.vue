@@ -7,11 +7,14 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
 import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
 import ReadinessFormBuilderModal from '../Components/ReadinessFormBuilderModal.vue';
 import UiIcon from '../Components/UiIcon.vue';
+import { localeTag } from '../i18n';
+const { t, locale } = useI18n();
 
 const props = defineProps({
   athletes: {
@@ -145,7 +148,7 @@ function formatTotal(value) {
 }
 
 function formatGlPoints(value) {
-  return value != null ? value.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '—';
+  return value != null ? value.toLocaleString(localeTag(locale.value), { maximumFractionDigits: 1 }) : '—';
 }
 
 function formatReadinessCheckins(count) {
@@ -273,7 +276,7 @@ function confirmRemove(row) {
   <div>
     <div class="flex flex-wrap items-end justify-between gap-6">
       <div>
-        <h1 class="text-2xl font-bold text-white">Athlètes</h1>
+        <h1 class="text-2xl font-bold text-white">{{ t('app.athletes.title') }}</h1>
         <p class="mt-2 text-slate-400">
           Tous les athlètes ({{ athleteCount }}) · actifs
         </p>
@@ -300,7 +303,7 @@ function confirmRemove(row) {
       v-if="activationLink"
       class="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 shadow-lg"
     >
-      <p class="text-sm font-semibold text-emerald-200">Lien d’activation athlète</p>
+      <p class="text-sm font-semibold text-emerald-200">{{ t('app.athletes.activationLink') }}</p>
       <p class="mt-1 text-xs text-slate-400">
         Copie ce lien et transmets-le à l’athlète (WhatsApp, SMS…). Valable 14 jours.
       </p>
@@ -325,26 +328,26 @@ function confirmRemove(row) {
         <table class="min-w-full text-left text-sm">
           <thead>
             <tr class="border-b border-slate-800 bg-slate-950/60 text-xs uppercase tracking-wide text-slate-500">
-              <th class="px-4 py-3 font-semibold lg:px-6">Athlète</th>
-              <th class="px-3 py-3 font-semibold">Actions</th>
+              <th class="px-4 py-3 font-semibold lg:px-6">{{ t('app.athletes.athlete') }}</th>
+              <th class="px-3 py-3 font-semibold">{{ t('app.athletes.actions') }}</th>
               <th class="px-3 py-3 font-semibold">
                 <button
                   type="button"
                   class="group inline-flex items-center gap-1.5 hover:text-slate-300"
                   @click="toggleSort('weight_category')"
                 >
-                  <span>Caté. poids</span>
+                  <span>{{ t('app.athletes.weightCategory') }}</span>
                   <span class="inline-flex flex-col leading-none" aria-hidden="true">
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('weight_category', 'desc')"
-                      title="Tri décroissant"
+                      :title="t('app.athletes.sortDesc')"
                       @click.stop="toggleSort('weight_category', 'desc')"
                     >▲</span>
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('weight_category', 'asc')"
-                      title="Tri croissant"
+                      :title="t('app.athletes.sortAsc')"
                       @click.stop="toggleSort('weight_category', 'asc')"
                     >▼</span>
                   </span>
@@ -356,18 +359,18 @@ function confirmRemove(row) {
                   class="group ml-auto inline-flex items-center justify-end gap-1.5 hover:text-slate-300"
                   @click="toggleSort('total_kg')"
                 >
-                  <span>Total</span>
+                  <span>{{ t('app.athletes.total') }}</span>
                   <span class="inline-flex flex-col leading-none" aria-hidden="true">
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('total_kg', 'desc')"
-                      title="Tri décroissant"
+                      :title="t('app.athletes.sortDesc')"
                       @click.stop="toggleSort('total_kg', 'desc')"
                     >▲</span>
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('total_kg', 'asc')"
-                      title="Tri croissant"
+                      :title="t('app.athletes.sortAsc')"
                       @click.stop="toggleSort('total_kg', 'asc')"
                     >▼</span>
                   </span>
@@ -379,18 +382,18 @@ function confirmRemove(row) {
                   class="group ml-auto inline-flex items-center justify-end gap-1.5 hover:text-slate-300"
                   @click="toggleSort('gl_points')"
                 >
-                  <span>GL Points</span>
+                  <span>{{ t('app.athletes.glPoints') }}</span>
                   <span class="inline-flex flex-col leading-none" aria-hidden="true">
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('gl_points', 'desc')"
-                      title="Tri décroissant"
+                      :title="t('app.athletes.sortDesc')"
                       @click.stop="toggleSort('gl_points', 'desc')"
                     >▲</span>
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('gl_points', 'asc')"
-                      title="Tri croissant"
+                      :title="t('app.athletes.sortAsc')"
                       @click.stop="toggleSort('gl_points', 'asc')"
                     >▼</span>
                   </span>
@@ -402,18 +405,18 @@ function confirmRemove(row) {
                   class="group ml-auto inline-flex items-center justify-end gap-1.5 hover:text-slate-300"
                   @click="toggleSort('readiness_checkins_7d')"
                 >
-                  <span>Check-in (7 j)</span>
+                  <span>{{ t('app.athletes.checkIn7d') }}</span>
                   <span class="inline-flex flex-col leading-none" aria-hidden="true">
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('readiness_checkins_7d', 'desc')"
-                      title="Tri décroissant"
+                      :title="t('app.athletes.sortDesc')"
                       @click.stop="toggleSort('readiness_checkins_7d', 'desc')"
                     >▲</span>
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('readiness_checkins_7d', 'asc')"
-                      title="Tri croissant"
+                      :title="t('app.athletes.sortAsc')"
                       @click.stop="toggleSort('readiness_checkins_7d', 'asc')"
                     >▼</span>
                   </span>
@@ -425,18 +428,18 @@ function confirmRemove(row) {
                   class="group ml-auto inline-flex items-center justify-end gap-1.5 hover:text-slate-300"
                   @click="toggleSort('next_competition_days')"
                 >
-                  <span>Prochaine compétition</span>
+                  <span>{{ t('app.athletes.nextCompetition') }}</span>
                   <span class="inline-flex flex-col leading-none" aria-hidden="true">
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('next_competition_days', 'asc')"
-                      title="Compétition la plus proche en premier"
+                      :title="t('app.athletes.sortCompetitionNearest')"
                       @click.stop="toggleSort('next_competition_days', 'asc')"
                     >▲</span>
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('next_competition_days', 'desc')"
-                      title="Compétition la plus lointaine en premier"
+                      :title="t('app.athletes.sortCompetitionFarthest')"
                       @click.stop="toggleSort('next_competition_days', 'desc')"
                     >▼</span>
                   </span>
@@ -448,18 +451,18 @@ function confirmRemove(row) {
                   class="group ml-auto inline-flex items-center justify-end gap-1.5 hover:text-slate-300"
                   @click="toggleSort('adherence_percentage')"
                 >
-                  <span>Adhérence</span>
+                  <span>{{ t('app.athletes.adherence') }}</span>
                   <span class="inline-flex flex-col leading-none" aria-hidden="true">
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('adherence_percentage', 'desc')"
-                      title="Tri décroissant"
+                      :title="t('app.athletes.sortDesc')"
                       @click.stop="toggleSort('adherence_percentage', 'desc')"
                     >▲</span>
                     <span
                       class="cursor-pointer text-[10px] leading-3"
                       :class="sortArrowClass('adherence_percentage', 'asc')"
-                      title="Tri croissant"
+                      :title="t('app.athletes.sortAsc')"
                       @click.stop="toggleSort('adherence_percentage', 'asc')"
                     >▼</span>
                   </span>
@@ -503,7 +506,7 @@ function confirmRemove(row) {
                   <Link
                     :href="programHref(row)"
                     class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
-                    title="Programme"
+                    :title="t('app.athletes.program')"
                   >
                     <UiIcon name="calendar" class="h-5 w-5" />
                   </Link>
@@ -511,7 +514,7 @@ function confirmRemove(row) {
                     v-if="!row.is_pending_activation"
                     :href="messageHref(row)"
                     class="relative rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
-                    title="Messages"
+                    :title="t('app.athletes.messages')"
                   >
                     <UiIcon name="chat" class="h-5 w-5" />
                     <span
@@ -525,7 +528,7 @@ function confirmRemove(row) {
                     v-else
                     type="button"
                     class="rounded-lg px-2 py-1 text-xs font-medium text-amber-400 hover:bg-slate-800"
-                    title="Afficher le lien d’activation"
+                    :title="t('app.athletes.showActivationLink')"
                     :disabled="resendForm.processing"
                     @click="resendInvitation(row)"
                   >
@@ -534,7 +537,7 @@ function confirmRemove(row) {
                   <Link
                     :href="`/athletes/${row.id}`"
                     class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
-                    title="Fiche athlète"
+                    :title="t('app.athletes.athleteSheet')"
                   >
                     <UiIcon name="user-circle" class="h-5 w-5" />
                   </Link>
@@ -601,7 +604,7 @@ function confirmRemove(row) {
     <ReadinessFormBuilderModal
       :open="showDefaultReadinessBuilder"
       mode="template"
-      title="Formulaire facteurs externes par défaut"
+      :title="t('app.athletes.defaultReadinessForm')"
       :initial-fields="coachReadinessForm?.fields ?? []"
       @close="showDefaultReadinessBuilder = false"
     />

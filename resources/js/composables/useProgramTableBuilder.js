@@ -1,5 +1,6 @@
 import { computed, ref, toValue } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import { columnHeading, weekdayShortLabel } from '../utils/programBuilder';
 import {
   applyClipboardWeekIncrements,
@@ -15,6 +16,7 @@ import { programSessionVisitOptions } from '../utils/programBuilderVisit';
 export const ALL_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 
 export function useProgramTableBuilder(activeBlock, builderTab = 'table') {
+  const { t } = useI18n();
   const dragState = ref({
     weekNumber: null,
     weekday: null,
@@ -48,12 +50,19 @@ export function useProgramTableBuilder(activeBlock, builderTab = 'table') {
   const clipboardStatus = computed(() => {
     if (clipboardWeek.value) {
       const count = Object.keys(clipboardWeek.value.sessions ?? {}).length;
-      return `Semaine ${clipboardWeek.value.weekNumber} copiée (${count} séance${count > 1 ? 's' : ''})`;
+      return t('programBuilder.composables.weekCopied', count, {
+        named: {
+          n: clipboardWeek.value.weekNumber,
+          count,
+        },
+      });
     }
 
     if (clipboardSession.value) {
       const label = clipboardSession.value.session_label?.trim();
-      return label ? `Séance copiée : ${label}` : 'Séance copiée';
+      return label
+        ? t('programBuilder.composables.sessionCopiedLabeled', { label })
+        : t('programBuilder.composables.sessionCopied');
     }
 
     return null;
@@ -121,8 +130,10 @@ export function useProgramTableBuilder(activeBlock, builderTab = 'table') {
       type: 'session',
       weekNumber,
       weekday,
-      title: `Coller la séance sur ${weekdayShortLabel(weekday)}`,
-      hint: 'Définis le titre, les notes, les incréments et les lignes concernées avant de coller.',
+      title: t('programBuilder.composables.pasteSessionTitle', {
+        day: weekdayShortLabel(weekday),
+      }),
+      hint: t('programBuilder.composables.pasteSessionHint'),
       pasteKind: 'session',
       defaultSessionLabel: clipboardSession.value.session_label ?? '',
       defaultSessionNotes: clipboardSession.value.notes ?? '',
@@ -155,7 +166,10 @@ export function useProgramTableBuilder(activeBlock, builderTab = 'table') {
 
     if (
       !window.confirm(
-        `Supprimer la séance du ${weekdayShortLabel(weekday)} en semaine ${weekNumber} ? Toutes les données programmées pour ce jour seront effacées.`,
+        t('programBuilder.composables.deleteSessionConfirm', {
+          day: weekdayShortLabel(weekday),
+          week: weekNumber,
+        }),
       )
     ) {
       return;
@@ -371,7 +385,10 @@ export function useProgramTableBuilder(activeBlock, builderTab = 'table') {
 
     if (
       !window.confirm(
-        `Coller la semaine ${clipboardWeek.value.weekNumber} sur la semaine ${targetWeekNumber} ? Les séances existantes sur ces jours seront remplacées.`,
+        t('programBuilder.composables.pasteWeekConfirm', {
+          source: clipboardWeek.value.weekNumber,
+          target: targetWeekNumber,
+        }),
       )
     ) {
       return;
@@ -380,8 +397,8 @@ export function useProgramTableBuilder(activeBlock, builderTab = 'table') {
     openIncrementModal({
       type: 'week',
       targetWeekNumber,
-      title: `Coller sur la semaine ${targetWeekNumber}`,
-      hint: 'Définis les notes, les incréments et les lignes concernées pour toutes les séances collées.',
+      title: t('programBuilder.composables.pasteWeekTitle', { n: targetWeekNumber }),
+      hint: t('programBuilder.composables.pasteWeekHint'),
       pasteKind: 'week',
       defaultSessionNotes: '',
       exerciseNames: collectClipboardExerciseNames(clipboardWeek.value),

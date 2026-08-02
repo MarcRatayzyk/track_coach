@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import ReadinessDynamicFields from './ReadinessDynamicFields.vue';
 import {
   READINESS_FIELD_TYPES,
@@ -14,6 +15,8 @@ import {
   emptyValuesForFields,
   validateReadinessFieldsDraft,
 } from '../config/readinessFormFields';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -219,7 +222,7 @@ function submit() {
         <div class="flex items-center justify-between border-b border-slate-800 px-4 py-3 sm:px-6">
           <div>
             <h2 class="text-lg font-bold text-white">{{ title }}</h2>
-            <p class="text-xs text-slate-400">Compose le questionnaire — aperçu en temps réel à droite.</p>
+            <p class="text-xs text-slate-400">{{ t('modals.readinessFormBuilder.subtitle') }}</p>
           </div>
           <button
             type="button"
@@ -254,7 +257,7 @@ function submit() {
               class="mb-3 rounded-xl border border-slate-700 bg-slate-950/80 p-2"
             >
               <p v-if="!availablePresets.length" class="px-2 py-1 text-xs text-slate-500">
-                Tous les facteurs du catalogue sont déjà ajoutés.
+                {{ t('modals.readinessFormBuilder.allAdded') }}
               </p>
               <button
                 v-for="preset in availablePresets"
@@ -315,9 +318,9 @@ function submit() {
               v-if="selectedField"
               class="mt-4 space-y-3 rounded-xl border border-slate-700 bg-slate-950/60 p-3"
             >
-              <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-400">Édition</h3>
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-400">{{ t('modals.readinessFormBuilder.editing') }}</h3>
               <label class="block text-xs text-slate-400">
-                Libellé
+                {{ t('modals.readinessFormBuilder.label') }}
                 <input
                   v-model="selectedField.label"
                   type="text"
@@ -366,7 +369,7 @@ function submit() {
                     v-model="option.label"
                     type="text"
                     class="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-white"
-                    placeholder="Libellé"
+                    :placeholder="t('modals.readinessFormBuilder.label')"
                     @input="option.value = option.value || option.label"
                   >
                   <select
@@ -395,9 +398,9 @@ function submit() {
           </div>
 
           <div class="min-h-0 overflow-y-auto bg-slate-950/40 p-4 sm:p-5">
-            <h3 class="mb-3 text-sm font-semibold text-white">Aperçu athlète</h3>
+            <h3 class="mb-3 text-sm font-semibold text-white">{{ t('modals.readinessFormBuilder.athletePreview') }}</h3>
             <div class="rounded-xl border border-slate-800 bg-slate-900/80 p-4">
-              <p class="mb-3 text-xs text-slate-500">Check-in du jour — tel que l’athlète le verra.</p>
+              <p class="mb-3 text-xs text-slate-500">{{ t('modals.readinessFormBuilder.previewHint') }}</p>
               <ReadinessDynamicFields
                 v-model="previewValues"
                 :fields="fields"
@@ -429,7 +432,7 @@ function submit() {
               class="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
               @click="close"
             >
-              Annuler
+              {{ t('common.cancel') }}
             </button>
             <button
               type="button"
@@ -437,7 +440,7 @@ function submit() {
               :disabled="form.processing"
               @click="submit"
             >
-              {{ mode === 'local' ? 'Utiliser ce formulaire' : 'Enregistrer' }}
+              {{ mode === 'local' ? t('modals.readinessFormBuilder.useThisForm') : t('common.save') }}
             </button>
           </div>
         </div>

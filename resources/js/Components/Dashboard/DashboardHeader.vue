@@ -1,9 +1,12 @@
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { motion } from 'motion-v';
 import UiIcon from '../UiIcon.vue';
 import { messagingInitials } from '../../utils/messagingFormat';
+
+const { t } = useI18n();
 
 const props = defineProps({
   summary: {
@@ -49,19 +52,19 @@ const chips = computed(() => {
   const items = [
     {
       key: 'reviews',
-      label: `${s.pendingReviews} retour${s.pendingReviews > 1 ? 's' : ''} à valider`,
+      label: t('app.coachDash.pendingToValidate', s.pendingReviews),
       tone: s.pendingReviews > 0 ? 'amber' : 'slate',
       href: '/feedbacks?filter=pending',
     },
     {
       key: 'alerts',
-      label: `${s.importantAlerts} alerte${s.importantAlerts > 1 ? 's' : ''} importante${s.importantAlerts > 1 ? 's' : ''}`,
+      label: t('app.coachDash.importantAlertsCount', s.importantAlerts),
       tone: s.importantAlerts > 0 ? 'rose' : 'slate',
       href: '#dashboard-alerts',
     },
     {
       key: 'programs',
-      label: `${s.activePrograms} programme${s.activePrograms > 1 ? 's' : ''} actif${s.activePrograms > 1 ? 's' : ''}`,
+      label: t('app.coachDash.activeProgramsCount', s.activePrograms),
       tone: 'blue',
       href: '/program-builder',
     },
@@ -72,8 +75,8 @@ const chips = computed(() => {
       key: 'comp',
       label:
         s.nextCompetitionDays === 0
-          ? 'Compétition aujourd’hui'
-          : `Prochaine compétition dans ${s.nextCompetitionDays} jour${s.nextCompetitionDays > 1 ? 's' : ''}`,
+          ? t('app.coachDash.competitionToday')
+          : t('app.coachDash.nextCompetitionIn', s.nextCompetitionDays),
       tone: 'indigo',
       href: '/competitions',
     });
@@ -137,10 +140,10 @@ function onSearchBlur() {
           Power Roster
         </p>
         <h1 class="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-          Bonjour {{ firstName }}
+          {{ t('app.coachDash.hello', { name: firstName }) }}
           <span class="inline-block origin-bottom-left animate-[wave_1.2s_ease-in-out_1]" aria-hidden="true">👋</span>
         </h1>
-        <p class="mt-2 text-sm text-slate-400">Aujourd’hui</p>
+        <p class="mt-2 text-sm text-slate-400">{{ t('app.dashboard.today') }}</p>
         <div class="mt-2.5 flex flex-wrap gap-2">
           <component
             :is="chip.href.startsWith('#') ? 'a' : Link"
@@ -166,7 +169,7 @@ function onSearchBlur() {
             <input
               v-model="search"
               type="search"
-              placeholder="Rechercher un athlète…"
+              :placeholder="t('app.feedbacks.searchAthlete')"
               class="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
               @focus="searchOpen = true"
               @blur="onSearchBlur"
@@ -226,7 +229,7 @@ function onSearchBlur() {
         class="inline-flex items-center gap-2 rounded-[14px] bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition duration-200 hover:bg-blue-500 hover:shadow-[0_0_24px_rgba(59,130,246,0.35)]"
       >
         <UiIcon name="clipboard" class="h-4 w-4" />
-        Créer un programme
+        {{ t('app.coachDash.createProgram') }}
       </Link>
       <button
         type="button"
@@ -234,7 +237,7 @@ function onSearchBlur() {
         @click="emit('add-athlete')"
       >
         <UiIcon name="users" class="h-4 w-4" />
-        Ajouter un athlète
+        {{ t('app.coachDash.addAthlete') }}
       </button>
       <button
         type="button"
@@ -242,7 +245,7 @@ function onSearchBlur() {
         @click="emit('open-competition')"
       >
         <UiIcon name="trophy" class="h-4 w-4" />
-        Nouvelle compétition
+        {{ t('app.competitions.new') }}
       </button>
     </div>
   </motion.header>

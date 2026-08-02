@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import BarChart from './charts/BarChart.vue';
 import DoughnutChart from './charts/DoughnutChart.vue';
 import LineChart from './charts/LineChart.vue';
@@ -16,6 +17,8 @@ import {
   defaultChartConfig,
 } from '../config/chartBuilderOptions';
 import { buildChartFromConfig, listExerciseNames } from '../utils/chartBuilderEngine';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -185,7 +188,7 @@ function deleteTemplate() {
     return;
   }
 
-  if (!window.confirm(`Supprimer le modèle « ${form.name} » ?`)) {
+  if (!window.confirm(t('modals.chartBuilder.confirmDelete', { name: form.name }))) {
     return;
   }
 
@@ -210,9 +213,9 @@ function deleteTemplate() {
         <div class="flex items-center justify-between border-b border-slate-800 px-6 py-4">
           <div>
             <h2 class="text-lg font-semibold text-white">
-              {{ editingTemplate ? 'Modifier le modèle' : 'Nouveau graphique' }}
+              {{ editingTemplate ? t('modals.chartBuilder.editTitle') : t('modals.chartBuilder.newTitle') }}
             </h2>
-            <p class="mt-0.5 text-sm text-slate-400">Configure les données et prévisualise le résultat.</p>
+            <p class="mt-0.5 text-sm text-slate-400">{{ t('modals.chartBuilder.subtitle') }}</p>
           </div>
           <button
             type="button"
@@ -227,7 +230,7 @@ function deleteTemplate() {
           <div class="overflow-y-auto border-b border-slate-800 p-6 lg:border-b-0 lg:border-r">
             <div class="space-y-4">
               <label class="block text-sm text-slate-400">
-                Nom du modèle
+                {{ t('modals.chartBuilder.templateName') }}
                 <input
                   v-model="form.name"
                   type="text"
@@ -264,7 +267,7 @@ function deleteTemplate() {
                   </select>
                 </label>
                 <label class="block text-sm text-slate-400">
-                  Métrique
+                  {{ t('modals.chartBuilder.metric') }}
                   <select
                     v-model="form.metric"
                     class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
@@ -287,12 +290,12 @@ function deleteTemplate() {
                 </label>
                 <label v-if="showStackedOption" class="flex items-end gap-2 pb-2 text-sm text-slate-300">
                   <input v-model="form.stacked" type="checkbox" class="rounded border-slate-600 bg-slate-950" />
-                  Barres empilées
+                  {{ t('modals.chartBuilder.stackedBars') }}
                 </label>
               </div>
 
               <div v-if="showSeriesPicker">
-                <p class="text-sm text-slate-400">Séries (lifts)</p>
+                <p class="text-sm text-slate-400">{{ t('modals.chartBuilder.seriesLifts') }}</p>
                 <div class="mt-2 flex flex-wrap gap-2">
                   <button
                     v-for="opt in SERIES_LIFT_OPTIONS"
@@ -383,7 +386,7 @@ function deleteTemplate() {
           </div>
 
           <div class="flex flex-col overflow-y-auto p-6">
-            <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Aperçu</p>
+            <p class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ t('modals.chartBuilder.preview') }}</p>
             <div class="mt-3 flex-1 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
               <div v-if="preview.hasData" class="relative h-72">
                 <BarChart
@@ -404,7 +407,7 @@ function deleteTemplate() {
                 />
               </div>
               <p v-else class="py-16 text-center text-sm text-slate-500">
-                Programme des séances ou ajuste les filtres pour voir l’aperçu.
+                {{ t('modals.chartBuilder.emptyPreview') }}
               </p>
             </div>
           </div>
@@ -417,7 +420,7 @@ function deleteTemplate() {
             class="text-sm text-red-400 hover:text-red-300"
             @click="deleteTemplate"
           >
-            Supprimer le modèle
+            {{ t('modals.chartBuilder.deleteTemplate') }}
           </button>
           <div v-else />
 
@@ -427,7 +430,7 @@ function deleteTemplate() {
               class="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
               @click="closeModal"
             >
-              Annuler
+              {{ t('common.cancel') }}
             </button>
             <button
               type="button"
@@ -435,7 +438,7 @@ function deleteTemplate() {
               :disabled="form.processing || !form.name.trim()"
               @click="submit(false)"
             >
-              Enregistrer le modèle
+              {{ t('modals.chartBuilder.saveTemplate') }}
             </button>
             <button
               type="button"
@@ -443,7 +446,7 @@ function deleteTemplate() {
               :disabled="form.processing || !form.name.trim()"
               @click="submit(true)"
             >
-              Enregistrer + ajouter
+              {{ t('modals.chartBuilder.saveAndAdd') }}
             </button>
           </div>
         </div>

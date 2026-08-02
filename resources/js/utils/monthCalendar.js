@@ -1,4 +1,11 @@
+import { localeTag, resolveLocale } from '../i18n';
 import { buildCalendarRows, isoWeekdayFromDate, WEEKDAY_LABELS } from './programBuilder';
+
+function activeTag() {
+  const raw =
+    typeof document !== 'undefined' ? document.documentElement.lang : 'fr';
+  return localeTag(resolveLocale(raw));
+}
 
 function formatYmd(date) {
   const y = date.getFullYear();
@@ -66,7 +73,7 @@ export function defaultCalendarRange() {
 function monthHeaderLabel(year, month, includeYear = false) {
   const d = new Date(year, month, 1);
   const monthPart = d
-    .toLocaleDateString('fr-FR', { month: 'short' })
+    .toLocaleDateString(activeTag(), { month: 'short' })
     .replace('.', '')
     .toUpperCase()
     .slice(0, 4);
@@ -75,8 +82,9 @@ function monthHeaderLabel(year, month, includeYear = false) {
 }
 
 function rangeLabel(startDate, endDate) {
-  const start = startDate.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
-  const end = endDate.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+  const tag = activeTag();
+  const start = startDate.toLocaleDateString(tag, { month: 'short', year: 'numeric' });
+  const end = endDate.toLocaleDateString(tag, { month: 'short', year: 'numeric' });
   return `${start} – ${end}`;
 }
 

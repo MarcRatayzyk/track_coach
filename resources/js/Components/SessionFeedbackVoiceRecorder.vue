@@ -1,5 +1,8 @@
 <script setup>
 import { onBeforeUnmount, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const emit = defineEmits(['recorded', 'removed']);
 
@@ -48,7 +51,7 @@ async function startRecording() {
     mediaRecorder.start();
     isRecording.value = true;
   } catch {
-    errorMessage.value = 'Microphone inaccessible. Utilisez l’import de fichier audio.';
+    errorMessage.value = t('app.feedbacks.micFileFallback');
   }
 }
 
@@ -72,8 +75,8 @@ defineExpose({
 
 <template>
   <div class="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
-    <p class="text-sm font-medium text-white">Message vocal</p>
-    <p class="mt-1 text-xs text-slate-500">Enregistrez ou importez un fichier audio.</p>
+    <p class="text-sm font-medium text-white">{{ t('app.feedbacks.voiceMessage') }}</p>
+    <p class="mt-1 text-xs text-slate-500">{{ t('app.feedbacks.voiceHint') }}</p>
 
     <div class="mt-3 flex flex-wrap gap-2">
       <button
@@ -82,7 +85,7 @@ defineExpose({
         class="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-500"
         @click="startRecording"
       >
-        Enregistrer
+        {{ t('app.feedbacks.record') }}
       </button>
       <button
         v-else
@@ -90,7 +93,7 @@ defineExpose({
         class="rounded-lg bg-slate-600 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-500"
         @click="stopRecording"
       >
-        Arrêter
+        {{ t('common.stop') }}
       </button>
       <button
         v-if="recordedUrl"
@@ -98,7 +101,7 @@ defineExpose({
         class="rounded-lg border border-slate-600 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
         @click="removeRecording"
       >
-        Supprimer
+        {{ t('common.delete') }}
       </button>
     </div>
 

@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   exercises: {
@@ -45,7 +48,7 @@ function formatMetric(value) {
 }
 
 function title(row) {
-  const name = row.exercise_name || 'Exercice';
+  const name = row.exercise_name || t('app.feedbacks.exercise');
   return row.section_label ? `${name} — ${row.section_label}` : name;
 }
 
@@ -95,7 +98,7 @@ function matchClass(row, key) {
     <div class="min-w-0 rounded-xl border border-slate-800 bg-slate-950/40">
       <div class="border-b border-slate-800 px-3 py-2">
         <h4 class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-          Séance prévue
+          {{ t('athleteUi.seriesComparison.plannedSession') }}
         </h4>
       </div>
       <ul class="divide-y divide-slate-800/80">
@@ -122,7 +125,7 @@ function matchClass(row, key) {
     <div class="min-w-0 rounded-xl border border-slate-800 bg-slate-950/40">
       <div class="border-b border-slate-800 px-3 py-2">
         <h4 class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-          Séance réalisée
+          {{ t('athleteUi.seriesComparison.performedSession') }}
         </h4>
       </div>
       <ul class="divide-y divide-slate-800/80">
@@ -136,7 +139,7 @@ function matchClass(row, key) {
             v-if="!actualParts(row)"
             class="mt-0.5 text-xs text-slate-500"
           >
-            Non logué
+            {{ t('app.feedbacks.notLogged') }}
           </p>
           <p
             v-else

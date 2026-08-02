@@ -28,7 +28,7 @@ class DayTableLayoutWebController extends Controller
 
         return redirect()
             ->route('program.builder', ['tab' => 'table'])
-            ->with('success', 'Tableau jour enregistré.');
+            ->with('success', __('messages.day_table.saved'));
     }
 
     public function update(UpdateDayTableLayoutRequest $request, DayTableLayout $layout): RedirectResponse
@@ -48,7 +48,7 @@ class DayTableLayoutWebController extends Controller
 
         return redirect()
             ->route('program.builder', ['tab' => 'table'])
-            ->with('success', 'Tableau jour mis à jour.');
+            ->with('success', __('messages.day_table.updated'));
     }
 
     public function destroy(DayTableLayout $layout): RedirectResponse
@@ -63,7 +63,7 @@ class DayTableLayoutWebController extends Controller
         if ($remainingCount === 0) {
             return redirect()
                 ->route('program.builder', ['tab' => 'table'])
-                ->with('error', 'Tu dois conserver au moins un tableau jour.');
+                ->with('error', __('messages.day_table.keep_at_least_one'));
         }
 
         $wasDefault = $layout->is_default;
@@ -80,7 +80,7 @@ class DayTableLayoutWebController extends Controller
 
         return redirect()
             ->route('program.builder', ['tab' => 'table'])
-            ->with('success', 'Tableau jour supprimé.');
+            ->with('success', __('messages.day_table.deleted'));
     }
 
     private function authorizeLayout(DayTableLayout $layout): void

@@ -1,8 +1,12 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../i18n';
 import { buildAthleteOverviewStats } from '../utils/athleteOverviewStats';
 import AthleteTrainingPrCard from './AthleteTrainingPrCard.vue';
 import PrProgressionCharts from './charts/PrProgressionCharts.vue';
+
+const { t, locale } = useI18n();
 
 const props = defineProps({
   trainingSessions: {
@@ -37,32 +41,32 @@ const recentActivity = computed(() => stats.value?.recentActivity ?? null);
 
 <template>
   <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
-    <h2 class="text-sm font-semibold text-white">Progression</h2>
+    <h2 class="text-sm font-semibold text-white">{{ t('athleteUi.dashboard.progression') }}</h2>
 
     <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <div class="rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5">
-        <p class="text-[10px] uppercase tracking-wide text-slate-500">Adhérence</p>
+        <p class="text-[10px] uppercase tracking-wide text-slate-500">{{ t('athleteUi.dashboard.adherence') }}</p>
         <p v-if="adherence?.percentage != null" class="mt-0.5 text-lg font-bold text-white">
           {{ adherence.percentage }}%
         </p>
         <p v-else class="mt-0.5 text-lg font-bold text-slate-500">—</p>
         <p v-if="adherence" class="mt-1 text-xs text-slate-500">
-          {{ adherence.completedSessions }}/{{ adherence.plannedSessions }} séances au bon jour
+          {{ t('athleteUi.dashboard.sessionsOnDay', { completed: adherence.completedSessions, planned: adherence.plannedSessions }) }}
         </p>
       </div>
 
       <div class="rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5">
-        <p class="text-[10px] uppercase tracking-wide text-slate-500">Dernière séance</p>
+        <p class="text-[10px] uppercase tracking-wide text-slate-500">{{ t('athleteUi.dashboard.lastSession') }}</p>
         <template v-if="recentActivity">
           <p class="mt-0.5 text-sm font-semibold text-white">
             {{ recentActivity.sessionLabel }}
           </p>
           <p class="mt-0.5 text-xs text-slate-400">{{ recentActivity.dateLabel }}</p>
           <p v-if="recentActivity.tonnage" class="mt-1 text-xs text-slate-500">
-            {{ recentActivity.tonnage.toLocaleString('fr-FR') }} kg·reps
+            {{ recentActivity.tonnage.toLocaleString(localeTag(locale)) }} kg·reps
           </p>
         </template>
-        <p v-else class="mt-0.5 text-sm text-slate-500">Aucune séance enregistrée</p>
+        <p v-else class="mt-0.5 text-sm text-slate-500">{{ t('athleteUi.dashboard.noSessionLogged') }}</p>
       </div>
 
       <AthleteTrainingPrCard :training-sessions="trainingSessions" />

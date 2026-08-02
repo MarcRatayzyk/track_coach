@@ -1,7 +1,10 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import MatchPlanDisplay from './MatchPlanDisplay.vue';
 import { formatCalendarFr } from '../utils/formatDates';
+
+const { t } = useI18n();
 
 defineProps({
   competition: {
@@ -25,7 +28,7 @@ defineEmits(['back']);
       class="mb-4 text-sm font-medium text-blue-400 hover:text-blue-300"
       @click="$emit('back')"
     >
-      ← Retour au calendrier
+      {{ t('athleteUi.competitionDetail.backToCalendar') }}
     </button>
 
     <h3 class="text-lg font-semibold text-white">{{ competition.name }}</h3>
@@ -35,28 +38,28 @@ defineEmits(['back']);
 
     <dl class="mt-6 space-y-4 text-sm">
       <div>
-        <dt class="text-slate-500">Qui</dt>
+        <dt class="text-slate-500">{{ t('athleteUi.competitionDetail.who') }}</dt>
         <dd class="mt-1 font-medium text-slate-200">
           <Link
             v-if="competition.athlete_id"
             :href="`/athletes/${competition.athlete_id}`"
             class="text-blue-400 hover:text-blue-300"
           >
-            {{ competition.athlete?.name ?? 'Athlète' }}
+            {{ competition.athlete?.name ?? t('common.athlete') }}
           </Link>
           <span v-else>—</span>
         </dd>
       </div>
       <div>
-        <dt class="text-slate-500">Où</dt>
+        <dt class="text-slate-500">{{ t('athleteUi.competitionDetail.where') }}</dt>
         <dd class="mt-1 text-slate-200">{{ competition.location?.trim() || '—' }}</dd>
       </div>
       <div>
-        <dt class="text-slate-500">Objectif</dt>
+        <dt class="text-slate-500">{{ t('app.competitions.goal') }}</dt>
         <dd class="mt-1 text-slate-200">{{ competition.goal?.trim() || '—' }}</dd>
       </div>
       <div>
-        <dt class="text-slate-500">Plan de match</dt>
+        <dt class="text-slate-500">{{ t('athleteUi.competitionDetail.matchPlan') }}</dt>
         <dd class="mt-2">
           <MatchPlanDisplay :competition="competition" />
         </dd>

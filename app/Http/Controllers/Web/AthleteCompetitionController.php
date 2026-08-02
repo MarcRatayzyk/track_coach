@@ -27,6 +27,6 @@ class AthleteCompetitionController extends Controller
 
         $competition->update($request->matchPlanPayload());
 
-        return back()->with('success', 'Plan de match enregistré.');
+        return back()->with('success', __('messages.competitions.match_plan_saved'));
     }
 }

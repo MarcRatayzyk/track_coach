@@ -1,7 +1,10 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import UiIcon from './UiIcon.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   onboarding: {
@@ -26,9 +29,9 @@ const progressPercent = computed(() =>
   >
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="text-lg font-semibold text-white">Premiers pas avec Power Roster</h2>
+        <h2 class="text-lg font-semibold text-white">{{ t('modals.checklist.title') }}</h2>
         <p class="mt-1 text-sm text-slate-400">
-          Termine ces étapes pour tirer le meilleur de ton espace coach.
+          {{ t('modals.checklist.subtitle') }}
         </p>
       </div>
       <span class="text-sm font-semibold text-blue-300">{{ completed }}/{{ total }}</span>
@@ -67,7 +70,7 @@ const progressPercent = computed(() =>
           :href="step.href"
           class="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-500"
         >
-          Commencer
+          {{ t('modals.checklist.start') }}
         </Link>
       </li>
     </ul>

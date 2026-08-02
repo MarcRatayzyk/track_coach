@@ -1,8 +1,14 @@
+import i18n from '../i18n';
+
+function tt(key) {
+  return i18n.global.t(key);
+}
+
 export const PROGRAM_TABLE_SECTIONS = [
   {
     value: 'warmup',
-    label: 'Échauffement',
-    shortLabel: 'Éch.',
+    get label() { return tt('config.programSections.warmup'); },
+    get shortLabel() { return tt('config.programSections.warmupShort'); },
     compactLabel: 'Éc',
     rowClass: 'bg-sky-500/12',
     buttonActiveClass: 'bg-sky-400 text-slate-950 font-semibold shadow-sm shadow-sky-900/30',
@@ -10,8 +16,8 @@ export const PROGRAM_TABLE_SECTIONS = [
   },
   {
     value: 'topset',
-    label: 'Topset',
-    shortLabel: 'Top',
+    get label() { return tt('config.programSections.topset'); },
+    get shortLabel() { return tt('config.programSections.topsetShort'); },
     compactLabel: 'To',
     rowClass: 'bg-amber-500/12',
     buttonActiveClass: 'bg-amber-400 text-slate-950 font-semibold shadow-sm shadow-amber-900/30',
@@ -19,8 +25,8 @@ export const PROGRAM_TABLE_SECTIONS = [
   },
   {
     value: 'backoff',
-    label: 'Back off',
-    shortLabel: 'Back',
+    get label() { return tt('config.programSections.backoff'); },
+    get shortLabel() { return tt('config.programSections.backoffShort'); },
     compactLabel: 'Ba',
     rowClass: 'bg-blue-500/12',
     buttonActiveClass: 'bg-blue-500 text-white font-semibold shadow-sm shadow-blue-900/30',
@@ -28,8 +34,8 @@ export const PROGRAM_TABLE_SECTIONS = [
   },
   {
     value: 'accessory',
-    label: 'Accessoires',
-    shortLabel: 'Acc.',
+    get label() { return tt('config.programSections.accessory'); },
+    get shortLabel() { return tt('config.programSections.accessoryShort'); },
     compactLabel: 'Ac',
     rowClass: 'bg-emerald-500/10',
     buttonActiveClass: 'bg-emerald-500 text-slate-950 font-semibold shadow-sm shadow-emerald-900/30',

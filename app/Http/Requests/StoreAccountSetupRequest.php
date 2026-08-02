@@ -62,11 +62,11 @@ class StoreAccountSetupRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'L’adresse e-mail est obligatoire.',
-            'email.email' => 'L’adresse e-mail n’est pas valide.',
-            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
-            'password.min' => 'Le mot de passe doit contenir au moins :min caractères.',
+            'email.required' => __('messages.validation.email_required'),
+            'email.email' => __('messages.validation.email_invalid'),
+            'email.unique' => __('messages.validation.email_unique'),
+            'password.confirmed' => __('messages.validation.password_confirmed'),
+            'password.min' => __('messages.validation.password_min'),
         ];
     }
 }

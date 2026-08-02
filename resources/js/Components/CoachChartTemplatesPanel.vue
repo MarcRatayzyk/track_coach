@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -35,7 +38,7 @@ function addToDashboard(templateId) {
 }
 
 function deleteTemplate(template) {
-  if (!window.confirm(`Supprimer le modèle « ${template.name} » ?`)) {
+  if (!window.confirm(t('modals.chartBuilder.confirmDelete', { name: template.name }))) {
     return;
   }
 
@@ -63,8 +66,8 @@ function editTemplate(template) {
       >
         <div class="flex items-center justify-between border-b border-slate-800 px-5 py-4">
           <div>
-            <h2 class="text-base font-semibold text-white">Mes modèles</h2>
-            <p class="mt-0.5 text-xs text-slate-400">Réutilise ou ajoute tes graphiques au tableau de bord.</p>
+            <h2 class="text-base font-semibold text-white">{{ t('programBuilder.statsTab.myTemplates') }}</h2>
+            <p class="mt-0.5 text-xs text-slate-400">{{ t('modals.chartBuilder.templatesSubtitle') }}</p>
           </div>
           <button
             type="button"
@@ -77,7 +80,7 @@ function editTemplate(template) {
 
         <div class="flex-1 overflow-y-auto p-5">
           <p v-if="templates.length === 0" class="text-sm text-slate-500">
-            Aucun modèle enregistré. Crée un graphique avec « Ajouter un graphique ».
+            {{ t('modals.chartBuilder.noTemplates') }}
           </p>
 
           <ul v-else class="space-y-3">
@@ -97,21 +100,21 @@ function editTemplate(template) {
                   class="rounded-lg bg-blue-600/20 px-3 py-1.5 text-xs text-blue-200 hover:bg-blue-600/30"
                   @click="addToDashboard(template.id)"
                 >
-                  Ajouter au dashboard
+                  {{ t('modals.chartBuilder.addToDashboard') }}
                 </button>
                 <button
                   type="button"
                   class="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
                   @click="editTemplate(template)"
                 >
-                  Modifier
+                  {{ t('common.edit') }}
                 </button>
                 <button
                   type="button"
                   class="rounded-lg px-3 py-1.5 text-xs text-red-400 hover:bg-red-950/30"
                   @click="deleteTemplate(template)"
                 >
-                  Supprimer
+                  {{ t('common.delete') }}
                 </button>
               </div>
             </li>

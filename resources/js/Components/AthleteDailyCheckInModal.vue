@@ -1,9 +1,12 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ReadinessDynamicFields from './ReadinessDynamicFields.vue';
 import { emptyValuesForFields } from '../config/readinessFormFields';
 import { track } from '../utils/analytics';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -111,7 +114,7 @@ function submitAll() {
       <button
         type="button"
         class="absolute inset-0 bg-slate-950/80"
-        aria-label="Fermer"
+        :aria-label="t('common.close')"
         @click="skipForLater"
       />
 
@@ -120,15 +123,15 @@ function submitAll() {
       >
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h2 id="daily-checkin-title" class="text-lg font-bold text-white">Check-in du jour</h2>
+            <h2 id="daily-checkin-title" class="text-lg font-bold text-white">{{ t('athleteUi.readiness.dailyTitle') }}</h2>
             <p class="mt-1 text-sm text-slate-400">
-              Quelques secondes pour suivre ta forme avant la séance.
+              {{ t('athleteUi.readiness.dailySubtitle') }}
             </p>
           </div>
           <button
             type="button"
             class="shrink-0 rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-            aria-label="Fermer"
+            :aria-label="t('common.close')"
             @click="skipForLater"
           >
             ✕
@@ -139,7 +142,7 @@ function submitAll() {
           v-if="needsReadiness"
           class="mt-4 rounded-xl border border-slate-800 bg-slate-950/40 p-3"
         >
-          <h3 class="text-sm font-semibold text-white">Facteurs externes</h3>
+          <h3 class="text-sm font-semibold text-white">{{ t('athleteUi.readiness.externalFactors') }}</h3>
           <div class="mt-3">
             <ReadinessDynamicFields
               v-model="readinessForm.values"
@@ -153,9 +156,9 @@ function submitAll() {
           v-if="needsWeight"
           class="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3"
         >
-          <h3 class="text-sm font-semibold text-white">Poids du corps</h3>
+          <h3 class="text-sm font-semibold text-white">{{ t('athleteUi.readiness.bodyWeight') }}</h3>
           <label class="mt-2 block text-xs text-slate-400">
-            Aujourd'hui (kg)
+            {{ t('athleteUi.readiness.todayKg') }}
             <input
               v-model="bodyWeightForm.weight_kg"
               type="number"
@@ -179,14 +182,14 @@ function submitAll() {
             :disabled="readinessForm.processing || bodyWeightForm.processing"
             @click="submitAll"
           >
-            Enregistrer
+            {{ t('common.save') }}
           </button>
           <button
             type="button"
             class="w-full rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800"
             @click="skipForLater"
           >
-            Plus tard
+            {{ t('athleteUi.readiness.later') }}
           </button>
         </div>
       </div>

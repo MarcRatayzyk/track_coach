@@ -1,3 +1,4 @@
+import { localeTag } from '../../i18n';
 export function athleteInitials(name) {
   const parts = String(name || '')
     .trim()
@@ -56,7 +57,7 @@ export function timeOfDayFr(iso) {
   if (Number.isNaN(date.getTime())) {
     return '';
   }
-  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString(localeTag(), { hour: '2-digit', minute: '2-digit' });
 }
 
 export const cardShell =

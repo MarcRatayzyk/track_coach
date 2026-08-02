@@ -1,7 +1,10 @@
 <script setup>
 import { motion } from 'motion-v';
+import { useI18n } from 'vue-i18n';
 import DashboardMockup from './DashboardMockup.vue';
 import { track } from '../../utils/analytics';
+
+const { t } = useI18n();
 
 function trackCta(ctaId) {
     track('cta_clicked', { cta_id: ctaId });
@@ -22,7 +25,7 @@ function trackCta(ctaId) {
                         <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
                         <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-400" />
                     </span>
-                    Conçu pour les coachs de powerlifting
+                    {{ t('landing.hero.badge') }}
                 </motion.p>
 
                 <motion.h1
@@ -31,9 +34,9 @@ function trackCta(ctaId) {
                     :transition="{ duration: 0.65, delay: 0.12, ease: [0.22, 1, 0.36, 1] }"
                     class="mt-7 max-w-xl text-[2.35rem] font-black leading-[1.08] tracking-[-0.04em] text-white sm:text-5xl xl:text-[3.5rem]"
                 >
-                    Structure ton coaching.
-                    <span class="block text-blue-400">Fais progresser tes athlètes.</span>
-                    <span class="block text-slate-200">Sans multiplier les outils.</span>
+                    {{ t('landing.hero.titleLine1') }}
+                    <span class="block text-blue-400">{{ t('landing.hero.titleLine2') }}</span>
+                    <span class="block text-slate-200">{{ t('landing.hero.titleLine3') }}</span>
                 </motion.h1>
 
                 <motion.p
@@ -42,8 +45,7 @@ function trackCta(ctaId) {
                     :transition="{ duration: 0.6, delay: 0.22 }"
                     class="mt-6 max-w-lg text-base leading-relaxed text-slate-400 sm:text-lg"
                 >
-                    Power Roster réunit la programmation, le suivi des performances et des facteurs externes, les retours vidéo,
-                    les messages et les compétitions dans une seule plateforme.
+                    {{ t('landing.hero.subtitle') }}
                 </motion.p>
 
                 <motion.div
@@ -57,7 +59,7 @@ function trackCta(ctaId) {
                         class="lp-btn-primary px-7 py-3.5 text-[15px] leading-none sm:px-8 sm:py-4 sm:text-base"
                         @click="trackCta('hero_commencer')"
                     >
-                        <span>Commencer</span>
+                        <span>{{ t('landing.hero.ctaStart') }}</span>
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                         </svg>
@@ -67,14 +69,14 @@ function trackCta(ctaId) {
                         class="lp-btn-secondary px-7 py-3.5 text-[15px] leading-none sm:px-8 sm:py-4 sm:text-base"
                         @click="trackCta('hero_trial')"
                     >
-                        Essai 14j
+                        {{ t('landing.hero.ctaTrial') }}
                     </a>
                     <a
                         href="/demo"
                         class="lp-btn-secondary px-7 py-3.5 text-[15px] leading-none sm:px-8 sm:py-4 sm:text-base"
                         @click="trackCta('hero_demo')"
                     >
-                        Démo
+                        {{ t('landing.hero.ctaDemo') }}
                     </a>
                 </motion.div>
 
@@ -84,7 +86,7 @@ function trackCta(ctaId) {
                     :transition="{ duration: 0.5, delay: 0.5 }"
                     class="mt-6 text-sm text-slate-500"
                 >
-                    Gratuit 14 jours · Aucune carte bancaire · Interface en français
+                    {{ t('landing.hero.trustLine') }}
                 </motion.p>
             </div>
 

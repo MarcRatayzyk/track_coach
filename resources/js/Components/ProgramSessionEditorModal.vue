@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import SessionEditorPanel from './SessionEditorPanel.vue';
 import { cellKey } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -41,7 +44,7 @@ const session = computed(() => {
       <button
         type="button"
         class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
-        aria-label="Fermer"
+        :aria-label="t('common.close')"
         @click="emit('close')"
       />
 

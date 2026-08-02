@@ -1,5 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -26,16 +29,16 @@ const slides = computed(() => {
     {
       id: 'intro',
       kind: 'intro',
-      title: 'Roster Awards',
-      subtitle: data.month_label ?? 'Ce mois',
-      hint: 'Les podiums un peu décalés de ton groupe →',
+      title: t('modals.rosterAwards.title'),
+      subtitle: data.month_label ?? t('modals.rosterAwards.thisMonth'),
+      hint: t('modals.rosterAwards.hint'),
     },
     ...data.screens,
     {
       id: 'outro',
       kind: 'outro',
-      title: 'Fin du podium',
-      subtitle: 'On remet ça le mois prochain. (Avec un peu de sommeil, promis.)',
+      title: t('modals.rosterAwards.outroTitle'),
+      subtitle: t('modals.rosterAwards.outroSubtitle'),
     },
   ];
 });
@@ -107,7 +110,7 @@ const awardAccent = computed(() => {
         <button
           type="button"
           class="rounded-lg p-2 text-slate-300 hover:bg-white/10 hover:text-white"
-          aria-label="Fermer"
+          :aria-label="t('common.close')"
           @click="close"
         >
           ✕
@@ -117,7 +120,7 @@ const awardAccent = computed(() => {
       <div class="relative flex flex-1 flex-col px-6 pb-6" @click="next">
         <div class="flex flex-1 flex-col justify-center">
           <template v-if="currentSlide?.kind === 'intro'">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-200">Monthly Wrapped</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-200">{{ t('modals.rosterAwards.brand') }}</p>
             <h2 class="mt-4 text-4xl font-bold leading-tight">{{ currentSlide.title }}</h2>
             <p class="mt-3 text-lg text-slate-200">{{ currentSlide.subtitle }}</p>
             <p class="mt-8 text-sm text-slate-400">{{ currentSlide.hint }}</p>
@@ -145,7 +148,7 @@ const awardAccent = computed(() => {
           </template>
 
           <template v-else-if="currentSlide?.kind === 'outro'">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-200">À suivre</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-200">{{ t('modals.rosterAwards.upNext') }}</p>
             <h2 class="mt-4 text-3xl font-bold">{{ currentSlide.title }}</h2>
             <p class="mt-3 text-lg text-slate-300">{{ currentSlide.subtitle }}</p>
           </template>
@@ -158,14 +161,14 @@ const awardAccent = computed(() => {
             :disabled="isFirst"
             @click.stop="prev"
           >
-            Retour
+            {{ t('common.back') }}
           </button>
           <button
             type="button"
             class="rounded-xl bg-white/15 px-5 py-2 text-sm font-semibold text-white hover:bg-white/25"
             @click.stop="next"
           >
-            {{ isLast ? 'Fermer' : 'Suivant' }}
+            {{ isLast ? t('common.close') : t('common.next') }}
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import LandingBackground from '../Components/Landing/LandingBackground.vue';
 import LandingNav from '../Components/Landing/LandingNav.vue';
 import LandingHero from '../Components/Landing/LandingHero.vue';
@@ -15,21 +16,23 @@ import FaqSection from '../Components/Landing/FaqSection.vue';
 import PricingSection from '../Components/Landing/PricingSection.vue';
 import FinalCta from '../Components/Landing/FinalCta.vue';
 import LandingFooter from '../Components/Landing/LandingFooter.vue';
+
+const { t } = useI18n();
 </script>
 
 <template>
     <Head>
-        <title>Power Roster : Coaching powerlifting structuré</title>
+        <title>{{ t('landing.meta.title') }}</title>
         <meta
             head-key="description"
             name="description"
-            content="Power Roster réunit programmation, suivi SBD, vidéos annotées, messagerie et compétitions pour les coachs de powerlifting. Une seule plateforme."
+            :content="t('landing.meta.description')"
         />
-        <meta head-key="og:title" property="og:title" content="Power Roster : Structure ton coaching powerlifting" />
+        <meta head-key="og:title" property="og:title" :content="t('landing.meta.ogTitle')" />
         <meta
             head-key="og:description"
             property="og:description"
-            content="La plateforme de référence pour les coachs de powerlifting. Programmes, PRs, vidéos annotées et messages au même endroit."
+            :content="t('landing.meta.ogDescription')"
         />
         <meta head-key="og:type" property="og:type" content="website" />
         <meta head-key="twitter:card" name="twitter:card" content="summary_large_image" />

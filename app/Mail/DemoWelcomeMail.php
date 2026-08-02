@@ -25,7 +25,7 @@ class DemoWelcomeMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Ta démo Power Roster est prête',
+            subject: __('mail.demo_welcome.subject'),
         );
     }
 

@@ -537,7 +537,7 @@ class CoachAlertsService
 
         foreach ($dailyTasks as $task) {
             $athleteName = $task->athlete?->name ?? 'Athlète';
-            $sessionLabel = $task->session_date?->locale('fr')->isoFormat('ddd D MMMM')
+            $sessionLabel = $task->session_date?->locale(app()->getLocale())->isoFormat('ddd D MMMM')
                 ?? $todayString;
 
             $items->push([
@@ -554,9 +554,9 @@ class CoachAlertsService
             $athleteName = $task->athlete?->name ?? 'Athlète';
             $weekStart = $task->period_week_start;
             $weekLabel = $weekStart !== null
-                ? $weekStart->locale('fr')->isoFormat('D MMM')
+                ? $weekStart->locale(app()->getLocale())->isoFormat('D MMM')
                     .' – '
-                    .$weekStart->copy()->endOfWeek(Carbon::SUNDAY)->locale('fr')->isoFormat('D MMM')
+                    .$weekStart->copy()->endOfWeek(Carbon::SUNDAY)->locale(app()->getLocale())->isoFormat('D MMM')
                 : 'semaine passée';
 
             $items->push([
@@ -641,7 +641,7 @@ class CoachAlertsService
 
         foreach ($dailyTasks as $task) {
             $athleteName = $task->athlete?->name ?? 'Athlète';
-            $sessionLabel = $task->session_date?->locale('fr')->isoFormat('ddd D MMMM')
+            $sessionLabel = $task->session_date?->locale(app()->getLocale())->isoFormat('ddd D MMMM')
                 ?? $todayString;
             $feedbackId = $task->session_feedback_id;
 
@@ -661,9 +661,9 @@ class CoachAlertsService
             $athleteName = $task->athlete?->name ?? 'Athlète';
             $weekStart = $task->period_week_start;
             $weekLabel = $weekStart !== null
-                ? $weekStart->locale('fr')->isoFormat('D MMM')
+                ? $weekStart->locale(app()->getLocale())->isoFormat('D MMM')
                     .' – '
-                    .$weekStart->copy()->endOfWeek(Carbon::SUNDAY)->locale('fr')->isoFormat('D MMM')
+                    .$weekStart->copy()->endOfWeek(Carbon::SUNDAY)->locale(app()->getLocale())->isoFormat('D MMM')
                 : 'semaine passée';
             $feedbackId = $task->session_feedback_id;
 

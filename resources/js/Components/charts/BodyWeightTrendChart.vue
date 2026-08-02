@@ -1,7 +1,11 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../../i18n';
 import LineChart from './LineChart.vue';
-import { formatCalendarFr } from '../../utils/formatDates';
+import { formatCalendarDate } from '../../utils/formatDates';
+
+const { t, locale } = useI18n();
 
 const props = defineProps({
   entries: {
@@ -20,14 +24,14 @@ const sortedEntries = computed(() =>
 
 const chartData = computed(() => {
   const labels = sortedEntries.value.map((entry) =>
-    formatCalendarFr(entry.entry_date, 'medium').split(' ').slice(0, 2).join(' '),
+    formatCalendarDate(entry.entry_date, 'medium', locale.value).split(' ').slice(0, 2).join(' '),
   );
 
   return {
     labels,
     datasets: [
       {
-        label: 'Poids (kg)',
+        label: t('charts.weightKg'),
         data: sortedEntries.value.map((entry) => {
           const n = Number(entry.weight_kg);
           return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
@@ -43,40 +47,43 @@ const chartData = computed(() => {
   };
 });
 
-const chartOptions = {
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      ticks: {
-        callback(value) {
-          const n = Number(value);
-          if (!Number.isFinite(n)) {
-            return value;
-          }
-          const rounded = Math.round(n * 100) / 100;
-          return `${rounded.toLocaleString('fr-FR', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-          })} kg`;
+const chartOptions = computed(() => {
+  const tag = localeTag(locale.value);
+  return {
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        ticks: {
+          callback(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) {
+              return value;
+            }
+            const rounded = Math.round(n * 100) / 100;
+            return `${rounded.toLocaleString(tag, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })} kg`;
+          },
         },
       },
     },
-  },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label(context) {
-          const n = Number(context.parsed.y);
-          return `${n.toLocaleString('fr-FR', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-          })} kg`;
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label(context) {
+            const n = Number(context.parsed.y);
+            return `${n.toLocaleString(tag, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })} kg`;
+          },
         },
       },
     },
-  },
-};
+  };
+});
 
 const hasData = computed(() => sortedEntries.value.length > 0);
 </script>
@@ -87,19 +94,19 @@ const hasData = computed(() => sortedEntries.value.length > 0);
       v-if="!embedded"
       class="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500"
     >
-      Poids du corps
+      {{ t('charts.bodyWeight') }}
     </p>
     <p
       v-else
       class="mb-3 text-sm font-semibold text-white"
     >
-      Poids du corps
+      {{ t('charts.bodyWeight') }}
     </p>
     <div :class="embedded ? 'h-52' : 'h-48'">
       <LineChart :chart-data="chartData" :options="chartOptions" />
     </div>
   </div>
   <p v-else class="text-sm text-slate-500">
-    Aucune saisie de poids sur cette période.
+    {{ t('charts.noBodyWeight') }}
   </p>
 </template>

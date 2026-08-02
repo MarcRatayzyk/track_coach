@@ -1,27 +1,34 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
+
+const { t } = useI18n();
 
 const openIndex = ref(0);
 
-const faqs = [
+const faqs = computed(() => [
     {
-        q: 'Comment les athlètes accèdent-ils à Power Roster ?',
-        a: 'Tu invites tes athlètes depuis ton compte coach. Ils téléchargent l’app, activent leur espace via le lien d’invitation, et retrouvent programmes, check-ins et messages.',
+        key: 'access',
+        q: t('landing.faq.items.access.q'),
+        a: t('landing.faq.items.access.a'),
     },
     {
-        q: 'Dois-je tout migrer d’un coup ?',
-        a: 'Non. Tu peux démarrer avec quelques athlètes, migrer progressivement, puis tout centraliser une fois la roster en place.',
+        key: 'migrate',
+        q: t('landing.faq.items.migrate.q'),
+        a: t('landing.faq.items.migrate.a'),
     },
     {
-        q: 'Les athlètes doivent-ils payer ?',
-        a: 'Ton compte coach te permet d’inviter tes athlètes. Ils rejoignent gratuitement via ton invitation : pas de compte séparé à acheter.',
+        key: 'athletesPay',
+        q: t('landing.faq.items.athletesPay.q'),
+        a: t('landing.faq.items.athletesPay.a'),
     },
     {
-        q: 'Combien de temps pour être opérationnel ?',
-        a: 'Compte créé en quelques minutes. L’importation de programme se fait en quelques clics. Invite ton premier athlète, assigne un programme, et tu coaches dès aujourd’hui.',
+        key: 'timeToStart',
+        q: t('landing.faq.items.timeToStart.q'),
+        a: t('landing.faq.items.timeToStart.a'),
     },
-];
+]);
 
 function toggle(i) {
     openIndex.value = openIndex.value === i ? -1 : i;
@@ -36,19 +43,19 @@ function toggle(i) {
     >
         <div class="mx-auto w-full max-w-[800px]">
             <FadeIn class-name="text-center">
-                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-400">FAQ</p>
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-400">{{ t('landing.faq.eyebrow') }}</p>
                 <h2
                     id="faq-heading"
                     class="mt-3 text-3xl font-black tracking-[-0.03em] text-white sm:text-4xl"
                 >
-                    Questions fréquentes
+                    {{ t('landing.faq.heading') }}
                 </h2>
             </FadeIn>
 
             <div class="mt-10 space-y-3">
                 <FadeIn
                     v-for="(item, i) in faqs"
-                    :key="item.q"
+                    :key="item.key"
                     :delay="0.04 * i"
                 >
                     <div class="lp-glass overflow-hidden rounded-[18px]">

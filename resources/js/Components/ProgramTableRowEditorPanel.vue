@@ -7,6 +7,9 @@ import { PROGRAM_TABLE_SECTIONS } from '../config/programTableSections';
 import { SET_OPTIONS, REP_OPTIONS, formatEditorLineRecapParts } from '../utils/programBuilder';
 import { useTableRowEditor } from '../composables/useTableRowEditor';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   athleteOneRm: {
@@ -124,9 +127,9 @@ function removeRow() {
   >
     <div class="flex items-center justify-between gap-2 border-b border-slate-800 px-4 py-2.5">
       <div class="min-w-0">
-        <p class="text-[11px] font-semibold uppercase tracking-wide text-blue-300">Édition rapide</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wide text-blue-300">{{ t('programBuilder.rowEditor.quickEdit') }}</p>
         <p class="truncate text-sm font-semibold text-white">
-          {{ row ? `Ligne ${rowNumber}` : 'Aucune ligne' }}
+          {{ row ? t('programBuilder.rowEditor.lineN', { n: rowNumber }) : t('programBuilder.rowEditor.noLine') }}
           <span v-if="row && sessionHeading" class="font-normal text-slate-400">· {{ sessionHeading }}</span>
         </p>
       </div>
@@ -135,24 +138,24 @@ function removeRow() {
           type="button"
           class="text-xs font-medium text-red-400 transition hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
           :disabled="!canRemove"
-          :title="canRemove ? 'Supprimer cette série' : 'Au moins une série est requise'"
+          :title="canRemove ? t('programBuilder.rowEditor.deleteSetTitle') : t('programBuilder.rowEditor.minSetRequired')"
           @click="removeRow"
         >
-          Supprimer
+          {{ t('common.delete') }}
         </button>
         <button
           type="button"
           class="text-xs font-medium text-slate-500 hover:text-slate-300"
           @click="editor?.clearSelection()"
         >
-          Fermer
+          {{ t('common.close') }}
         </button>
       </div>
     </div>
 
     <div v-if="row" class="space-y-3 px-4 py-3">
       <div>
-        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Type</p>
+        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ t('programBuilder.rowEditor.type') }}</p>
         <div class="mt-1.5 flex gap-1.5">
           <button
             v-for="option in PROGRAM_TABLE_SECTIONS"
@@ -172,7 +175,7 @@ function removeRow() {
       </div>
 
       <div>
-        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Exercice</p>
+        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ t('programBuilder.shared.exercise') }}</p>
         <div class="mt-1.5">
           <ExerciseVariantStrip
             accessory-panel
@@ -193,7 +196,7 @@ function removeRow() {
           :model-value="row.sets"
           :options="SET_OPTIONS"
           :columns="5"
-          label="Séries"
+          :label="t('programBuilder.shared.sets')"
           dense
           @update:model-value="updateField('sets', $event)"
         />
@@ -201,7 +204,7 @@ function removeRow() {
           :model-value="row.reps"
           :options="REP_OPTIONS"
           :columns="6"
-          label="Reps"
+          :label="t('programBuilder.shared.reps')"
           dense
           @update:model-value="updateField('reps', $event)"
         />
@@ -215,7 +218,7 @@ function removeRow() {
 
       <div class="flex items-end gap-2.5">
         <label class="block min-w-0 flex-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
-          Repos (s)
+          {{ t('programBuilder.rowEditor.restSeconds') }}
           <input
             :value="row.rest_seconds"
             type="number"
@@ -228,7 +231,7 @@ function removeRow() {
           />
         </label>
         <div class="min-w-0 flex-[2] rounded-lg border border-blue-500/20 bg-blue-950/25 px-2.5 py-2">
-          <p class="text-[10px] font-medium uppercase tracking-wide text-blue-300/80">Récap</p>
+          <p class="text-[10px] font-medium uppercase tracking-wide text-blue-300/80">{{ t('programBuilder.rowEditor.recap') }}</p>
           <p v-if="recapParts" class="mt-0.5 text-sm leading-snug text-white">
             <span class="font-semibold" :class="recapSectionClass">{{ recapParts.section }}</span>
             <span> · {{ recapParts.main }}</span>
@@ -242,7 +245,7 @@ function removeRow() {
     </div>
 
     <div v-else class="px-4 py-5 text-center text-sm text-slate-500">
-      Clique sur une ligne du tableau pour l'éditer ici.
+      {{ t('programBuilder.rowEditor.emptyHint') }}
     </div>
 
     <div v-if="row" class="border-t border-slate-800 px-4 py-2.5">
@@ -251,7 +254,7 @@ function removeRow() {
         class="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
         @click="goToNextRow"
       >
-        Ligne suivante →
+        {{ t('programBuilder.rowEditor.nextLine') }}
       </button>
     </div>
   </aside>

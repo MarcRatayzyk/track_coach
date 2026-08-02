@@ -75,7 +75,7 @@ class ExerciseLibraryController extends Controller
             return response()->json($exercise->load('variants'), 201);
         }
 
-        return back()->with('success', 'Exercice personnalisé ajouté.');
+        return back()->with('success', __('messages.exercises.custom_added'));
     }
 
     public function update(UpdateCustomExerciseRequest $request, Exercise $exercise): RedirectResponse|JsonResponse
@@ -96,7 +96,7 @@ class ExerciseLibraryController extends Controller
             return response()->json($exercise->fresh('variants'));
         }
 
-        return back()->with('success', 'Exercice mis à jour.');
+        return back()->with('success', __('messages.exercises.updated'));
     }
 
     public function destroy(Request $request, Exercise $exercise): RedirectResponse|JsonResponse
@@ -106,10 +106,10 @@ class ExerciseLibraryController extends Controller
         $exercise->delete();
 
         if ($request->wantsJson()) {
-            return response()->json(['message' => 'Exercice supprimé.']);
+            return response()->json(['message' => __('messages.exercises.deleted')]);
         }
 
-        return back()->with('success', 'Exercice supprimé.');
+        return back()->with('success', __('messages.exercises.deleted'));
     }
 
     private function uniqueSlugForCoach(int $coachId, string $name, ?int $ignoreId = null): string

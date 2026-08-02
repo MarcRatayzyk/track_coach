@@ -1,9 +1,11 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BarChart from './charts/BarChart.vue';
 import ChartCard from './charts/ChartCard.vue';
 import DoughnutChart from './charts/DoughnutChart.vue';
 import LineChart from './charts/LineChart.vue';
+import { localeTag } from '../i18n';
 import { LIFT_COLORS, LIFT_LABELS } from '../utils/chartTheme';
 import {
   MAIN_LIFT_FILTER_OPTIONS,
@@ -17,6 +19,8 @@ import {
   volumeForDonut,
 } from '../utils/trainingVolume';
 import { BUILTIN_CHART_KEYS, BUILTIN_CHART_META } from '../config/chartBuilderOptions';
+
+const { t, locale } = useI18n();
 
 const TOPSET_LIFT_KEYS = ['squat', 'bench', 'deadlift'];
 
@@ -79,7 +83,7 @@ const stackedBarOptions = {
     tooltip: {
       callbacks: {
         label(context) {
-          return `${context.dataset.label}: ${context.parsed.y.toLocaleString('fr-FR')} kg·reps`;
+          return `${context.dataset.label}: ${context.parsed.y.toLocaleString(localeTag(locale.value))} kg·reps`;
         },
       },
     },
@@ -257,15 +261,15 @@ const hasData = computed(() => {
 const emptyMessage = computed(() => {
   switch (props.builtinKey) {
     case BUILTIN_CHART_KEYS.VOLUME_WEEKLY:
-      return 'Programme des séances pour voir le volume par semaine.';
+      return t('app.charts.emptyVolume');
     case BUILTIN_CHART_KEYS.TOPSET_E1RM:
-      return 'Programme des topsets en kg ou % du 1RM pour voir l’évolution.';
+      return t('app.charts.emptyTopset');
     case BUILTIN_CHART_KEYS.VOLUME_DISTRIBUTION:
-      return 'Aucun volume calculable avec les filtres choisis.';
+      return t('app.charts.emptyDistribution');
     case BUILTIN_CHART_KEYS.AVG_LOAD_WEEKLY:
-      return 'Aucune charge en kg sur ce bloc.';
+      return t('app.charts.emptyAvgLoad');
     default:
-      return 'Aucune donnée.';
+      return t('app.charts.noData');
   }
 });
 
@@ -344,19 +348,19 @@ const chartHeight = computed(() =>
         <p class="mt-1 text-slate-300">{{ selectedTopsetPoint.dayLabel }}</p>
         <p class="mt-0.5 text-slate-400">{{ selectedTopsetPoint.seriesLabel }}</p>
         <p v-if="selectedTopsetPoint.sessionLabel" class="mt-1 text-slate-500">
-          Séance : {{ selectedTopsetPoint.sessionLabel }}
+          {{ t('app.charts.sessionColon', { label: selectedTopsetPoint.sessionLabel }) }}
         </p>
       </div>
       <p v-else class="mt-2 text-center text-xs text-slate-500">
-        Clique sur un point pour afficher le jour et la série du topset.
+        {{ t('app.charts.clickPoint') }}
       </p>
     </template>
 
     <template v-if="builtinKey === BUILTIN_CHART_KEYS.VOLUME_DISTRIBUTION" #footer>
       <p class="mt-2 text-center text-xs text-slate-500">
-        Total :
+        {{ t('app.charts.totalLabel') }}
         <span class="font-semibold text-slate-300">
-          {{ Math.round(donutTotalSum).toLocaleString('fr-FR') }} kg·reps
+          {{ Math.round(donutTotalSum).toLocaleString(localeTag(locale)) }} kg·reps
         </span>
       </p>
     </template>

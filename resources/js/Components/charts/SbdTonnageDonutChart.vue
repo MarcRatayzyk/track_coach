@@ -1,8 +1,12 @@
 <script setup>
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../../i18n';
 import { buildDistribution } from '../../utils/athleteOverviewStats';
 import { LIFT_COLORS, LIFT_LABELS } from '../../utils/chartTheme';
 import DoughnutChart from './DoughnutChart.vue';
+
+const { t, locale } = useI18n();
 
 const LIFTS = ['squat', 'bench', 'deadlift'];
 
@@ -13,18 +17,18 @@ const props = defineProps({
   },
 });
 
-const timeRangeOptions = [
-  { value: '7d', label: '7 j', days: 7 },
-  { value: '1m', label: '1 mois', days: 30 },
-  { value: '3m', label: '3 mois', days: 90 },
-  { value: '6m', label: '6 mois', days: 180 },
-  { value: '1y', label: '1 an', days: 365 },
-];
+const timeRangeOptions = computed(() => [
+  { value: '7d', label: t('charts.range7d'), days: 7 },
+  { value: '1m', label: t('charts.range1m'), days: 30 },
+  { value: '3m', label: t('charts.range3m'), days: 90 },
+  { value: '6m', label: t('charts.range6m'), days: 180 },
+  { value: '1y', label: t('charts.range1y'), days: 365 },
+]);
 
 const timeRange = ref('1m');
 
 const recentDays = computed(
-  () => timeRangeOptions.find((option) => option.value === timeRange.value)?.days ?? 30,
+  () => timeRangeOptions.value.find((option) => option.value === timeRange.value)?.days ?? 30,
 );
 
 const distribution = computed(() => buildDistribution(props.flatItems, recentDays.value));
@@ -51,12 +55,18 @@ const chartData = computed(() => ({
 const totalTonnage = computed(() =>
   distribution.value.items.reduce((sum, item) => sum + item.value, 0),
 );
+
+const tonnageLabel = computed(() =>
+  t('charts.tonnagePeriod', {
+    value: totalTonnage.value.toLocaleString(localeTag(locale.value)),
+  }),
+);
 </script>
 
 <template>
   <article class="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h3 class="text-sm font-semibold text-white">Répartition tonnage SBD</h3>
+      <h3 class="text-sm font-semibold text-white">{{ t('charts.sbdDistribution') }}</h3>
       <div class="flex flex-wrap gap-2">
         <button
           v-for="option in timeRangeOptions"
@@ -77,7 +87,7 @@ const totalTonnage = computed(() =>
 
     <div v-if="hasData" class="mt-4">
       <p class="mb-2 text-center text-xs text-slate-500">
-        {{ totalTonnage.toLocaleString('fr-FR') }} kg·reps sur la période
+        {{ tonnageLabel }}
       </p>
       <div class="mx-auto h-56 max-w-xs">
         <DoughnutChart :chart-data="chartData" />
@@ -89,9 +99,6 @@ const totalTonnage = computed(() =>
         </li>
       </ul>
     </div>
-
-    <p v-else class="mt-4 text-sm text-slate-500">
-      Aucun tonnage enregistré sur cette période.
-    </p>
+    <p v-else class="mt-6 text-center text-sm text-slate-500">—</p>
   </article>
 </template>

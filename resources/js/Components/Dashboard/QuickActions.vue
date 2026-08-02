@@ -1,7 +1,11 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { motion } from 'motion-v';
 import UiIcon from '../UiIcon.vue';
+
+const { t } = useI18n();
 
 defineProps({
   compact: {
@@ -12,34 +16,34 @@ defineProps({
 
 defineEmits(['add-athlete', 'open-competition']);
 
-const actions = [
+const actions = computed(() => [
   {
     key: 'program',
-    label: 'Créer un programme',
+    label: t('app.coachDash.createProgram'),
     href: '/program-builder',
     icon: 'clipboard',
     class: 'border-blue-500/40 bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/40',
   },
   {
     key: 'athlete',
-    label: 'Ajouter un athlète',
+    label: t('app.coachDash.addAthlete'),
     icon: 'users',
     class: 'border-blue-500/40 bg-blue-950/40 text-blue-100 hover:bg-blue-950/60',
   },
   {
     key: 'message',
-    label: 'Envoyer un message',
+    label: t('app.coachDash.sendMessage'),
     href: '/messaging',
     icon: 'chat',
     class: 'border-slate-700 bg-slate-950/50 text-slate-200 hover:border-slate-600',
   },
   {
     key: 'competition',
-    label: 'Créer une compétition',
+    label: t('app.coachDash.createCompetition'),
     icon: 'trophy',
     class: 'border-slate-700 bg-slate-950/50 text-slate-200 hover:border-slate-600',
   },
-];
+]);
 </script>
 
 <template>

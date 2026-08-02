@@ -6,7 +6,10 @@ export default {
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AppLogo from '../Components/AppLogo.vue';
+
+const { t } = useI18n();
 
 defineProps({
     demoHours: { type: Number, default: 48 },
@@ -23,7 +26,7 @@ function submit() {
 </script>
 
 <template>
-    <Head title="Essayer la démo" />
+    <Head :title="t('auth.demo.pageTitle')" />
 
     <div class="min-h-screen bg-slate-950 text-slate-200">
         <div class="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-5 py-12">
@@ -34,15 +37,14 @@ function submit() {
                 />
             </Link>
 
-            <h1 class="text-3xl font-black tracking-tight text-white">Démo</h1>
+            <h1 class="text-3xl font-black tracking-tight text-white">{{ t('auth.demo.title') }}</h1>
             <p class="mt-3 text-sm leading-relaxed text-slate-400">
-                Entre ton e-mail pour ouvrir un espace coach jetable rempli de données réalistes.
-                Chaque adresse ne peut lancer qu’une seule démo ({{ demoHours }} h).
+                {{ t('auth.demo.subtitle', { hours: demoHours }) }}
             </p>
 
             <form class="mt-8 space-y-4" @submit.prevent="submit">
                 <div>
-                    <label for="demo-email" class="block text-sm font-medium text-slate-300">E-mail</label>
+                    <label for="demo-email" class="block text-sm font-medium text-slate-300">{{ t('auth.demo.email') }}</label>
                     <input
                         id="demo-email"
                         v-model="form.email"
@@ -56,7 +58,7 @@ function submit() {
 
                 <div>
                     <label for="demo-name" class="block text-sm font-medium text-slate-300">
-                        Prénom / pseudo <span class="text-slate-500">(optionnel)</span>
+                        {{ t('auth.demo.nameOptional') }} <span class="text-slate-500">{{ t('auth.demo.optional') }}</span>
                     </label>
                     <input
                         id="demo-name"
@@ -73,15 +75,15 @@ function submit() {
                     :disabled="form.processing"
                     class="inline-flex w-full justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
                 >
-                    {{ form.processing ? 'Préparation…' : 'Lancer la démo' }}
+                    {{ form.processing ? t('auth.demo.preparing') : t('auth.demo.submit') }}
                 </button>
             </form>
 
             <p class="mt-6 text-center text-sm text-slate-500">
-                Déjà un compte ?
-                <Link href="/login" class="text-blue-400 hover:underline">Se connecter</Link>
+                {{ t('auth.demo.alreadyAccount') }}
+                <Link href="/login" class="text-blue-400 hover:underline">{{ t('auth.demo.logIn') }}</Link>
                 ·
-                <Link href="/start-trial" class="text-blue-400 hover:underline">Essai 14 jours</Link>
+                <Link href="/start-trial" class="text-blue-400 hover:underline">{{ t('auth.demo.trial14') }}</Link>
             </p>
         </div>
     </div>

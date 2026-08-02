@@ -1,6 +1,9 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const emit = defineEmits(['close', 'created']);
 
@@ -31,38 +34,38 @@ const form = useForm({
   movement_pattern: '',
 });
 
-const liftOptions = [
-  { value: 'squat', label: 'Squat' },
-  { value: 'bench', label: 'Bench' },
-  { value: 'deadlift', label: 'Deadlift' },
-  { value: 'general', label: 'Général' },
-];
+const liftOptions = computed(() => [
+  { value: 'squat', label: t('config.lifts.squat') },
+  { value: 'bench', label: t('config.lifts.bench') },
+  { value: 'deadlift', label: t('config.lifts.deadlift') },
+  { value: 'general', label: t('modals.customExercises.general') },
+]);
 
-const categoryOptions = [
-  { value: 'main_lift', label: 'Mouvement principal' },
-  { value: 'accessory', label: 'Accessoire' },
-];
+const categoryOptions = computed(() => [
+  { value: 'main_lift', label: t('modals.customExercises.mainLift') },
+  { value: 'accessory', label: t('modals.customExercises.accessory') },
+]);
 
-const muscleOptions = [
-  { value: 'Pectoraux', label: 'Pectoraux' },
-  { value: 'Épaules', label: 'Épaules' },
-  { value: 'Dos', label: 'Dos' },
-  { value: 'Biceps', label: 'Biceps' },
-  { value: 'Triceps', label: 'Triceps' },
-  { value: 'Quadriceps', label: 'Quadriceps' },
-  { value: 'Ischio-jambiers', label: 'Ischio-jambiers' },
-  { value: 'Fessiers', label: 'Fessiers' },
-  { value: 'Mollets', label: 'Mollets' },
-  { value: 'Abdominaux', label: 'Abdominaux' },
-  { value: 'Corps entier', label: 'Corps entier' },
-];
+const muscleOptions = computed(() => [
+  { value: 'Pectoraux', label: t('modals.customExercises.musclesList.chest') },
+  { value: 'Épaules', label: t('modals.customExercises.musclesList.shoulders') },
+  { value: 'Dos', label: t('modals.customExercises.musclesList.back') },
+  { value: 'Biceps', label: t('modals.customExercises.musclesList.biceps') },
+  { value: 'Triceps', label: t('modals.customExercises.musclesList.triceps') },
+  { value: 'Quadriceps', label: t('modals.customExercises.musclesList.quads') },
+  { value: 'Ischio-jambiers', label: t('modals.customExercises.musclesList.hamstrings') },
+  { value: 'Fessiers', label: t('modals.customExercises.musclesList.glutes') },
+  { value: 'Mollets', label: t('modals.customExercises.musclesList.calves') },
+  { value: 'Abdominaux', label: t('modals.customExercises.musclesList.abs') },
+  { value: 'Corps entier', label: t('modals.customExercises.musclesList.fullBody') },
+]);
 
-const liftLabelByValue = Object.fromEntries(liftOptions.map((option) => [option.value, option.label]));
-const categoryLabelByValue = Object.fromEntries(categoryOptions.map((option) => [option.value, option.label]));
+const liftLabelByValue = computed(() => Object.fromEntries(liftOptions.value.map((option) => [option.value, option.label])));
+const categoryLabelByValue = computed(() => Object.fromEntries(categoryOptions.value.map((option) => [option.value, option.label])));
 
 function exerciseMeta(exercise) {
-  const lift = liftLabelByValue[exercise.lift] ?? exercise.lift;
-  const category = categoryLabelByValue[exercise.category] ?? exercise.category;
+  const lift = liftLabelByValue.value[exercise.lift] ?? exercise.lift;
+  const category = categoryLabelByValue.value[exercise.category] ?? exercise.category;
   const muscle = exercise.movement_pattern ? String(exercise.movement_pattern) : null;
   return [lift, category, muscle].filter(Boolean).join(' · ');
 }
@@ -130,7 +133,7 @@ function submit() {
 }
 
 function destroyExercise(exercise) {
-  if (!window.confirm(`Supprimer « ${exercise.name} » ?`)) {
+  if (!window.confirm(t('modals.customExercises.deleteConfirm', { name: exercise.name }))) {
     return;
   }
 
@@ -165,9 +168,9 @@ function close() {
       >
         <div class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-800 px-5 py-4 sm:px-6">
           <div>
-            <h2 class="text-xl font-bold text-white">Mes exercices</h2>
+            <h2 class="text-xl font-bold text-white">{{ t('modals.customExercises.title') }}</h2>
             <p class="mt-1 text-sm text-slate-400">
-              Catalogue complet : mouvements, accessoires et toutes les variantes.
+              {{ t('modals.customExercises.subtitle') }}
             </p>
           </div>
           <button type="button" class="text-slate-400 hover:text-white" @click="close">✕</button>
@@ -176,7 +179,7 @@ function close() {
         <div class="tc-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
           <form class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5" @submit.prevent="submit">
             <label class="sm:col-span-2 block text-sm lg:col-span-2">
-              <span class="text-slate-300">Nom</span>
+              <span class="text-slate-300">{{ t('modals.customExercises.name') }}</span>
               <input
                 v-model="form.name"
                 type="text"
@@ -187,7 +190,7 @@ function close() {
             </label>
 
             <label class="block text-sm">
-              <span class="text-slate-300">Lift</span>
+              <span class="text-slate-300">{{ t('modals.customExercises.lift') }}</span>
               <select v-model="form.lift" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white">
                 <option v-for="option in liftOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
@@ -196,7 +199,7 @@ function close() {
             </label>
 
             <label class="block text-sm">
-              <span class="text-slate-300">Catégorie</span>
+              <span class="text-slate-300">{{ t('modals.customExercises.category') }}</span>
               <select v-model="form.category" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white">
                 <option v-for="option in categoryOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
@@ -205,7 +208,7 @@ function close() {
             </label>
 
             <label class="block text-sm">
-              <span class="text-slate-300">Muscles</span>
+              <span class="text-slate-300">{{ t('modals.customExercises.muscles') }}</span>
               <select
                 v-model="form.movement_pattern"
                 class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
@@ -226,7 +229,7 @@ function close() {
                 :disabled="form.processing"
                 class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
-                {{ editingId ? 'Mettre à jour' : 'Ajouter' }}
+                {{ editingId ? t('modals.customExercises.update') : t('modals.customExercises.add') }}
               </button>
               <button
                 v-if="editingId"
@@ -234,7 +237,7 @@ function close() {
                 class="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300"
                 @click="resetForm"
               >
-                Annuler l’édition
+                {{ t('modals.customExercises.cancelEdit') }}
               </button>
             </div>
           </form>
@@ -245,7 +248,7 @@ function close() {
               <input
                 v-model="search"
                 type="search"
-                placeholder="Rechercher un exercice ou une variante…"
+                :placeholder="t('modals.customExercises.searchPlaceholder')"
                 class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder:text-slate-500"
               />
             </label>
@@ -253,7 +256,7 @@ function close() {
 
           <section v-if="filteredCustom.length" class="mt-8">
             <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Tes exercices ({{ filteredCustom.length }})
+              {{ t('modals.customExercises.yourExercises', { count: filteredCustom.length }) }}
             </h3>
             <div class="mt-3 grid gap-3 sm:grid-cols-2">
               <article
@@ -268,10 +271,10 @@ function close() {
                   </div>
                   <div class="flex shrink-0 gap-2">
                     <button type="button" class="text-xs text-blue-400 hover:text-blue-300" @click="startEdit(exercise)">
-                      Modifier
+                      {{ t('modals.customExercises.edit') }}
                     </button>
                     <button type="button" class="text-xs text-red-400 hover:text-red-300" @click="destroyExercise(exercise)">
-                      Supprimer
+                      {{ t('common.delete') }}
                     </button>
                   </div>
                 </div>
@@ -290,7 +293,7 @@ function close() {
 
           <section v-if="filteredMainLifts.length" class="mt-8">
             <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Mouvements principaux ({{ filteredMainLifts.length }})
+              {{ t('modals.customExercises.mainLifts', { count: filteredMainLifts.length }) }}
             </h3>
             <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <article
@@ -315,7 +318,7 @@ function close() {
 
           <section v-if="filteredAccessories.length" class="mt-8">
             <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Accessoires &amp; variantes ({{ filteredAccessories.length }})
+              {{ t('modals.customExercises.accessories', { count: filteredAccessories.length }) }}
             </h3>
             <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <article
@@ -342,7 +345,7 @@ function close() {
             v-if="!filteredCustom.length && !filteredMainLifts.length && !filteredAccessories.length"
             class="mt-8 text-sm text-slate-500"
           >
-            Aucun exercice ne correspond à ta recherche.
+            {{ t('modals.customExercises.noMatch') }}
           </p>
         </div>
       </div>

@@ -7,6 +7,7 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
 import CoachAddAthleteModal from '../Components/CoachAddAthleteModal.vue';
@@ -27,6 +28,8 @@ import ShortcutGrid from '../Components/CoachDashboard/ShortcutGrid.vue';
 import { useDismissedAlerts } from '../composables/useDismissedAlerts';
 import { formatCalendarFr } from '../utils/formatDates';
 import { isCoachOnboardingDone } from '../utils/coachOnboarding';
+
+const { t } = useI18n();
 
 const props = defineProps({
   athleteCount: { type: Number, default: 0 },
@@ -242,10 +245,9 @@ onMounted(() => {
         >
           <UiIcon name="users" class="h-8 w-8" />
         </span>
-        <h1 class="mt-6 text-2xl font-bold text-white sm:text-3xl">Bienvenue sur ton dashboard</h1>
+        <h1 class="mt-6 text-2xl font-bold text-white sm:text-3xl">{{ t('app.dashboard.welcomeTitle') }}</h1>
         <p class="mt-3 max-w-md text-sm text-slate-400 sm:text-base">
-          Tu n’as pas encore d’athlète. Commence par en inviter un et partage le lien d’activation pour
-          qu’il configure son compte.
+          {{ t('app.dashboard.welcomeBody') }}
         </p>
         <div class="mt-8 flex w-full max-w-sm flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-4">
           <button
@@ -254,7 +256,7 @@ onMounted(() => {
             @click="openAddAthleteModal"
           >
             <UiIcon name="users" class="h-5 w-5" />
-            Ajouter mon premier athlète
+            {{ t('app.dashboard.addFirstAthlete') }}
           </button>
           <button
             v-if="!showOnboardingTour"
@@ -262,11 +264,11 @@ onMounted(() => {
             class="rounded-2xl border border-slate-600 px-6 py-3.5 text-sm font-medium text-slate-300 hover:bg-slate-800/50 sm:py-4"
             @click="showOnboardingTour = true"
           >
-            Revoir la visite guidée
+            {{ t('app.dashboard.replayTour') }}
           </button>
         </div>
         <p class="mt-8 text-sm text-slate-500">
-          Ensuite : programmes, retours vidéo, messagerie et alertes apparaîtront ici.
+          {{ t('app.dashboard.welcomeHint') }}
         </p>
       </div>
     </template>
@@ -349,8 +351,8 @@ onMounted(() => {
       <FeedbackBreakdownModal
         :open="showDailyFeedbackModal"
         variant="daily"
-        :title="`Retours journaliers · ${todayLabel}`"
-        subtitle="Athlètes avec une séance programme prévue aujourd'hui"
+        :title="t('app.dashboard.dailyFeedbackTitle', { date: todayLabel })"
+        :subtitle="t('app.dashboard.dailyFeedbackSubtitle')"
         :breakdown="dailyBreakdown"
         @close="showDailyFeedbackModal = false"
       />
@@ -358,7 +360,7 @@ onMounted(() => {
       <FeedbackBreakdownModal
         :open="showWeeklyFeedbackModal"
         variant="weekly"
-        title="Retours hebdomadaires"
+        :title="t('app.dashboard.weeklyFeedbackTitle')"
         :subtitle="weekLabel"
         :breakdown="weeklyBreakdown"
         @close="showWeeklyFeedbackModal = false"

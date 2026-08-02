@@ -7,6 +7,7 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import AthleteDailyCheckInModal from '../Components/AthleteDailyCheckInModal.vue';
 import AthleteDashboardHeader from '../Components/AthleteDashboardHeader.vue';
@@ -14,6 +15,8 @@ import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
 import TodaySessionCard from '../Components/TodaySessionCard.vue';
 import WrappedStoryModal from '../Components/WrappedStoryModal.vue';
 import { WEEKDAY_LABELS } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   athleteName: { type: String, required: true },
@@ -262,7 +265,7 @@ onMounted(() => {
       <div class="flex items-center justify-between gap-3">
         <div>
           <p class="text-[10px] font-semibold uppercase tracking-widest text-violet-300/90">Wrapped</p>
-          <p class="mt-1 text-sm font-semibold text-white">Ton récap hebdo & mensuel</p>
+          <p class="mt-1 text-sm font-semibold text-white">{{ t('app.athleteDash.wrappedTitle') }}</p>
         </div>
       </div>
 
@@ -282,7 +285,7 @@ onMounted(() => {
           </div>
 
           <p class="mt-3 text-xs text-slate-300">
-            Ton récap est prêt : volume, adhérence et stats Squat / Bench / Terre.
+            {{ t('app.athleteDash.wrappedReady') }}
           </p>
 
           <div class="mt-3 flex flex-wrap gap-2">
@@ -291,7 +294,7 @@ onMounted(() => {
               class="rounded-lg bg-violet-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-violet-500"
               @click="openWrappedStory(card)"
             >
-              Voir mon recap
+              {{ t('app.athleteDash.seeRecap') }}
             </button>
             <button
               type="button"

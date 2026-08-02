@@ -28,13 +28,13 @@ class NewSessionFeedbackNotification extends Notification implements ShouldQueue
     {
         $this->feedback->loadMissing(['athlete:id,name', 'programTrainingDay']);
 
-        $athleteName = $this->feedback->athlete?->name ?? 'Un athlète';
-        $sessionDate = $this->feedback->session_date?->locale('fr')->isoFormat('D MMMM YYYY') ?? '';
+        $athleteName = $this->feedback->athlete?->name ?? __('mail.new_feedback.an_athlete');
+        $sessionDate = $this->feedback->session_date?->locale(app()->getLocale())->isoFormat('D MMMM YYYY') ?? '';
 
         return (new MailMessage)
-            ->subject("Nouveau retour vidéo — {$athleteName}")
-            ->line("{$athleteName} a envoyé un retour vidéo pour la séance du {$sessionDate}.")
-            ->action('Voir le retour', url('/feedbacks/'.$this->feedback->id))
-            ->salutation("Cordialement,\nPower Roster");
+            ->subject(__('mail.new_feedback.subject', ['name' => $athleteName]))
+            ->line(__('mail.new_feedback.line', ['name' => $athleteName, 'date' => $sessionDate]))
+            ->action(__('mail.new_feedback.action'), url('/feedbacks/'.$this->feedback->id))
+            ->salutation(__('mail.salutation'));
     }
 }

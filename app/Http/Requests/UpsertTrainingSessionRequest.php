@@ -57,7 +57,7 @@ class UpsertTrainingSessionRequest extends FormRequest
             if (! TrainingSessionSupport::hasExerciseContent($items) && $notes === '') {
                 $validator->errors()->add(
                     'items',
-                    'Ajoute au moins un exercice ou une note pour enregistrer la séance.',
+                    __('messages.validation.session_needs_content'),
                 );
             }
         });
@@ -66,9 +66,9 @@ class UpsertTrainingSessionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'items.*.load.numeric' => 'La charge doit être un nombre (ex. 140 ou 138,5).',
-            'items.*.sets.integer' => 'Le nombre de séries doit être un entier.',
-            'items.*.reps.integer' => 'Le nombre de reps doit être un entier.',
+            'items.*.load.numeric' => __('messages.validation.load_numeric'),
+            'items.*.sets.integer' => __('messages.validation.sets_integer'),
+            'items.*.reps.integer' => __('messages.validation.reps_integer'),
         ];
     }
 }

@@ -1,3 +1,9 @@
+import i18n, { localeTag } from '../i18n';
+
+function activeTag() {
+  return localeTag(i18n.global.locale.value);
+}
+
 export const LIFT_COLORS = {
   squat: { border: 'rgb(167, 139, 250)', bg: 'rgba(167, 139, 250, 0.25)' },
   bench: { border: 'rgb(232, 121, 249)', bg: 'rgba(232, 121, 249, 0.25)' },
@@ -106,10 +112,10 @@ export function prGlowCardStyle() {
 }
 
 export const LIFT_LABELS = {
-  squat: 'Squat',
-  bench: 'Bench',
-  deadlift: 'Terre',
-  total: 'Total',
+  get squat() { return i18n.global.t('config.lifts.squat'); },
+  get bench() { return i18n.global.t('config.lifts.bench'); },
+  get deadlift() { return i18n.global.t('config.lifts.deadlift'); },
+  get total() { return i18n.global.t('config.lifts.total'); },
 };
 
 const gridColorDark = 'rgba(51, 65, 85, 0.5)';
@@ -196,7 +202,7 @@ export function doughnutChartOptions(overrides = {}) {
             const value = context.parsed ?? 0;
             const total = context.dataset.data.reduce((a, b) => a + b, 0);
             const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-            return `${context.label}: ${Math.round(value).toLocaleString('fr-FR')} kg·reps (${pct} %)`;
+            return `${context.label}: ${Math.round(value).toLocaleString(activeTag())} kg·reps (${pct} %)`;
           },
         },
       },

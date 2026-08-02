@@ -212,7 +212,7 @@ trait ValidatesProgramSessionDay
             if ($steps === []) {
                 $validator->errors()->add(
                     "{$prefix}.scheme_config.steps",
-                    'Ajoute au moins un palier ramp valide (reps + charge).',
+                    __('messages.validation.ramp_steps_required'),
                 );
             }
         }
@@ -223,13 +223,13 @@ trait ValidatesProgramSessionDay
             if (! is_numeric($reps) || (int) $reps < 1) {
                 $validator->errors()->add(
                     "{$prefix}.scheme_config.reps",
-                    'Indique le nombre de reps du cluster.',
+                    __('messages.validation.cluster_reps_required'),
                 );
             }
             if (! is_numeric($minutes) || (int) $minutes < 1) {
                 $validator->errors()->add(
                     "{$prefix}.scheme_config.duration_minutes",
-                    'Indique la durée du cluster en minutes.',
+                    __('messages.validation.cluster_duration_required'),
                 );
             }
         }

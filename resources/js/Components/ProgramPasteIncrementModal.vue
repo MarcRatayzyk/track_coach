@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { MAIN_LIFTS, uppercaseSessionLabel } from '../utils/programBuilder';
 import { PROGRAM_TABLE_SECTIONS } from '../config/programTableSections';
 import {
@@ -7,6 +8,8 @@ import {
   DEFAULT_INCREMENT_SECTIONS,
   defaultIncrementsByLift,
 } from '../utils/programBuilderClipboard';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -132,7 +135,7 @@ function onConfirm() {
     const rpe = parseIncrementValue(raw.rpe);
 
     if (kg === null || percent === null || rpe === null) {
-      errorMessage.value = 'Entre des nombres valides, par exemple 0, 2.5 ou -2.5.';
+      errorMessage.value = t('programBuilder.pasteIncrement.invalidNumber');
       return;
     }
 
@@ -140,17 +143,17 @@ function onConfirm() {
   }
 
   if (selectedSections.value.length === 0) {
-    errorMessage.value = 'Sélectionne au moins un type de série.';
+    errorMessage.value = t('programBuilder.pasteIncrement.selectSection');
     return;
   }
 
   if (selectedLifts.value.length === 0) {
-    errorMessage.value = 'Sélectionne au moins un mouvement.';
+    errorMessage.value = t('programBuilder.pasteIncrement.selectLift');
     return;
   }
 
   if (props.exerciseNames.length > 0 && selectedExercises.value.length === 0) {
-    errorMessage.value = 'Sélectionne au moins un exercice.';
+    errorMessage.value = t('programBuilder.pasteIncrement.selectExercise');
     return;
   }
 
@@ -198,30 +201,30 @@ function onCancel() {
 
         <div class="tc-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4">
         <label v-if="pasteKind === 'session'" class="block text-xs text-slate-500">
-          Titre de la séance
+          {{ t('programBuilder.pasteIncrement.sessionTitle') }}
           <input
             :value="sessionLabel"
             type="text"
             maxlength="255"
-            placeholder="Nom de la séance"
+:placeholder="t('programBuilder.pasteIncrement.sessionTitlePlaceholder')"
             class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm uppercase text-white outline-none"
             @input="onSessionLabelInput"
           />
         </label>
 
         <label class="mt-4 block text-xs text-slate-500">
-          Notes de séance
+          {{ t('programBuilder.pasteIncrement.sessionNotes') }}
           <textarea
             v-model="sessionNotes"
             rows="2"
             maxlength="2000"
-            placeholder="Consignes, remarques, contexte…"
+:placeholder="t('programBuilder.pasteIncrement.sessionNotesPlaceholder')"
             class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600"
           />
         </label>
 
         <fieldset class="mt-4">
-          <legend class="text-xs font-medium text-slate-400">Mouvement</legend>
+<legend class="text-xs font-medium text-slate-400">{{ t('programBuilder.pasteIncrement.movement') }}</legend>
           <div class="mt-2 flex flex-wrap gap-2">
             <label
               v-for="lift in MAIN_LIFTS"
@@ -240,7 +243,7 @@ function onCancel() {
         </fieldset>
 
         <div v-if="visibleLifts.length > 0" class="mt-4 space-y-3">
-          <p class="text-xs font-medium text-slate-400">Incréments par mouvement</p>
+<p class="text-xs font-medium text-slate-400">{{ t('programBuilder.pasteIncrement.incrementsByLift') }}</p>
           <div
             v-for="lift in visibleLifts"
             :key="lift.value"
@@ -249,7 +252,7 @@ function onCancel() {
             <p class="text-xs font-medium text-slate-300">{{ lift.label }}</p>
             <div class="mt-2 grid gap-3 sm:grid-cols-3">
               <label class="block text-xs text-slate-500">
-                Incrément kg
+                {{ t('programBuilder.pasteIncrement.incrementKg') }}
                 <input
                   v-model="incrementsByLift[lift.value].kg"
                   type="text"
@@ -260,7 +263,7 @@ function onCancel() {
                 />
               </label>
               <label class="block text-xs text-slate-500">
-                Incrément %
+                {{ t('programBuilder.pasteIncrement.incrementPercent') }}
                 <input
                   v-model="incrementsByLift[lift.value].percent"
                   type="text"
@@ -271,7 +274,7 @@ function onCancel() {
                 />
               </label>
               <label class="block text-xs text-slate-500">
-                Incrément RPE
+                {{ t('programBuilder.pasteIncrement.incrementRpe') }}
                 <input
                   v-model="incrementsByLift[lift.value].rpe"
                   type="text"
@@ -286,7 +289,7 @@ function onCancel() {
         </div>
 
         <fieldset class="mt-4">
-          <legend class="text-xs font-medium text-slate-400">Type de série</legend>
+<legend class="text-xs font-medium text-slate-400">{{ t('programBuilder.pasteIncrement.setType') }}</legend>
           <div class="mt-2 flex flex-wrap gap-2">
             <label
               v-for="section in PROGRAM_TABLE_SECTIONS"
@@ -305,7 +308,7 @@ function onCancel() {
         </fieldset>
 
         <fieldset v-if="exerciseNames.length > 0" class="mt-4">
-          <legend class="text-xs font-medium text-slate-400">Exercice</legend>
+<legend class="text-xs font-medium text-slate-400">{{ t('programBuilder.shared.exercise') }}</legend>
           <div class="tc-scrollbar tc-scrollbar-thin mt-2 max-h-32 space-y-1 overflow-y-auto rounded-lg border border-slate-800 p-2 pr-1">
             <label
               v-for="name in exerciseNames"
@@ -334,14 +337,14 @@ function onCancel() {
             class="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
             @click="onCancel"
           >
-            Annuler
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
             class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500"
             @click="onConfirm"
           >
-            Confirmer
+            {{ t('common.confirm') }}
           </button>
         </div>
       </div>

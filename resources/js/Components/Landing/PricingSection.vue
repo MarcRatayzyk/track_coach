@@ -1,47 +1,51 @@
 <script setup>
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
 
-const sharedFeatures = [
-    'Programmation SBD & builder',
-    'Suivi PRs, readiness & adhérence',
-    'Retours de séance',
-    'Messagerie coach ↔ athlète',
-    'Compétitions & match plans',
-    'Dashboard coach',
-];
+const { t } = useI18n();
 
-const plans = [
+const sharedFeatures = computed(() => [
+    t('landing.pricing.sharedFeatures.programming'),
+    t('landing.pricing.sharedFeatures.tracking'),
+    t('landing.pricing.sharedFeatures.feedback'),
+    t('landing.pricing.sharedFeatures.messaging'),
+    t('landing.pricing.sharedFeatures.competitions'),
+    t('landing.pricing.sharedFeatures.dashboard'),
+]);
+
+const plans = computed(() => [
     {
         key: 'starter',
-        name: 'Starter',
+        name: t('landing.pricing.plans.starter.name'),
         price: '34,99',
-        description: 'Jusqu’à 15 athlètes',
-        cta: 'S’abonner : 34,99 €/mois',
+        description: t('landing.pricing.plans.starter.description'),
+        cta: t('landing.pricing.plans.starter.cta'),
         href: '/subscribe/starter',
         highlight: false,
-        features: [...sharedFeatures, 'Jusqu’à 15 athlètes actifs'],
+        features: [...sharedFeatures.value, t('landing.pricing.plans.starter.limit')],
     },
     {
         key: 'growth',
-        name: 'Growth',
+        name: t('landing.pricing.plans.growth.name'),
         price: '49,99',
-        description: 'De 16 à 40 athlètes',
-        cta: 'S’abonner : 49,99 €/mois',
+        description: t('landing.pricing.plans.growth.description'),
+        cta: t('landing.pricing.plans.growth.cta'),
         href: '/subscribe/growth',
         highlight: true,
-        features: [...sharedFeatures, 'Jusqu’à 40 athlètes actifs'],
+        features: [...sharedFeatures.value, t('landing.pricing.plans.growth.limit')],
     },
     {
         key: 'scale',
-        name: 'Scale',
+        name: t('landing.pricing.plans.scale.name'),
         price: '74,99',
-        description: '41 athlètes et plus',
-        cta: 'S’abonner : 74,99 €/mois',
+        description: t('landing.pricing.plans.scale.description'),
+        cta: t('landing.pricing.plans.scale.cta'),
         href: '/subscribe/scale',
         highlight: false,
-        features: [...sharedFeatures, 'Athlètes illimités'],
+        features: [...sharedFeatures.value, t('landing.pricing.plans.scale.limit')],
     },
-];
+]);
 </script>
 
 <template>
@@ -52,16 +56,15 @@ const plans = [
     >
         <div class="mx-auto w-full max-w-[1280px]">
             <FadeIn class-name="text-center">
-                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-400">Tarifs</p>
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-400">{{ t('landing.pricing.eyebrow') }}</p>
                 <h2
                     id="pricing-heading"
                     class="mx-auto mt-3 max-w-2xl text-3xl font-black tracking-[-0.03em] text-white sm:text-4xl"
                 >
-                    Simple : selon ton roster
+                    {{ t('landing.pricing.heading') }}
                 </h2>
                 <p class="mx-auto mt-4 max-w-xl text-base text-slate-400 sm:text-lg">
-                    Toutes les fonctionnalités incluses. Tarifs selon le nombre d’athlètes actifs.
-                    Ou commence par un essai 14 jours sans carte.
+                    {{ t('landing.pricing.subtitle') }}
                 </p>
             </FadeIn>
 
@@ -85,7 +88,7 @@ const plans = [
                         </p>
                         <p class="mt-4 text-4xl font-black text-white">
                             {{ plan.price }} €
-                            <span class="text-base font-medium text-slate-400">/ mois</span>
+                            <span class="text-base font-medium text-slate-400">{{ t('common.perMonth') }}</span>
                         </p>
                         <p class="mt-3 text-[15px] text-slate-400">{{ plan.description }}</p>
 
@@ -121,12 +124,12 @@ const plans = [
 
             <FadeIn :delay="0.25" class-name="mt-10 text-center">
                 <p class="text-sm text-slate-500">
-                    Pas encore prêt à payer ?
-                    <a href="/start-trial" class="font-semibold text-blue-400 hover:underline">Essai 14 jours</a>
-                    · Déjà un compte ?
-                    <a href="/login" class="font-semibold text-blue-400 hover:underline">Se connecter</a>
+                    {{ t('landing.pricing.footerNotReady') }}
+                    <a href="/start-trial" class="font-semibold text-blue-400 hover:underline">{{ t('landing.pricing.trial14') }}</a>
+                    · {{ t('landing.pricing.alreadyAccount') }}
+                    <a href="/login" class="font-semibold text-blue-400 hover:underline">{{ t('landing.pricing.logIn') }}</a>
                     ·
-                    <a href="/demo" class="font-semibold text-blue-400 hover:underline">Démo</a>
+                    <a href="/demo" class="font-semibold text-blue-400 hover:underline">{{ t('landing.pricing.demo') }}</a>
                 </p>
             </FadeIn>
         </div>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { Capacitor } from '@capacitor/core';
+import { useI18n } from 'vue-i18n';
 import UiIcon from './UiIcon.vue';
 import { formatMb } from '../utils/compressVideo';
 import { warmMaterializeNativeVideoPath } from '../utils/nativeVideoFile';
@@ -10,6 +11,8 @@ import {
   preloadTrimEngine,
   trimVideo,
 } from '../utils/trimVideo';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -47,12 +50,12 @@ let thumbToken = 0;
 
 const title = computed(() => {
   if (props.total > 1) {
-    return `Rogner ${props.index + 1}/${props.total}`;
+    return t('modals.videoTrim.titleIndexed', { index: props.index + 1, total: props.total });
   }
-  return 'Rogner la vidéo';
+  return t('modals.videoTrim.title');
 });
 
-const fileLabel = computed(() => props.source?.name || 'vidéo');
+const fileLabel = computed(() => props.source?.name || t('modals.videoTrim.videoFallback'));
 const sizeLabel = computed(() => {
   const bytes = props.source?.size ?? props.source?.file?.size ?? 0;
   return bytes > 0 ? formatMb(bytes) : null;
@@ -151,7 +154,7 @@ function onLoadedMetadata() {
   }
   const d = Number(el.duration);
   if (!Number.isFinite(d) || d <= 0) {
-    errorMessage.value = 'Impossible de lire la durée de cette vidéo.';
+    errorMessage.value = t('modals.videoTrim.durationError');
     return;
   }
   duration.value = d;
@@ -408,7 +411,7 @@ async function confirmTrim() {
   } catch (error) {
     errorMessage.value =
       error?.message ||
-      'Rognage impossible. Vous pouvez envoyer toute la vidéo, ou réessayer.';
+      t('modals.videoTrim.trimError');
     trimming.value = false;
     trimProgress.value = 0;
   }
@@ -463,7 +466,7 @@ onUnmounted(() => {
       <button
         type="button"
         class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm"
-        aria-label="Fermer"
+        :aria-label="t('common.close')"
         :disabled="trimming"
         @click="cancel"
       />
@@ -484,7 +487,7 @@ onUnmounted(() => {
           <button
             type="button"
             class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white disabled:opacity-40"
-            aria-label="Annuler"
+            :aria-label="t('common.cancel')"
             :disabled="trimming"
             @click="cancel"
           >
@@ -515,14 +518,14 @@ onUnmounted(() => {
                 class="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-sky-400"
                 aria-hidden="true"
               />
-              <p class="text-sm font-medium text-slate-200">Chargement de la vidéo…</p>
-              <p class="text-xs text-slate-500">Tu pourras rogner dès que l’aperçu est prêt</p>
+              <p class="text-sm font-medium text-slate-200">{{ t('modals.videoTrim.loading') }}</p>
+              <p class="text-xs text-slate-500">{{ t('modals.videoTrim.loadingHint') }}</p>
             </div>
             <button
               v-if="metadataReady && !trimming"
               type="button"
               class="absolute bottom-3 left-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition hover:bg-black/70"
-              :aria-label="playingSelection ? 'Pause' : 'Lire le clip'"
+              :aria-label="playingSelection ? t('modals.videoTrim.pause') : t('modals.videoTrim.playClip')"
               @click.stop="playingSelection ? stopSelectionPlayback() : playSelection()"
             >
               <svg
@@ -556,7 +559,7 @@ onUnmounted(() => {
           <div v-if="metadataReady" class="mt-4 space-y-2">
             <div class="flex items-center justify-between text-xs tabular-nums text-slate-400">
               <span>{{ formatTime(startSec) }}</span>
-              <span class="font-semibold text-sky-300">Clip {{ formatTime(selectionDuration) }}</span>
+              <span class="font-semibold text-sky-300">{{ t('modals.videoTrim.clip', { duration: formatTime(selectionDuration) }) }}</span>
               <span>{{ formatTime(endSec) }}</span>
             </div>
 
@@ -581,7 +584,7 @@ onUnmounted(() => {
                   v-if="thumbsLoading && thumbnails.length === 0"
                   class="flex h-full w-full items-center justify-center text-[11px] text-slate-500"
                 >
-                  Aperçu…
+                  {{ t('modals.videoTrim.preview') }}
                 </div>
               </div>
 
@@ -614,7 +617,7 @@ onUnmounted(() => {
                 class="absolute inset-y-0 z-20 flex w-5 -translate-x-1/2 cursor-ew-resize items-center justify-center touch-none"
                 :style="{ left: `${startPct}%` }"
                 :disabled="trimming"
-                aria-label="Début du clip"
+                :aria-label="t('modals.videoTrim.startHandle')"
                 @pointerdown.stop="onHandlePointerDown('start', $event)"
                 @pointermove="onStripPointerMove"
                 @pointerup="onStripPointerUp"
@@ -629,7 +632,7 @@ onUnmounted(() => {
                 class="absolute inset-y-0 z-20 flex w-5 -translate-x-1/2 cursor-ew-resize items-center justify-center touch-none"
                 :style="{ left: `${endPct}%` }"
                 :disabled="trimming"
-                aria-label="Fin du clip"
+                :aria-label="t('modals.videoTrim.endHandle')"
                 @pointerdown.stop="onHandlePointerDown('end', $event)"
                 @pointermove="onStripPointerMove"
                 @pointerup="onStripPointerUp"
@@ -639,7 +642,7 @@ onUnmounted(() => {
             </div>
 
             <p class="text-center text-[11px] text-slate-500">
-              Glissez les poignées pour couper · touchez la vidéo pour lire
+              {{ t('modals.videoTrim.dragHint') }}
             </p>
           </div>
 
@@ -650,7 +653,7 @@ onUnmounted(() => {
                 :style="{ width: `${trimProgress}%` }"
               />
             </div>
-            <p class="mt-1 text-xs text-slate-400">Rognage… {{ trimProgress }}%</p>
+            <p class="mt-1 text-xs text-slate-400">{{ t('modals.videoTrim.trimming', { progress: trimProgress }) }}</p>
           </div>
 
           <p v-if="errorMessage" class="mt-3 text-sm text-amber-300/95">
@@ -665,7 +668,7 @@ onUnmounted(() => {
             :disabled="!canConfirm || trimming"
             @click="confirmTrim"
           >
-            {{ isFullSelection ? 'Continuer (vidéo entière)' : 'Confirmer le clip' }}
+            {{ isFullSelection ? t('modals.videoTrim.continueFull') : t('modals.videoTrim.confirmClip') }}
           </button>
           <button
             type="button"
@@ -673,7 +676,7 @@ onUnmounted(() => {
             :disabled="trimming"
             @click="useFull"
           >
-            Utiliser toute la vidéo
+            {{ t('modals.videoTrim.useFull') }}
           </button>
           <button
             type="button"
@@ -681,7 +684,7 @@ onUnmounted(() => {
             :disabled="trimming"
             @click="cancel"
           >
-            Annuler la sélection
+            {{ t('modals.videoTrim.cancelSelection') }}
           </button>
         </div>
       </div>

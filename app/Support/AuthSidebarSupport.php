@@ -38,7 +38,7 @@ class AuthSidebarSupport
         if ($user->role === 'coach') {
             return [
                 'label' => $user->name,
-                'subtitle' => 'Mon profil & stats roster',
+                'subtitle' => __('messages.sidebar.coach_profile_subtitle'),
                 'href' => route('coach.profile'),
             ];
         }
@@ -53,8 +53,8 @@ class AuthSidebarSupport
         }
 
         return [
-            'label' => 'Mon coach — '.$coach['name'],
-            'subtitle' => $coach['club_gym'] ?? 'Voir le profil',
+            'label' => __('messages.sidebar.my_coach', ['name' => $coach['name']]),
+            'subtitle' => $coach['club_gym'] ?? __('messages.sidebar.view_profile'),
             'href' => $coach['profile_url'],
         ];
     }

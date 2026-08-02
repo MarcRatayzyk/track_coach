@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import SessionDayEditorPanel from './SessionDayEditorPanel.vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
@@ -8,6 +9,8 @@ import {
   sessionToDay,
 } from '../utils/programBuilder';
 import { track } from '../utils/analytics';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -53,7 +56,7 @@ const headerTitle = computed(() => {
   if (sessionDate.value) {
     return formatCalendarFr(sessionDate.value, 'medium');
   }
-  return 'Séance isolée';
+  return t('modals.trainingSessionEditor.isolatedSession');
 });
 
 function resetFromProps() {
@@ -125,7 +128,7 @@ function deleteSession() {
     return;
   }
 
-  if (!window.confirm('Supprimer cette séance ?')) {
+  if (!window.confirm(t('modals.trainingSessionEditor.confirmDelete'))) {
     return;
   }
 

@@ -30,7 +30,7 @@ class DemoController extends Controller
         $hours = (int) config('billing.demo_hours', 48);
 
         $coach = User::query()->create([
-            'name' => $validated['name'] ?? 'Coach démo',
+            'name' => $validated['name'] ?? __('messages.auth.demo_coach_name'),
             'email' => $validated['email'],
             'password' => Str::password(48),
             'role' => 'coach',
@@ -61,7 +61,7 @@ class DemoController extends Controller
 
         return redirect()
             ->route('dashboard')
-            ->with('success', "Démo prête — expire dans {$hours} h. Explore librement, les données seront purgées ensuite.")
+            ->with('success', __('messages.auth.demo_ready', ['hours' => $hours]))
             ->with('demo_welcome', [
                 'hours' => $hours,
                 'expires_label' => $expiresLabel,

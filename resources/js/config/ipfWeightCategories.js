@@ -1,13 +1,19 @@
+import i18n from '../i18n';
+
+function tt(key) {
+  return i18n.global.t(key);
+}
+
 export const SEX_OPTIONS = [
-  { value: 'male', label: 'Homme' },
-  { value: 'female', label: 'Femme' },
+  { value: 'male', get label() { return tt('config.sex.male'); } },
+  { value: 'female', get label() { return tt('config.sex.female'); } },
 ];
 
 export const LEVEL_OPTIONS = [
-  { value: 'beginner', label: 'Débutant' },
-  { value: 'intermediate', label: 'Intermédiaire' },
-  { value: 'advanced', label: 'Avancé' },
-  { value: 'elite', label: 'Élite' },
+  { value: 'beginner', get label() { return tt('config.level.beginner'); } },
+  { value: 'intermediate', get label() { return tt('config.level.intermediate'); } },
+  { value: 'advanced', get label() { return tt('config.level.advanced'); } },
+  { value: 'elite', get label() { return tt('config.level.elite'); } },
 ];
 
 export const MALE_CATEGORIES = [
@@ -36,9 +42,12 @@ export const CATEGORY_LABELS = Object.fromEntries(
   [...MALE_CATEGORIES, ...FEMALE_CATEGORIES].map((item) => [item.value, item.label]),
 );
 
-export const LEVEL_LABELS = Object.fromEntries(
-  LEVEL_OPTIONS.map((item) => [item.value, item.label]),
-);
+const LEVEL_KEYS = {
+  beginner: 'config.level.beginner',
+  intermediate: 'config.level.intermediate',
+  advanced: 'config.level.advanced',
+  elite: 'config.level.elite',
+};
 
 export function weightCategoriesForSex(sex) {
   if (sex === 'male') {
@@ -59,17 +68,22 @@ export function weightCategoryLabel(value) {
 }
 
 export function levelLabel(value) {
-  return LEVEL_LABELS[value] ?? value ?? '—';
+  const key = LEVEL_KEYS[value];
+  return key ? tt(key) : (value ?? '—');
 }
 
 export const COACH_SPECIALTY_OPTIONS = [
-  { value: 'powerlifting', label: 'Powerlifting' },
-  { value: 'force_athletique', label: 'Force athlétique' },
-  { value: 'hypertrophie', label: 'Hypertrophie' },
-  { value: 'preparation_physique', label: 'Préparation physique' },
-  { value: 'rehabilitation', label: 'Réhabilitation / retour' },
+  { value: 'powerlifting', get label() { return tt('config.coachSpecialty.powerlifting'); } },
+  { value: 'force_athletique', get label() { return tt('config.coachSpecialty.forceAthletique'); } },
+  { value: 'hypertrophie', get label() { return tt('config.coachSpecialty.hypertrophie'); } },
+  { value: 'preparation_physique', get label() { return tt('config.coachSpecialty.preparationPhysique'); } },
+  { value: 'rehabilitation', get label() { return tt('config.coachSpecialty.rehabilitation'); } },
 ];
 
-export const COACH_SPECIALTY_LABELS = Object.fromEntries(
-  COACH_SPECIALTY_OPTIONS.map((item) => [item.value, item.label]),
-);
+export const COACH_SPECIALTY_LABELS = {
+  get powerlifting() { return tt('config.coachSpecialty.powerlifting'); },
+  get force_athletique() { return tt('config.coachSpecialty.forceAthletique'); },
+  get hypertrophie() { return tt('config.coachSpecialty.hypertrophie'); },
+  get preparation_physique() { return tt('config.coachSpecialty.preparationPhysique'); },
+  get rehabilitation() { return tt('config.coachSpecialty.rehabilitation'); },
+};

@@ -110,13 +110,13 @@ class ProgramImportController extends Controller
             $rows = $ai->extractRows($request->file('file'), (int) $request->user()->id, $weekCount);
         } catch (\App\Support\ProgramImport\ProgramAiResponseTruncated $e) {
             return response()->json([
-                'message' => 'Réponse IA encore trop longue après découpage. Réessaie avec un PDF, ou utilise l’onglet JSON (IA externe).',
+                'message' => __('messages.programs.import_ai_too_long'),
             ], 422);
         } catch (\Throwable $e) {
             $message = $e->getMessage();
             if (str_contains($message, 'Maximum execution time') || str_contains($message, 'max_execution_time')) {
                 return response()->json([
-                    'message' => 'Analyse trop longue (timeout PHP). Réessaie, ou importe un CSV/XLSX plutôt qu’une capture d’écran très lourde.',
+                    'message' => __('messages.programs.import_timeout'),
                 ], 504);
             }
 
@@ -192,8 +192,8 @@ class ProgramImportController extends Controller
                     : 'table_v2',
             ])
             ->with('success', $count === 1
-                ? '1 séance importée.'
-                : "{$count} séances importées.");
+                ? __('messages.sessions.imported_one')
+                : __('messages.sessions.imported_many', ['count' => $count]));
     }
 
     /**

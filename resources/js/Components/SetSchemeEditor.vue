@@ -1,11 +1,14 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   SET_SCHEME_OPTIONS,
   createRampStep,
   emptySchemeConfig,
   inferLoadMode,
 } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const line = defineModel({ type: Object, required: true });
 
@@ -132,7 +135,7 @@ function parseNum(value) {
         class="font-medium uppercase tracking-wide text-slate-500"
         :class="dense ? 'text-[11px]' : 'text-xs'"
       >
-        Type de séries
+        {{ t('programBuilder.setScheme.type') }}
       </p>
       <div class="mt-1.5 flex flex-wrap gap-1.5">
         <button
@@ -153,7 +156,7 @@ function parseNum(value) {
     </div>
 
     <div v-if="scheme === 'ramp'" class="space-y-2">
-      <p class="text-[11px] text-slate-500">Paliers (ex. 2@210 → 2@220 → 2@230)</p>
+      <p class="text-[11px] text-slate-500">{{ t('programBuilder.setScheme.rampHint') }}</p>
       <div
         v-for="(step, index) in steps"
         :key="index"
@@ -161,7 +164,7 @@ function parseNum(value) {
       >
         <span class="pb-2 text-[10px] font-semibold text-slate-500">{{ index + 1 }}</span>
         <label class="block text-[10px] uppercase text-slate-500">
-          Reps
+          {{ t('programBuilder.shared.reps') }}
           <input
             :value="step.reps ?? ''"
             type="number"
@@ -236,13 +239,13 @@ function parseNum(value) {
         :disabled="steps.length >= 8"
         @click="addStep"
       >
-        + Ajouter un palier
+        {{ t('programBuilder.setScheme.addStep') }}
       </button>
     </div>
 
     <div v-else-if="scheme === 'cluster'" class="grid grid-cols-2 gap-3">
       <label class="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-        Reps totales
+        {{ t('programBuilder.setScheme.totalReps') }}
         <input
           :value="line.scheme_config?.reps ?? ''"
           type="number"
@@ -253,7 +256,7 @@ function parseNum(value) {
         />
       </label>
       <label class="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
-        Durée (min)
+        {{ t('programBuilder.setScheme.durationMin') }}
         <input
           :value="line.scheme_config?.duration_minutes ?? ''"
           type="number"

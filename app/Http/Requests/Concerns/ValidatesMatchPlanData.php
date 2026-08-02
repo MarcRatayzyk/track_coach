@@ -42,7 +42,7 @@ trait ValidatesMatchPlanData
             if ($mode === 'structured' && empty($data['scenarios'])) {
                 $validator->errors()->add(
                     'match_plan_data.scenarios',
-                    'Ajoute au moins un scénario pour le plan structuré.',
+                    __('messages.validation.match_plan_scenario_required'),
                 );
             }
         });
@@ -75,16 +75,16 @@ trait ValidatesMatchPlanData
     public function messages(): array
     {
         return [
-            'match_plan_data.scenarios.*.name.required_with' => 'Le nom du scénario est requis.',
-            'match_plan_data.scenarios.*.lifts.*.attempt1.numeric' => 'L\'essai 1 doit être un nombre.',
-            'match_plan_data.scenarios.*.lifts.*.attempt2.numeric' => 'L\'essai 2 doit être un nombre.',
-            'match_plan_data.scenarios.*.lifts.*.attempt3.numeric' => 'L\'essai 3 doit être un nombre.',
-            'match_plan_data.scenarios.*.lifts.*.attempt1.min' => 'L\'essai 1 doit être supérieur ou égal à :min.',
-            'match_plan_data.scenarios.*.lifts.*.attempt2.min' => 'L\'essai 2 doit être supérieur ou égal à :min.',
-            'match_plan_data.scenarios.*.lifts.*.attempt3.min' => 'L\'essai 3 doit être supérieur ou égal à :min.',
-            'match_plan_data.scenarios.*.lifts.*.attempt1.max' => 'L\'essai 1 doit être inférieur ou égal à :max.',
-            'match_plan_data.scenarios.*.lifts.*.attempt2.max' => 'L\'essai 2 doit être inférieur ou égal à :max.',
-            'match_plan_data.scenarios.*.lifts.*.attempt3.max' => 'L\'essai 3 doit être inférieur ou égal à :max.',
+            'match_plan_data.scenarios.*.name.required_with' => __('messages.validation.scenario_name_required'),
+            'match_plan_data.scenarios.*.lifts.*.attempt1.numeric' => __('messages.validation.attempt_numeric', ['n' => 1]),
+            'match_plan_data.scenarios.*.lifts.*.attempt2.numeric' => __('messages.validation.attempt_numeric', ['n' => 2]),
+            'match_plan_data.scenarios.*.lifts.*.attempt3.numeric' => __('messages.validation.attempt_numeric', ['n' => 3]),
+            'match_plan_data.scenarios.*.lifts.*.attempt1.min' => __('messages.validation.attempt_min', ['n' => 1]),
+            'match_plan_data.scenarios.*.lifts.*.attempt2.min' => __('messages.validation.attempt_min', ['n' => 2]),
+            'match_plan_data.scenarios.*.lifts.*.attempt3.min' => __('messages.validation.attempt_min', ['n' => 3]),
+            'match_plan_data.scenarios.*.lifts.*.attempt1.max' => __('messages.validation.attempt_max', ['n' => 1]),
+            'match_plan_data.scenarios.*.lifts.*.attempt2.max' => __('messages.validation.attempt_max', ['n' => 2]),
+            'match_plan_data.scenarios.*.lifts.*.attempt3.max' => __('messages.validation.attempt_max', ['n' => 3]),
         ];
     }
 }

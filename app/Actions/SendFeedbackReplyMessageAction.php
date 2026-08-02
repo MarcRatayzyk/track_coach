@@ -50,13 +50,13 @@ class SendFeedbackReplyMessageAction
         $body = trim((string) $content);
         if ($body === '' && $audioFiles === []) {
             throw ValidationException::withMessages([
-                'content' => 'Ajoutez un message texte ou au moins un fichier audio.',
+                'content' => __('messages.validation.message_or_audio'),
             ]);
         }
 
         $feedback->loadMissing('programTrainingDay');
         $sessionLabel = SessionFeedbackPresenter::sessionLabel($feedback->programTrainingDay);
-        $sessionDate = $feedback->session_date?->locale('fr')->isoFormat('D MMMM YYYY') ?? '';
+        $sessionDate = $feedback->session_date?->locale(app()->getLocale())->isoFormat('D MMMM YYYY') ?? '';
 
         $prefix = "Réponse à ton retour du {$sessionDate} — {$sessionLabel}";
         $messageContent = $body !== '' ? "{$prefix}\n\n{$body}" : $prefix;

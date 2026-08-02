@@ -1,15 +1,21 @@
+import i18n from '../i18n';
+import { localeTag } from '../i18n';
 import { epleyE1rm, resolveLoadKg } from './trainingVolume';
 
+function tt(key) {
+  return i18n.global.t(key);
+}
+
 export const BLOCK_TYPES = [
-  { value: 'volume', label: 'Volume' },
-  { value: 'intensification', label: 'Intensification' },
-  { value: 'peaking', label: 'Peaking' },
+  { value: 'volume', get label() { return tt('config.blockTypes.volume'); } },
+  { value: 'intensification', get label() { return tt('config.blockTypes.intensification'); } },
+  { value: 'peaking', get label() { return tt('config.blockTypes.peaking'); } },
 ];
 
 export const MAIN_LIFTS = [
-  { value: 'squat', label: 'Squat' },
-  { value: 'bench', label: 'Bench' },
-  { value: 'deadlift', label: 'Deadlift' },
+  { value: 'squat', get label() { return tt('config.lifts.squat'); } },
+  { value: 'bench', get label() { return tt('config.lifts.bench'); } },
+  { value: 'deadlift', get label() { return tt('config.lifts.deadlift'); } },
 ];
 
 export function emptyExerciseLine(name = '') {
@@ -573,7 +579,37 @@ export function itemSectionTitle(item, items) {
   return SESSION_SECTION_LABELS[item.section] ?? item.section;
 }
 
-export const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const WEEKDAY_KEYS = [
+  'config.weekdays.mon',
+  'config.weekdays.tue',
+  'config.weekdays.wed',
+  'config.weekdays.thu',
+  'config.weekdays.fri',
+  'config.weekdays.sat',
+  'config.weekdays.sun',
+];
+
+export function getWeekdayLabels() {
+  return WEEKDAY_KEYS.map((key) => tt(key));
+}
+
+/** Locale-aware weekday short labels (array-like). */
+export const WEEKDAY_LABELS = new Proxy(
+  { length: 7 },
+  {
+    get(_, prop) {
+      const labels = getWeekdayLabels();
+      if (prop === 'length') {
+        return 7;
+      }
+      if (prop === Symbol.iterator) {
+        return labels[Symbol.iterator].bind(labels);
+      }
+      const value = labels[prop];
+      return typeof value === 'function' ? value.bind(labels) : value;
+    },
+  },
+);
 
 /** Jour ISO 1 = lundi … 7 = dimanche */
 export function isoWeekdayFromDate(value) {
@@ -591,11 +627,11 @@ export function isoWeekdayFromDate(value) {
 }
 
 export function weekdayLabelFromDate(value) {
-  return WEEKDAY_LABELS[isoWeekdayFromDate(value) - 1] ?? '';
+  return getWeekdayLabels()[isoWeekdayFromDate(value) - 1] ?? '';
 }
 
 export function weekdayShortLabel(weekday) {
-  return WEEKDAY_LABELS[weekday - 1] ?? `J${weekday}`;
+  return getWeekdayLabels()[weekday - 1] ?? `J${weekday}`;
 }
 
 /** Ex. "Mer · 12 juin" */
@@ -605,7 +641,7 @@ export function columnHeading(dateStart, weekNumber, weekday) {
     return weekdayShortLabel(weekday);
   }
 
-  const dayMonth = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  const dayMonth = date.toLocaleDateString(localeTag(), { day: 'numeric', month: 'short' });
   return `${weekdayShortLabel(weekday)} · ${dayMonth}`;
 }
 

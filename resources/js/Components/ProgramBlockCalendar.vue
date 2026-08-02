@@ -1,6 +1,10 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../i18n';
 import { WEEKDAY_LABELS, buildCalendarRows } from '../utils/programBuilder';
+
+const { t, locale } = useI18n();
 
 const props = defineProps({
   weekCount: {
@@ -100,7 +104,7 @@ function selectCell(cell) {
 
 function dayLabel(dateKey) {
   const d = new Date(dateKey + 'T12:00:00');
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  return d.toLocaleDateString(localeTag(locale.value), { day: 'numeric', month: 'short' });
 }
 
 function weekHasSessions(weekNumber) {
@@ -120,7 +124,7 @@ function weekHasSessions(weekNumber) {
             class="pb-2 text-left text-xs font-medium text-slate-500"
             :class="weekColumnWidth"
           >
-            Sem.
+            {{ t('programBuilder.shared.weekShort') }}
           </th>
           <th
             v-for="label in WEEKDAY_LABELS"
@@ -136,32 +140,32 @@ function weekHasSessions(weekNumber) {
         <tr v-for="row in rows" :key="row.weekNumber" class="border-t border-slate-800/80">
           <td class="py-2 pr-0.5 align-top" :class="weekColumnWidth">
             <div class="flex flex-col gap-1">
-              <span class="text-xs font-semibold text-slate-400">S{{ row.weekNumber }}</span>
+              <span class="text-xs font-semibold text-slate-400">{{ t('programBuilder.shared.weekAbbr', { n: row.weekNumber }) }}</span>
               <div v-if="!readOnly" class="flex flex-wrap gap-0.5">
                 <button
                   type="button"
-                  title="Copier la semaine"
+                  :title="t('programBuilder.calendar.copyWeekTitle')"
                   class="rounded border border-slate-700 px-1 py-0.5 text-[10px] text-slate-400 hover:border-slate-500 hover:text-white disabled:opacity-30"
                   :disabled="!weekHasSessions(row.weekNumber)"
                   @click.stop="emit('copy-week', row.weekNumber)"
                 >
-                  Copier
+                  {{ t('programBuilder.shared.copy') }}
                 </button>
                 <button
                   type="button"
-                  title="Coller la semaine copiée"
+                  :title="t('programBuilder.calendar.pasteWeekTitle')"
                   class="rounded border border-slate-700 px-1 py-0.5 text-[10px] text-blue-300 hover:border-blue-500/50 hover:bg-blue-950/40 disabled:opacity-30"
                   :disabled="!hasWeekClipboard"
                   @click.stop="emit('paste-week', row.weekNumber)"
                 >
-                  Coller
+                  {{ t('programBuilder.shared.paste') }}
                 </button>
               </div>
               <p
                 v-if="!readOnly && hasWeekClipboard && copiedWeekNumber === row.weekNumber"
                 class="text-[9px] text-amber-400/90"
               >
-                source
+                {{ t('programBuilder.calendar.source') }}
               </p>
             </div>
           </td>

@@ -29,8 +29,8 @@ class ResetPasswordController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', PasswordRule::min(8)],
         ], [
-            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
-            'password.min' => 'Le mot de passe doit contenir au moins :min caractères.',
+            'password.confirmed' => __('messages.validation.password_confirmed'),
+            'password.min' => __('messages.validation.password_min'),
         ]);
 
         $status = Password::reset(
@@ -47,12 +47,12 @@ class ResetPasswordController extends Controller
 
         if ($status !== Password::PASSWORD_RESET) {
             return back()->withErrors([
-                'email' => 'Ce lien de réinitialisation est invalide ou a expiré.',
+                'email' => __('messages.auth.reset_link_invalid'),
             ]);
         }
 
         return redirect()
             ->route('login')
-            ->with('success', 'Mot de passe mis à jour. Tu peux te connecter.');
+            ->with('success', __('messages.auth.password_updated'));
     }
 }

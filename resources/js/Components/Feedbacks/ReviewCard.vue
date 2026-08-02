@@ -1,11 +1,14 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { motion } from 'motion-v';
 import { formatCalendarFr } from '../../utils/formatDates';
 import { messagingInitials, messagingRelativeTime } from '../../utils/messagingFormat';
 import ReviewStatusBadge from './ReviewStatusBadge.vue';
 import FeedbackFrequencyPill from './FeedbackFrequencyPill.vue';
 import UiIcon from '../UiIcon.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -18,8 +21,8 @@ defineEmits(['select']);
 
 const title = computed(() =>
   props.mode === 'athlete'
-    ? props.item.session_label || 'Séance'
-    : props.item.athlete_name || 'Athlète',
+    ? props.item.session_label || t('app.feedbacks.session')
+    : props.item.athlete_name || t('common.athlete'),
 );
 
 const subtitle = computed(() => {

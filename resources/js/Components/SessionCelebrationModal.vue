@@ -1,5 +1,7 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import CelebrationBarbell from './CelebrationBarbell.vue';
+const { t } = useI18n();
 
 defineProps({
   open: {
@@ -80,7 +82,7 @@ function close() {
           >
             <div v-if="open && celebration" class="w-full max-w-lg text-center">
               <p class="mt-2 text-xs font-bold uppercase tracking-[0.32em] text-red-400 sm:mt-3">
-                Séance validée
+                {{ t('app.celebration.validated') }}
               </p>
               <h2 class="mt-2 text-3xl font-bold leading-tight sm:mt-3 sm:text-5xl">
                 {{ celebration.sessionTitle }}
@@ -118,9 +120,7 @@ function close() {
                 class="mt-6 grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-black/50 px-3 py-4 backdrop-blur-sm sm:mt-8 sm:gap-3 sm:px-4"
               >
                 <div class="min-w-0 text-center">
-                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                    Adhérence
-                  </p>
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{{ t('app.celebration.adherence') }}</p>
                   <p class="mt-1 text-xl font-bold tabular-nums text-red-300 sm:text-2xl">
                     {{ celebration.adherenceLabel }}
                   </p>
@@ -147,9 +147,7 @@ function close() {
                 type="button"
                 class="mt-6 inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-500 sm:mt-8"
                 @click="close"
-              >
-                Continuer
-              </button>
+              >{{ t('app.celebration.continue') }}</button>
             </div>
           </Transition>
         </div>

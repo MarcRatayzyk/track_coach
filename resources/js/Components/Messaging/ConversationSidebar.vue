@@ -1,8 +1,11 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import ConversationCard from './ConversationCard.vue';
 import SearchBar from './SearchBar.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   threads: {
@@ -39,9 +42,9 @@ const threadForm = useForm({
 
 function displayName(thread) {
   if (props.isCoach) {
-    return thread.athlete?.name ?? 'Athlète';
+    return thread.athlete?.name ?? t('common.athlete');
   }
-  return thread.coach?.name ?? 'Coach';
+  return thread.coach?.name ?? t('common.coach');
 }
 
 const filteredThreads = computed(() => {
@@ -87,11 +90,11 @@ function createThread() {
   });
 }
 
-const filters = [
-  { id: 'all', label: 'Tous' },
-  { id: 'unread', label: 'Non lus' },
-  { id: 'pinned', label: 'Épinglés' },
-];
+const filters = computed(() => [
+  { id: 'all', label: t('app.messaging.filterAll') },
+  { id: 'unread', label: t('app.messaging.filterUnread') },
+  { id: 'pinned', label: t('app.messaging.pinned') },
+]);
 </script>
 
 <template>
@@ -101,9 +104,9 @@ const filters = [
     <div class="border-b border-slate-800/80 p-4">
       <div class="flex items-center justify-between gap-3">
         <div>
-          <h1 class="text-lg font-bold text-white">Messagerie</h1>
+          <h1 class="text-lg font-bold text-white">{{ t('nav.messaging') }}</h1>
           <p class="mt-0.5 text-xs text-slate-500">
-            {{ threads.length }} conversation{{ threads.length > 1 ? 's' : '' }}
+            {{ t('app.messaging.conversationsCount', threads.length, { count: threads.length }) }}
           </p>
         </div>
         <button
@@ -115,7 +118,7 @@ const filters = [
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          Nouvelle
+          {{ t('app.messaging.newShort') }}
         </button>
       </div>
 
@@ -144,7 +147,7 @@ const filters = [
     <div class="tc-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden p-3">
       <section v-if="pinnedThreads.length">
         <h2 class="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-          Épinglées
+          {{ t('app.messaging.pinnedSection') }}
         </h2>
         <div class="space-y-2">
           <ConversationCard
@@ -164,7 +167,7 @@ const filters = [
           v-if="pinnedThreads.length && regularThreads.length"
           class="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500"
         >
-          Récentes
+          {{ t('app.messaging.recentSection') }}
         </h2>
         <div class="space-y-2">
           <ConversationCard
@@ -184,10 +187,10 @@ const filters = [
         class="px-2 py-8 text-center text-sm leading-relaxed text-slate-500"
       >
         <template v-if="threads.length === 0">
-          Aucune conversation pour le moment. Ouvre-en une depuis le profil d’un athlète.
+          {{ t('app.messaging.emptyThreadsHint') }}
         </template>
         <template v-else>
-          Aucun résultat pour cette recherche.
+          {{ t('app.messaging.noSearchResults') }}
         </template>
       </p>
     </div>
@@ -199,15 +202,15 @@ const filters = [
         @click.self="showNewModal = false"
       >
         <div class="w-full max-w-md rounded-[18px] border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-          <h3 class="text-lg font-semibold text-white">Nouvelle conversation</h3>
-          <p class="mt-1 text-sm text-slate-400">Choisis un athlète pour ouvrir l’échange.</p>
+          <h3 class="text-lg font-semibold text-white">{{ t('app.messaging.newConversation') }}</h3>
+          <p class="mt-1 text-sm text-slate-400">{{ t('app.messaging.newConversationHint') }}</p>
           <form class="mt-5 space-y-4" @submit.prevent="createThread">
             <select
               v-model="threadForm.athlete_id"
               class="w-full rounded-[14px] border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               required
             >
-              <option value="" disabled>Sélectionner un athlète…</option>
+              <option value="" disabled>{{ t('app.messaging.selectAthlete') }}</option>
               <option v-for="athlete in athletesForThread" :key="athlete.id" :value="athlete.id">
                 {{ athlete.name }}
               </option>
@@ -218,14 +221,14 @@ const filters = [
                 class="rounded-[14px] px-4 py-2 text-sm text-slate-400 transition hover:bg-slate-800 hover:text-white"
                 @click="showNewModal = false"
               >
-                Annuler
+                {{ t('common.cancel') }}
               </button>
               <button
                 type="submit"
                 class="rounded-[14px] bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500 disabled:opacity-50"
                 :disabled="threadForm.processing || !threadForm.athlete_id"
               >
-                Ouvrir
+                {{ t('app.messaging.open') }}
               </button>
             </div>
           </form>

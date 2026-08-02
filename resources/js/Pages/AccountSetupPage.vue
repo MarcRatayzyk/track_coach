@@ -7,12 +7,15 @@ export default {
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   LEVEL_OPTIONS,
   SEX_OPTIONS,
   weightCategoriesForSex,
 } from '../config/ipfWeightCategories';
 import { track } from '../utils/analytics';
+
+const { t } = useI18n();
 
 const props = defineProps({
     user: {
@@ -33,22 +36,36 @@ const isCoach = computed(() => props.role === 'coach');
 
 const stepIndex = ref(0);
 
-const athleteSteps = [
-    { id: 'welcome', title: 'Bienvenue' },
-    { id: 'practice', title: 'Ta pratique' },
-    { id: 'prs', title: 'Tes records' },
-    { id: 'profile', title: 'Ton profil' },
-    { id: 'goals', title: 'Tes objectifs' },
-];
+const athleteSteps = computed(() => [
+    { id: 'welcome', title: t('auth.accountSetup.steps.welcome') },
+    { id: 'practice', title: t('auth.accountSetup.steps.practice') },
+    { id: 'prs', title: t('auth.accountSetup.steps.prs') },
+    { id: 'profile', title: t('auth.accountSetup.steps.profile') },
+    { id: 'goals', title: t('auth.accountSetup.steps.goals') },
+]);
 
-const trainingYearOptions = [
-    { value: 0, label: "Moins d'1 an" },
-    { value: 1, label: '1 an' },
-    { value: 2, label: '2 ans' },
-    { value: 3, label: '3–5 ans' },
-    { value: 5, label: '5–10 ans' },
-    { value: 10, label: '10 ans et +' },
-];
+const trainingYearOptions = computed(() => [
+    { value: 0, label: t('auth.accountSetup.trainingYears.lt1') },
+    { value: 1, label: t('auth.accountSetup.trainingYears.y1') },
+    { value: 2, label: t('auth.accountSetup.trainingYears.y2') },
+    { value: 3, label: t('auth.accountSetup.trainingYears.y3to5') },
+    { value: 5, label: t('auth.accountSetup.trainingYears.y5to10') },
+    { value: 10, label: t('auth.accountSetup.trainingYears.y10plus') },
+]);
+
+const sexOptions = computed(() =>
+    SEX_OPTIONS.map((option) => ({
+        ...option,
+        label: t(`config.sex.${option.value}`),
+    })),
+);
+
+const levelOptions = computed(() =>
+    LEVEL_OPTIONS.map((option) => ({
+        ...option,
+        label: t(`config.level.${option.value}`),
+    })),
+);
 
 const form = useForm({
     email: props.user.email ?? '',
@@ -89,9 +106,9 @@ watch(
   },
 );
 
-const currentStep = computed(() => athleteSteps[stepIndex.value] ?? athleteSteps[0]);
+const currentStep = computed(() => athleteSteps.value[stepIndex.value] ?? athleteSteps.value[0]);
 const isFirstStep = computed(() => stepIndex.value <= 0);
-const isLastStep = computed(() => stepIndex.value >= athleteSteps.length - 1);
+const isLastStep = computed(() => stepIndex.value >= athleteSteps.value.length - 1);
 
 const choiceBtnClass = (selected) =>
   selected
@@ -138,25 +155,24 @@ const inputClass =
 
 <template>
     <div class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-blue-950/30 px-4 py-4 text-slate-100 sm:py-8 tc-native-safe-top">
-        <Head :title="isCoach ? 'Activer mon compte coach' : 'Bienvenue sur Power Roster'" />
+        <Head :title="isCoach ? t('auth.accountSetup.coachPageTitle') : t('auth.accountSetup.athletePageTitle')" />
 
         <div class="mx-auto w-full max-w-lg">
             <template v-if="isCoach">
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-xl">
-                    <h1 class="text-2xl font-bold text-white">Active ton compte coach</h1>
+                    <h1 class="text-2xl font-bold text-white">{{ t('auth.accountSetup.coachTitle') }}</h1>
                     <p class="mt-2 text-slate-400">
-                        Bonjour <span class="font-medium text-slate-200">{{ user.name }}</span>,
-                        choisis un mot de passe pour accéder à ton espace coach.
+                        {{ t('auth.accountSetup.coachHello', { name: user.name }) }}
                     </p>
-                    <p class="mt-3 text-sm text-slate-500">E-mail : {{ user.email }}</p>
+                    <p class="mt-3 text-sm text-slate-500">{{ t('auth.accountSetup.emailLabel', { email: user.email }) }}</p>
 
                     <form class="mt-8 space-y-5" @submit.prevent="submit">
                         <label class="block text-sm font-medium text-slate-400">
-                            Mot de passe
+                            {{ t('auth.accountSetup.password') }}
                             <input v-model="form.password" type="password" required autocomplete="new-password" :class="inputClass" />
                         </label>
                         <label class="block text-sm font-medium text-slate-400">
-                            Confirmation
+                            {{ t('auth.accountSetup.confirmation') }}
                             <input
                                 v-model="form.password_confirmation"
                                 type="password"
@@ -166,19 +182,19 @@ const inputClass =
                             />
                         </label>
                         <label class="block text-sm font-medium text-slate-400">
-                            Bio
-                            <textarea v-model="form.bio" rows="3" :class="inputClass" placeholder="Présentation courte" />
+                            {{ t('auth.accountSetup.bio') }}
+                            <textarea v-model="form.bio" rows="3" :class="inputClass" :placeholder="t('auth.accountSetup.bioPlaceholder')" />
                         </label>
                         <label class="block text-sm font-medium text-slate-400">
-                            Années d'expérience
+                            {{ t('auth.accountSetup.yearsExperience') }}
                             <input v-model.number="form.years_experience" type="number" min="0" max="60" :class="inputClass" />
                         </label>
                         <label class="block text-sm font-medium text-slate-400">
-                            Certifications
+                            {{ t('auth.accountSetup.certifications') }}
                             <textarea v-model="form.certifications" rows="2" :class="inputClass" />
                         </label>
                         <label class="block text-sm font-medium text-slate-400">
-                            Club / salle
+                            {{ t('auth.accountSetup.clubGym') }}
                             <input v-model="form.club_gym" type="text" :class="inputClass" />
                         </label>
                         <p v-if="form.errors.password" class="text-sm text-red-400">{{ form.errors.password }}</p>
@@ -187,7 +203,7 @@ const inputClass =
                             :disabled="form.processing"
                             class="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                         >
-                            Activer mon compte
+                            {{ t('auth.accountSetup.activateAccount') }}
                         </button>
                     </form>
                 </div>
@@ -209,36 +225,36 @@ const inputClass =
                 </div>
 
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/85 p-6 shadow-xl sm:p-8">
-                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-400">Onboarding</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-400">{{ t('auth.accountSetup.onboarding') }}</p>
                     <h1 class="mt-2 text-2xl font-bold text-white">{{ currentStep.title }}</h1>
                     <p class="mt-2 text-sm text-slate-400">
-                        Salut <span class="font-medium text-slate-200">{{ user.name }}</span>
+                        {{ t('auth.accountSetup.hello', { name: user.name }) }}
                         <template v-if="currentStep.id === 'welcome'">
-                            — créons ton profil athlète en quelques étapes.
+                            {{ t('auth.accountSetup.welcomeHint') }}
                         </template>
                     </p>
 
                     <div class="mt-6 space-y-4">
                         <template v-if="currentStep.id === 'welcome'">
                             <label v-if="needsEmail" class="block text-sm font-medium text-slate-400">
-                                Adresse e-mail (identifiant de connexion)
+                                {{ t('auth.accountSetup.emailLoginLabel') }}
                                 <input
                                     v-model="form.email"
                                     type="email"
                                     required
                                     autocomplete="email"
                                     :class="inputClass"
-                                    placeholder="ton@email.fr"
+                                    :placeholder="t('auth.accountSetup.emailPlaceholder')"
                                 />
                             </label>
-                            <p v-else class="text-sm text-slate-500">E-mail de connexion : {{ user.email }}</p>
+                            <p v-else class="text-sm text-slate-500">{{ t('auth.accountSetup.emailLoginHint', { email: user.email }) }}</p>
                             <p v-if="form.errors.email" class="text-sm text-red-400">{{ form.errors.email }}</p>
                             <label class="block text-sm font-medium text-slate-400">
-                                Mot de passe
+                                {{ t('auth.accountSetup.password') }}
                                 <input v-model="form.password" type="password" required autocomplete="new-password" :class="inputClass" />
                             </label>
                             <label class="block text-sm font-medium text-slate-400">
-                                Confirmation
+                                {{ t('auth.accountSetup.confirmation') }}
                                 <input
                                     v-model="form.password_confirmation"
                                     type="password"
@@ -251,7 +267,7 @@ const inputClass =
                         </template>
 
                         <template v-else-if="currentStep.id === 'practice'">
-                            <p class="text-sm text-slate-400">Depuis combien de temps tu pratiques la force / powerlifting ?</p>
+                            <p class="text-sm text-slate-400">{{ t('auth.accountSetup.practiceQuestion') }}</p>
                             <div class="grid grid-cols-2 gap-2.5">
                                 <button
                                     v-for="option in trainingYearOptions"
@@ -268,19 +284,19 @@ const inputClass =
 
                         <template v-else-if="currentStep.id === 'prs'">
                             <p class="text-sm text-slate-400">
-                                Renseigne tes meilleurs lifts actuels (compétition ou estimés au gym).
+                                {{ t('auth.accountSetup.prsHint') }}
                             </p>
                             <div class="grid grid-cols-3 gap-3">
                                 <label class="block text-xs font-medium text-slate-400">
-                                    Squat (kg)
+                                    {{ t('auth.accountSetup.squatKg') }}
                                     <input v-model="form.squat" type="number" min="0" max="999" inputmode="numeric" :class="inputClass" />
                                 </label>
                                 <label class="block text-xs font-medium text-slate-400">
-                                    Bench (kg)
+                                    {{ t('auth.accountSetup.benchKg') }}
                                     <input v-model="form.bench" type="number" min="0" max="999" inputmode="numeric" :class="inputClass" />
                                 </label>
                                 <label class="block text-xs font-medium text-slate-400">
-                                    Terre (kg)
+                                    {{ t('auth.accountSetup.deadliftKg') }}
                                     <input v-model="form.deadlift" type="number" min="0" max="999" inputmode="numeric" :class="inputClass" />
                                 </label>
                             </div>
@@ -288,11 +304,11 @@ const inputClass =
 
                         <template v-else-if="currentStep.id === 'profile'">
                             <label class="block text-sm font-medium text-slate-400">
-                                Date de naissance
+                                {{ t('auth.accountSetup.birthDate') }}
                                 <input v-model="form.birth_date" type="date" :class="inputClass" />
                             </label>
                             <label class="block text-sm font-medium text-slate-400">
-                                Taille (cm)
+                                {{ t('auth.accountSetup.heightCm') }}
                                 <input
                                     v-model.number="form.height_cm"
                                     type="number"
@@ -302,10 +318,10 @@ const inputClass =
                                 />
                             </label>
                             <div>
-                                <p class="text-sm font-medium text-slate-400">Sexe</p>
+                                <p class="text-sm font-medium text-slate-400">{{ t('auth.accountSetup.sex') }}</p>
                                 <div class="mt-2 grid grid-cols-2 gap-2.5">
                                     <button
-                                        v-for="option in SEX_OPTIONS"
+                                        v-for="option in sexOptions"
                                         :key="option.value"
                                         type="button"
                                         class="rounded-xl border px-3 py-3 text-sm font-semibold transition"
@@ -317,18 +333,18 @@ const inputClass =
                                 </div>
                             </div>
                             <label class="block text-sm font-medium text-slate-400">
-                                Profession
+                                {{ t('auth.accountSetup.profession') }}
                                 <input
                                     v-model="form.profession"
                                     type="text"
                                     :class="inputClass"
-                                    placeholder="Ex. Étudiant, ingénieur…"
+                                    :placeholder="t('auth.accountSetup.professionPlaceholder')"
                                 />
                             </label>
                             <div>
-                                <p class="text-sm font-medium text-slate-400">Catégorie de poids IPF</p>
+                                <p class="text-sm font-medium text-slate-400">{{ t('auth.accountSetup.weightCategory') }}</p>
                                 <p v-if="!form.sex" class="mt-1 text-xs text-amber-300/90">
-                                    Choisis d’abord Homme ou Femme pour voir les bonnes catégories.
+                                    {{ t('auth.accountSetup.chooseSexFirst') }}
                                 </p>
                                 <div
                                     v-else
@@ -347,10 +363,10 @@ const inputClass =
                                 </div>
                             </div>
                             <div>
-                                <p class="text-sm font-medium text-slate-400">Niveau</p>
+                                <p class="text-sm font-medium text-slate-400">{{ t('auth.accountSetup.level') }}</p>
                                 <div class="mt-2 grid grid-cols-2 gap-2.5">
                                     <button
-                                        v-for="option in LEVEL_OPTIONS"
+                                        v-for="option in levelOptions"
                                         :key="option.value"
                                         type="button"
                                         class="rounded-xl border px-3 py-3 text-sm font-semibold transition"
@@ -362,28 +378,28 @@ const inputClass =
                                 </div>
                             </div>
                             <label class="block text-sm font-medium text-slate-400">
-                                Blessures / gênes récentes
+                                {{ t('auth.accountSetup.injuries') }}
                                 <textarea
                                     v-model="form.injuries_notes"
                                     rows="2"
                                     :class="inputClass"
-                                    placeholder="Optionnel"
+                                    :placeholder="t('auth.accountSetup.injuriesPlaceholder')"
                                 />
                             </label>
                         </template>
 
                         <template v-else-if="currentStep.id === 'goals'">
                             <label class="block text-sm font-medium text-slate-400">
-                                Objectifs & contexte pour ton coach
+                                {{ t('auth.accountSetup.goalsLabel') }}
                                 <textarea
                                     v-model="form.bio"
                                     rows="4"
                                     :class="inputClass"
-                                    placeholder="Ex. viser un total de 500 kg, préparer une compétition en novembre…"
+                                    :placeholder="t('auth.accountSetup.goalsPlaceholder')"
                                 />
                             </label>
                             <p class="text-xs text-slate-500">
-                                Tu pourras modifier ces infos plus tard depuis l’icône profil.
+                                {{ t('auth.accountSetup.goalsHint') }}
                             </p>
                         </template>
 
@@ -399,7 +415,7 @@ const inputClass =
                             :disabled="isFirstStep"
                             @click="prevStep"
                         >
-                            Retour
+                            {{ t('auth.accountSetup.back') }}
                         </button>
                         <button
                             type="button"
@@ -407,14 +423,14 @@ const inputClass =
                             :disabled="form.processing || !canGoNext"
                             @click="nextStep"
                         >
-                            {{ isLastStep ? (form.processing ? 'Activation…' : 'Terminer') : 'Suivant' }}
+                            {{ isLastStep ? (form.processing ? t('auth.accountSetup.activating') : t('auth.accountSetup.finish')) : t('auth.accountSetup.next') }}
                         </button>
                     </div>
                 </div>
             </template>
 
             <p class="mt-6 text-center text-sm text-slate-500">
-                <a href="/login" class="text-blue-400 hover:text-blue-300">Retour à la connexion</a>
+                <a href="/login" class="text-blue-400 hover:text-blue-300">{{ t('auth.accountSetup.backToLogin') }}</a>
             </p>
         </div>
     </div>

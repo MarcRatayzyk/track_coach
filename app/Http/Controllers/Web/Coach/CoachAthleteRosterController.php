@@ -26,7 +26,7 @@ class CoachAthleteRosterController extends Controller
             if ($coach->is_demo) {
                 return back()->with(
                     'error',
-                    'La démo ne permet pas d’ajouter d’athlètes. Crée un vrai compte pour gérer ton roster.',
+                    __('messages.athletes.demo_cannot_add'),
                 );
             }
 
@@ -35,8 +35,8 @@ class CoachAthleteRosterController extends Controller
             return back()->with(
                 'error',
                 $limit === null
-                    ? 'Impossible d’ajouter un athlète avec ton abonnement actuel.'
-                    : "Tu as atteint la limite de {$limit} athlètes de ton plan. Passe à un plan supérieur.",
+                    ? __('messages.athletes.cannot_add_with_subscription')
+                    : __('messages.athletes.seat_limit_reached', ['limit' => $limit]),
             );
         }
 
@@ -83,7 +83,7 @@ class CoachAthleteRosterController extends Controller
         if ($athlete->initial_setup_completed_at !== null) {
             return redirect()
                 ->route('athletes.index')
-                ->with('error', 'Ce compte est déjà activé.');
+                ->with('error', __('messages.athletes.already_activated'));
         }
 
         $coach = $request->user();
@@ -109,6 +109,6 @@ class CoachAthleteRosterController extends Controller
 
         return redirect()
             ->route('athletes.index')
-            ->with('success', 'Athlète retiré de ton groupe. Son compte existe toujours pour une éventuelle réassociation.');
+            ->with('success', __('messages.athletes.removed_from_group'));
     }
 }

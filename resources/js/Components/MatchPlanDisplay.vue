@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   ATTEMPT_KEYS,
   ATTEMPT_LABELS,
@@ -10,6 +11,8 @@ import {
   matchPlanFromCompetition,
   scenarioTotal,
 } from '../utils/matchPlan';
+
+const { t } = useI18n();
 
 const props = defineProps({
   competition: {
@@ -23,7 +26,7 @@ const hasContent = computed(() => hasMatchPlanContent(props.competition));
 </script>
 
 <template>
-  <div v-if="!hasContent" class="text-slate-500">Non renseigné</div>
+  <div v-if="!hasContent" class="text-slate-500">{{ t('programBuilder.matchPlanDisplay.empty') }}</div>
 
   <p
     v-else-if="plan.mode === 'text'"
@@ -44,7 +47,7 @@ const hasContent = computed(() => hasMatchPlanContent(props.competition));
           v-if="scenarioTotal(scenario) != null"
           class="rounded-lg bg-rose-500/15 px-2.5 py-1 text-xs font-medium text-rose-200"
         >
-          Total 3e essais : {{ formatWeight(scenarioTotal(scenario)) }} kg
+          {{ t('programBuilder.matchPlanDisplay.totalThird', { weight: formatWeight(scenarioTotal(scenario)) }) }}
         </span>
       </div>
 
@@ -52,7 +55,7 @@ const hasContent = computed(() => hasMatchPlanContent(props.competition));
         <table class="w-full min-w-[280px] text-left text-xs">
           <thead>
             <tr class="text-slate-500">
-              <th class="pb-2 pr-3 font-medium">Mouvement</th>
+              <th class="pb-2 pr-3 font-medium">{{ t('programBuilder.shared.movement') }}</th>
               <th
                 v-for="key in ATTEMPT_KEYS"
                 :key="key"

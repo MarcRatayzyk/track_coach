@@ -1,7 +1,10 @@
 <script setup>
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router, useForm } from '@inertiajs/vue3';
 import { track } from '../utils/analytics';
+
+const { t } = useI18n();
 
 const props = defineProps({
   athletes: {
@@ -55,7 +58,7 @@ function toggleBulkPanel(block) {
 
 function submitBulkAssign(block) {
   if (!bulkAthleteIds.value.length) {
-    bulkError.value = 'Sélectionne au moins un athlète.';
+    bulkError.value = t('programBuilder.blockSetup.selectAthlete');
     return;
   }
 
@@ -102,7 +105,7 @@ function duplicateBlock(block) {
 function deleteBlock(block) {
   if (
     !window.confirm(
-      `Supprimer le bloc « ${block.name} » ? Toutes les séances programmées seront perdues.`,
+      t('programBuilder.shared.deleteBlockConfirm', { name: block.name }),
     )
   ) {
     return;
@@ -120,14 +123,14 @@ function deleteBlock(block) {
 
 <template>
   <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
-    <h2 class="text-lg font-semibold text-white">Nouveau bloc</h2>
+<h2 class="text-lg font-semibold text-white">{{ t('programBuilder.blockSetup.title') }}</h2>
     <p class="mt-2 text-sm text-slate-400">
-      Choisis l’athlète, la durée et la date de début, puis programme les séances sur le calendrier.
+      {{ t('programBuilder.blockSetup.subtitle') }}
     </p>
 
     <form class="mt-5 grid gap-4 sm:grid-cols-2" @submit.prevent="submit">
       <label class="block text-sm text-slate-400 sm:col-span-2">
-        Athlète
+        {{ t('common.athlete') }}
         <select
           v-model="form.athlete_id"
           required
@@ -139,17 +142,17 @@ function deleteBlock(block) {
         </select>
       </label>
       <label class="block text-sm text-slate-400">
-        Nom du bloc
+        {{ t('programBuilder.blockSetup.blockName') }}
         <input
           v-model="form.name"
           type="text"
           required
-          placeholder="Ex. Bloc force prépa compète"
+:placeholder="t('programBuilder.blockSetup.blockNamePlaceholder')"
           class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
         />
       </label>
       <label class="block text-sm text-slate-400">
-        Nombre de semaines
+        {{ t('programBuilder.blockSetup.weekCount') }}
         <input
           v-model.number="form.week_count"
           type="number"
@@ -160,7 +163,7 @@ function deleteBlock(block) {
         />
       </label>
       <label class="block text-sm text-slate-400 sm:col-span-2">
-        Date de début
+        {{ t('programBuilder.blockSetup.dateStart') }}
         <input
           v-model="form.date_start"
           type="date"
@@ -168,7 +171,7 @@ function deleteBlock(block) {
           class="mt-2 w-full max-w-xs rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
         />
         <span class="mt-1 block text-xs text-slate-500">
-          Le calendrier affiche des semaines du lundi au dimanche (semaine contenant cette date).
+          {{ t('programBuilder.blockSetup.calendarHint') }}
         </span>
       </label>
 
@@ -182,13 +185,13 @@ function deleteBlock(block) {
           :disabled="form.processing || !athletes.length"
           class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 disabled:opacity-50"
         >
-          Créer le bloc
+          {{ t('programBuilder.blockSetup.create') }}
         </button>
       </div>
     </form>
 
     <div v-if="existingBlocks.length" class="mt-8 border-t border-slate-800 pt-6">
-      <h3 class="text-sm font-semibold text-white">Reprendre un bloc</h3>
+<h3 class="text-sm font-semibold text-white">{{ t('programBuilder.blockSetup.resume') }}</h3>
       <ul class="mt-3 space-y-2">
         <li
           v-for="block in existingBlocks"
@@ -199,14 +202,13 @@ function deleteBlock(block) {
             <div>
               <p class="font-medium text-white">{{ block.name }}</p>
               <p class="mt-1 text-sm text-slate-400">
-                {{ block.athlete_name }} · {{ block.week_count }} sem. · du
-                {{ block.date_start }}
-                <span v-if="block.date_end"> au {{ block.date_end }}</span>
+                {{ t('programBuilder.shared.blockMeta', { athlete: block.athlete_name, weeks: block.week_count, start: block.date_start }) }}
+                <span v-if="block.date_end">{{ t('programBuilder.shared.blockMetaTo', { end: block.date_end }) }}</span>
                 <span
                   v-if="block.status === 'draft'"
                   class="ml-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-xs text-amber-300"
                 >
-                  Brouillon
+                  {{ t('programBuilder.shared.draft') }}
                 </span>
               </p>
             </div>
@@ -216,7 +218,7 @@ function deleteBlock(block) {
                 class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-medium text-blue-300 hover:bg-slate-800"
                 @click="openBlock(block.id)"
               >
-                Ouvrir
+                {{ t('programBuilder.shared.open') }}
               </button>
               <button
                 type="button"
@@ -224,7 +226,7 @@ function deleteBlock(block) {
                 :disabled="duplicatingId === block.id"
                 @click="duplicateBlock(block)"
               >
-                {{ duplicatingId === block.id ? 'Duplication…' : 'Dupliquer' }}
+{{ duplicatingId === block.id ? t('programBuilder.blockSetup.duplicating') : t('programBuilder.blockSetup.duplicate') }}
               </button>
               <button
                 v-if="athletes.length > 1"
@@ -232,7 +234,7 @@ function deleteBlock(block) {
                 class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
                 @click="toggleBulkPanel(block)"
               >
-                Assigner à plusieurs
+                {{ t('programBuilder.blockSetup.assignSeveral') }}
               </button>
               <button
                 type="button"
@@ -240,7 +242,7 @@ function deleteBlock(block) {
                 :disabled="deletingId === block.id"
                 @click="deleteBlock(block)"
               >
-                {{ deletingId === block.id ? 'Suppression…' : 'Supprimer' }}
+{{ deletingId === block.id ? t('common.deleting') : t('common.delete') }}
               </button>
             </div>
           </div>
@@ -249,10 +251,9 @@ function deleteBlock(block) {
             v-if="bulkForBlockId === block.id"
             class="rounded-xl border border-slate-700/70 bg-slate-900/60 p-4"
           >
-            <p class="text-sm font-medium text-white">Assigner « {{ block.name }} » à plusieurs athlètes</p>
+<p class="text-sm font-medium text-white">{{ t('programBuilder.blockSetup.assignTitle', { name: block.name }) }}</p>
             <p class="mt-1 text-xs text-slate-500">
-              Chaque athlète reçoit une copie indépendante, activée immédiatement (son bloc actif
-              précédent est archivé).
+              {{ t('programBuilder.blockSetup.assignHint') }}
             </p>
             <div class="mt-3 grid gap-2 sm:grid-cols-2">
               <label
@@ -277,14 +278,14 @@ function deleteBlock(block) {
                 class="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                 @click="submitBulkAssign(block)"
               >
-                {{ bulkProcessing ? 'Assignation…' : `Assigner (${bulkAthleteIds.length})` }}
+{{ bulkProcessing ? t('programBuilder.blockSetup.assigning') : t('programBuilder.blockSetup.assignCount', { count: bulkAthleteIds.length }) }}
               </button>
               <button
                 type="button"
                 class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
                 @click="bulkForBlockId = null"
               >
-                Annuler
+                {{ t('common.cancel') }}
               </button>
             </div>
           </div>

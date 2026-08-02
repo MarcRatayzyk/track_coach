@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { motion } from 'motion-v';
@@ -6,6 +7,7 @@ import UiIcon from '../UiIcon.vue';
 import AnimatedCounter from './AnimatedCounter.vue';
 import SectionHeader from './SectionHeader.vue';
 import { cardHover, cardShell } from './dashboardUi';
+const { t } = useI18n();
 
 const props = defineProps({
   activePrograms: { type: Number, default: 0 },
@@ -67,7 +69,7 @@ const cards = computed(() => [
   },
   {
     key: 'athletes',
-    label: 'Athlètes suivis',
+    label: t('app.coachDash.athletesFollowed'),
     value: props.athleteCount,
     delta: period.value === 'daily' ? 'Roster du jour' : 'Roster de la semaine',
     icon: 'users',
@@ -76,7 +78,7 @@ const cards = computed(() => [
   },
   {
     key: 'comps',
-    label: 'Compétitions',
+    label: t('app.coachDash.competitions'),
     value: filteredCompetitionCount.value,
     delta: period.value === 'daily' ? 'Aujourd’hui' : 'Cette semaine',
     icon: 'calendar',
@@ -90,7 +92,7 @@ const cards = computed(() => [
   <section>
     <SectionHeader
       eyebrow="Vue d’ensemble"
-      title="Indicateurs clés"
+      :title="t('app.coachDash.keyIndicators')"
     >
       <template #actions>
         <div class="flex shrink-0 rounded-full border border-slate-700 bg-slate-950/50 p-1">

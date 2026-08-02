@@ -46,7 +46,7 @@ class ProgramWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
-            ->with('success', 'Bloc créé. Commencez à construire vos séances.');
+            ->with('success', __('messages.programs.block_created'));
     }
 
     public function destroyBlock(
@@ -59,7 +59,7 @@ class ProgramWebController extends Controller
 
         return redirect()
             ->route('program.builder')
-            ->with('success', 'Bloc supprimé.');
+            ->with('success', __('messages.programs.block_deleted'));
     }
 
     public function duplicateBlock(
@@ -79,7 +79,7 @@ class ProgramWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($newAssignment->id))
-            ->with('success', 'Bloc dupliqué. Tu peux l\'ajuster puis l\'assigner.');
+            ->with('success', __('messages.programs.block_duplicated'));
     }
 
     public function bulkAssignBlock(
@@ -101,8 +101,8 @@ class ProgramWebController extends Controller
         return redirect()
             ->route('program.builder')
             ->with('success', $count === 1
-                ? 'Programme assigné à 1 athlète.'
-                : "Programme assigné à {$count} athlètes.");
+                ? __('messages.programs.assigned_one')
+                : __('messages.programs.assigned_many', ['count' => $count]));
     }
 
     public function assignBlock(
@@ -116,7 +116,7 @@ class ProgramWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
-            ->with('success', 'Bloc enregistré et assigné à l\'athlète.');
+            ->with('success', __('messages.programs.block_saved_assigned'));
     }
 
     public function updateWarmup(
@@ -131,7 +131,7 @@ class ProgramWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
-            ->with('success', 'Échauffement du bloc enregistré.');
+            ->with('success', __('messages.programs.warmup_saved'));
     }
 
     public function upsertSession(
@@ -146,7 +146,7 @@ class ProgramWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
-            ->with('success', 'Séance enregistrée.');
+            ->with('success', __('messages.sessions.saved'));
     }
 
     public function bulkUpsertSessions(
@@ -161,7 +161,7 @@ class ProgramWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
-            ->with('success', $count === 1 ? '1 séance collée.' : "{$count} séances collées.");
+            ->with('success', $count === 1 ? __('messages.sessions.pasted_one') : __('messages.sessions.pasted_many', ['count' => $count]));
     }
 
     public function clearSession(
@@ -176,6 +176,6 @@ class ProgramWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
-            ->with('success', 'Case vidée.');
+            ->with('success', __('messages.sessions.cell_cleared'));
     }
 }

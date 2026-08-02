@@ -1,11 +1,14 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { formatCalendarFr } from '../utils/formatDates';
 import { BLOCK_TYPES } from '../utils/programBuilder';
 import { buildAthleteOverviewStats } from '../utils/athleteOverviewStats';
 import AthleteBlockProgramView from './AthleteBlockProgramView.vue';
 import AthleteStatsOverview from './AthleteStatsOverview.vue';
 import ProgramBlockStatsTab from './ProgramBlockStatsTab.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   activeProgram: {
@@ -69,9 +72,9 @@ const overviewStats = computed(() =>
         <div>
           <h2 class="text-sm font-semibold text-white">{{ programBlock.name }}</h2>
           <p class="mt-1 text-xs text-slate-500">
-            Du {{ formatCalendarFr(programBlock.date_start, 'medium') }}
+            {{ t('athleteUi.blockTab.from', { start: formatCalendarFr(programBlock.date_start, 'medium') }) }}
             <template v-if="programBlock.date_end">
-              au {{ formatCalendarFr(programBlock.date_end, 'medium') }}
+              {{ t('athleteUi.blockTab.to', { end: formatCalendarFr(programBlock.date_end, 'medium') }) }}
             </template>
           </p>
         </div>
@@ -82,7 +85,7 @@ const overviewStats = computed(() =>
 
       <div v-if="blockProgress?.week_current" class="mt-4">
         <div class="flex items-center justify-between text-xs text-slate-500">
-          <span>Semaine {{ blockProgress.week_current }} / {{ blockProgress.week_count }}</span>
+          <span>{{ t('athleteUi.blockTab.weekProgress', { current: blockProgress.week_current, total: blockProgress.week_count }) }}</span>
           <span>{{ weekProgressPercent }}%</span>
         </div>
         <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-800">

@@ -28,12 +28,12 @@ class NewMessageNotification extends Notification implements ShouldQueue
     {
         $this->message->loadMissing('sender:id,name');
 
-        $senderName = $this->message->sender?->name ?? 'Quelqu’un';
+        $senderName = $this->message->sender?->name ?? __('mail.new_message.someone');
 
         return (new MailMessage)
-            ->subject("Nouveau message de {$senderName}")
-            ->line("{$senderName} t’a envoyé un message sur Power Roster.")
-            ->action('Ouvrir la messagerie', url('/messaging?thread='.$this->message->thread_id))
-            ->salutation("Cordialement,\nPower Roster");
+            ->subject(__('mail.new_message.subject', ['name' => $senderName]))
+            ->line(__('mail.new_message.line', ['name' => $senderName]))
+            ->action(__('mail.new_message.action'), url('/messaging?thread='.$this->message->thread_id))
+            ->salutation(__('mail.salutation'));
     }
 }

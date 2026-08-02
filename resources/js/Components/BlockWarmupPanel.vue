@@ -1,7 +1,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useForm } from '@inertiajs/vue3';
 import { emptyExerciseLine } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   activeBlock: {
@@ -109,13 +112,13 @@ const inputClass =
     >
       <div>
         <p class="text-[10px] font-semibold uppercase tracking-widest text-sky-300/90">
-          Échauffement du bloc
+          {{ t('programBuilder.warmup.title') }}
         </p>
         <p class="mt-0.5 text-sm text-slate-300">
           {{
             hasContent
-              ? 'Appliqué à toutes les séances (sauf surcharge)'
-              : 'Aucun échauffement défini — optionnel'
+              ? t('programBuilder.warmup.applied')
+              : t('programBuilder.warmup.empty')
           }}
         </p>
       </div>
@@ -124,25 +127,25 @@ const inputClass =
 
     <div v-if="open" class="space-y-4 border-t border-sky-500/20 px-4 py-4">
       <label class="block text-xs font-medium text-slate-400">
-        Instructions (texte libre)
+        {{ t('programBuilder.warmup.instructions') }}
         <textarea
           v-model="form.default_warmup_notes"
           rows="3"
           maxlength="5000"
-          placeholder="Ex. 5 min vélo, mobilité hanches, activations…"
+:placeholder="t('programBuilder.warmup.instructionsPlaceholder')"
           :class="inputClass"
         />
       </label>
 
       <div class="space-y-2">
         <div class="flex items-center justify-between gap-2">
-          <p class="text-xs font-medium text-slate-400">Exercices d’échauffement</p>
+<p class="text-xs font-medium text-slate-400">{{ t('programBuilder.warmup.exercises') }}</p>
           <button
             type="button"
             class="rounded-lg border border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-200 hover:border-slate-500"
             @click="addItem"
           >
-            Ajouter
+            {{ t('programBuilder.shared.add') }}
           </button>
         </div>
 
@@ -152,16 +155,16 @@ const inputClass =
           class="grid gap-2 rounded-lg border border-slate-800 bg-slate-950/50 p-3 sm:grid-cols-[1fr_4.5rem_4.5rem_auto]"
         >
           <label class="block text-xs text-slate-500">
-            Exercice
+            {{ t('programBuilder.shared.exercise') }}
             <input
               v-model="item.exercise_name"
               type="text"
-              placeholder="Ex. Hip flexor stretch"
+:placeholder="t('programBuilder.warmup.exercisePlaceholder')"
               :class="inputClass"
             />
           </label>
           <label class="block text-xs text-slate-500">
-            Séries
+            {{ t('programBuilder.shared.sets') }}
             <input
               v-model.number="item.sets"
               type="number"
@@ -171,7 +174,7 @@ const inputClass =
             />
           </label>
           <label class="block text-xs text-slate-500">
-            Reps
+            {{ t('programBuilder.shared.reps') }}
             <input
               v-model.number="item.reps"
               type="number"
@@ -186,13 +189,13 @@ const inputClass =
               class="rounded-lg border border-red-500/40 px-2.5 py-2 text-xs text-red-300 hover:bg-red-950/40"
               @click="removeItem(index)"
             >
-              Retirer
+              {{ t('programBuilder.warmup.remove') }}
             </button>
           </div>
         </div>
 
         <p v-if="!form.default_warmup_items.length" class="text-xs text-slate-500">
-          Aucun exercice — le texte seul suffit si tu veux.
+          {{ t('programBuilder.warmup.noExercises') }}
         </p>
       </div>
 
@@ -206,7 +209,7 @@ const inputClass =
         :disabled="form.processing"
         @click="save"
       >
-        {{ form.processing ? 'Enregistrement…' : 'Enregistrer l’échauffement du bloc' }}
+{{ form.processing ? t('programBuilder.shared.saving') : t('programBuilder.warmup.save') }}
       </button>
     </div>
   </section>

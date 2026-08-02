@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import ProgramSessionInstructionsModal from './ProgramSessionInstructionsModal.vue';
 import ProgramTableExerciseRow from './ProgramTableExerciseRow.vue';
 import {
@@ -12,6 +13,8 @@ import {
 import { uppercaseSessionLabel, applySchemeDerivedFields } from '../utils/programBuilder';
 import { programSessionVisitOptions } from '../utils/programBuilderVisit';
 import { useTableRowEditor } from '../composables/useTableRowEditor';
+
+const { t } = useI18n();
 
 const props = defineProps({
   assignmentId: {
@@ -445,7 +448,7 @@ function selectRow(index) {
       draggable="true"
       role="button"
       tabindex="0"
-      aria-label="Glisser pour réordonner ce jour"
+      :aria-label="t('programBuilder.dayCard.dragAria')"
       class="flex cursor-grab items-center justify-center gap-1.5 border-b border-slate-800 bg-slate-900/90 py-1.5 text-slate-500 transition hover:bg-slate-800/90 hover:text-slate-300 active:cursor-grabbing"
       @dragstart.stop="$emit('drag-start', $event)"
       @dragend.stop="$emit('drag-end', $event)"
@@ -463,13 +466,13 @@ function selectRow(index) {
         <circle cx="5" cy="12" r="1.25" />
         <circle cx="11" cy="12" r="1.25" />
       </svg>
-      <span class="text-[10px] font-medium uppercase tracking-wide">Glisser</span>
+      <span class="text-[10px] font-medium uppercase tracking-wide">{{ t('programBuilder.dayCard.drag') }}</span>
     </div>
     <div class="border-l-2 border-amber-400 bg-slate-950 px-3 py-2">
       <div class="flex items-center justify-between gap-3">
         <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
           <label class="flex min-w-0 flex-1 items-center gap-1.5">
-            <span class="sr-only">Nom de la séance</span>
+            <span class="sr-only">{{ t('programBuilder.shared.sessionLabel') }}</span>
             <input
               :value="sessionLabel"
               type="text"
@@ -487,7 +490,7 @@ function selectRow(index) {
             :class="hasInstructions ? 'text-amber-300/80' : ''"
             @click="openInstructionsModal"
           >
-            Instructions
+            {{ t('programBuilder.shared.instructions') }}
           </button>
         </div>
         <div class="flex flex-wrap justify-end gap-1.5">
@@ -497,7 +500,7 @@ function selectRow(index) {
             class="rounded-md border border-slate-600 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
             @click="copySession"
           >
-            Copier
+            {{ t('programBuilder.shared.copy') }}
           </button>
           <button
             type="button"
@@ -505,14 +508,14 @@ function selectRow(index) {
             class="rounded-md border border-slate-600 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
             @click="pasteSession"
           >
-            Coller
+            {{ t('programBuilder.shared.paste') }}
           </button>
           <button
             type="button"
             class="rounded-md border border-red-900 px-2 py-1 text-[10px] text-red-300 hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-40"
             @click="deleteSession"
           >
-            Supprimer le jour
+            {{ t('programBuilder.dayCard.deleteDay') }}
           </button>
         </div>
       </div>
@@ -576,7 +579,7 @@ function selectRow(index) {
           class="rounded-md border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800"
           @click="addRow"
         >
-          Ajouter une ligne
+          {{ t('programBuilder.dayCard.addRow') }}
         </button>
 
         <button
@@ -585,7 +588,7 @@ function selectRow(index) {
           class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           @click="saveSession"
         >
-          {{ form.processing ? 'Enregistrement…' : 'Enregistrer' }}
+          {{ form.processing ? t('programBuilder.shared.saving') : t('common.save') }}
         </button>
       </div>
     </div>

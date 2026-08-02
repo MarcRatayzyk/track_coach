@@ -32,14 +32,14 @@ class StoreBugReportRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required' => 'Le titre est obligatoire.',
-            'category.required' => 'Choisis une catégorie.',
-            'category.in' => 'Catégorie invalide.',
-            'description.required' => 'La description est obligatoire.',
-            'description.max' => 'La description ne peut pas dépasser :max caractères.',
-            'screenshot.image' => 'La capture doit être une image.',
-            'screenshot.mimes' => 'Formats acceptés : JPEG, PNG ou WebP.',
-            'screenshot.max' => 'La capture ne doit pas dépasser 4 Mo.',
+            'title.required' => __('messages.validation.title_required'),
+            'category.required' => __('messages.validation.category_required'),
+            'category.in' => __('messages.validation.category_invalid'),
+            'description.required' => __('messages.validation.description_required'),
+            'description.max' => __('messages.validation.description_max'),
+            'screenshot.image' => __('messages.validation.screenshot_image'),
+            'screenshot.mimes' => __('messages.validation.screenshot_mimes'),
+            'screenshot.max' => __('messages.validation.screenshot_max'),
         ];
     }
 }

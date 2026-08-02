@@ -1,10 +1,12 @@
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import InstallAppButton from '../Components/InstallAppButton.vue';
 import InstallAppGuideModal from '../Components/InstallAppGuideModal.vue';
 import AppLogo from '../Components/AppLogo.vue';
 import BugReportModal from '../Components/BugReportModal.vue';
+import LanguageSwitcher from '../Components/LanguageSwitcher.vue';
 import MessageThreadUnreadBadge from '../Components/MessageThreadUnreadBadge.vue';
 import UiIcon from '../Components/UiIcon.vue';
 import { useNativeApp } from '../composables/useNativeApp';
@@ -12,7 +14,9 @@ import { usePwaInstall } from '../composables/usePwaInstall';
 import { useTheme } from '../composables/useTheme';
 import { echo } from '../echo';
 import { resetAnalytics } from '../utils/analytics';
+import { localeTag } from '../i18n';
 
+const { t, locale } = useI18n();
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
 const sidebarProfile = computed(() => page.props.auth?.sidebarProfile ?? null);
@@ -204,21 +208,21 @@ function setupMessagingRealtime() {
     messagingPollTimer = window.setInterval(reloadMessagingInbox, 60000);
 }
 
-const coachNav = [
-    { label: 'Dashboard', shortLabel: 'Accueil', href: '/dashboard', pattern: '/dashboard', icon: 'dashboard' },
-    { label: 'Athlètes', shortLabel: 'Athlètes', href: '/athletes', pattern: '/athletes', icon: 'users' },
-    { label: 'Compétitions', shortLabel: 'Compét.', href: '/competitions', pattern: '/competitions', icon: 'trophy' },
-    { label: 'Programmes', shortLabel: 'Prog.', href: '/program-builder', pattern: '/program-builder', icon: 'clipboard' },
-    { label: 'Retours', shortLabel: 'Retours', href: '/feedbacks', pattern: '/feedbacks', icon: 'video' },
+const coachNavDefs = [
+    { labelKey: 'nav.dashboard', shortKey: 'nav.home', href: '/dashboard', pattern: '/dashboard', icon: 'dashboard' },
+    { labelKey: 'nav.athletes', shortKey: 'nav.athletes', href: '/athletes', pattern: '/athletes', icon: 'users' },
+    { labelKey: 'nav.competitions', shortKey: 'nav.competitionsShort', href: '/competitions', pattern: '/competitions', icon: 'trophy' },
+    { labelKey: 'nav.programs', shortKey: 'nav.programsShort', href: '/program-builder', pattern: '/program-builder', icon: 'clipboard' },
+    { labelKey: 'nav.feedbacks', shortKey: 'nav.feedbacks', href: '/feedbacks', pattern: '/feedbacks', icon: 'video' },
     {
-        label: 'Messagerie',
-        shortLabel: 'Messages',
+        labelKey: 'nav.messaging',
+        shortKey: 'nav.messages',
         href: '/messaging',
         pattern: '/messaging',
         icon: 'chat',
         unreadCount: 0,
     },
-    { label: 'Abonnement', shortLabel: 'Abo', href: '/billing', pattern: '/billing', icon: 'bolt' },
+    { labelKey: 'nav.billing', shortKey: 'nav.billingShort', href: '/billing', pattern: '/billing', icon: 'bolt' },
 ];
 
 const billing = computed(() => page.props.billing ?? null);
@@ -241,7 +245,7 @@ const demoExpiresLabel = computed(() => {
     if (!billing.value?.demoExpiresAt) {
         return null;
     }
-    return new Date(billing.value.demoExpiresAt).toLocaleString('fr-FR', {
+    return new Date(billing.value.demoExpiresAt).toLocaleString(localeTag(locale.value), {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -255,7 +259,7 @@ const trialBannerLabel = computed(() => {
     if (billing.value.status !== 'trial' || !billing.value.trialEndsAt) {
         return null;
     }
-    return new Date(billing.value.trialEndsAt).toLocaleDateString('fr-FR');
+    return new Date(billing.value.trialEndsAt).toLocaleDateString(localeTag(locale.value));
 });
 
 const showBillingBanner = computed(
@@ -287,36 +291,36 @@ const navItems = computed(() => {
 
         return [
             {
-                label: 'Accueil',
-                shortLabel: 'Accueil',
+                label: t('nav.home'),
+                shortLabel: t('nav.home'),
                 href: '/athlete/dashboard',
                 pattern: '/athlete/dashboard',
                 icon: 'dashboard',
             },
             {
-                label: 'Programme',
-                shortLabel: 'Prog.',
+                label: t('nav.program'),
+                shortLabel: t('nav.programsShort'),
                 href: '/athlete/program',
                 pattern: '/athlete/program',
                 icon: 'clipboard',
             },
             {
-                label: 'Mon profil',
-                shortLabel: 'Profil',
+                label: t('nav.myProfile'),
+                shortLabel: t('nav.profile'),
                 href: `/athletes/${user.value.id}`,
                 pattern: '/athletes',
                 icon: 'user-circle',
             },
             {
-                label: 'Retours',
-                shortLabel: 'Retours',
+                label: t('nav.feedbacks'),
+                shortLabel: t('nav.feedbacks'),
                 href: '/feedbacks',
                 pattern: '/feedbacks',
                 icon: 'video',
             },
             {
-                label: 'Messagerie',
-                shortLabel: 'Messages',
+                label: t('nav.messaging'),
+                shortLabel: t('nav.messages'),
                 href: messagingInbox.value?.thread_id
                     ? `/messaging?thread=${messagingInbox.value.thread_id}`
                     : '/messaging',
@@ -329,18 +333,25 @@ const navItems = computed(() => {
 
     // Paywall: only Abonnement is reachable until subscription / trial is active.
     if (!billing.value?.hasAccess) {
-        return coachNav.filter((item) => item.pattern === '/billing');
+        return coachNavDefs
+            .filter((item) => item.pattern === '/billing')
+            .map((item) => ({
+                ...item,
+                label: t(item.labelKey),
+                shortLabel: t(item.shortKey),
+            }));
     }
 
-    return coachNav.map((item) => {
-        if (item.pattern !== '/messaging') {
-            return item;
-        }
-
-        return {
+    return coachNavDefs.map((item) => {
+        const mapped = {
             ...item,
-            unreadCount: messagingInbox.value?.total_unread ?? 0,
+            label: t(item.labelKey),
+            shortLabel: t(item.shortKey),
         };
+        if (item.pattern === '/messaging') {
+            mapped.unreadCount = messagingInbox.value?.total_unread ?? 0;
+        }
+        return mapped;
     });
 });
 
@@ -432,24 +443,24 @@ watch(() => page.url, () => {
         >
             <div class="min-w-0 flex-1 px-6">
                 <template v-if="isDemoAccount">
-                    Compte démo
-                    <span v-if="demoExpiresLabel"> — expire le {{ demoExpiresLabel }}</span>
+                    {{ t('banners.demoAccount') }}
+                    <span v-if="demoExpiresLabel"> — {{ t('banners.demoExpires', { date: demoExpiresLabel }) }}</span>
                     ·
                     <Link href="/register" class="font-semibold underline hover:no-underline">
-                        Créer un vrai compte
+                        {{ t('banners.createRealAccount') }}
                     </Link>
                 </template>
                 <template v-else>
-                    Essai gratuit jusqu’au {{ trialBannerLabel }} ·
+                    {{ t('banners.trialUntil', { date: trialBannerLabel }) }} ·
                     <Link href="/billing" class="font-semibold underline hover:no-underline">
-                        Voir les offres
+                        {{ t('banners.seeOffers') }}
                     </Link>
                 </template>
             </div>
             <button
                 type="button"
                 class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-current/80 transition hover:bg-white/10 hover:text-white"
-                aria-label="Fermer le bandeau"
+                :aria-label="t('nav.closeBanner')"
                 @click="dismissBillingBanner"
             >
                 <UiIcon name="x-mark" class="h-4 w-4" />
@@ -477,7 +488,7 @@ watch(() => page.url, () => {
                 <button
                     type="button"
                     class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-300 transition hover:bg-slate-800/70 hover:text-white"
-                    aria-label="Plus d'options"
+                    :aria-label="t('nav.moreOptions')"
                     @click="toggleMobileMenu"
                 >
                     <UiIcon name="ellipsis-vertical" class="h-4 w-4" />
@@ -507,13 +518,18 @@ watch(() => page.url, () => {
 
             <InstallAppButton variant="menu" @interacted="closeMobileMenu" />
 
+            <div class="mt-1 flex items-center justify-between gap-2 px-3 py-2">
+                <span class="text-xs font-medium text-slate-400">{{ t('common.language') }}</span>
+                <LanguageSwitcher variant="compact" />
+            </div>
+
             <button
                 type="button"
                 class="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition hover:bg-slate-800/60"
                 @click="toggleTheme(); closeMobileMenu()"
             >
                 <UiIcon :name="isLight ? 'moon' : 'sun'" class="h-4 w-4 text-blue-400" />
-                <span>{{ isLight ? 'Thème sombre' : 'Thème clair' }}</span>
+                <span>{{ isLight ? t('nav.darkTheme') : t('nav.lightTheme') }}</span>
             </button>
 
             <button
@@ -522,7 +538,7 @@ watch(() => page.url, () => {
                 @click="showBugReportModal = true; closeMobileMenu()"
             >
                 <UiIcon name="alert" class="h-4 w-4 text-blue-400" />
-                <span>Signaler un problème</span>
+                <span>{{ t('nav.reportProblem') }}</span>
             </button>
 
             <Link
@@ -531,7 +547,7 @@ watch(() => page.url, () => {
                 @click="closeMobileMenu"
             >
                 <UiIcon name="user-circle" class="h-4 w-4 text-blue-400" />
-                <span>Confidentialité et données</span>
+                <span>{{ t('nav.privacyAndData') }}</span>
             </Link>
 
             <Link
@@ -542,7 +558,7 @@ watch(() => page.url, () => {
                 @click="() => { resetAnalytics(); closeMobileMenu(); }"
             >
                 <UiIcon name="logout" class="h-4 w-4 text-blue-400" />
-                <span>Déconnexion</span>
+                <span>{{ t('nav.logOut') }}</span>
             </Link>
         </div>
 
@@ -578,7 +594,7 @@ watch(() => page.url, () => {
                     <p
                         class="mt-1.5 inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-300"
                     >
-                        {{ user.role === 'coach' ? 'Coach' : 'Athlète' }}
+                        {{ user.role === 'coach' ? t('common.coach') : t('common.athlete') }}
                     </p>
                 </div>
             </Link>
@@ -587,7 +603,7 @@ watch(() => page.url, () => {
                 <p
                     class="mb-1 px-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500"
                 >
-                    Menu
+                    {{ t('nav.menu') }}
                 </p>
                 <Link
                     v-for="item in navItems"
@@ -619,6 +635,10 @@ watch(() => page.url, () => {
             </nav>
 
             <div class="mt-auto space-y-2 border-t border-slate-800 pt-4">
+                <div class="flex justify-center px-1 py-1">
+                    <LanguageSwitcher />
+                </div>
+
                 <InstallAppButton
                     variant="sidebar"
                     :collapsed="false"
@@ -627,11 +647,11 @@ watch(() => page.url, () => {
                 <button
                     type="button"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
-                    :title="isLight ? 'Passer au thème sombre' : 'Passer au thème clair'"
+                    :title="isLight ? t('nav.switchToDark') : t('nav.switchToLight')"
                     @click="toggleTheme"
                 >
                     <UiIcon :name="isLight ? 'moon' : 'sun'" class="h-4 w-4" />
-                    <span>{{ isLight ? 'Thème sombre' : 'Thème clair' }}</span>
+                    <span>{{ isLight ? t('nav.darkTheme') : t('nav.lightTheme') }}</span>
                 </button>
 
                 <button
@@ -640,7 +660,7 @@ watch(() => page.url, () => {
                     @click="showBugReportModal = true"
                 >
                     <UiIcon name="alert" class="h-4 w-4" />
-                    <span>Signaler un problème</span>
+                    <span>{{ t('nav.reportProblem') }}</span>
                 </button>
 
                 <Link
@@ -648,7 +668,7 @@ watch(() => page.url, () => {
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
                 >
                     <UiIcon name="user-circle" class="h-4 w-4" />
-                    <span>Confidentialité</span>
+                    <span>{{ t('nav.privacy') }}</span>
                 </Link>
 
                 <Link
@@ -659,7 +679,7 @@ watch(() => page.url, () => {
                     @click="resetAnalytics"
                 >
                     <UiIcon name="logout" class="h-4 w-4" />
-                    <span>Déconnexion</span>
+                    <span>{{ t('nav.logOut') }}</span>
                 </Link>
             </div>
         </aside>
@@ -714,7 +734,7 @@ watch(() => page.url, () => {
                     <button
                         type="button"
                         class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-red-200/80 transition hover:bg-red-900/50 hover:text-white"
-                        aria-label="Fermer"
+                        :aria-label="t('nav.close')"
                         @click="flashErrorDismissed = true"
                     >
                         <UiIcon name="x-mark" class="h-4 w-4" />

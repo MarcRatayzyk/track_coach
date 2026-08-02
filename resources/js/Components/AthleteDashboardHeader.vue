@@ -1,6 +1,9 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   athleteId: {
@@ -73,13 +76,13 @@ const heroMotionClass = computed(() => {
         class="shrink-0 rounded-lg border border-blue-500/40 bg-blue-950/30 px-3 py-1.5 text-xs font-semibold text-blue-200 lg:hidden"
         @click="emit('open-check-in')"
       >
-        Check-in
+        {{ t('athleteUi.dashboard.checkIn') }}
       </button>
     </div>
 
     <div :class="heroMotionClass">
       <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-        Aujourd'hui
+        {{ t('athleteUi.dashboard.today') }}
         <template v-if="todaySessionTitle"> {{ todaySessionTitle }}</template>
       </h1>
     </div>

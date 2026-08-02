@@ -38,7 +38,7 @@ class SessionFeedbackVideoUploadController extends Controller
 
         if (! VideoUploadDisk::usesDirectUpload()) {
             throw ValidationException::withMessages([
-                'video' => 'L’upload direct n’est pas configuré sur ce serveur.',
+                'video' => __('messages.video.direct_upload_not_configured'),
             ]);
         }
 
@@ -50,7 +50,7 @@ class SessionFeedbackVideoUploadController extends Controller
 
         if (! in_array($data['mime_type'], self::ALLOWED_MIME_TYPES, true)) {
             throw ValidationException::withMessages([
-                'mime_type' => 'Format vidéo non pris en charge (MP4, MOV, WebM, 3GP…).',
+                'mime_type' => __('messages.video.unsupported_format'),
             ]);
         }
 
@@ -123,7 +123,7 @@ class SessionFeedbackVideoUploadController extends Controller
 
         if ($media->status !== SessionFeedbackMedia::STATUS_PENDING) {
             throw ValidationException::withMessages([
-                'video' => 'Cette vidéo ne peut plus être finalisée.',
+                'video' => __('messages.video.cannot_finalize'),
             ]);
         }
 
@@ -131,7 +131,7 @@ class SessionFeedbackVideoUploadController extends Controller
             $media->update(['status' => SessionFeedbackMedia::STATUS_FAILED]);
 
             throw ValidationException::withMessages([
-                'video' => 'Le fichier n’a pas été trouvé sur le stockage. Réessayez l’envoi.',
+                'video' => __('messages.video.file_not_found_retry'),
             ]);
         }
 

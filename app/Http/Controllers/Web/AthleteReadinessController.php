@@ -42,6 +42,6 @@ class AthleteReadinessController extends Controller
 
         return redirect()
             ->route('athlete.dashboard')
-            ->with('success', 'Check-in enregistré.');
+            ->with('success', __('messages.readiness.checkin_saved'));
     }
 }

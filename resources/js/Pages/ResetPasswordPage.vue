@@ -6,6 +6,9 @@ export default {
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
     token: {
@@ -34,14 +37,14 @@ function submit() {
 
 <template>
     <div class="min-h-screen bg-slate-950 px-4 py-12 text-slate-100">
-        <Head title="Nouveau mot de passe" />
+        <Head :title="t('auth.resetPassword.pageTitle')" />
         <div class="mx-auto w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-xl">
-            <h1 class="text-2xl font-bold text-white">Nouveau mot de passe</h1>
-            <p class="mt-2 text-slate-400">Choisis un nouveau mot de passe pour ton compte.</p>
+            <h1 class="text-2xl font-bold text-white">{{ t('auth.resetPassword.title') }}</h1>
+            <p class="mt-2 text-slate-400">{{ t('auth.resetPassword.subtitle') }}</p>
 
             <form class="mt-8 space-y-5" @submit.prevent="submit">
                 <label class="block text-sm font-medium text-slate-400">
-                    E-mail
+                    {{ t('auth.resetPassword.emailLabel') }}
                     <input
                         v-model="form.email"
                         type="email"
@@ -52,7 +55,7 @@ function submit() {
                     <p v-if="form.errors.email" class="mt-1 text-sm text-red-400">{{ form.errors.email }}</p>
                 </label>
                 <label class="block text-sm font-medium text-slate-400">
-                    Nouveau mot de passe
+                    {{ t('auth.resetPassword.newPassword') }}
                     <input
                         v-model="form.password"
                         type="password"
@@ -63,7 +66,7 @@ function submit() {
                     <p v-if="form.errors.password" class="mt-1 text-sm text-red-400">{{ form.errors.password }}</p>
                 </label>
                 <label class="block text-sm font-medium text-slate-400">
-                    Confirmation
+                    {{ t('auth.resetPassword.confirmation') }}
                     <input
                         v-model="form.password_confirmation"
                         type="password"
@@ -77,12 +80,12 @@ function submit() {
                     :disabled="form.processing"
                     class="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                 >
-                    Enregistrer
+                    {{ t('auth.resetPassword.submit') }}
                 </button>
             </form>
 
             <p class="mt-6 text-center text-sm text-slate-500">
-                <Link href="/login" class="text-blue-400 hover:text-blue-300">Retour à la connexion</Link>
+                <Link href="/login" class="text-blue-400 hover:text-blue-300">{{ t('auth.resetPassword.backToLogin') }}</Link>
             </p>
         </div>
     </div>

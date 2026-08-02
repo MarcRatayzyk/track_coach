@@ -81,21 +81,21 @@ class RegisterController extends Controller
         if ($plan) {
             return redirect()
                 ->route('billing.checkout.plan', ['plan' => $plan])
-                ->with('success', 'Compte créé. Finalise ton paiement pour activer l’abonnement.');
+                ->with('success', __('messages.auth.register_created_pay'));
         }
 
         if (ActivationDelivery::usesManualLinks()) {
             return redirect()
                 ->route('dashboard')
-                ->with('success', "Compte créé. Essai gratuit de {$trialDays} jours activé. Invite tes athlètes par e-mail.");
+                ->with('success', __('messages.auth.register_created_trial_invite', ['days' => $trialDays]));
         }
 
         $redirect = redirect()
             ->route('verification.notice')
-            ->with('success', "Compte créé. Essai gratuit de {$trialDays} jours activé. Confirme ton e-mail pour accéder au dashboard.");
+            ->with('success', __('messages.auth.register_created_trial_confirm', ['days' => $trialDays]));
 
         if (! $emailSent) {
-            $redirect = $redirect->with('error', MailSendSupport::DELIVERY_FAILED_MESSAGE);
+            $redirect = $redirect->with('error', MailSendSupport::deliveryFailedMessage());
         }
 
         return $redirect;

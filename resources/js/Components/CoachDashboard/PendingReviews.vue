@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { motion } from 'motion-v';
@@ -6,6 +7,7 @@ import ReviewCard from './ReviewCard.vue';
 import SectionHeader from './SectionHeader.vue';
 import { cardShell } from './dashboardUi';
 import { isFeedbackOverdue, todayKey as resolveToday, dateKey, weekStartMonday } from '../../utils/feedbackUrgency';
+const { t } = useI18n();
 
 const props = defineProps({
   dailyTasks: { type: Array, default: () => [] },
@@ -22,8 +24,8 @@ const filters = [
   { key: 'daily', label: 'Journaliers' },
   { key: 'weekly', label: 'Hebdomadaires' },
   { key: 'overdue', label: 'En retard' },
-  { key: 'not_sent', label: "N'a pas envoyé" },
-  { key: 'sent', label: 'A envoyé' },
+  { key: 'not_sent', label: t('app.coachDash.notSent') },
+  { key: 'sent', label: t('app.coachDash.sent') },
 ];
 
 function todayStr() {
@@ -112,8 +114,8 @@ const emptyLabels = {
   daily: 'journalier',
   weekly: 'hebdomadaire',
   overdue: 'en retard',
-  not_sent: 'non envoyé',
-  sent: 'envoyé',
+  not_sent: t('app.coachDash.notSentStatus'),
+  sent: t('app.coachDash.sentStatus'),
 };
 </script>
 
@@ -121,7 +123,7 @@ const emptyLabels = {
   <section :class="[cardShell, 'min-w-0 overflow-hidden p-4 sm:p-5']">
     <SectionHeader
       eyebrow="À traiter"
-      title="Retours à traiter"
+      :title="t('app.coachDash.pendingReviews')"
     >
       <template #actions>
         <Link

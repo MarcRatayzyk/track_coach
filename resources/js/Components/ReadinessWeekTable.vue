@@ -1,7 +1,11 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../i18n';
 import { formatCalendarFr } from '../utils/formatDates';
 import { resolveOptionColor, resolveOptionLabel } from '../config/readinessFormFields';
+
+const { t, locale } = useI18n();
 
 const props = defineProps({
   fields: {
@@ -18,7 +22,15 @@ const props = defineProps({
   },
 });
 
-const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const DAY_LABELS = computed(() => [
+  t('athleteUi.readiness.days.sun'),
+  t('athleteUi.readiness.days.mon'),
+  t('athleteUi.readiness.days.tue'),
+  t('athleteUi.readiness.days.wed'),
+  t('athleteUi.readiness.days.thu'),
+  t('athleteUi.readiness.days.fri'),
+  t('athleteUi.readiness.days.sat'),
+]);
 
 const sortedFields = computed(() =>
   [...(props.fields ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
@@ -45,7 +57,7 @@ const dayRows = computed(() => {
     const iso = date.toISOString().slice(0, 10);
     rows.push({
       date: iso,
-      label: DAY_LABELS[date.getDay()],
+      label: DAY_LABELS.value[date.getDay()],
       fullLabel: formatCalendarFr(iso, 'medium'),
       entry: byDate.get(iso) ?? null,
     });
@@ -85,7 +97,7 @@ function cellText(field, value) {
   if (typeof value === 'number' || (typeof value === 'string' && value !== '' && Number.isFinite(Number(value)))) {
     const n = Number(value);
     if (Number.isFinite(n) && String(value).match(/^\d+([.,]\d+)?$/)) {
-      return (Math.round(n * 100) / 100).toLocaleString('fr-FR', {
+      return (Math.round(n * 100) / 100).toLocaleString(localeTag(locale.value), {
         maximumFractionDigits: 2,
       });
     }
@@ -104,7 +116,7 @@ const hasAnyValue = computed(() =>
         <thead>
           <tr class="border-b border-slate-800 text-slate-400">
             <th class="sticky left-0 z-10 bg-slate-900/95 px-2 py-2 font-semibold uppercase tracking-wide">
-              Jour
+              {{ t('athleteUi.readiness.day') }}
             </th>
             <th
               v-for="field in sortedFields"
@@ -155,7 +167,7 @@ const hasAnyValue = computed(() =>
       v-if="!hasAnyValue"
       class="mt-2 text-sm text-slate-500"
     >
-      Aucune saisie cette semaine.
+      {{ t('athleteUi.readiness.noEntryWeek') }}
     </p>
   </div>
 </template>

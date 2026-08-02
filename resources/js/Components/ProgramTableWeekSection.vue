@@ -3,6 +3,9 @@ import ProgramTableDayCard from './ProgramTableDayCard.vue';
 import ProgramTableRestDaySlot from './ProgramTableRestDaySlot.vue';
 import { ALL_WEEKDAYS } from '../composables/useProgramTableBuilder';
 import { weekdayShortLabel } from '../utils/programBuilder';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   weekNumber: {
@@ -79,9 +82,9 @@ const emit = defineEmits([
   <section class="rounded-2xl border border-slate-800 bg-slate-950/30 p-4">
     <div class="mb-4 flex items-center justify-between gap-3">
       <div>
-        <h3 class="text-base font-semibold text-white">Semaine {{ weekNumber }}</h3>
+        <h3 class="text-base font-semibold text-white">{{ t('programBuilder.shared.week', { n: weekNumber }) }}</h3>
         <p class="mt-1 text-xs text-slate-500">
-          Glisse une séance vers un autre jour pour la déplacer ou l'échanger.
+          {{ t('programBuilder.weekSection.dragHint') }}
         </p>
       </div>
       <div class="flex flex-wrap items-center justify-end gap-2">
@@ -91,7 +94,7 @@ const emit = defineEmits([
           class="rounded-md border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
           @click="emit('copy-week', weekNumber)"
         >
-          Copier la semaine
+          {{ t('programBuilder.weekSection.copyWeek') }}
         </button>
         <button
           type="button"
@@ -99,7 +102,7 @@ const emit = defineEmits([
           class="rounded-md border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
           @click="emit('paste-week', weekNumber)"
         >
-          Coller la semaine
+          {{ t('programBuilder.weekSection.pasteWeek') }}
         </button>
       </div>
     </div>

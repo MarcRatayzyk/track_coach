@@ -1,3 +1,14 @@
+import { localeTag, resolveLocale } from '../i18n';
+
+function activeLocaleTag(locale) {
+    if (locale) {
+        return localeTag(locale);
+    }
+    const raw =
+        typeof document !== 'undefined' ? document.documentElement.lang : 'fr';
+    return localeTag(resolveLocale(raw));
+}
+
 /**
  * Interprète une valeur comme date civile (Y-m-d ou ISO commençant par Y-m-d)
  * sans décalage fuseau (évite « veille » pour minuit UTC).
@@ -23,8 +34,9 @@ export function calendarDateFromValue(value) {
 
 /**
  * @param {'long'|'medium'|'short'} style — long : jour de semaine + date ; medium : date lisible ; short : mois + année
+ * @param {string} [locale] — 'fr' | 'en' (défaut: document lang)
  */
-export function formatCalendarFr(value, style = 'long') {
+export function formatCalendarDate(value, style = 'long', locale) {
     const date = calendarDateFromValue(value);
     if (!date) {
         return '—';
@@ -40,11 +52,16 @@ export function formatCalendarFr(value, style = 'long') {
                     month: 'long',
                     year: 'numeric',
                 };
-    return date.toLocaleDateString('fr-FR', opts);
+    return date.toLocaleDateString(activeLocaleTag(locale), opts);
+}
+
+/** @deprecated Use formatCalendarDate */
+export function formatCalendarFr(value, style = 'long') {
+    return formatCalendarDate(value, style);
 }
 
 /** Instant réel (échéances, horodatage messagerie). */
-export function formatDateTimeFr(value) {
+export function formatDateTime(value, locale) {
     if (value == null || value === '') {
         return '—';
     }
@@ -52,7 +69,7 @@ export function formatDateTimeFr(value) {
     if (Number.isNaN(t)) {
         return '—';
     }
-    return new Date(t).toLocaleString('fr-FR', {
+    return new Date(t).toLocaleString(activeLocaleTag(locale), {
         weekday: 'short',
         day: 'numeric',
         month: 'short',
@@ -62,7 +79,12 @@ export function formatDateTimeFr(value) {
     });
 }
 
-export function formatShortDateTimeFr(value) {
+/** @deprecated Use formatDateTime */
+export function formatDateTimeFr(value) {
+    return formatDateTime(value);
+}
+
+export function formatShortDateTime(value, locale) {
     if (value == null || value === '') {
         return '';
     }
@@ -70,10 +92,15 @@ export function formatShortDateTimeFr(value) {
     if (Number.isNaN(t)) {
         return '';
     }
-    return new Date(t).toLocaleString('fr-FR', {
+    return new Date(t).toLocaleString(activeLocaleTag(locale), {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
         minute: '2-digit',
     });
+}
+
+/** @deprecated Use formatShortDateTime */
+export function formatShortDateTimeFr(value) {
+    return formatShortDateTime(value);
 }

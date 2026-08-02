@@ -29,6 +29,6 @@ class AthleteBodyWeightController extends Controller
 
         return redirect()
             ->route('athlete.dashboard')
-            ->with('success', 'Poids du corps enregistré.');
+            ->with('success', __('messages.body_weight.saved'));
     }
 }

@@ -24,7 +24,7 @@ class AthleteInvitationMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->coach->name.' t’invite sur Power Roster',
+            subject: __('mail.athlete_invitation.subject', ['name' => $this->coach->name]),
         );
     }
 

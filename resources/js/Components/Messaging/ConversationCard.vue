@@ -1,8 +1,10 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import OnlineIndicator from './OnlineIndicator.vue';
 import { messagingInitials, messagingRelativeTime } from '../../utils/messagingFormat';
+const { t } = useI18n();
 
 const props = defineProps({
   thread: {
@@ -113,7 +115,7 @@ const unread = computed(() => props.thread.unread_messages_count ?? 0);
     <button
       type="button"
       class="absolute bottom-2.5 right-2.5 z-10 rounded-full p-1.5 text-slate-500 opacity-0 transition duration-200 hover:bg-slate-800 hover:text-blue-400 group-hover:opacity-100"
-      :title="pinned ? 'Désépingler' : 'Épingler'"
+      :title="pinned ? t('app.messaging.unpin') : t('app.messaging.pin')"
       @click.prevent="emit('toggle-pin', thread.id)"
     >
       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

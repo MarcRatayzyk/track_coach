@@ -1,58 +1,53 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
 import ScreenFrame from './ScreenFrame.vue';
 
-const screens = [
+const { t } = useI18n();
+
+const screens = computed(() => [
     {
         id: 'dashboard',
-        label: 'Dashboard',
+        label: t('landing.demo.screens.dashboard'),
         src: '/images/landing/actions.png',
-        alt: 'Dashboard coach Power Roster : actions prioritaires',
     },
     {
         id: 'feedback',
-        label: 'Retours',
+        label: t('landing.demo.screens.feedback'),
         src: '/images/landing/session-feedback.png',
-        alt: 'Écran retours de séance Power Roster',
     },
     {
         id: 'messaging',
-        label: 'Messagerie',
+        label: t('landing.demo.screens.messaging'),
         src: '/images/landing/messaging.png',
-        alt: 'Messagerie coach Power Roster',
     },
     {
         id: 'roster',
-        label: 'Roster',
+        label: t('landing.demo.screens.roster'),
         src: '/images/landing/roster.png',
-        alt: 'Tableau roster athlètes',
     },
     {
         id: 'program',
-        label: 'Programmes',
+        label: t('landing.demo.screens.programs'),
         src: '/images/landing/program-editor.png',
-        alt: 'Éditeur de programme powerlifting',
     },
     {
         id: 'athlete-app',
-        label: 'App athlète',
+        label: t('landing.demo.screens.athleteApp'),
         src: '/images/landing/session-feedback.png',
-        alt: 'Application athlète Power Roster',
     },
     {
         id: 'import',
-        label: 'Importation',
+        label: t('landing.demo.screens.import'),
         src: '/images/landing/program-editor.png',
-        alt: 'Importation rapide de programme',
     },
     {
         id: 'stats',
-        label: 'Stats',
+        label: t('landing.demo.screens.stats'),
         src: '/images/landing/stats.png',
-        alt: 'Tableau de bord statistiques',
     },
-];
+]);
 
 const active = ref(0);
 
@@ -69,15 +64,15 @@ function select(i) {
     >
         <div class="mx-auto w-full max-w-[1100px]">
             <FadeIn class-name="text-center">
-                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-400">Démonstration</p>
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-400">{{ t('landing.demo.eyebrow') }}</p>
                 <h2
                     id="demo-heading"
                     class="mx-auto mt-3 max-w-2xl text-3xl font-black tracking-[-0.03em] text-white sm:text-4xl"
                 >
-                    Le produit, pas une maquette
+                    {{ t('landing.demo.heading') }}
                 </h2>
                 <p class="mx-auto mt-4 max-w-xl text-base text-slate-400 sm:text-lg">
-                    Screens réels de Power Roster : dashboard, retours, messagerie, app athlète et plus.
+                    {{ t('landing.demo.subtitle') }}
                 </p>
             </FadeIn>
 
@@ -85,7 +80,7 @@ function select(i) {
                 <div
                     class="flex flex-wrap items-center justify-center gap-2"
                     role="tablist"
-                    aria-label="Écrans produit"
+                    :aria-label="t('landing.demo.tabsAria')"
                 >
                     <button
                         v-for="(screen, i) in screens"
@@ -120,7 +115,7 @@ function select(i) {
                     >
                         <ScreenFrame
                             :src="screen.src"
-                            :alt="screen.alt"
+                            :alt="screen.label"
                             :label="`Power Roster · ${screen.label}`"
                             loading="lazy"
                         />
@@ -130,7 +125,7 @@ function select(i) {
                             href="/demo"
                             class="lp-btn-primary inline-flex px-6 py-3 text-sm leading-none"
                         >
-                            Ouvrir la démo
+                            {{ t('landing.demo.openDemo') }}
                         </a>
                     </div>
                 </div>

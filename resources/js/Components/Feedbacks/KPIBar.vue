@@ -1,8 +1,11 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { motion } from 'motion-v';
 import UiIcon from '../UiIcon.vue';
 import AnimatedCounter from '../Dashboard/AnimatedCounter.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   metrics: {
@@ -26,8 +29,8 @@ const items = computed(() => {
   return [
     {
       key: 'expected',
-      label: 'Attendu au total',
-      hint: 'Cette semaine',
+      label: t('app.feedbacks.expectedTotal'),
+      hint: t('app.dashboard.thisWeek'),
       value: expected.total ?? 0,
       daily: expected.daily ?? 0,
       weekly: expected.weekly ?? 0,
@@ -38,7 +41,7 @@ const items = computed(() => {
     },
     {
       key: 'pending',
-      label: 'En attente',
+      label: t('app.dashboard.waiting'),
       hint: '',
       value: pending.total ?? 0,
       daily: pending.daily ?? 0,
@@ -50,7 +53,7 @@ const items = computed(() => {
     },
     {
       key: 'done',
-      label: 'Traités',
+      label: t('app.feedbacks.treated'),
       hint: '',
       value: done.total ?? 0,
       daily: done.daily ?? 0,
@@ -62,7 +65,7 @@ const items = computed(() => {
     },
     {
       key: 'overdue',
-      label: 'En retard',
+      label: t('app.feedbacks.overdue'),
       hint: '',
       value: overdue.total ?? 0,
       daily: overdue.daily ?? 0,
@@ -107,12 +110,12 @@ const items = computed(() => {
       </p>
       <div class="relative mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-300">
         <span class="tabular-nums">
-          <span class="text-slate-300">Journalier</span>
+          <span class="text-slate-300">{{ t('app.feedbacks.daily') }}</span>
           <span class="ml-1 font-semibold text-white">{{ item.daily }}</span>
         </span>
         <span class="text-slate-500">·</span>
         <span class="tabular-nums">
-          <span class="text-slate-300">Hebdo</span>
+          <span class="text-slate-300">{{ t('app.feedbacks.weeklyShort') }}</span>
           <span class="ml-1 font-semibold text-white">{{ item.weekly }}</span>
         </span>
       </div>

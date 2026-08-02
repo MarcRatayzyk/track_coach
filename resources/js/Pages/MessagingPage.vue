@@ -7,6 +7,8 @@ export default {
 </script>
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { motion } from 'motion-v';
@@ -317,14 +319,14 @@ onUnmounted(() => {
             class="border-b border-blue-500/25 bg-blue-950/20 px-4 py-2.5 lg:px-5"
           >
             <p class="text-sm font-medium text-blue-200">
-              Réponse au retour vidéo du {{ formatCalendarFr(feedbackContext.session_date) }}
+              {{ t('app.messaging.replyToFeedback', { date: formatCalendarFr(feedbackContext.session_date) }) }}
               <span v-if="feedbackContext.session_label"> — {{ feedbackContext.session_label }}</span>
             </p>
             <Link
               :href="`/feedbacks?feedback=${feedbackContext.id}`"
               class="mt-1 inline-block text-xs text-blue-400/80 transition hover:text-blue-300"
             >
-              Voir le retour vidéo →
+              {{ t('app.messaging.seeFeedback') }}
             </Link>
           </div>
 

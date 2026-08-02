@@ -1,11 +1,14 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { motion } from 'motion-v';
 import BarChart from '../charts/BarChart.vue';
 import LineChart from '../charts/LineChart.vue';
 import ProgressRing from './ProgressRing.vue';
 import SectionHeader from './SectionHeader.vue';
 import AnimatedCounter from './AnimatedCounter.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   metrics: {
@@ -50,7 +53,7 @@ const barData = computed(() => {
     labels: weekLabels,
     datasets: [
       {
-        label: 'Retours attendus',
+        label: t('app.coachDash.reviewsExpected'),
         data: shape.map((s) => Math.round(base * s)),
         backgroundColor: 'rgba(59, 130, 246, 0.25)',
         borderColor: 'rgb(96, 165, 250)',
@@ -58,7 +61,7 @@ const barData = computed(() => {
         borderRadius: 6,
       },
       {
-        label: 'Retours traités',
+        label: t('app.coachDash.reviewsTreated'),
         data: shape.map((s) => Math.round(replied * s)),
         backgroundColor: 'rgba(52, 211, 153, 0.35)',
         borderColor: 'rgb(52, 211, 153)',
@@ -79,7 +82,7 @@ const lineData = computed(() => {
     labels: weekLabels,
     datasets: [
       {
-        label: 'Programmes actifs',
+        label: t('app.coachDash.activeProgramsLabel'),
         data: seed,
         borderColor: 'rgb(129, 140, 248)',
         backgroundColor: 'rgba(129, 140, 248, 0.15)',
@@ -116,24 +119,51 @@ const chartOptions = {
     y: { grid: { color: 'rgba(51,65,85,0.35)' }, ticks: { precision: 0 } },
   },
 };
+
+const stats = computed(() => [
+  {
+    label: t('app.coachDash.avgVolume'),
+    value: props.metrics.activePrograms * 4 || props.metrics.athleteCount * 3,
+    suffix: t('app.coachDash.sessionsSuffix'),
+    color: '#60a5fa',
+  },
+  {
+    label: t('app.coachDash.prThisWeek'),
+    value: props.metrics.importantAlerts,
+    suffix: '',
+    color: '#fbbf24',
+  },
+  {
+    label: t('app.coachDash.adherenceRate'),
+    value: adherenceRate.value,
+    suffix: '%',
+    color: '#34d399',
+  },
+  {
+    label: t('app.coachDash.feedbacksFilled'),
+    value: props.metrics.feedbackFillRate,
+    suffix: '%',
+    color: '#818cf8',
+  },
+  {
+    label: t('app.coachDash.activeAthletes'),
+    value: props.metrics.activeAthletes || props.metrics.athleteCount,
+    suffix: '',
+    color: '#38bdf8',
+  },
+]);
 </script>
 
 <template>
   <section>
     <SectionHeader
       eyebrow="Performance"
-      title="Performance globale"
+      :title="t('app.coachDash.globalPerformance')"
     />
 
     <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       <motion.div
-        v-for="(stat, i) in [
-          { label: 'Volume moyen', value: metrics.activePrograms * 4 || metrics.athleteCount * 3, suffix: ' séances', color: '#60a5fa' },
-          { label: 'PR cette semaine', value: metrics.importantAlerts, suffix: '', color: '#fbbf24' },
-          { label: 'Taux d’adhérence', value: adherenceRate, suffix: '%', color: '#34d399' },
-          { label: 'Retours remplis', value: metrics.feedbackFillRate, suffix: '%', color: '#818cf8' },
-          { label: 'Athlètes actifs', value: metrics.activeAthletes || metrics.athleteCount, suffix: '', color: '#38bdf8' },
-        ]"
+        v-for="(stat, i) in stats"
         :key="stat.label"
         :initial="{ opacity: 0, y: 10 }"
         :whileInView="{ opacity: 1, y: 0 }"
@@ -157,29 +187,29 @@ const chartOptions = {
 
     <div class="mt-4 grid gap-4 lg:grid-cols-12">
       <div class="rounded-[18px] border border-slate-800/80 bg-slate-900/50 p-4 shadow-lg lg:col-span-5">
-        <p class="text-xs font-semibold text-slate-400">Retours · 7 jours</p>
+        <p class="text-xs font-semibold text-slate-400">{{ t('app.coachDash.reviews7d') }}</p>
         <div class="mt-3 h-48">
           <BarChart :chart-data="barData" :options="chartOptions" />
         </div>
       </div>
 
       <div class="rounded-[18px] border border-slate-800/80 bg-slate-900/50 p-4 shadow-lg lg:col-span-4">
-        <p class="text-xs font-semibold text-slate-400">Tendance programmes</p>
+        <p class="text-xs font-semibold text-slate-400">{{ t('app.coachDash.programsTrend') }}</p>
         <div class="mt-3 h-48">
           <LineChart :chart-data="lineData" :options="chartOptions" />
         </div>
       </div>
 
       <div class="flex flex-col items-center justify-center gap-4 rounded-[18px] border border-slate-800/80 bg-slate-900/50 p-4 shadow-lg lg:col-span-3">
-        <p class="w-full text-xs font-semibold text-slate-400">Anneaux de progression</p>
+        <p class="w-full text-xs font-semibold text-slate-400">{{ t('app.coachDash.progressRings') }}</p>
         <div class="flex flex-wrap items-center justify-center gap-4">
-          <ProgressRing :value="adherenceRate" :max="100" color="#34d399" label="Adhérence" />
-          <ProgressRing :value="activeShare" :max="100" color="#60a5fa" label="Actifs" />
+          <ProgressRing :value="adherenceRate" :max="100" color="#34d399" :label="t('app.coachDash.adherence')" />
+          <ProgressRing :value="activeShare" :max="100" color="#60a5fa" :label="t('app.coachDash.activeShare')" />
           <ProgressRing
             :value="metrics.feedbackFillRate"
             :max="100"
             color="#818cf8"
-            label="Retours"
+            :label="t('app.coachDash.feedbacksShort')"
           />
         </div>
       </div>
@@ -187,8 +217,8 @@ const chartOptions = {
 
     <div class="mt-4 rounded-[18px] border border-slate-800/80 bg-slate-900/50 p-4 shadow-lg">
       <div class="flex items-center justify-between gap-3">
-        <p class="text-xs font-semibold text-slate-400">Heatmap d’activité · 4 semaines</p>
-        <p class="text-[10px] text-slate-600">Plus clair = plus d’activité</p>
+        <p class="text-xs font-semibold text-slate-400">{{ t('app.coachDash.heatmapActivity') }}</p>
+        <p class="text-[10px] text-slate-600">{{ t('app.coachDash.heatmapHint') }}</p>
       </div>
       <div class="mt-3 grid grid-cols-7 gap-1.5 sm:grid-cols-[repeat(14,minmax(0,1fr))] lg:grid-cols-[repeat(28,minmax(0,1fr))]">
         <div
@@ -196,7 +226,7 @@ const chartOptions = {
           :key="i"
           class="aspect-square rounded-md transition duration-200 hover:scale-110"
           :class="heatClass(level)"
-          :title="`Jour ${i + 1}`"
+          :title="t('app.coachDash.dayN', { n: i + 1 })"
         />
       </div>
     </div>

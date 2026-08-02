@@ -1,10 +1,13 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ProgramPasteIncrementModal from './ProgramPasteIncrementModal.vue';
 import ProgramTableRowEditorPanel from './ProgramTableRowEditorPanel.vue';
 import ProgramTableWeekSection from './ProgramTableWeekSection.vue';
 import { provideTableRowEditor } from '../composables/useTableRowEditor';
 import { useProgramTableBuilder } from '../composables/useProgramTableBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   activeBlock: {
@@ -104,15 +107,13 @@ watch(selectedWeek, () => {
   <section class="min-w-0 flex-1 space-y-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg sm:p-4 lg:space-y-6 lg:p-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div class="min-w-0">
-        <h2 class="text-base font-semibold text-white sm:text-lg">Builder tableur V2</h2>
+        <h2 class="text-base font-semibold text-white sm:text-lg">{{ t('programBuilder.tableBuilderV2.title') }}</h2>
         <p class="mt-1 text-xs text-slate-400 sm:mt-2 sm:text-sm">
-          Une semaine à la fois, jours empilés du lundi au dimanche pour des séances en pleine largeur.
+          {{ t('programBuilder.tableBuilderV2.subtitle') }}
         </p>
       </div>
       <div class="shrink-0 rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-xs text-slate-400 sm:px-4 sm:py-3 sm:text-sm">
-        Jusqu'à
-        <span class="font-medium text-white">{{ maxSessionsPerWeek }}</span>
-        séance{{ maxSessionsPerWeek > 1 ? 's' : '' }} par semaine
+        {{ t('programBuilder.tableBuilderV2.maxSessions', maxSessionsPerWeek, { named: { count: maxSessionsPerWeek } }) }}
       </div>
     </div>
 
@@ -121,7 +122,7 @@ watch(selectedWeek, () => {
       class="rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2 text-xs text-slate-400 sm:px-4 sm:py-3 sm:text-sm"
     >
       <span class="font-medium text-white">{{ clipboardStatus }}</span>
-      <span class="ml-2 text-slate-500">Le collage demandera des incréments (kg, %, RPE).</span>
+      <span class="ml-2 text-slate-500">{{ t('programBuilder.tableBuilderV2.pasteHint') }}</span>
     </div>
 
     <div class="tc-scrollbar -mx-1 flex gap-2 overflow-x-auto border-b border-slate-800 px-1 pb-3">
@@ -137,7 +138,7 @@ watch(selectedWeek, () => {
         "
         @click="selectedWeek = weekNumber"
       >
-        Semaine {{ weekNumber }}
+        {{ t('programBuilder.shared.week', { n: weekNumber }) }}
       </button>
     </div>
 

@@ -1,6 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
 import { track } from '../../utils/analytics';
+
+const { t } = useI18n();
 
 function trackCta(ctaId) {
     track('cta_clicked', { cta_id: ctaId });
@@ -29,11 +32,10 @@ function trackCta(ctaId) {
                             id="final-cta-heading"
                             class="mx-auto max-w-2xl text-3xl font-black tracking-[-0.03em] text-white sm:text-4xl lg:text-5xl"
                         >
-                            Prêt à transformer ton coaching&nbsp;?
+                            {{ t('landing.finalCta.heading') }}
                         </h2>
                         <p class="mx-auto mt-5 max-w-lg text-base text-slate-300 sm:text-lg">
-                            14 jours d’essai sans carte. Ou ouvre une démo avec ton e-mail pour tester
-                            le produit immédiatement.
+                            {{ t('landing.finalCta.subtitle') }}
                         </p>
                         <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
                             <a
@@ -41,14 +43,14 @@ function trackCta(ctaId) {
                                 class="lp-btn-primary px-10 py-4 text-base leading-none sm:text-lg"
                                 @click="trackCta('final_register')"
                             >
-                                Essai 14 jours
+                                {{ t('landing.finalCta.trial') }}
                             </a>
                             <a
                                 href="/demo"
                                 class="lp-btn-secondary px-10 py-4 text-base leading-none sm:text-lg"
                                 @click="trackCta('final_demo')"
                             >
-                                Démo
+                                {{ t('landing.finalCta.demo') }}
                             </a>
                         </div>
                     </div>

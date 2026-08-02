@@ -32,6 +32,7 @@ use App\Http\Controllers\Web\Coach\ProgramWebController;
 use App\Http\Controllers\Web\DemoController;
 use App\Http\Controllers\Web\RegisterController;
 use App\Http\Controllers\Web\LandingController;
+use App\Http\Controllers\Web\LocaleController;
 use App\Http\Controllers\Web\LoginController;
 use App\Http\Controllers\Web\PrivateMediaController;
 use App\Http\Controllers\Web\SessionFeedbackVideoUploadController;
@@ -39,6 +40,8 @@ use App\Http\Controllers\Web\SessionFeedbackWebController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
+
+Route::post('/locale', LocaleController::class)->name('locale.update');
 
 Route::get('/downloads/power-roster.apk', ApkDownloadController::class)
     ->name('downloads.apk');

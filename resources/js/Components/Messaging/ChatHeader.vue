@@ -1,9 +1,12 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import OnlineIndicator from './OnlineIndicator.vue';
 import { messagingInitials } from '../../utils/messagingFormat';
 import UiIcon from '../UiIcon.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   title: {
@@ -37,7 +40,9 @@ const emit = defineEmits(['toggle-context', 'back']);
 const showOptions = ref(false);
 const initials = computed(() => messagingInitials(props.title));
 
-const statusLabel = computed(() => (props.online ? 'En ligne' : 'Hors ligne'));
+const statusLabel = computed(() =>
+  props.online ? t('app.messaging.online') : t('app.messaging.offline'),
+);
 </script>
 
 <template>
@@ -48,7 +53,7 @@ const statusLabel = computed(() => (props.online ? 'En ligne' : 'Hors ligne'));
       <button
         type="button"
         class="shrink-0 rounded-full p-2 text-slate-400 transition duration-200 hover:bg-slate-800 hover:text-white lg:hidden"
-        aria-label="Retour"
+        :aria-label="t('common.back')"
         @click="emit('back')"
       >
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -76,14 +81,14 @@ const statusLabel = computed(() => (props.online ? 'En ligne' : 'Hors ligne'));
           <template v-if="lastSession">
             <span class="hidden text-slate-600 sm:inline"> · </span>
             <span class="hidden sm:inline">
-              Dernière séance
+              {{ t('app.messaging.lastSession') }}
               <template v-if="lastSession.label"> — {{ lastSession.label }}</template>
               <template v-else-if="lastSession.date"> — {{ lastSession.date }}</template>
             </span>
           </template>
           <template v-if="goal">
             <span class="hidden text-slate-600 md:inline"> · </span>
-            <span class="hidden text-slate-300 md:inline">Objectif : {{ goal }}</span>
+            <span class="hidden text-slate-300 md:inline">{{ t('app.messaging.goalLabel', { goal }) }}</span>
           </template>
         </p>
       </div>
@@ -94,28 +99,28 @@ const statusLabel = computed(() => (props.online ? 'En ligne' : 'Hors ligne'));
         v-if="profileUrl && isCoach"
         :href="profileUrl"
         class="inline-flex items-center justify-center gap-1.5 rounded-[14px] border border-slate-800 bg-slate-950/60 p-2 text-xs font-medium text-slate-300 transition duration-200 hover:border-blue-500/30 hover:bg-slate-800 hover:text-white sm:px-3 sm:py-2"
-        title="Profil"
+        :title="t('nav.profile')"
       >
         <UiIcon name="user-circle" class="h-4 w-4" />
-        <span class="hidden sm:inline">Profil</span>
+        <span class="hidden sm:inline">{{ t('nav.profile') }}</span>
       </Link>
 
       <button
         v-if="isCoach"
         type="button"
         class="inline-flex items-center justify-center gap-1.5 rounded-[14px] border border-slate-800 bg-slate-950/60 p-2 text-xs font-medium text-slate-300 transition duration-200 hover:border-slate-700 hover:bg-slate-800 hover:text-white sm:px-3 sm:py-2 xl:hidden"
-        title="Contexte"
+        :title="t('app.messaging.context')"
         @click="emit('toggle-context')"
       >
         <UiIcon name="list" class="h-4 w-4 sm:hidden" />
-        <span class="hidden sm:inline">Contexte</span>
+        <span class="hidden sm:inline">{{ t('app.messaging.context') }}</span>
       </button>
 
       <div class="relative">
         <button
           type="button"
           class="rounded-[14px] border border-slate-800 bg-slate-950/60 p-2 text-slate-400 transition duration-200 hover:bg-slate-800 hover:text-white"
-          aria-label="Options"
+          :aria-label="t('app.messaging.options')"
           @click="showOptions = !showOptions"
         >
           <UiIcon name="ellipsis-vertical" class="h-4 w-4" />
@@ -129,7 +134,7 @@ const statusLabel = computed(() => (props.online ? 'En ligne' : 'Hors ligne'));
             class="block w-full px-3 py-2.5 text-left text-sm text-slate-300 transition hover:bg-slate-800"
             @click="showOptions = false; emit('toggle-context')"
           >
-            Voir le contexte
+            {{ t('app.messaging.viewContext') }}
           </button>
           <Link
             v-if="profileUrl && isCoach"
@@ -137,7 +142,7 @@ const statusLabel = computed(() => (props.online ? 'En ligne' : 'Hors ligne'));
             class="block w-full px-3 py-2.5 text-left text-sm text-slate-300 transition hover:bg-slate-800"
             @click="showOptions = false"
           >
-            Ouvrir le profil
+            {{ t('app.messaging.openProfile') }}
           </Link>
         </div>
       </div>

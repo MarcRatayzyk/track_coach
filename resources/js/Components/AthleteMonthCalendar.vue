@@ -13,6 +13,10 @@ import {
 import { formatLineRecap } from '../utils/programBuilder';
 import { sectionBadgeClass, sectionOption } from '../config/programTableSections';
 import { scoreDayAdherence } from '../utils/sessionAdherence';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
 
 const props = defineProps({
   programBlock: {
@@ -117,7 +121,7 @@ function programLabel(session) {
     return label;
   }
   const count = (session?.items ?? session?.exercises ?? []).length;
-  return count > 0 ? `${count} exercice${count > 1 ? 's' : ''}` : 'Séance programmée';
+  return count > 0 ? t('athleteUi.calendar.exercisesCount', count) : t('athleteUi.calendar.plannedSession');
 }
 
 function programItems(session) {
@@ -300,28 +304,28 @@ onMounted(() => {
         <template v-if="!isOverview">
           <span class="inline-flex items-center gap-1.5">
             <span class="h-2 w-2 rounded-full bg-emerald-400" />
-            Programme
+            {{ t('athleteUi.calendar.program') }}
           </span>
           <span class="inline-flex items-center gap-1.5">
             <span class="h-2 w-2 rounded-full bg-violet-400" />
-            Séance réalisée
+            {{ t('athleteUi.calendar.completedSession') }}
           </span>
         </template>
         <span v-if="isOverview" class="inline-flex items-center gap-1.5">
           <span class="h-2 w-2 rounded-full bg-sky-400" />
-          Bloc
+          {{ t('athleteUi.calendar.block') }}
         </span>
         <span v-if="isOverview" class="inline-flex items-center gap-1.5">
           <span class="h-2 w-2 rounded-full bg-indigo-400" />
-          Rappel
+          {{ t('athleteUi.calendar.reminder') }}
         </span>
         <span class="inline-flex items-center gap-1.5">
           <span class="h-2.5 w-2.5 rounded bg-amber-500/80" />
-          Aujourd'hui
+          {{ t('athleteUi.calendar.today') }}
         </span>
         <span class="inline-flex items-center gap-1.5">
           <span class="h-2.5 w-2.5 rounded bg-rose-500/25 ring-1 ring-inset ring-rose-400/45" />
-          Compétition
+          {{ t('athleteUi.calendar.competition') }}
         </span>
       </div>
       <span class="text-[11px] text-slate-500">{{ grid.rangeLabel }}</span>
@@ -406,7 +410,7 @@ onMounted(() => {
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 class="text-sm font-semibold text-white">{{ selectedDetail.label }}</h3>
-          <p v-if="selectedDetail.isToday" class="mt-0.5 text-xs text-amber-400">Aujourd'hui</p>
+          <p v-if="selectedDetail.isToday" class="mt-0.5 text-xs text-amber-400">{{ t('athleteUi.calendar.today') }}</p>
         </div>
         <div class="flex flex-wrap items-center justify-end gap-2">
           <button
@@ -414,13 +418,13 @@ onMounted(() => {
             class="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-800 hover:text-slate-300"
             @click="selectedDate = null"
           >
-            Fermer
+            {{ t('common.close') }}
           </button>
         </div>
       </div>
 
       <p v-if="selectedDetail.isEmpty" class="mt-3 text-sm text-slate-500">
-        Aucune séance ni compétition ce jour-là.
+        {{ t('athleteUi.calendar.emptyDay') }}
       </p>
 
       <div v-else class="mt-3 space-y-3">
@@ -429,7 +433,7 @@ onMounted(() => {
           :key="`block-${index}`"
           class="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2.5"
         >
-          <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-300">Bloc</p>
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-300">{{ t('athleteUi.calendar.block') }}</p>
           <p class="mt-1 text-sm font-semibold text-white">{{ boundary.label }}</p>
         </section>
 
@@ -438,7 +442,7 @@ onMounted(() => {
           :key="`reminder-${reminder.id}`"
           class="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-2.5"
         >
-          <p class="text-[10px] font-semibold uppercase tracking-wide text-indigo-300">Rappel</p>
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-indigo-300">{{ t('athleteUi.calendar.reminder') }}</p>
           <p class="mt-1 text-sm font-semibold text-white">{{ reminder.title }}</p>
           <p v-if="reminder.athlete_name" class="mt-0.5 text-xs text-slate-400">{{ reminder.athlete_name }}</p>
           <p v-if="reminder.notes" class="mt-0.5 text-xs text-slate-500">{{ reminder.notes }}</p>
@@ -448,13 +452,13 @@ onMounted(() => {
           v-if="selectedDetail.competition"
           class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2.5"
         >
-          <p class="text-[10px] font-semibold uppercase tracking-wide text-rose-300">Compétition</p>
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-rose-300">{{ t('athleteUi.calendar.competition') }}</p>
           <p class="mt-1 text-sm font-semibold text-white">{{ selectedDetail.competition.name }}</p>
           <p v-if="selectedDetail.competition.athlete_name" class="mt-0.5 text-xs text-slate-400">
             {{ selectedDetail.competition.athlete_name }}
           </p>
           <p v-if="selectedDetail.competition.goal" class="mt-0.5 text-xs text-slate-400">
-            Objectif : {{ selectedDetail.competition.goal }}
+            {{ t('athleteUi.calendar.goal', { goal: selectedDetail.competition.goal }) }}
           </p>
           <p v-if="selectedDetail.competition.location" class="mt-0.5 text-xs text-slate-500">
             {{ selectedDetail.competition.location }}
@@ -466,7 +470,7 @@ onMounted(() => {
           class="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-3 py-2.5"
         >
           <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
-            Séance programmée
+            {{ t('athleteUi.calendar.plannedSession') }}
           </p>
           <p class="mt-1 text-sm font-semibold text-white">{{ programLabel(selectedDetail.program) }}</p>
           <ul v-if="programItems(selectedDetail.program).length" class="mt-2 space-y-1.5">
@@ -494,14 +498,14 @@ onMounted(() => {
           <div class="flex flex-wrap items-start justify-between gap-2">
             <div class="flex min-w-0 flex-wrap items-center gap-2">
               <p class="text-[10px] font-semibold uppercase tracking-wide text-violet-300">
-                Séance réalisée
+                {{ t('athleteUi.calendar.completedSession') }}
               </p>
               <span
                 v-if="selectedDetail.adherence && sessionIndex === 0"
                 class="text-[10px] font-semibold uppercase tracking-wide text-violet-300 tabular-nums"
-                :title="`Adhérence : ${selectedDetail.adherence.percentage}% (${selectedDetail.adherence.matchedChecks}/${selectedDetail.adherence.totalChecks} critères)`"
+                :title="t('athleteUi.calendar.adherenceTitle', { percent: selectedDetail.adherence.percentage, matched: selectedDetail.adherence.matchedChecks, total: selectedDetail.adherence.totalChecks })"
               >
-                Adhérence : {{ selectedDetail.adherence.percentage }}%
+                {{ t('athleteUi.calendar.adherence', { percent: selectedDetail.adherence.percentage }) }}
               </span>
             </div>
             <button
@@ -510,7 +514,7 @@ onMounted(() => {
               class="rounded-lg border border-violet-500/40 px-2 py-0.5 text-[10px] font-semibold text-violet-200 hover:bg-violet-500/10"
               @click="editTrainingSession(session)"
             >
-              Modifier
+              {{ t('athleteUi.calendar.edit') }}
             </button>
           </div>
           <ul
@@ -535,7 +539,7 @@ onMounted(() => {
                 v-if="String(item.athlete_note ?? '').trim()"
                 class="mt-1 whitespace-pre-wrap text-[11px] leading-relaxed text-slate-400"
               >
-                Note : {{ item.athlete_note }}
+                {{ t('athleteUi.calendar.note', { note: item.athlete_note }) }}
               </p>
             </li>
           </ul>

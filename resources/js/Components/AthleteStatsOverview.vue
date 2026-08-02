@@ -1,11 +1,14 @@
 <script setup>
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { filterEntriesByRange } from '../utils/athleteOverviewStats';
 import AthletePrForm from './AthletePrForm.vue';
 import BodyWeightTrendChart from './charts/BodyWeightTrendChart.vue';
 import PrProgressionCharts from './charts/PrProgressionCharts.vue';
 import ReadinessWeekTable from './ReadinessWeekTable.vue';
 import SbdTonnageDonutChart from './charts/SbdTonnageDonutChart.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   stats: {
@@ -71,13 +74,13 @@ const emit = defineEmits(['update:timeRange']);
 const wellnessTimeRange = ref('1m');
 const showPrForm = ref(false);
 
-const wellnessTimeRangeOptions = [
-  { value: '7d', label: '7 j' },
-  { value: '1m', label: '1 mois' },
-  { value: '3m', label: '3 mois' },
-  { value: '6m', label: '6 mois' },
-  { value: '1y', label: '1 an' },
-];
+const wellnessTimeRangeOptions = computed(() => [
+  { value: '7d', label: t('athleteUi.stats.range7d') },
+  { value: '1m', label: t('athleteUi.stats.range1m') },
+  { value: '3m', label: t('athleteUi.stats.range3m') },
+  { value: '6m', label: t('athleteUi.stats.range6m') },
+  { value: '1y', label: t('athleteUi.stats.range1y') },
+]);
 
 const showPrChart = computed(() => props.prRecords !== null);
 
@@ -94,18 +97,18 @@ const filteredBodyWeight = computed(() =>
 
 <template>
   <section class="tc-athlete-stats-panel rounded-xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg">
-    <h2 class="text-sm font-semibold text-white">Statistiques</h2>
+    <h2 class="text-sm font-semibold text-white">{{ t('athleteUi.stats.title') }}</h2>
 
     <article class="mt-3 rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2.5">
-      <p class="text-[10px] uppercase tracking-wide text-slate-500">Adhérence</p>
+      <p class="text-[10px] uppercase tracking-wide text-slate-500">{{ t('athleteUi.stats.adherence') }}</p>
       <p v-if="adherence?.percentage != null" class="mt-0.5 text-lg font-bold text-white">
         {{ adherence.percentage }}%
       </p>
       <p v-else class="mt-0.5 text-sm text-slate-500">
-        {{ programUpcomingLabel ?? (hasActiveProgram ? '—' : 'Aucun programme actif') }}
+        {{ programUpcomingLabel ?? (hasActiveProgram ? '—' : t('athleteUi.stats.noActiveProgram')) }}
       </p>
       <p v-if="adherence" class="mt-1 text-xs text-slate-500">
-        {{ adherence.completedSessions }}/{{ adherence.plannedSessions }} séances au bon jour
+        {{ t('athleteUi.stats.sessionsOnDay', { completed: adherence.completedSessions, planned: adherence.plannedSessions }) }}
         <span v-if="adherence.exactLineCoverage != null" class="text-slate-600">
           · {{ adherence.exactLineCoverage }}% lignes exactes
         </span>
@@ -117,7 +120,7 @@ const filteredBodyWeight = computed(() =>
 
       <article class="min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
         <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h3 class="text-sm font-semibold text-white">Poids</h3>
+          <h3 class="text-sm font-semibold text-white">{{ t('athleteUi.stats.weight') }}</h3>
           <div class="flex flex-wrap gap-1.5">
             <button
               v-for="option in wellnessTimeRangeOptions"
@@ -143,7 +146,7 @@ const filteredBodyWeight = computed(() =>
 
     <article class="mt-3 min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 class="text-sm font-semibold text-white">Facteurs externes</h3>
+        <h3 class="text-sm font-semibold text-white">{{ t('athleteUi.stats.externalFactors') }}</h3>
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="option in wellnessTimeRangeOptions"
@@ -168,7 +171,7 @@ const filteredBodyWeight = computed(() =>
           embedded
         />
       </div>
-      <p v-else class="text-sm text-slate-500">Aucune saisie de facteurs externes sur cette période.</p>
+      <p v-else class="text-sm text-slate-500">{{ t('athleteUi.stats.noExternalData') }}</p>
     </article>
 
     <article
@@ -176,7 +179,7 @@ const filteredBodyWeight = computed(() =>
       class="mt-4 min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4"
     >
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <h3 class="text-sm font-semibold text-white">Progression des PR</h3>
+        <h3 class="text-sm font-semibold text-white">{{ t('athleteUi.stats.prProgression') }}</h3>
         <div class="flex flex-wrap items-center gap-2">
           <button
             v-if="canEditPrs && athleteId"
@@ -189,7 +192,7 @@ const filteredBodyWeight = computed(() =>
             "
             @click="showPrForm = !showPrForm"
           >
-            {{ showPrForm ? 'Fermer' : 'Enregistrer un PR' }}
+            {{ showPrForm ? t('common.close') : t('athleteUi.stats.savePr') }}
           </button>
           <template v-if="timeRangeOptions.length">
             <button
@@ -216,8 +219,8 @@ const filteredBodyWeight = computed(() =>
         :athlete-id="athleteId"
         :latest-pr="latestPr"
         :is-coach="isCoach"
-        title="Enregistrer un PR"
-        description="Saisis squat, bench, terre et la date du record."
+        :title="t('athleteUi.stats.savePrTitle')"
+        :description="t('athleteUi.stats.savePrDesc')"
       />
 
       <div class="mt-4 min-w-0 overflow-x-auto">

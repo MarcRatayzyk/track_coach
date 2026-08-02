@@ -25,7 +25,7 @@ class CoachTrialStartedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Ton essai gratuit de {$this->trialDays} jours a commencé",
+            subject: __('mail.trial_started.subject', ['days' => $this->trialDays]),
         );
     }
 

@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   ATTEMPT_KEYS,
   ATTEMPT_LABELS,
@@ -11,6 +12,8 @@ import {
   normalizePlan,
   scenarioTotal,
 } from '../utils/matchPlan';
+
+const { t } = useI18n();
 
 const model = defineModel({
   type: Object,
@@ -61,7 +64,7 @@ function updateAttempt(index, lift, key, raw) {
 function addScenario() {
   updateScenarios([
     ...plan.value.scenarios,
-    emptyScenario(`Scénario ${plan.value.scenarios.length + 1}`),
+    emptyScenario(t('programBuilder.matchPlan.scenarioName', { n: plan.value.scenarios.length + 1 })),
   ]);
 }
 
@@ -81,7 +84,7 @@ function convertLegacyToStructured() {
   <div class="space-y-4">
     <template v-if="isLegacyText">
       <p class="text-xs text-slate-500">
-        Ancien plan en texte. Tu peux le conserver tel quel ou passer au format structuré.
+        {{ t('programBuilder.matchPlan.legacyHint') }}
       </p>
       <p
         class="whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2 font-mono text-xs text-slate-400"
@@ -93,7 +96,7 @@ function convertLegacyToStructured() {
         class="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-500"
         @click="convertLegacyToStructured"
       >
-        Passer au plan structuré
+        {{ t('programBuilder.matchPlan.convertStructured') }}
       </button>
     </template>
 
@@ -105,12 +108,12 @@ function convertLegacyToStructured() {
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <label class="min-w-0 flex-1 text-sm text-slate-400">
-            Nom du scénario
+            {{ t('programBuilder.matchPlan.scenarioLabel') }}
             <input
               :value="scenario.name"
               type="text"
               class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              placeholder="Ex. Objectif total, Plan B…"
+:placeholder="t('programBuilder.matchPlan.scenarioPlaceholder')"
               @input="updateScenarioName(index, $event.target.value)"
             />
           </label>
@@ -127,7 +130,7 @@ function convertLegacyToStructured() {
               class="rounded-lg border border-slate-700 px-2 py-1 text-xs text-slate-400 hover:border-red-500/50 hover:text-red-300"
               @click="removeScenario(index)"
             >
-              Supprimer
+              {{ t('common.delete') }}
             </button>
           </div>
         </div>
@@ -136,7 +139,7 @@ function convertLegacyToStructured() {
           <table class="w-full min-w-[300px] text-xs">
             <thead>
               <tr class="text-slate-500">
-                <th class="pb-2 pr-2 text-left font-medium">Mouvement</th>
+                <th class="pb-2 pr-2 text-left font-medium">{{ t('programBuilder.shared.movement') }}</th>
                 <th
                   v-for="key in ATTEMPT_KEYS"
                   :key="key"
@@ -170,7 +173,7 @@ function convertLegacyToStructured() {
         class="w-full rounded-xl border border-dashed border-slate-600 py-2.5 text-sm font-medium text-slate-300 hover:border-rose-500/40 hover:text-rose-200"
         @click="addScenario"
       >
-        + Ajouter un scénario
+        {{ t('programBuilder.matchPlan.addScenario') }}
       </button>
     </template>
   </div>

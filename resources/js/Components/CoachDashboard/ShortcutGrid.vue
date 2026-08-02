@@ -1,19 +1,21 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
 import { motion } from 'motion-v';
 import UiIcon from '../UiIcon.vue';
 import SectionHeader from './SectionHeader.vue';
 import { cardHover, cardShell } from './dashboardUi';
+const { t } = useI18n();
 
 defineProps({
   onAddAthlete: { type: Function, default: null },
 });
 
 const shortcuts = [
-  { key: 'program', label: 'Créer un programme', href: '/program-builder', icon: 'bolt' },
-  { key: 'athlete', label: 'Ajouter un athlète', action: 'add-athlete', icon: 'users' },
+  { key: 'program', label: t('app.coachDash.createProgram'), href: '/program-builder', icon: 'bolt' },
+  { key: 'athlete', label: t('app.coachDash.addAthlete'), action: 'add-athlete', icon: 'users' },
   { key: 'message', label: 'Envoyer un message', href: '/messaging', icon: 'chat' },
-  { key: 'comp', label: 'Créer une compétition', href: '/competitions', icon: 'calendar' },
+  { key: 'comp', label: t('app.coachDash.createCompetition'), href: '/competitions', icon: 'calendar' },
   { key: 'pr', label: 'Voir tous les PR', href: '/athletes', icon: 'trophy' },
 ];
 </script>
@@ -21,7 +23,7 @@ const shortcuts = [
 <template>
   <section :class="[cardShell, 'p-5']">
     <SectionHeader
-      eyebrow="Accès rapide"
+      :eyebrow="t('app.coachDash.quickAccess')"
       title="Raccourcis"
     />
 

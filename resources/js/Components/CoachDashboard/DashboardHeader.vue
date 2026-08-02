@@ -1,9 +1,11 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { motion } from 'motion-v';
 import UiIcon from '../UiIcon.vue';
 import { athleteInitials, daysUntil } from './dashboardUi';
+const { t } = useI18n();
 
 const props = defineProps({
   athleteCount: { type: Number, default: 0 },
@@ -29,13 +31,13 @@ const chips = computed(() => {
   const items = [
     {
       key: 'programs',
-      label: `${props.activePrograms} programme${props.activePrograms > 1 ? 's' : ''} actif${props.activePrograms > 1 ? 's' : ''}`,
+      label: t('app.coachDash.activeProgramsCount', props.activePrograms),
       href: '/program-builder',
       tone: 'blue',
     },
     {
       key: 'athletes',
-      label: `${props.athleteCount} athlète${props.athleteCount > 1 ? 's' : ''} suivi${props.athleteCount > 1 ? 's' : ''}`,
+      label: t('app.coachDash.athletesFollowedCount', props.athleteCount),
       href: '/athletes',
       tone: 'sky',
     },
@@ -46,8 +48,8 @@ const chips = computed(() => {
       key: 'comp',
       label:
         daysToComp.value <= 0
-          ? 'Compétition aujourd’hui'
-          : `Prochaine compétition dans ${daysToComp.value} jour${daysToComp.value > 1 ? 's' : ''}`,
+          ? t('app.coachDash.competitionToday')
+          : t('app.coachDash.nextCompetitionIn', daysToComp.value),
       href: '/competitions',
       tone: daysToComp.value <= 7 ? 'rose' : 'slate',
     });
@@ -85,11 +87,11 @@ const chipClass = {
           Power Roster
         </p>
         <h1 class="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-          Bonjour {{ firstName }}
+          {{ t('app.coachDash.hello', { name: firstName }) }}
           <span aria-hidden="true">👋</span>
         </h1>
         <p class="mt-2 text-sm text-slate-400">
-          Vue d’ensemble de ton activité.
+          {{ t('app.coachDash.overviewHint') }}
         </p>
 
         <div class="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
@@ -111,7 +113,7 @@ const chipClass = {
             class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition duration-200 hover:bg-blue-500 sm:w-auto sm:justify-start sm:py-2"
           >
             <UiIcon name="bolt" class="h-4 w-4" />
-            Créer un programme
+            {{ t('app.coachDash.createProgram') }}
           </Link>
           <button
             type="button"
@@ -119,14 +121,14 @@ const chipClass = {
             @click="emit('add-athlete')"
           >
             <UiIcon name="users" class="h-4 w-4" />
-            Ajouter un athlète
+            {{ t('app.coachDash.addAthlete') }}
           </button>
           <Link
             href="/competitions"
             class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950/40 px-3.5 py-2.5 text-sm font-medium text-slate-200 transition duration-200 hover:border-blue-500/40 hover:bg-slate-900 sm:w-auto sm:justify-start sm:py-2"
           >
             <UiIcon name="calendar" class="h-4 w-4" />
-            Nouvelle compétition
+            {{ t('app.competitions.new') }}
           </Link>
         </div>
       </div>
@@ -135,7 +137,7 @@ const chipClass = {
         <Link
           href="#dashboard-alerts"
           class="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 text-slate-300 transition duration-200 hover:border-blue-500/40 hover:text-white"
-          title="Notifications"
+          :title="t('app.coachDash.notifications')"
         >
           <UiIcon name="alert" class="h-5 w-5" />
           <span
@@ -148,7 +150,7 @@ const chipClass = {
         <Link
           href="/messaging"
           class="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-700 bg-slate-950/50 text-slate-300 transition duration-200 hover:border-blue-500/40 hover:text-white"
-          title="Messages"
+          :title="t('nav.messages')"
         >
           <UiIcon name="chat" class="h-5 w-5" />
           <span

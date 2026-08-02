@@ -1,7 +1,9 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { formatCalendarFr, formatShortDateTimeFr } from '../../utils/formatDates';
 import { messagingInitials } from '../../utils/messagingFormat';
+const { t } = useI18n();
 
 const props = defineProps({
   feedback: { type: Object, required: true },
@@ -12,7 +14,7 @@ const hasNotes = computed(() => Boolean((props.feedback.athlete_notes || '').tri
 const loggedNotes = computed(() => props.feedback.session_logged_notes || []);
 
 const title = computed(() =>
-  props.mode === 'athlete' ? 'Votre commentaire' : 'Commentaire de l’athlète',
+  props.mode === 'athlete' ? t('app.feedbacks.yourComment') : t('app.feedbacks.athleteComment'),
 );
 </script>
 
@@ -42,7 +44,7 @@ const title = computed(() =>
       {{ feedback.athlete_notes }}
     </p>
     <p v-else class="mt-3 text-sm text-slate-500">
-      {{ mode === 'athlete' ? 'Vous n’avez pas laissé de message.' : 'Aucun message libre laissé par l’athlète.' }}
+      {{ mode === 'athlete' ? t('app.feedbacks.noFreeMessageYou') : t('app.feedbacks.noFreeMessageAthlete') }}
     </p>
 
     <div

@@ -28,7 +28,7 @@ class CoachChartTemplateWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($request))
-            ->with('success', 'Modèle de graphique enregistré.');
+            ->with('success', __('messages.charts.template_saved'));
     }
 
     public function update(UpdateCoachChartTemplateRequest $request, CoachChartTemplate $template): RedirectResponse
@@ -48,7 +48,7 @@ class CoachChartTemplateWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams($request))
-            ->with('success', 'Modèle de graphique mis à jour.');
+            ->with('success', __('messages.charts.template_updated'));
     }
 
     public function destroy(CoachChartTemplate $template): RedirectResponse
@@ -64,7 +64,7 @@ class CoachChartTemplateWebController extends Controller
 
         return redirect()
             ->route('program.builder', $this->builderRouteParams(request()))
-            ->with('success', 'Modèle de graphique supprimé.');
+            ->with('success', __('messages.charts.template_deleted'));
     }
 
     private function authorizeTemplate(CoachChartTemplate $template): void

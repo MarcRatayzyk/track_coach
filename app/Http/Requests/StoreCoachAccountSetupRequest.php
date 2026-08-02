@@ -35,8 +35,8 @@ class StoreCoachAccountSetupRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
-            'password.min' => 'Le mot de passe doit contenir au moins :min caractères.',
+            'password.confirmed' => __('messages.validation.password_confirmed'),
+            'password.min' => __('messages.validation.password_min'),
         ];
     }
 }

@@ -1,10 +1,13 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { motion } from 'motion-v';
 import OnlineIndicator from '../Messaging/OnlineIndicator.vue';
 import SectionHeader from './SectionHeader.vue';
 import { messagingInitials, messagingRelativeTime } from '../../utils/messagingFormat';
+
+const { t } = useI18n();
 
 const props = defineProps({
   threads: {
@@ -27,9 +30,9 @@ const sorted = computed(() =>
 function preview(thread) {
   const last = thread?.last_message;
   if (!last) {
-    return 'Aucun message';
+    return t('app.messaging.noMessage');
   }
-  return `${last.is_mine ? 'Toi : ' : ''}${last.content}`;
+  return `${last.is_mine ? t('app.messaging.youPrefix') : ''}${last.content}`;
 }
 </script>
 
@@ -38,15 +41,15 @@ function preview(thread) {
     class="flex h-full min-h-0 flex-col rounded-[20px] border border-slate-800/80 bg-slate-900/50 p-4 shadow-lg backdrop-blur-sm sm:p-5"
   >
     <SectionHeader
-      eyebrow="Messagerie"
-      title="Conversations"
+      :eyebrow="t('nav.messaging')"
+      :title="t('app.messaging.conversationsTitle')"
     >
       <template #actions>
         <Link
           href="/messaging"
           class="rounded-[12px] border border-blue-500/40 bg-blue-950/30 px-3 py-1.5 text-xs font-semibold text-blue-200 transition hover:bg-blue-950/50"
         >
-          Voir toute la messagerie
+          {{ t('app.messaging.seeAllMessaging') }}
         </Link>
       </template>
     </SectionHeader>
@@ -55,7 +58,7 @@ function preview(thread) {
       v-if="!sorted.length"
       class="mt-6 flex flex-1 items-center justify-center rounded-[16px] border border-dashed border-slate-700 px-4 py-8 text-center text-sm text-slate-500"
     >
-      Aucune conversation.
+      {{ t('app.messaging.emptyConversations') }}
     </p>
 
     <ul v-else class="tc-scrollbar mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 lg:max-h-[22rem]">
@@ -87,7 +90,7 @@ function preview(thread) {
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
               <p class="truncate text-sm font-semibold text-white">
-                {{ thread.athlete?.name ?? 'Athlète' }}
+                {{ thread.athlete?.name ?? t('common.athlete') }}
               </p>
               <span class="shrink-0 text-[11px] text-slate-500">
                 {{ messagingRelativeTime(thread.last_message?.created_at ?? thread.updated_at) }}

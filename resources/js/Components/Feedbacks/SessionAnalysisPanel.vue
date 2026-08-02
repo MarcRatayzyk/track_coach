@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, ref, watch } from 'vue';
 import { motion } from 'motion-v';
 import { formatCalendarFr } from '../../utils/formatDates';
@@ -8,6 +9,7 @@ import AthleteCommentCard from './AthleteCommentCard.vue';
 import VideoFeedbackSlider from '../VideoFeedbackSlider.vue';
 import EmptyState from './EmptyState.vue';
 import FeedbackFrequencyPill from './FeedbackFrequencyPill.vue';
+const { t } = useI18n();
 
 const props = defineProps({
   feedback: { type: Object, default: null },
@@ -26,7 +28,7 @@ const canCompare = computed(() => videos.value.length >= 2);
 const headerTitle = computed(() => {
   if (!props.feedback) return '';
   return props.mode === 'athlete'
-    ? props.feedback.session_label || 'Séance'
+    ? props.feedback.session_label || t('app.feedbacks.session')
     : props.feedback.athlete_name;
 });
 
@@ -101,8 +103,8 @@ watch(
           />
           <EmptyState
             v-else
-            title="Pas d’exercices à comparer"
-            description="Cette séance n’a pas de programme prévu associé, ou aucun log n’est disponible."
+            :title="t('app.feedbacks.noExercisesCompare')"
+            :description="t('app.feedbacks.noExercisesCompareDesc')"
             class="!min-h-[8rem] !py-6"
           />
         </div>
@@ -125,7 +127,7 @@ watch(
               "
               @click="compareMode = !compareMode"
             >
-              {{ compareMode ? 'Vue simple' : 'Comparer 2 vidéos' }}
+              {{ compareMode ? t('app.feedbacks.simpleView') : t('app.feedbacks.compareVideos') }}
             </button>
           </div>
 
@@ -163,8 +165,8 @@ watch(
           </template>
           <EmptyState
             v-else
-            title="Aucune vidéo"
-            description="L’athlète n’a joint aucune vidéo à ce retour."
+            :title="t('app.feedbacks.noVideo')"
+            :description="t('app.feedbacks.noVideoDesc')"
             class="!min-h-[8rem] !py-6"
           />
         </div>
@@ -173,11 +175,11 @@ watch(
 
     <EmptyState
       v-else
-      title="Sélectionnez un retour"
+      :title="t('app.feedbacks.selectFeedback')"
       :description="
         mode === 'athlete'
-          ? 'Choisissez un retour dans la liste pour voir la séance et la réponse du coach.'
-          : 'Choisissez un athlète à gauche pour analyser la séance, les vidéos et répondre.'
+          ? t('app.feedbacks.selectFeedbackAthlete')
+          : t('app.feedbacks.selectFeedbackCoach')
       "
       class="m-4 !min-h-[16rem] flex-1"
     />

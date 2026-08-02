@@ -37,7 +37,7 @@ class StoreDayTableLayoutRequest extends FormRequest
             $hasPrescription = collect($columns)->contains(fn ($column) => in_array($column, ['sets', 'reps', 'load'], true));
 
             if (! $hasPrescription) {
-                $validator->errors()->add('columns', 'Active au moins une colonne de prescription (séries, reps ou charge).');
+                $validator->errors()->add('columns', __('messages.validation.day_table_columns'));
             }
         });
     }

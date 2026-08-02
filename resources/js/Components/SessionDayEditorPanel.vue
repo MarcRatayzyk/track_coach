@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import TrainingDayEditor from './TrainingDayEditor.vue';
 import { createSessionItem, emptyExerciseLine, formatLineRecap } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   title: {
@@ -94,7 +97,7 @@ function formatErrorMessages(errors) {
     .flat()
     .map((message) => {
       if (typeof message === 'string' && message.startsWith('validation.')) {
-        return 'Certaines valeurs numériques sont invalides.';
+        return t('programBuilder.sessionDayEditor.invalidNumbers');
       }
       return message;
     })
@@ -106,12 +109,12 @@ function formatErrorMessages(errors) {
   <div class="flex max-h-[min(90vh,52rem)] flex-col">
     <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 pb-4">
       <div class="min-w-0 flex-1">
-        <p class="text-xs font-medium uppercase tracking-wide text-blue-300">Séance</p>
+<p class="text-xs font-medium uppercase tracking-wide text-blue-300">{{ t('programBuilder.sessionDayEditor.session') }}</p>
         <h3 class="mt-1 text-lg font-semibold text-white">
           {{ title }}
         </h3>
         <label v-if="showDateField" class="mt-3 block text-sm text-slate-400">
-          Date
+          {{ t('common.date') }}
           <input
             v-model="sessionDate"
             type="date"
@@ -120,12 +123,12 @@ function formatErrorMessages(errors) {
           />
         </label>
         <label class="mt-3 block text-sm text-slate-400">
-          Nom de la séance
+          {{ t('programBuilder.shared.sessionLabel') }}
           <input
             :value="sessionLabel"
             type="text"
             maxlength="255"
-            placeholder="Ex. Force jambes, Volume bench…"
+:placeholder="t('programBuilder.sessionDayEditor.namePlaceholder')"
             class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm uppercase text-white placeholder:text-slate-600"
             @input="onSessionLabelInput"
           />
@@ -139,14 +142,14 @@ function formatErrorMessages(errors) {
           :disabled="processing"
           @click="$emit('delete')"
         >
-          Supprimer
+          {{ t('common.delete') }}
         </button>
         <button
           type="button"
           class="text-sm font-medium text-blue-400 hover:text-blue-300"
           @click="$emit('close')"
         >
-          ← Retour
+          {{ t('programBuilder.sessionDayEditor.back') }}
         </button>
       </div>
     </div>
@@ -158,7 +161,7 @@ function formatErrorMessages(errors) {
       >
         <div class="flex flex-wrap items-center justify-between gap-2">
           <p class="text-[10px] font-semibold uppercase tracking-widest text-sky-300/90">
-            Échauffement
+            {{ t('programBuilder.sessionDayEditor.warmup') }}
           </p>
           <label class="flex items-center gap-2 text-xs text-slate-300">
             <input
@@ -166,13 +169,13 @@ function formatErrorMessages(errors) {
               type="checkbox"
               class="rounded border-slate-600 bg-slate-950 text-sky-500"
             />
-            Personnaliser pour cette séance
+            {{ t('programBuilder.sessionDayEditor.customizeWarmup') }}
           </label>
         </div>
 
         <template v-if="!warmupOverride">
           <p v-if="hasInheritedWarmup" class="text-xs text-slate-400">
-            Hérité du bloc
+            {{ t('programBuilder.sessionDayEditor.inherited') }}
           </p>
           <p
             v-if="inheritedWarmup.notes?.trim()"
@@ -190,23 +193,23 @@ function formatErrorMessages(errors) {
             </li>
           </ul>
           <p v-else-if="!inheritedWarmup.notes?.trim()" class="text-xs text-slate-500">
-            Aucun échauffement défini sur le bloc.
+            {{ t('programBuilder.sessionDayEditor.noBlockWarmup') }}
           </p>
         </template>
 
         <template v-else>
           <label class="block text-xs font-medium text-slate-400">
-            Instructions
+            {{ t('programBuilder.shared.instructions') }}
             <textarea
               v-model="day.warmup_notes"
               rows="2"
               maxlength="5000"
-              placeholder="Instructions spécifiques à cette séance…"
+:placeholder="t('programBuilder.sessionDayEditor.warmupPlaceholder')"
               class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-white placeholder:text-slate-600"
             />
           </label>
           <p class="text-xs text-slate-500">
-            Ajoute les exercices d’échauffement avec le bouton ci-dessous.
+            {{ t('programBuilder.sessionDayEditor.warmupHint') }}
           </p>
         </template>
       </div>
@@ -215,12 +218,12 @@ function formatErrorMessages(errors) {
     </div>
 
     <label v-if="showNotes" class="mt-4 block text-sm text-slate-400">
-      Notes (optionnel)
+      {{ t('programBuilder.sessionDayEditor.notesOptional') }}
       <textarea
         v-model="notes"
         rows="2"
         class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-600"
-        placeholder="Ressenti, consignes, remarques…"
+:placeholder="t('programBuilder.sessionDayEditor.notesPlaceholder')"
       />
     </label>
 
@@ -235,7 +238,7 @@ function formatErrorMessages(errors) {
         class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
         @click="$emit('save')"
       >
-        Enregistrer
+        {{ t('common.save') }}
       </button>
       <button
         v-if="showDelete"
@@ -244,7 +247,7 @@ function formatErrorMessages(errors) {
         class="rounded-xl border border-red-500/50 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-950/40 disabled:opacity-50"
         @click="$emit('delete')"
       >
-        Supprimer la séance
+        {{ t('programBuilder.sessionDayEditor.deleteSession') }}
       </button>
     </div>
   </div>

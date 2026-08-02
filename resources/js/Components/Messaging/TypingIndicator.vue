@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
 defineProps({
   name: {
     type: String,
@@ -14,6 +18,6 @@ defineProps({
       <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:150ms]" />
       <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:300ms]" />
     </div>
-    <span v-if="name" class="text-xs text-slate-500">{{ name }} écrit…</span>
+    <span v-if="name" class="text-xs text-slate-500">{{ t('app.messaging.isTyping', { name }) }}</span>
   </div>
 </template>

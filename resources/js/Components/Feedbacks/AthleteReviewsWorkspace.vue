@@ -1,10 +1,12 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import ReviewCard from './ReviewCard.vue';
 import SessionAnalysisPanel from './SessionAnalysisPanel.vue';
 import AthleteReplyPanel from './AthleteReplyPanel.vue';
 import EmptyState from './EmptyState.vue';
+const { t } = useI18n();
 
 const props = defineProps({
   feedbacks: { type: Array, default: () => [] },
@@ -125,8 +127,8 @@ function urgencyFor(item) {
       <slot v-if="canSubmit" name="submit-form" />
       <EmptyState
         v-else
-        title="Aucune séance à renvoyer"
-        description="Dès qu’une séance est éligible, vous pourrez envoyer un retour ici."
+        :title="t('app.feedbacks.noSessionResend')"
+        :description="t('app.feedbacks.noSessionResendDesc')"
         tone="empty"
       />
     </div>
@@ -143,8 +145,8 @@ function urgencyFor(item) {
           <div class="tc-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
             <EmptyState
               v-if="!sortedFeedbacks.length"
-              title="Aucun retour passé"
-              description="Vos retours envoyés apparaîtront ici avec la réponse du coach."
+              :title="t('app.feedbacks.noPastFeedback')"
+              :description="t('app.feedbacks.noPastFeedbackDesc')"
               tone="empty"
             />
             <ReviewCard

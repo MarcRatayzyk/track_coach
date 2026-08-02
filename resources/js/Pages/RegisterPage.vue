@@ -7,8 +7,12 @@ export default {
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLogo from '../Components/AppLogo.vue';
+import { localeTag } from '../i18n';
 import { track } from '../utils/analytics';
+
+const { t, locale } = useI18n();
 
 const props = defineProps({
     selectedPlan: { type: String, default: null },
@@ -26,7 +30,7 @@ const form = useForm({
 });
 
 function formatPrice(amount) {
-    return Number(amount).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return Number(amount).toLocaleString(localeTag(locale.value), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function submit() {
@@ -40,7 +44,7 @@ function submit() {
 </script>
 
 <template>
-    <Head title="Créer un compte coach" />
+    <Head :title="t('auth.register.pageTitle')" />
 
     <div class="min-h-screen bg-slate-950 text-slate-200 lg:grid lg:grid-cols-2">
         <div
@@ -57,30 +61,30 @@ function submit() {
                     />
                 </Link>
                 <h1 class="mt-14 max-w-lg text-4xl font-bold leading-tight text-white xl:text-5xl">
-                    Lance ton espace coach en quelques minutes.
+                    {{ t('auth.register.brandTitle') }}
                 </h1>
                 <p class="mt-5 max-w-md text-lg leading-relaxed text-slate-400">
                     <template v-if="selectedPlanMeta">
-                        Crée ton compte, puis finalise le paiement Stripe pour le plan choisi.
+                        {{ t('auth.register.brandSubtitlePlan') }}
                     </template>
                     <template v-else>
-                        Crée ton compte et démarre un essai gratuit de 14 jours, sans carte bancaire.
+                        {{ t('auth.register.brandSubtitleTrial') }}
                     </template>
                 </p>
             </div>
             <ol class="relative mt-12 space-y-4 text-slate-300">
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">1</span>
-                    <span>Crée ton compte coach</span>
+                    <span>{{ t('auth.register.step1') }}</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">2</span>
-                    <span v-if="selectedPlanMeta">Paiement sécurisé via Stripe</span>
-                    <span v-else>Essai 14 jours activé immédiatement</span>
+                    <span v-if="selectedPlanMeta">{{ t('auth.register.step2Plan') }}</span>
+                    <span v-else>{{ t('auth.register.step2Trial') }}</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">3</span>
-                    <span>Invite tes athlètes et démarre</span>
+                    <span>{{ t('auth.register.step3') }}</span>
                 </li>
             </ol>
         </div>
@@ -92,17 +96,17 @@ function submit() {
                     class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-300 lg:hidden"
                 >
                     <span aria-hidden="true">←</span>
-                    Retour à l’accueil
+                    {{ t('auth.register.backHome') }}
                 </Link>
 
-                <h2 class="mt-6 text-3xl font-bold text-white lg:mt-0">Créer un compte coach</h2>
+                <h2 class="mt-6 text-3xl font-bold text-white lg:mt-0">{{ t('auth.register.title') }}</h2>
                 <p class="mt-2 text-slate-400">
-                    Déjà inscrit ?
+                    {{ t('auth.register.alreadyRegistered') }}
                     <Link
                         :href="selectedPlan ? `/login?plan=${selectedPlan}` : '/login'"
                         class="font-medium text-blue-400 hover:text-blue-300"
                     >
-                        Se connecter
+                        {{ t('auth.register.logIn') }}
                     </Link>
                 </p>
 
@@ -110,23 +114,21 @@ function submit() {
                     v-if="selectedPlanMeta"
                     class="mt-6 rounded-xl border border-blue-500/30 bg-blue-950/30 px-4 py-3 text-sm text-blue-100"
                 >
-                    Plan sélectionné :
-                    <strong class="text-white">{{ selectedPlanMeta.name }}</strong>
-                    : {{ formatPrice(selectedPlanMeta.price_eur) }} €/mois.
-                    Après inscription, tu seras redirigé vers le paiement Stripe (sans essai automatique).
+                    {{ t('auth.register.selectedPlan') }}
+                    <strong class="text-white">{{ selectedPlanMeta.name }}</strong>{{ t('auth.register.selectedPlanSuffix', { price: formatPrice(selectedPlanMeta.price_eur) }) }}
                 </div>
 
                 <div
                     v-else
                     class="mt-6 rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-100/90"
                 >
-                    Essai gratuit 14 jours, sans carte. Tu pourras t’abonner plus tard depuis Abonnement.
+                    {{ t('auth.register.trialBanner') }}
                 </div>
 
                 <form class="mt-8 space-y-5" @submit.prevent="submit">
                     <input v-if="form.plan" type="hidden" name="plan" :value="form.plan" />
                     <div>
-                        <label for="name" class="block text-sm font-medium text-slate-300">Nom affiché</label>
+                        <label for="name" class="block text-sm font-medium text-slate-300">{{ t('auth.register.nameLabel') }}</label>
                         <input
                             id="name"
                             v-model="form.name"
@@ -134,13 +136,13 @@ function submit() {
                             required
                             autocomplete="name"
                             class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3.5 text-base text-white placeholder-slate-500 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                            placeholder="Jean Dupont"
+                            :placeholder="t('auth.register.namePlaceholder')"
                         />
                         <p v-if="form.errors.name" class="mt-2 text-sm text-red-400">{{ form.errors.name }}</p>
                     </div>
 
                     <div>
-                        <label for="email" class="block text-sm font-medium text-slate-300">Adresse e-mail</label>
+                        <label for="email" class="block text-sm font-medium text-slate-300">{{ t('auth.register.emailLabel') }}</label>
                         <input
                             id="email"
                             v-model="form.email"
@@ -148,13 +150,13 @@ function submit() {
                             required
                             autocomplete="email"
                             class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3.5 text-base text-white placeholder-slate-500 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                            placeholder="coach@exemple.fr"
+                            :placeholder="t('auth.register.emailPlaceholder')"
                         />
                         <p v-if="form.errors.email" class="mt-2 text-sm text-red-400">{{ form.errors.email }}</p>
                     </div>
 
                     <div>
-                        <label for="password" class="block text-sm font-medium text-slate-300">Mot de passe</label>
+                        <label for="password" class="block text-sm font-medium text-slate-300">{{ t('auth.register.passwordLabel') }}</label>
                         <input
                             id="password"
                             v-model="form.password"
@@ -162,14 +164,14 @@ function submit() {
                             required
                             autocomplete="new-password"
                             class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3.5 text-base text-white placeholder-slate-500 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                            placeholder="8 caractères minimum"
+                            :placeholder="t('auth.register.passwordPlaceholder')"
                         />
                         <p v-if="form.errors.password" class="mt-2 text-sm text-red-400">{{ form.errors.password }}</p>
                     </div>
 
                     <div>
                         <label for="password_confirmation" class="block text-sm font-medium text-slate-300">
-                            Confirmation du mot de passe
+                            {{ t('auth.register.passwordConfirmation') }}
                         </label>
                         <input
                             id="password_confirmation"
@@ -186,16 +188,15 @@ function submit() {
                         :disabled="form.processing"
                         class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-4 text-base font-semibold leading-none text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-500 disabled:opacity-60"
                     >
-                        <span v-if="form.processing">Création du compte…</span>
-                        <span v-else-if="selectedPlanMeta">Créer mon compte et payer</span>
-                        <span v-else>Démarrer l’essai 14 jours</span>
+                        <span v-if="form.processing">{{ t('auth.register.submitCreating') }}</span>
+                        <span v-else-if="selectedPlanMeta">{{ t('auth.register.submitPay') }}</span>
+                        <span v-else>{{ t('auth.register.submitTrial') }}</span>
                         <span v-if="!form.processing" aria-hidden="true">→</span>
                     </button>
                 </form>
 
                 <p class="mt-8 text-center text-sm text-slate-500">
-                    Tu es athlète ? Demande à ton coach de t’inviter : il te transmettra un lien pour activer ton
-                    compte.
+                    {{ t('auth.register.athleteFooter') }}
                 </p>
             </div>
         </div>

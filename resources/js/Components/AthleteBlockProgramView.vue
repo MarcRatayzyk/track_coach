@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
   BLOCK_TYPES,
@@ -10,6 +11,8 @@ import {
   sessionCardTitle,
   weekDaysWithSessions,
 } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   activeProgram: {
@@ -82,12 +85,11 @@ function toggleWeek(weekId) {
     v-if="activeProgram && activeProgram.template"
     class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4"
   >
-    <h3 class="text-sm font-semibold text-white">Programme</h3>
+    <h3 class="text-sm font-semibold text-white">{{ t('athleteUi.blockProgram.program') }}</h3>
     <p class="mt-1 text-xs text-slate-500">
-      {{ activeProgram.template.name }} · du
-      {{ formatCalendarFr(activeProgram.date_start, 'medium') }}
+      {{ t('athleteUi.blockProgram.fromTo', { name: activeProgram.template.name, start: formatCalendarFr(activeProgram.date_start, 'medium') }) }}
       <template v-if="activeProgram.date_end">
-        au {{ formatCalendarFr(activeProgram.date_end, 'medium') }}
+        {{ t('athleteUi.blockProgram.to', { end: formatCalendarFr(activeProgram.date_end, 'medium') }) }}
       </template>
     </p>
 
@@ -114,7 +116,7 @@ function toggleWeek(weekId) {
           <span class="text-slate-400">— {{ blockTypeLabel(week.block_type) }}</span>
         </span>
         <span class="shrink-0 text-xs text-slate-500">
-          {{ weekDaysWithSessions(week).length }} séance{{ weekDaysWithSessions(week).length > 1 ? 's' : '' }}
+          {{ t('athleteUi.blockProgram.sessionsCount', weekDaysWithSessions(week).length) }}
         </span>
       </button>
 
@@ -150,11 +152,11 @@ function toggleWeek(weekId) {
               </li>
             </ul>
             <p v-if="!sortedExercisesForDay(day).length" class="mt-2 text-xs text-slate-500">
-              Aucun exercice.
+              {{ t('athleteUi.blockProgram.noExercises') }}
             </p>
           </article>
         </div>
-        <p v-else class="mt-2 text-xs text-slate-500">Aucune séance cette semaine.</p>
+        <p v-else class="mt-2 text-xs text-slate-500">{{ t('athleteUi.blockProgram.noSessionsWeek') }}</p>
       </div>
     </div>
   </section>
@@ -163,6 +165,6 @@ function toggleWeek(weekId) {
     v-else
     class="rounded-2xl border border-dashed border-slate-700 bg-slate-900/30 p-4 text-center"
   >
-    <p class="text-sm text-slate-500">Aucun programme actif assigné.</p>
+    <p class="text-sm text-slate-500">{{ t('athleteUi.blockProgram.noActiveProgram') }}</p>
   </section>
 </template>

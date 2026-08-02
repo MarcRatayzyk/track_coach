@@ -35,7 +35,7 @@ class PreviewProgramImportRequest extends FormRequest
             if (! in_array($ext, ['csv', 'txt', 'xlsx', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf'], true)) {
                 $validator->errors()->add(
                     'file',
-                    'Formats acceptés : CSV, XLSX, PDF ou image (JPG/PNG/WEBP).',
+                    __('messages.validation.file_mimes_import'),
                 );
             }
         });
@@ -44,8 +44,8 @@ class PreviewProgramImportRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'file.required' => 'Choisissez un fichier programme.',
-            'file.max' => 'Le fichier est trop volumineux.',
+            'file.required' => __('messages.validation.file_required_program'),
+            'file.max' => __('messages.validation.file_too_large'),
         ];
     }
 }

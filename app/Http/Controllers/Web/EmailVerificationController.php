@@ -43,7 +43,7 @@ class EmailVerificationController extends Controller
         }
 
         return redirect()->intended($this->homeFor($user))
-            ->with('success', 'E-mail confirmé. Bienvenue sur Power Roster !');
+            ->with('success', __('messages.auth.email_confirmed'));
     }
 
     public function resend(Request $request): RedirectResponse
@@ -61,7 +61,7 @@ class EmailVerificationController extends Controller
         $sent = ActivationDelivery::sendCoachEmailVerification($request->user());
 
         if (! $sent) {
-            return back()->with('error', MailSendSupport::DELIVERY_FAILED_MESSAGE);
+            return back()->with('error', MailSendSupport::deliveryFailedMessage());
         }
 
         return back()->with('status', 'verification-link-sent');

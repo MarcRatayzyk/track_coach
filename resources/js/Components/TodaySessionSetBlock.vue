@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import OptionButtonGroup from './OptionButtonGroup.vue';
 import {
   RPE_OPTIONS,
@@ -8,6 +9,8 @@ import {
   formatValidatedSetsRecapLines,
   inferLoadMode,
 } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   item: {
@@ -85,7 +88,7 @@ const collapsedRecapLines = computed(() => {
   }
 
   const withKg = formatLineRecapWithKg(line.value, props.oneRm, props.mainLift);
-  const fallback = withKg ?? formatLineRecap(line.value) ?? 'Série à renseigner';
+  const fallback = withKg ?? formatLineRecap(line.value) ?? t('athleteUi.todaySessionSet.setToFill');
   return [fallback];
 });
 
@@ -105,15 +108,15 @@ const currentSetNumber = computed(() =>
 
 const validateButtonLabel = computed(() => {
   if (props.saving) {
-    return 'Enregistrement…';
+    return t('athleteUi.todaySessionSet.saving');
   }
   if (isCluster.value) {
-    return 'Valider le cluster';
+    return t('athleteUi.todaySessionSet.validateCluster');
   }
   if (totalSets.value > 1 && !fullyValidated.value) {
-    return isRamp.value ? 'Valider ce palier' : 'Valider une série';
+    return isRamp.value ? t('athleteUi.todaySessionSet.validateRamp') : t('athleteUi.todaySessionSet.validateOneSet');
   }
-  return 'Valider la série';
+  return t('athleteUi.todaySessionSet.validateSet');
 });
 
 const hasAthleteNote = computed(() => Boolean(String(line.value.athlete_note ?? '').trim()));
@@ -249,7 +252,7 @@ const inputClass =
         v-if="fullyValidated"
         class="shrink-0 rounded-full border border-emerald-500/40 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300"
       >
-        Validée
+        {{ t('athleteUi.todaySessionSet.validated') }}
       </span>
       <span
         v-else-if="validatedSetsCount > 0"
@@ -266,7 +269,7 @@ const inputClass =
           class="mb-3 space-y-1 rounded-lg border border-emerald-500/20 bg-emerald-950/20 px-2.5 py-2"
         >
           <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-300/90">
-            Séries validées
+            {{ t('athleteUi.todaySessionSet.validatedSets') }}
           </p>
           <p
             v-for="(recapLine, index) in collapsedRecapLines"
@@ -278,17 +281,17 @@ const inputClass =
         </div>
 
         <p v-if="clusterTarget" class="mb-3 rounded-lg border border-violet-500/30 bg-violet-950/20 px-2.5 py-2 text-xs font-medium text-violet-200">
-          Objectif cluster : {{ clusterTarget }}
+          {{ t('athleteUi.todaySessionSet.clusterTarget', { target: clusterTarget }) }}
         </p>
 
         <p v-else-if="totalSets > 1" class="mb-3 text-xs font-medium text-blue-300/90">
-          <template v-if="isRamp">Palier {{ currentSetNumber }} sur {{ totalSets }}</template>
-          <template v-else>Série {{ currentSetNumber }} sur {{ totalSets }}</template>
+          <template v-if="isRamp">{{ t('athleteUi.todaySessionSet.rampProgress', { current: currentSetNumber, total: totalSets }) }}</template>
+          <template v-else>{{ t('athleteUi.todaySessionSet.setProgress', { current: currentSetNumber, total: totalSets }) }}</template>
         </p>
 
         <div class="grid grid-cols-2 gap-3">
           <label class="block text-xs font-medium text-slate-400">
-            {{ isCluster ? 'Reps réalisées' : 'Reps' }}
+            {{ isCluster ? t('athleteUi.todaySessionSet.repsDone') : t('athleteUi.todaySessionSet.reps') }}
             <input
               :value="line.reps ?? ''"
               type="number"
@@ -302,7 +305,7 @@ const inputClass =
           </label>
 
           <div v-if="!isCluster">
-            <p class="text-xs font-medium text-slate-400">Charge</p>
+            <p class="text-xs font-medium text-slate-400">{{ t('athleteUi.todaySessionSet.load') }}</p>
             <div class="mt-1 flex flex-wrap gap-1.5">
               <button
                 v-for="mode in chargeModes"
@@ -349,9 +352,9 @@ const inputClass =
             </label>
           </div>
           <div v-else class="text-xs text-slate-500">
-            <p class="font-medium text-slate-400">Durée prévue</p>
+            <p class="font-medium text-slate-400">{{ t('athleteUi.todaySessionSet.plannedDuration') }}</p>
             <p class="mt-2 rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-2 text-sm text-slate-200">
-              {{ line.scheme_config?.duration_minutes ?? '—' }} min
+              {{ t('athleteUi.todaySessionSet.minutes', { count: line.scheme_config?.duration_minutes ?? '—' }) }}
             </p>
           </div>
         </div>
@@ -360,7 +363,7 @@ const inputClass =
           <OptionButtonGroup
             :model-value="line.rpe"
             :options="RPE_OPTIONS"
-            label="RPE de la série"
+            :label="t('athleteUi.todaySessionSet.rpeLabel')"
             @update:model-value="updateRpe"
           />
         </div>
@@ -381,7 +384,7 @@ const inputClass =
           class="space-y-1 rounded-lg border border-emerald-500/20 bg-emerald-950/20 px-2.5 py-2"
         >
           <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-300/90">
-            Séries validées
+            {{ t('athleteUi.todaySessionSet.validatedSets') }}
           </p>
           <p
             v-for="(recapLine, index) in collapsedRecapLines"
@@ -392,15 +395,15 @@ const inputClass =
           </p>
         </div>
         <p class="text-xs text-emerald-300/90">
-          Exercice validé — la note sera incluse dans le retour au coach.
+          {{ t('athleteUi.todaySessionSet.exerciseValidated') }}
         </p>
         <label class="block text-xs font-medium text-slate-400">
-          Note sur cet exercice
+          {{ t('athleteUi.todaySessionSet.noteOnExercise') }}
           <textarea
             :value="line.athlete_note ?? ''"
             rows="3"
             maxlength="1000"
-            placeholder="Sensation, douleur, commentaire…"
+            :placeholder="t('athleteUi.todaySessionSet.notePlaceholder')"
             class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-white placeholder:text-slate-600"
             @input="updateAthleteNote($event.target.value)"
             @blur="persistNote"
@@ -412,7 +415,7 @@ const inputClass =
           :disabled="saving"
           @click="persistNote"
         >
-          {{ saving ? 'Enregistrement…' : 'Enregistrer la note' }}
+          {{ saving ? t('athleteUi.todaySessionSet.saving') : t('athleteUi.todaySessionSet.saveNote') }}
         </button>
       </div>
     </div>

@@ -15,6 +15,8 @@ export default {
 
 
 <script setup>
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 
 import { computed, ref } from 'vue';
 
@@ -219,7 +221,7 @@ const clipboardStatus = computed(() => {
 
     const count = Object.keys(clipboardWeek.value.sessions).length;
 
-    return `Semaine ${clipboardWeek.value.weekNumber} copiée (${count} séance${count > 1 ? 's' : ''})`;
+    return t(count > 1 ? 'app.programs.weekCopiedPlural' : 'app.programs.weekCopied', { week: clipboardWeek.value.weekNumber, count });
 
   }
 
@@ -227,7 +229,7 @@ const clipboardStatus = computed(() => {
 
     const label = clipboardSession.value.session_label;
 
-    return label ? `Séance copiée : ${label}` : 'Séance copiée';
+    return label ? t('app.programs.sessionCopiedNamed', { label }) : t('app.programs.sessionCopied');
 
   }
 
@@ -293,7 +295,7 @@ function deleteSelectedSession() {
 
     !window.confirm(
 
-      'Supprimer cette séance ? Tous les exercices programmés pour ce jour seront effacés.',
+      t('app.programs.deleteSessionConfirm'),
 
     )
 
@@ -488,9 +490,9 @@ function pasteSessionToCell(cell) {
 
     cell,
 
-    title: `Coller la séance sur ${weekdayShortLabel(cell.weekday)}`,
+    title: t('app.programs.pasteSessionTitle', { day: weekdayShortLabel(cell.weekday) }),
 
-    hint: 'Définis le titre, les notes, les incréments et les lignes concernées avant de coller.',
+    hint: t('app.programs.pasteSessionHint'),
 
     pasteKind: 'session',
 
@@ -594,7 +596,7 @@ function pasteWeek(targetWeekNumber) {
 
     !window.confirm(
 
-      `Coller la semaine ${clipboardWeek.value.weekNumber} sur la semaine ${targetWeekNumber} ? Les séances existantes sur ces jours seront remplacées.`,
+      t('app.programs.pasteWeekConfirm', { from: clipboardWeek.value.weekNumber, to: targetWeekNumber }),
 
     )
 
@@ -614,7 +616,7 @@ function pasteWeek(targetWeekNumber) {
 
     title: `Coller sur la semaine ${targetWeekNumber}`,
 
-    hint: 'Définis les notes, les incréments et les lignes concernées pour toutes les séances collées.',
+    hint: t('app.programs.pasteWeekHint'),
 
     pasteKind: 'week',
 
@@ -818,13 +820,13 @@ function clearClipboard() {
 
               assigning
 
-                ? 'Assignation…'
+                ? t('app.programs.assigning')
 
                 : isAssigned
 
-                  ? 'Assigné à l\'athlète'
+                  ? t('app.programs.assigned')
 
-                  : 'Enregistrer et assigner à l\'athlète'
+                  : t('app.programs.saveAndAssign')
 
             }}
 
@@ -1009,7 +1011,7 @@ function clearClipboard() {
 
             >
 
-              {{ deleting ? 'Suppression…' : 'Supprimer séance' }}
+              {{ deleting ? t('common.deleting') : t('app.programs.deleteSession') }}
 
             </button>
 
@@ -1067,7 +1069,7 @@ function clearClipboard() {
 
             >
 
-              {{ pasteMode ? 'Fin collage multiple' : 'Coller sur plusieurs cases' }}
+              {{ pasteMode ? t('app.programs.endPasteMulti') : t('app.programs.pasteMulti') }}
 
             </button>
 
@@ -1079,7 +1081,7 @@ function clearClipboard() {
 
               class="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:text-white"
 
-              title="Vider le presse-papiers"
+              :title="t('app.programs.clearClipboard')"
 
               @click="clearClipboard"
 

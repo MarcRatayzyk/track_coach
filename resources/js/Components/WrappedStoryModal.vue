@@ -1,7 +1,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { motion } from 'motion-v';
 import AnimatedCounter from './Dashboard/AnimatedCounter.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -20,11 +23,11 @@ const slideIndex = ref(0);
 /** Index de la métrique révélée sur un écran lift (0 = barre, 1 = e1RM, 2 = tonnage). */
 const liftStep = ref(0);
 
-const LIFT_METRICS = [
-  { key: 'heaviest_bar', headline: 'Barre la plus lourde', unit: 'kg', hint: 'Le max mis sur la barre' },
-  { key: 'tonnage', headline: 'Tonnage', unit: 'kg', hint: 'Volume total sur le mouvement' },
-  { key: 'top_e1rm', headline: 'e1RM le plus élevé', unit: 'kg', hint: 'Estimation 1RM' },
-];
+const LIFT_METRICS = computed(() => [
+  { key: 'heaviest_bar', headline: t('modals.wrapped.heaviestBar'), unit: 'kg', hint: t('modals.wrapped.heaviestBarHint') },
+  { key: 'tonnage', headline: t('modals.wrapped.tonnage'), unit: 'kg', hint: t('modals.wrapped.tonnageHint') },
+  { key: 'top_e1rm', headline: t('modals.wrapped.topE1rm'), unit: 'kg', hint: t('modals.wrapped.topE1rmHint') },
+]);
 
 const LIFT_THEMES = {
   squat: {
@@ -63,7 +66,7 @@ const slides = computed(() => {
     {
       id: 'overview',
       kind: 'overview',
-      title: 'Ton volume',
+      title: t('modals.wrapped.yourVolume'),
       metrics: data.overview ?? {},
     },
   ];
@@ -81,7 +84,7 @@ const slides = computed(() => {
     id: 'outro',
     kind: 'outro',
     title: data.label,
-    subtitle: 'Continue comme ça',
+    subtitle: t('modals.wrapped.keepGoing'),
   });
 
   return list;
@@ -104,11 +107,11 @@ const liftTheme = computed(() => {
 
 const revealedLiftMetrics = computed(() => {
   if (!isLift.value) return [];
-  return LIFT_METRICS.slice(0, liftStep.value + 1);
+  return LIFT_METRICS.value.slice(0, liftStep.value + 1);
 });
 
-const currentLiftMetric = computed(() => LIFT_METRICS[liftStep.value] ?? null);
-const canRevealMoreLift = computed(() => isLift.value && liftStep.value < LIFT_METRICS.length - 1);
+const currentLiftMetric = computed(() => LIFT_METRICS.value[liftStep.value] ?? null);
+const canRevealMoreLift = computed(() => isLift.value && liftStep.value < LIFT_METRICS.value.length - 1);
 
 const bgClass = computed(() => {
   if (isLift.value) return liftTheme.value.accent;
@@ -205,25 +208,25 @@ function metricValue(metric) {
 
 function nextLabel() {
   if (canRevealMoreLift.value) {
-    const nextMetric = LIFT_METRICS[liftStep.value + 1];
-    return nextMetric?.headline ?? 'Suivant';
+    const nextMetric = LIFT_METRICS.value[liftStep.value + 1];
+    return nextMetric?.headline ?? t('common.next');
   }
   if (isLast.value) {
-    return 'Fermer';
+    return t('common.close');
   }
   if (isLift.value) {
-    return 'Mouvement suivant';
+    return t('modals.wrapped.nextLift');
   }
-  return 'Suivant';
+  return t('common.next');
 }
 
-const overviewItems = [
-  { key: 'total_tonnage', label: 'Tonnage', suffix: 'kg' },
-  { key: 'adherence_percent', label: 'Adhérence', suffix: '%' },
-  { key: 'total_sets', label: 'Séries', suffix: '' },
-  { key: 'total_reps', label: 'Reps', suffix: '' },
-  { key: 'tonnage_per_set', label: 'Tonnage / série', suffix: 'kg' },
-];
+const overviewItems = computed(() => [
+  { key: 'total_tonnage', label: t('modals.wrapped.tonnage'), suffix: 'kg' },
+  { key: 'adherence_percent', label: t('modals.wrapped.adherence'), suffix: '%' },
+  { key: 'total_sets', label: t('modals.wrapped.sets'), suffix: '' },
+  { key: 'total_reps', label: t('modals.wrapped.reps'), suffix: '' },
+  { key: 'tonnage_per_set', label: t('modals.wrapped.tonnagePerSet'), suffix: 'kg' },
+]);
 </script>
 
 <template>
@@ -253,7 +256,7 @@ const overviewItems = [
         <button
           type="button"
           class="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
-          aria-label="Fermer"
+          :aria-label="t('common.close')"
           @click="close"
         >
           ✕
@@ -277,7 +280,7 @@ const overviewItems = [
               :animate="{ opacity: 1, y: 0 }"
               :transition="{ delay: 0.1, duration: 0.35 }"
             >
-              Wrapped
+              {{ t('modals.wrapped.brand') }}
             </motion.p>
             <motion.h2
               class="mt-5 text-4xl font-bold leading-tight sm:text-5xl"
@@ -301,7 +304,7 @@ const overviewItems = [
               :animate="{ opacity: 1 }"
               :transition="{ delay: 0.55, duration: 0.4 }"
             >
-              Découvre ton récap lift par lift →
+              {{ t('modals.wrapped.discover') }}
             </motion.p>
           </motion.div>
 
@@ -313,7 +316,7 @@ const overviewItems = [
             :animate="{ opacity: 1, y: 0 }"
             :transition="{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }"
           >
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">Volume</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">{{ t('modals.wrapped.volume') }}</p>
             <h2 class="mt-3 text-2xl font-bold sm:text-3xl">{{ currentSlide.title }}</h2>
             <div class="mt-7 grid gap-2.5">
               <motion.div
@@ -420,7 +423,7 @@ const overviewItems = [
                   class="mt-4 text-sm font-semibold"
                   :class="deltaClass(currentSlide.lift[currentLiftMetric.key].delta)"
                 >
-                  vs {{ wrapped?.comparison_label ?? 'la semaine précédente' }}
+                  vs {{ wrapped?.comparison_label ?? t('modals.wrapped.vsPreviousDefault') }}
                   {{ formatDelta(currentSlide.lift[currentLiftMetric.key].delta) }}
                 </p>
               </motion.div>
@@ -460,7 +463,7 @@ const overviewItems = [
             :animate="{ opacity: 1, y: 0, scale: 1 }"
             :transition="{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }"
           >
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">Bravo</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">{{ t('modals.wrapped.bravo') }}</p>
             <h2 class="mt-4 text-3xl font-bold sm:text-4xl">{{ currentSlide.title }}</h2>
             <p class="mt-3 text-lg text-slate-300">{{ currentSlide.subtitle }}</p>
             <motion.button
@@ -471,7 +474,7 @@ const overviewItems = [
               :transition="{ delay: 0.25, duration: 0.35 }"
               @click="emit('share', wrapped.share_payload)"
             >
-              Partager mon recap
+              {{ t('modals.wrapped.share') }}
             </motion.button>
           </motion.div>
         </div>
@@ -483,7 +486,7 @@ const overviewItems = [
             :disabled="isFirst && liftStep === 0"
             @click="prev"
           >
-            Retour
+            {{ t('common.back') }}
           </button>
 
           <motion.button

@@ -1,8 +1,11 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import MessageBubble from './MessageBubble.vue';
 import TypingIndicator from './TypingIndicator.vue';
 import { messagingDateKey, messagingDateLabel } from '../../utils/messagingFormat';
+
+const { t } = useI18n();
 
 const props = defineProps({
   messages: {
@@ -126,7 +129,7 @@ defineExpose({ scrollToBottom });
     <TypingIndicator v-if="isTyping" :name="typingName" />
 
     <p v-if="!messages.length" class="py-16 text-center text-sm text-slate-500">
-      Commence la conversation — ton premier message apparaîtra ici.
+      {{ t('app.messaging.startConversation') }}
     </p>
   </div>
 </template>

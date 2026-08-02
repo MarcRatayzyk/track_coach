@@ -57,7 +57,7 @@ class PreviewProgramImportMappedRequest extends FormRequest
             if (! in_array($ext, ['csv', 'txt', 'xlsx'], true)) {
                 $validator->errors()->add(
                     'file',
-                    'Formats acceptés : CSV (.csv, .txt) ou Excel (.xlsx).',
+                    __('messages.validation.file_mimes_mapped'),
                 );
             }
         });
@@ -66,8 +66,8 @@ class PreviewProgramImportMappedRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'file.required' => 'Choisissez un fichier CSV ou Excel.',
-            'mapping.required' => 'Le mapping des colonnes est requis.',
+            'file.required' => __('messages.validation.file_required_csv'),
+            'mapping.required' => __('messages.validation.mapping_required'),
         ];
     }
 }

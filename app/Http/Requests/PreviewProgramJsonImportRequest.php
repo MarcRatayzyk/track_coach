@@ -25,7 +25,7 @@ class PreviewProgramJsonImportRequest extends FormRequest
             $json = $this->input('json');
             if (is_string($json)) {
                 if (strlen($json) > 2_000_000) {
-                    $validator->errors()->add('json', 'JSON trop volumineux (max ~2 Mo).');
+                    $validator->errors()->add('json', __('messages.validation.json_too_large'));
                 }
 
                 return;
@@ -34,20 +34,20 @@ class PreviewProgramJsonImportRequest extends FormRequest
             if (is_array($json)) {
                 $encoded = json_encode($json);
                 if ($encoded !== false && strlen($encoded) > 2_000_000) {
-                    $validator->errors()->add('json', 'JSON trop volumineux (max ~2 Mo).');
+                    $validator->errors()->add('json', __('messages.validation.json_too_large'));
                 }
 
                 return;
             }
 
-            $validator->errors()->add('json', 'Fournis une chaîne JSON ou un objet.');
+            $validator->errors()->add('json', __('messages.validation.json_invalid'));
         });
     }
 
     public function messages(): array
     {
         return [
-            'json.required' => 'Colle le JSON du programme.',
+            'json.required' => __('messages.validation.json_required'),
         ];
     }
 }

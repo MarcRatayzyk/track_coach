@@ -1,12 +1,15 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import ChartBuilderModal from './ChartBuilderModal.vue';
 import CoachChartTemplatesPanel from './CoachChartTemplatesPanel.vue';
 import CustomChartCard from './CustomChartCard.vue';
 import DefaultBuiltinChart from './DefaultBuiltinChart.vue';
 import { BUILTIN_CHART_KEYS } from '../config/chartBuilderOptions';
 import { mapTrainingSessionsToBlockSessions } from '../utils/trainingVolume';
+
+const { t } = useI18n();
 
 const ATHLETE_DEFAULT_KEYS = [
   BUILTIN_CHART_KEYS.VOLUME_WEEKLY,
@@ -112,7 +115,7 @@ function closeBuilder() {
 }
 
 function removeDashboardItem(item) {
-  if (!window.confirm('Retirer ce graphique du tableau de bord ?')) {
+  if (!window.confirm(t('programBuilder.statsTab.removeConfirm'))) {
     return;
   }
 
@@ -147,7 +150,7 @@ function moveDashboardItem(item, direction) {
         "
         @click="statsMode = 'cible'"
       >
-        Cible
+        {{ t('programBuilder.statsTab.target') }}
       </button>
       <button
         type="button"
@@ -159,17 +162,17 @@ function moveDashboardItem(item, direction) {
         "
         @click="statsMode = 'realise'"
       >
-        Réalisé
+        {{ t('programBuilder.statsTab.realized') }}
       </button>
     </div>
 
     <p class="text-sm text-slate-400">
       <template v-if="statsMode === 'cible'">
-        Graphiques basés sur le programme prescrit (charges, reps et RPE cibles).
+        {{ t('programBuilder.statsTab.targetHint') }}
       </template>
       <template v-else>
-        Graphiques basés sur les séances loguées par l’athlète
-        <span v-if="realizedSessionCount"> ({{ realizedSessionCount }} séance{{ realizedSessionCount > 1 ? 's' : '' }})</span>.
+        {{ t('programBuilder.statsTab.realizedHint') }}
+        <span v-if="realizedSessionCount">{{ t('programBuilder.statsTab.realizedSessions', realizedSessionCount, { named: { count: realizedSessionCount } }) }}</span>.
       </template>
     </p>
 
@@ -177,21 +180,21 @@ function moveDashboardItem(item, direction) {
       v-if="coachMode"
       class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3"
     >
-      <p class="text-sm text-slate-400">Personnalise ton tableau de bord stats pour ce bloc.</p>
+      <p class="text-sm text-slate-400">{{ t('programBuilder.statsTab.customize') }}</p>
       <div class="flex flex-wrap gap-2">
         <button
           type="button"
           class="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
           @click="openTemplatesPanel"
         >
-          Mes modèles
+          {{ t('programBuilder.statsTab.myTemplates') }}
         </button>
         <button
           type="button"
           class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-500"
           @click="openBuilder"
         >
-          Ajouter un graphique
+          {{ t('programBuilder.statsTab.addChart') }}
         </button>
       </div>
     </div>
@@ -200,14 +203,14 @@ function moveDashboardItem(item, direction) {
       v-if="statsMode === 'realise' && realizedSessionCount === 0"
       class="rounded-xl border border-dashed border-slate-700 px-4 py-10 text-center text-sm text-slate-500"
     >
-      Aucune séance réalisée sur ce bloc pour le moment. Dès que l’athlète loggue ses entraînements, les graphiques apparaîtront ici.
+      {{ t('programBuilder.statsTab.noRealized') }}
     </p>
 
     <p
       v-else-if="coachMode && dashboardItems.length === 0"
       class="rounded-xl border border-dashed border-slate-700 px-4 py-10 text-center text-sm text-slate-500"
     >
-      Aucun graphique affiché. Ajoute un graphique par défaut via « Mes modèles » ou crée-en un nouveau.
+      {{ t('programBuilder.statsTab.noCharts') }}
     </p>
 
     <div v-else class="grid gap-4 lg:grid-cols-2">
@@ -220,7 +223,7 @@ function moveDashboardItem(item, direction) {
             type="button"
             class="rounded px-2 py-1 text-xs text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-30"
             :disabled="index === 0"
-            title="Monter"
+            :title="t('programBuilder.statsTab.moveUp')"
             @click="moveDashboardItem(item, 'up')"
           >
             ↑
@@ -229,7 +232,7 @@ function moveDashboardItem(item, direction) {
             type="button"
             class="rounded px-2 py-1 text-xs text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-30"
             :disabled="index === dashboardItems.length - 1"
-            title="Descendre"
+            :title="t('programBuilder.statsTab.moveDown')"
             @click="moveDashboardItem(item, 'down')"
           >
             ↓
@@ -237,7 +240,7 @@ function moveDashboardItem(item, direction) {
           <button
             type="button"
             class="rounded px-2 py-1 text-xs text-red-400 hover:bg-red-950/40"
-            title="Retirer"
+            :title="t('programBuilder.statsTab.remove')"
             @click="removeDashboardItem(item)"
           >
             ✕

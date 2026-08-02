@@ -1,9 +1,11 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { motion } from 'motion-v';
 import { track } from '../../utils/analytics';
 import FeedbackFrequencyPill from './FeedbackFrequencyPill.vue';
+const { t } = useI18n();
 
 const props = defineProps({
   feedback: { type: Object, default: null },
@@ -66,7 +68,7 @@ function sendReply() {
         Retour du coach
       </h2>
       <p class="mt-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-white">
-        <span>{{ feedback?.athlete_name || 'Sélectionnez un retour' }}</span>
+        <span>{{ feedback?.athlete_name || t('app.feedbacks.selectFeedback') }}</span>
         <FeedbackFrequencyPill
           v-if="feedback?.feedback_frequency"
           :frequency="feedback.feedback_frequency"
@@ -102,7 +104,7 @@ function sendReply() {
             ref="editorRef"
             v-model="replyForm.content"
             rows="10"
-            placeholder="Écrivez votre retour à l’athlète…"
+            :placeholder="t('app.feedbacks.writeReply')"
             class="mt-2 w-full rounded-[14px] border border-slate-700 bg-slate-950/80 px-3.5 py-3 text-sm text-white placeholder:text-slate-600 transition duration-200 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
           <p v-if="replyForm.errors.content" class="mt-1 text-sm text-red-400">

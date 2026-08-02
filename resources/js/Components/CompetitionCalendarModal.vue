@@ -1,8 +1,12 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../i18n';
 import CompetitionDetailPanel from './CompetitionDetailPanel.vue';
 import { formatCalendarFr } from '../utils/formatDates';
+
+const { t, locale } = useI18n();
 
 const props = defineProps({
   open: {
@@ -21,7 +25,15 @@ const view = ref('calendar');
 const selectedDay = ref(null);
 const selectedCompetition = ref(null);
 
-const weekdayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const weekdayLabels = computed(() => [
+  t('athleteUi.calendar.weekdaysShort.mon'),
+  t('athleteUi.calendar.weekdaysShort.tue'),
+  t('athleteUi.calendar.weekdaysShort.wed'),
+  t('athleteUi.calendar.weekdaysShort.thu'),
+  t('athleteUi.calendar.weekdaysShort.fri'),
+  t('athleteUi.calendar.weekdaysShort.sat'),
+  t('athleteUi.calendar.weekdaysShort.sun'),
+]);
 
 function dateKey(value) {
   const s = String(value ?? '');
@@ -67,7 +79,7 @@ const calendarYear = ref(initialMonth().year);
 
 const monthLabel = computed(() => {
   const d = new Date(calendarYear.value, calendarMonth.value, 1);
-  return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return d.toLocaleDateString(localeTag(locale.value), { month: 'long', year: 'numeric' });
 });
 
 const calendarCells = computed(() => {
@@ -180,8 +192,8 @@ function backToCalendar() {
           <h2 class="text-base font-semibold text-white">
             {{
               view === 'detail'
-                ? selectedCompetition?.name ?? 'Compétition'
-                : 'Compétitions à venir'
+                ? selectedCompetition?.name ?? t('modals.competitionCalendar.competition')
+                : t('modals.competitionCalendar.upcoming')
             }}
           </h2>
           <button
@@ -272,7 +284,7 @@ function backToCalendar() {
                 >
                   <p class="text-sm font-semibold text-white">{{ comp.name }}</p>
                   <p class="mt-0.5 text-xs text-slate-400">
-                    {{ comp.athlete?.name ?? 'Athlète' }}
+                    {{ comp.athlete?.name ?? t('common.athlete') }}
                     <span v-if="comp.location"> · {{ comp.location }}</span>
                   </p>
                 </button>
@@ -284,10 +296,10 @@ function backToCalendar() {
             v-else-if="!competitions.length"
             class="mt-6 text-center text-sm text-slate-500"
           >
-            Aucune compétition à venir.
+            {{ t('modals.competitionCalendar.none') }}
           </p>
           <p v-else class="mt-6 text-center text-sm text-slate-500">
-            Sélectionne un jour marqué pour voir les compétitions.
+            {{ t('modals.competitionCalendar.selectDay') }}
           </p>
         </template>
       </div>

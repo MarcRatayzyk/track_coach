@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AthleteSessionNotesModal from './AthleteSessionNotesModal.vue';
 import {
   athleteColumnHeaderLabel,
@@ -9,6 +10,8 @@ import {
   resolveVisibleColumns,
 } from '../config/dayTableColumns';
 import { sectionOption } from '../config/programTableSections';
+
+const { t } = useI18n();
 
 const props = defineProps({
   weekNumber: {
@@ -45,7 +48,7 @@ const hasSessionNotes = computed(() => sessionNotes.value.length > 0);
 const rows = computed(() => props.session?.items ?? []);
 
 const notesModalTitle = computed(() => {
-  const base = `Jour ${props.dayOrdinal} · S${props.weekNumber}`;
+  const base = t('athleteUi.programTableDay.dayWeek', { day: props.dayOrdinal, week: props.weekNumber });
   return sessionLabel.value ? `${base} — ${sessionLabel.value}` : base;
 });
 
@@ -64,7 +67,7 @@ function cellValue(row, columnId) {
     case 'main_lift':
       return row.lift ? String(row.lift).toUpperCase() : '—';
     case 'variant':
-      return row.exercise_variant_id ? 'Variante' : '—';
+      return row.exercise_variant_id ? t('athleteUi.programTableDay.variant') : '—';
     case 'section':
       return sectionLabel(row.section);
     case 'sets':
@@ -116,7 +119,7 @@ function prescriptionSummary(row) {
   if (sets != null && reps != null) {
     parts.push(`${sets}×${reps}`);
   } else if (sets != null) {
-    parts.push(`${sets} sér.`);
+    parts.push(t('athleteUi.programTableDay.setsShort', { count: sets }));
   } else if (reps != null) {
     parts.push(`${reps} reps`);
   }
@@ -163,7 +166,7 @@ function isPrescriptionColumn(columnId) {
   <article class="overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
     <div class="flex items-center gap-2 border-l-2 border-amber-400 bg-slate-950 px-3 py-2">
       <p class="min-w-0 flex-1 text-[12px] font-semibold uppercase tracking-wide text-amber-300 sm:text-sm">
-        Jour {{ dayOrdinal }} · S{{ weekNumber }}
+        {{ t('athleteUi.programTableDay.dayWeek', { day: dayOrdinal, week: weekNumber }) }}
         <span v-if="sessionLabel" class="font-normal normal-case text-amber-200/80">
           — {{ sessionLabel }}
         </span>
@@ -172,8 +175,8 @@ function isPrescriptionColumn(columnId) {
         v-if="hasSessionNotes"
         type="button"
         class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-400/20 text-xs font-bold leading-none text-amber-300 hover:bg-amber-400/35"
-        title="Voir les instructions"
-        aria-label="Voir les instructions de séance"
+        :title="t('athleteUi.programTableDay.viewInstructions')"
+        :aria-label="t('athleteUi.programTableDay.viewSessionInstructions')"
         @click="notesModalOpen = true"
       >
         !
@@ -261,7 +264,7 @@ function isPrescriptionColumn(columnId) {
     </div>
 
     <p v-else class="px-3 py-6 text-center text-sm text-slate-500">
-      Aucun exercice programmé.
+      {{ t('athleteUi.programTableDay.noExercises') }}
     </p>
 
     <AthleteSessionNotesModal

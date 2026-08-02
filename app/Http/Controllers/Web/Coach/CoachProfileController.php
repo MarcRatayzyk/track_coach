@@ -102,7 +102,7 @@ class CoachProfileController extends Controller
             ],
         );
 
-        return back()->with('success', 'Profil coach mis à jour.');
+        return back()->with('success', __('messages.coach.profile_updated'));
     }
 
     private function authorizeCoachView(User $coach): void

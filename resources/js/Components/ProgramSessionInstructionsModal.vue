@@ -1,6 +1,9 @@
 <script setup>
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { uppercaseSessionLabel } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: {
@@ -9,7 +12,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: 'Instructions de séance',
+    default: '',
   },
   sessionLabel: {
     type: String,
@@ -73,10 +76,11 @@ function onCancel() {
     >
       <div class="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
         <div class="flex items-start justify-between gap-3">
-          <h3 class="text-sm font-semibold text-white">{{ title }}</h3>
+          <h3 class="text-sm font-semibold text-white">{{ title || t('programBuilder.instructionsModal.defaultTitle') }}</h3>
           <button
             type="button"
             class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+            :aria-label="t('common.close')"
             @click="onCancel"
           >
             ✕
@@ -84,7 +88,7 @@ function onCancel() {
         </div>
 
         <label v-if="showSessionLabel" class="mt-4 block text-xs text-slate-500">
-          Titre de la séance
+          {{ t('programBuilder.instructionsModal.sessionTitle') }}
           <input
             :value="draftLabel"
             type="text"
@@ -96,12 +100,12 @@ function onCancel() {
         </label>
 
         <label class="mt-4 block text-xs text-slate-500">
-          Notes
+          {{ t('programBuilder.shared.notes') }}
           <textarea
             v-model="draftNotes"
             rows="4"
             maxlength="2000"
-            placeholder="Consignes, remarques…"
+            :placeholder="t('programBuilder.instructionsModal.notesPlaceholder')"
             class="mt-1 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600"
           />
         </label>
@@ -113,7 +117,7 @@ function onCancel() {
             :disabled="processing"
             @click="onCancel"
           >
-            Annuler
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
@@ -121,7 +125,7 @@ function onCancel() {
             :disabled="processing"
             @click="onConfirm"
           >
-            {{ processing ? 'Enregistrement…' : 'Enregistrer' }}
+            {{ processing ? t('programBuilder.shared.saving') : t('common.save') }}
           </button>
         </div>
       </div>

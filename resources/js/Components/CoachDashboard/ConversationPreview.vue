@@ -1,6 +1,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { motion } from 'motion-v';
 import MessageThreadUnreadBadge from '../MessageThreadUnreadBadge.vue';
 import SectionHeader from './SectionHeader.vue';
@@ -11,6 +12,8 @@ import {
   relativeTimeFr,
   timeOfDayFr,
 } from './dashboardUi';
+
+const { t } = useI18n();
 
 const props = defineProps({
   threads: { type: Array, default: () => [] },
@@ -29,15 +32,15 @@ const sorted = computed(() =>
 <template>
   <section :class="[cardShell, 'flex h-full min-h-0 min-w-0 flex-col overflow-hidden p-4 sm:p-5']">
     <SectionHeader
-      eyebrow="Messagerie"
-      title="Conversations"
+      :eyebrow="t('nav.messaging')"
+      :title="t('app.messaging.conversation')"
     >
       <template #actions>
         <Link
           href="/messaging"
           class="text-xs font-medium text-blue-400 transition hover:text-blue-300 sm:text-sm"
         >
-          Voir tout
+          {{ t('common.seeAll') }}
         </Link>
       </template>
     </SectionHeader>
@@ -46,7 +49,7 @@ const sorted = computed(() =>
       v-if="!sorted.length"
       class="mt-6 flex flex-1 items-center justify-center rounded-xl border border-dashed border-slate-700 bg-slate-950/40 px-4 py-10 text-center text-sm text-slate-500"
     >
-      Aucune conversation.
+      {{ t('app.messaging.emptyConversations') }}
     </p>
 
     <ul
@@ -54,49 +57,49 @@ const sorted = computed(() =>
       class="tc-scrollbar mt-5 min-h-0 min-w-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden pr-1 lg:max-h-[22rem]"
     >
       <motion.li
-        v-for="(t, index) in sorted"
-        :key="t.id"
+        v-for="(thread, index) in sorted"
+        :key="thread.id"
         :initial="{ opacity: 0, y: 8 }"
         :animate="{ opacity: 1, y: 0 }"
         :transition="{ delay: index * 0.03, duration: 0.3 }"
         class="min-w-0"
       >
         <Link
-          :href="`/messaging?thread=${t.id}`"
+          :href="`/messaging?thread=${thread.id}`"
           class="relative flex min-w-0 items-center gap-3 overflow-hidden rounded-[1.05rem] border px-3 py-3 pr-8 transition duration-200"
           :class="[
-            (t.unread_messages_count ?? 0) > 0
+            (thread.unread_messages_count ?? 0) > 0
               ? 'border-blue-500/35 bg-blue-950/25'
               : 'border-slate-800/80 bg-slate-950/40',
             cardHover,
           ]"
         >
-          <MessageThreadUnreadBadge :count="t.unread_messages_count ?? 0" />
+          <MessageThreadUnreadBadge :count="thread.unread_messages_count ?? 0" />
           <div class="relative shrink-0">
             <span
               class="flex h-11 w-11 items-center justify-center rounded-full bg-blue-500/15 text-sm font-semibold text-blue-100"
             >
-              {{ athleteInitials(t.athlete?.name) }}
+              {{ athleteInitials(thread.athlete?.name) }}
             </span>
             <span
               class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-950"
-              :class="t.is_online ? 'bg-emerald-400' : 'bg-slate-600'"
+              :class="thread.is_online ? 'bg-emerald-400' : 'bg-slate-600'"
             />
           </div>
           <div class="min-w-0 flex-1 overflow-hidden">
             <div class="flex min-w-0 items-center justify-between gap-2">
               <p class="min-w-0 flex-1 truncate text-sm font-semibold text-white">
-                {{ t.athlete?.name ?? 'Athlète' }}
+                {{ thread.athlete?.name ?? t('app.coachDash.athleteFallback') }}
               </p>
               <span class="shrink-0 text-[11px] text-slate-500">
-                {{ timeOfDayFr(t.updated_at) || relativeTimeFr(t.updated_at) }}
+                {{ timeOfDayFr(thread.updated_at) || relativeTimeFr(thread.updated_at) }}
               </span>
             </div>
             <p class="mt-0.5 min-w-0 truncate text-xs text-slate-500">
-              <template v-if="t.last_message">
-                {{ t.last_message.is_mine ? 'Toi : ' : '' }}{{ t.last_message.content }}
+              <template v-if="thread.last_message">
+                {{ thread.last_message.is_mine ? t('app.messaging.youPrefix') : '' }}{{ thread.last_message.content }}
               </template>
-              <template v-else>Aucun message</template>
+              <template v-else>{{ t('app.messaging.noMessage') }}</template>
             </p>
           </div>
         </Link>

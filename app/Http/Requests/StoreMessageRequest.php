@@ -38,17 +38,17 @@ class StoreMessageRequest extends FormRequest
             $feedbackId = $this->input('session_feedback_id');
 
             if ($feedbackId === null && $content === '' && $audioCount === 0) {
-                $validator->errors()->add('content', 'Le message ne peut pas être vide.');
+                $validator->errors()->add('content', __('messages.validation.message_empty'));
             }
 
             if ($feedbackId !== null && $content === '' && $audioCount === 0) {
-                $validator->errors()->add('content', 'Ajoutez un message texte ou au moins un fichier audio.');
+                $validator->errors()->add('content', __('messages.validation.message_or_audio'));
             }
 
             if ($feedbackId !== null) {
                 $feedback = SessionFeedback::query()->find($feedbackId);
                 if ($feedback !== null && ! $this->user()?->can('reply', $feedback)) {
-                    $validator->errors()->add('session_feedback_id', 'Vous ne pouvez pas répondre à ce retour.');
+                    $validator->errors()->add('session_feedback_id', __('messages.validation.cannot_reply_feedback'));
                 }
             }
         });

@@ -1,3 +1,9 @@
+import i18n from '../i18n';
+
+function tt(key) {
+  return i18n.global.t(key);
+}
+
 export const EXERCISE_MODE_NAME = 'name';
 export const EXERCISE_MODE_SPLIT_LIFT = 'split_lift';
 
@@ -19,61 +25,61 @@ export const PRESCRIPTION_LOAD_INPUT_CLASS =
 export const DAY_TABLE_COLUMNS = {
   exercise: {
     id: 'exercise',
-    label: 'Exercice',
+    get label() { return tt('config.dayTable.exercise'); },
     widthClass: 'min-w-[8rem]',
     align: 'left',
   },
   main_lift: {
     id: 'main_lift',
-    label: 'Main lift',
+    get label() { return tt('config.dayTable.mainLift'); },
     widthClass: 'w-24',
     align: 'center',
   },
   variant: {
     id: 'variant',
-    label: 'Variante',
+    get label() { return tt('config.dayTable.variant'); },
     widthClass: 'min-w-[7rem]',
     align: 'left',
   },
   section: {
     id: 'section',
-    label: 'Type',
+    get label() { return tt('config.dayTable.section'); },
     widthClass: 'w-[3.25rem]',
     align: 'center',
   },
   sets: {
     id: 'sets',
-    label: 'Séries',
+    get label() { return tt('config.dayTable.sets'); },
     widthClass: 'w-14',
     align: 'center',
   },
   reps: {
     id: 'reps',
-    label: 'Reps',
+    get label() { return tt('config.dayTable.reps'); },
     widthClass: 'w-14',
     align: 'center',
   },
   load: {
     id: 'load',
-    label: 'Charge',
+    get label() { return tt('config.dayTable.load'); },
     widthClass: 'w-28',
     align: 'center',
   },
   rpe: {
     id: 'rpe',
-    label: 'RPE cible',
+    get label() { return tt('config.dayTable.rpe'); },
     widthClass: 'w-16',
     align: 'center',
   },
   rest: {
     id: 'rest',
-    label: 'Repos',
+    get label() { return tt('config.dayTable.rest'); },
     widthClass: 'w-16',
     align: 'center',
   },
   muscles: {
     id: 'muscles',
-    label: 'Muscles',
+    get label() { return tt('config.dayTable.muscles'); },
     widthClass: 'w-24',
     align: 'left',
   },
@@ -81,18 +87,20 @@ export const DAY_TABLE_COLUMNS = {
 
 export const OPTIONAL_COLUMN_OPTIONS = OPTIONAL_COLUMN_IDS.map((id) => ({
   id,
-  label: DAY_TABLE_COLUMNS[id].label,
+  get label() {
+    return DAY_TABLE_COLUMNS[id].label;
+  },
 }));
 
 export const LOAD_MODE_OPTIONS = [
-  { value: LOAD_MODE_KG, label: 'kg' },
-  { value: LOAD_MODE_PERCENT, label: '% 1RM' },
-  { value: LOAD_MODE_RPE, label: 'RPE' },
+  { value: LOAD_MODE_KG, get label() { return tt('config.dayTable.loadKg'); } },
+  { value: LOAD_MODE_PERCENT, get label() { return tt('config.dayTable.loadPercent'); } },
+  { value: LOAD_MODE_RPE, get label() { return tt('config.dayTable.loadRpe'); } },
 ];
 
 export const EXERCISE_MODE_OPTIONS = [
-  { value: EXERCISE_MODE_NAME, label: 'Nom complet' },
-  { value: EXERCISE_MODE_SPLIT_LIFT, label: 'Main lift + variante' },
+  { value: EXERCISE_MODE_NAME, get label() { return tt('config.dayTable.exerciseModeName'); } },
+  { value: EXERCISE_MODE_SPLIT_LIFT, get label() { return tt('config.dayTable.exerciseModeSplit'); } },
 ];
 
 export function classicTableLayout() {
@@ -175,17 +183,17 @@ const ATHLETE_COLUMN_WEIGHTS = {
   muscles: 1.1,
 };
 
-const ATHLETE_COLUMN_HEADER_SHORT = {
-  exercise: 'Exo.',
-  main_lift: 'Lift',
-  variant: 'Var.',
-  section: 'Typ.',
-  sets: 'Sér.',
-  reps: 'R.',
-  load: 'Ch.',
-  rpe: 'RPE',
-  rest: 'Repos',
-  muscles: 'Mus.',
+const ATHLETE_COLUMN_HEADER_SHORT_KEYS = {
+  exercise: 'config.dayTable.short.exercise',
+  main_lift: 'config.dayTable.short.mainLift',
+  variant: 'config.dayTable.short.variant',
+  section: 'config.dayTable.short.section',
+  sets: 'config.dayTable.short.sets',
+  reps: 'config.dayTable.short.reps',
+  load: 'config.dayTable.short.load',
+  rpe: 'config.dayTable.short.rpe',
+  rest: 'config.dayTable.short.rest',
+  muscles: 'config.dayTable.short.muscles',
 };
 
 export function athleteSpacedColumnPercent(columnId, visibleColumns) {
@@ -200,7 +208,8 @@ export function athleteSpacedColumnPercent(columnId, visibleColumns) {
 }
 
 export function athleteColumnHeaderLabel(columnId, fallbackLabel = '') {
-  return ATHLETE_COLUMN_HEADER_SHORT[columnId] ?? fallbackLabel;
+  const key = ATHLETE_COLUMN_HEADER_SHORT_KEYS[columnId];
+  return key ? tt(key) : fallbackLabel;
 }
 
 export function layoutHasPrescriptionColumn(layout) {
@@ -214,11 +223,11 @@ export function validateTableLayoutDraft(draft) {
   const errors = [];
 
   if (!String(draft?.name ?? '').trim()) {
-    errors.push('Donne un nom à ton tableau jour.');
+    errors.push(tt('config.dayTable.nameRequired'));
   }
 
   if (!layoutHasPrescriptionColumn(normalized)) {
-    errors.push('Active au moins une colonne de prescription (séries, reps ou charge).');
+    errors.push(tt('config.dayTable.prescriptionRequired'));
   }
 
   return errors;

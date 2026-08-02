@@ -9,6 +9,10 @@ export default {
 <script setup>
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localeTag } from '../i18n';
+
+const { t, locale } = useI18n();
 
 const props = defineProps({
     plans: { type: Array, default: () => [] },
@@ -26,16 +30,15 @@ const form = useForm({
 
 const statusLabel = computed(() => {
     const status = sharedBilling.value?.status;
-    return (
-        {
-            trial: 'Essai gratuit',
-            subscribed: 'Abonné',
-            trial_expired: 'Essai terminé',
-            inactive: 'Inactif',
-            demo: 'Compte démo',
-            demo_expired: 'Démo expirée',
-        }[status] ?? status
-    );
+    const map = {
+        trial: 'app.billing.statuses.trial',
+        subscribed: 'app.billing.statuses.subscribed',
+        trial_expired: 'app.billing.statuses.trialExpired',
+        inactive: 'app.billing.statuses.inactive',
+        demo: 'app.billing.statuses.demo',
+        demo_expired: 'app.billing.statuses.demoExpired',
+    };
+    return map[status] ? t(map[status]) : status;
 });
 
 function formatPrice(amount) {
@@ -43,17 +46,20 @@ function formatPrice(amount) {
     if (Number.isNaN(n)) {
         return amount;
     }
-    return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return n.toLocaleString(localeTag(locale.value), {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 }
 
-const planFeatures = [
-    'Programmation SBD & builder',
-    'Suivi PRs, readiness & adhérence',
-    'Retours vidéo annotés',
-    'Messagerie coach ↔ athlète',
-    'Compétitions & match plans',
-    'Dashboard & alertes',
-];
+const planFeatures = computed(() => [
+    t('app.billing.features.programming'),
+    t('app.billing.features.tracking'),
+    t('app.billing.features.feedback'),
+    t('app.billing.features.messaging'),
+    t('app.billing.features.competitions'),
+    t('app.billing.features.dashboard'),
+]);
 
 function checkout(planKey) {
     form.plan = planKey;
@@ -71,13 +77,12 @@ function openPortal() {
 
 <template>
     <div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
-        <Head title="Abonnement" />
+        <Head :title="t('app.billing.title')" />
 
         <header class="mb-8">
-            <h1 class="text-2xl font-bold tracking-tight text-white">Abonnement</h1>
+            <h1 class="text-2xl font-bold tracking-tight text-white">{{ t('app.billing.title') }}</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Choisis un plan selon le nombre d’athlètes actifs. Un seul essai 14 jours par compte :
-                après expiration, l’accès est bloqué jusqu’au paiement.
+                {{ t('app.billing.subtitle') }}
             </p>
         </header>
 
@@ -85,16 +90,15 @@ function openPortal() {
             v-if="isDemo"
             class="mb-6 rounded-2xl border border-amber-500/40 bg-amber-950/30 p-5 text-sm text-amber-100"
         >
-            <p class="font-semibold text-amber-200">Compte démo</p>
+            <p class="font-semibold text-amber-200">{{ t('app.billing.demoTitle') }}</p>
             <p class="mt-1 text-amber-100/80">
-                La démo ne peut pas être convertie en abonnement. Crée un vrai compte coach pour
-                démarrer l’essai de 14 jours.
+                {{ t('app.billing.demoBody') }}
             </p>
             <Link
                 href="/register"
                 class="mt-4 inline-flex rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
             >
-                Créer mon compte coach
+                {{ t('app.billing.createCoachAccount') }}
             </Link>
         </div>
 
@@ -104,30 +108,37 @@ function openPortal() {
         >
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Statut</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ t('app.billing.status') }}</p>
                     <p class="mt-1 text-lg font-semibold text-white">{{ statusLabel }}</p>
                     <p v-if="sharedBilling?.trialEndsAt" class="mt-1 text-sm text-slate-400">
-                        Essai jusqu’au
-                        {{ new Date(sharedBilling.trialEndsAt).toLocaleDateString('fr-FR') }}
+                        {{
+                            t('app.billing.trialUntil', {
+                                date: new Date(sharedBilling.trialEndsAt).toLocaleDateString(
+                                    localeTag(locale),
+                                ),
+                            })
+                        }}
                     </p>
                     <p
                         v-if="sharedBilling?.status === 'trial_expired'"
                         class="mt-1 text-sm text-amber-300/90"
                     >
-                        Ton essai est terminé. Abonne-toi pour retrouver l’accès.
+                        {{ t('app.billing.trialEnded') }}
                     </p>
                     <p
                         v-else-if="sharedBilling?.status === 'inactive' && sharedBilling?.canStartTrial"
                         class="mt-1 text-sm text-slate-400"
                     >
-                        Tu n’as pas encore utilisé ton essai gratuit.
+                        {{ t('app.billing.trialNotUsed') }}
                     </p>
                     <p class="mt-2 text-sm text-slate-400">
-                        {{ sharedBilling?.athleteCount ?? 0 }} athlète(s) actif(s)
+                        {{ t('app.billing.activeAthletes', { count: sharedBilling?.athleteCount ?? 0 }) }}
                         <span v-if="sharedBilling?.seatLimit != null">
-                            · plafond {{ sharedBilling.seatLimit }}
+                            · {{ t('app.billing.seatLimit', { limit: sharedBilling.seatLimit }) }}
                         </span>
-                        <span v-else-if="sharedBilling?.status === 'subscribed'"> · illimité</span>
+                        <span v-else-if="sharedBilling?.status === 'subscribed'">
+                            · {{ t('app.billing.unlimited') }}
+                        </span>
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -138,7 +149,7 @@ function openPortal() {
                         :disabled="form.processing"
                         @click="startTrial"
                     >
-                        Démarrer l’essai 14 jours
+                        {{ t('app.billing.startTrial') }}
                     </button>
                     <button
                         v-if="sharedBilling?.status === 'subscribed' && stripeConfigured"
@@ -147,12 +158,12 @@ function openPortal() {
                         :disabled="form.processing"
                         @click="openPortal"
                     >
-                        Gérer mon abonnement
+                        {{ t('app.billing.manageSubscription') }}
                     </button>
                 </div>
             </div>
             <p v-if="!stripeConfigured" class="mt-4 text-sm text-amber-300">
-                Stripe n’est pas encore configuré sur cet environnement (clés / price IDs manquants).
+                {{ t('app.billing.stripeMissing') }}
             </p>
         </section>
 
@@ -172,7 +183,7 @@ function openPortal() {
                 </p>
                 <p class="mt-3 text-3xl font-black text-white">
                     {{ formatPrice(plan.price_eur) }} €
-                    <span class="text-base font-medium text-slate-400">/ mois</span>
+                    <span class="text-base font-medium text-slate-400">{{ t('common.perMonth') }}</span>
                 </p>
                 <p class="mt-2 text-sm text-slate-400">{{ plan.description }}</p>
                 <ul class="mt-4 flex-1 space-y-2">
@@ -193,7 +204,7 @@ function openPortal() {
                     v-if="sharedBilling?.requiredPlan === plan.key"
                     class="mt-4 text-xs font-medium text-blue-300"
                 >
-                    Recommandé pour ton roster actuel
+                    {{ t('app.billing.recommended') }}
                 </p>
                 <button
                     v-if="!isDemo"
@@ -208,10 +219,10 @@ function openPortal() {
                 >
                     {{
                         sharedBilling?.status === 'subscribed' && sharedBilling?.plan === plan.key
-                            ? 'Plan actuel'
+                            ? t('app.billing.currentPlan')
                             : sharedBilling?.status === 'subscribed'
-                              ? `Passer à ${formatPrice(plan.price_eur)} €/mois`
-                              : `Payer ${formatPrice(plan.price_eur)} €/mois`
+                              ? t('app.billing.switchTo', { price: formatPrice(plan.price_eur) })
+                              : t('app.billing.pay', { price: formatPrice(plan.price_eur) })
                     }}
                 </button>
             </article>
@@ -221,7 +232,7 @@ function openPortal() {
             v-if="sharedBilling?.hasAccess"
             class="mt-6 text-center text-sm text-slate-500"
         >
-            <Link href="/dashboard" class="text-blue-400 hover:underline">Retour au dashboard</Link>
+            <Link href="/dashboard" class="text-blue-400 hover:underline">{{ t('app.billing.backDashboard') }}</Link>
         </p>
     </div>
 </template>

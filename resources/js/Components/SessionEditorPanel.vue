@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useForm } from '@inertiajs/vue3';
 import SessionDayEditorPanel from './SessionDayEditorPanel.vue';
 import {
@@ -7,6 +8,8 @@ import {
   sessionDayOrdinalInWeek,
   sessionToDay,
 } from '../utils/programBuilder';
+
+const { t } = useI18n();
 
 const props = defineProps({
   activeBlock: {
@@ -69,7 +72,7 @@ const headerTitle = computed(() => {
     props.selectedCell.weekday,
   );
 
-  return `Semaine ${week} - Jour ${dayNum}`;
+  return t('programBuilder.sessionEditor.headerTitle', { week, day: dayNum });
 });
 
 const defaultWarmup = computed(() => ({
@@ -113,7 +116,7 @@ function deleteSession() {
 
   if (
     !window.confirm(
-      'Supprimer cette séance ? Tous les exercices programmés pour ce jour seront effacés.',
+      t('programBuilder.sessionEditor.deleteConfirm'),
     )
   ) {
     return;

@@ -51,7 +51,7 @@ class SessionFeedbackAnnotationController extends Controller
 
         $annotation->delete();
 
-        return response()->json(['message' => 'Annotation supprimée.']);
+        return response()->json(['message' => __('messages.feedback.annotation_deleted')]);
     }
 
     /**

@@ -34,7 +34,7 @@ class CoachCalendarReminderController extends Controller
             'athlete_id' => $validated['athlete_id'] ?? null,
         ]);
 
-        return back()->with('success', 'Rappel ajouté.');
+        return back()->with('success', __('messages.calendar.reminder_added'));
     }
 
     public function update(Request $request, CoachCalendarReminder $reminder): RedirectResponse
@@ -60,7 +60,7 @@ class CoachCalendarReminderController extends Controller
             'athlete_id' => $validated['athlete_id'] ?? null,
         ]);
 
-        return back()->with('success', 'Rappel mis à jour.');
+        return back()->with('success', __('messages.calendar.reminder_updated'));
     }
 
     public function destroy(CoachCalendarReminder $reminder): RedirectResponse
@@ -70,7 +70,7 @@ class CoachCalendarReminderController extends Controller
 
         $reminder->delete();
 
-        return back()->with('success', 'Rappel supprimé.');
+        return back()->with('success', __('messages.calendar.reminder_deleted'));
     }
 
     private function assertAthleteOnRoster(User $coach, int $athleteId): void
@@ -80,6 +80,6 @@ class CoachCalendarReminderController extends Controller
             ->where('users.role', 'athlete')
             ->exists();
 
-        abort_unless($exists, 422, 'Athlète hors roster.');
+        abort_unless($exists, 422, __('messages.calendar.athlete_not_in_roster'));
     }
 }
