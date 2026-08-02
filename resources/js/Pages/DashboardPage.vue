@@ -297,13 +297,13 @@ onMounted(() => {
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p class="text-[10px] font-semibold uppercase tracking-widest text-violet-300/90">
-                Monthly Wrapped
+                {{ t('app.dashboard.monthlyWrapped') }}
               </p>
               <h2 class="mt-1 text-base font-semibold text-white">
-                Roster Awards · {{ monthlyReadinessAwards.month_label }}
+                {{ t('app.dashboard.rosterAwards', { month: monthlyReadinessAwards.month_label }) }}
               </h2>
               <p class="mt-1 text-sm text-slate-400">
-                Podiums humour du groupe — seulement si ces facteurs sont dans ton questionnaire.
+                {{ t('app.dashboard.awardsHint') }}
               </p>
             </div>
             <button
@@ -311,7 +311,7 @@ onMounted(() => {
               class="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
               @click="openRosterAwards"
             >
-              Voir les awards
+              {{ t('app.dashboard.seeAwards') }}
             </button>
           </div>
         </section>

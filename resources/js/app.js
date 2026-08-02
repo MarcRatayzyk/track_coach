@@ -43,7 +43,7 @@ function syncAnalyticsUser(page) {
 }
 
 function syncLocale(page) {
-    setAppLocale(page?.props?.locale ?? 'fr');
+    setAppLocale(page?.props?.locale ?? 'en');
 }
 
 createInertiaApp({

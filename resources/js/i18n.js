@@ -10,17 +10,17 @@ export const BCP47 = {
 };
 
 export function resolveLocale(raw) {
-    return raw === 'en' ? 'en' : 'fr';
+    return raw === 'fr' ? 'fr' : 'en';
 }
 
-export function localeTag(locale = 'fr') {
-    return BCP47[resolveLocale(locale)] ?? BCP47.fr;
+export function localeTag(locale = 'en') {
+    return BCP47[resolveLocale(locale)] ?? BCP47.en;
 }
 
 const i18n = createI18n({
     legacy: false,
-    locale: 'fr',
-    fallbackLocale: 'fr',
+    locale: 'en',
+    fallbackLocale: 'en',
     messages: { fr, en },
 });
 

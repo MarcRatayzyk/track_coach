@@ -24,7 +24,7 @@ const severityStyles = {
     hover: 'hover:border-red-500/55 hover:bg-red-950/40',
     icon: 'text-red-400',
     badge: 'border border-red-500/40 bg-red-500/20 text-red-200',
-    label: 'Critique',
+    labelKey: 'severityCritical',
     bar: 'bg-red-500',
   },
   warning: {
@@ -33,7 +33,7 @@ const severityStyles = {
     hover: 'hover:border-amber-500/50 hover:bg-amber-950/30',
     icon: 'text-amber-400',
     badge: 'border border-amber-500/50 bg-amber-500/20 text-amber-200',
-    label: 'Attention',
+    labelKey: 'severityWarning',
     bar: 'bg-amber-400',
   },
   info: {
@@ -42,7 +42,7 @@ const severityStyles = {
     hover: 'hover:border-blue-500/45 hover:bg-blue-950/25',
     icon: 'text-blue-400',
     badge: 'border border-blue-500/40 bg-blue-500/20 text-blue-200',
-    label: 'Information',
+    labelKey: 'severityInfo',
     bar: 'bg-blue-400',
   },
 };
@@ -77,6 +77,11 @@ const modalOpen = computed(() => selectedAlert.value !== null);
 
 function stylesFor(alert) {
   return severityStyles[alert.severity] ?? severityStyles.info;
+}
+
+function severityLabel(alert) {
+  const key = stylesFor(alert).labelKey;
+  return t(`app.coachDash.${key}`);
 }
 
 function iconFor(alert) {
@@ -150,8 +155,8 @@ async function shareAlert() {
     :class="[cardShell, 'flex h-full min-h-0 min-w-0 scroll-mt-24 flex-col overflow-hidden border-orange-500/20 p-4 sm:p-5']"
   >
     <SectionHeader
-      eyebrow="Signaux"
-      title="Alertes"
+      :eyebrow="t('app.coachDash.signals')"
+      :title="t('app.coachDash.alerts')"
     >
       <template #actions>
         <span
@@ -167,7 +172,7 @@ async function shareAlert() {
       v-if="!items.length"
       class="mt-6 rounded-xl border border-dashed border-slate-700 bg-slate-950/40 px-4 py-10 text-center text-sm text-slate-500"
     >
-      Aucune alerte — tout semble sous contrôle.
+      {{ t('app.coachDash.noAlertsEmpty') }}
     </p>
 
     <ul
@@ -208,7 +213,7 @@ async function shareAlert() {
                     class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
                     :class="stylesFor(alert).badge"
                   >
-                    {{ stylesFor(alert).label }}
+                    {{ severityLabel(alert) }}
                   </span>
                 </div>
                 <p class="mt-0.5 line-clamp-2 break-words text-xs leading-snug text-slate-400">
@@ -220,7 +225,7 @@ async function shareAlert() {
           <button
             type="button"
             class="shrink-0 self-stretch border-l border-slate-700/60 px-3 text-xs font-semibold text-slate-300 transition hover:bg-slate-900/60 hover:text-white"
-            title="Écarter cette alerte"
+            :title="t('app.coachDash.dismissAlertTitle')"
             @click.stop="dismissAlert(alert)"
           >
             OK
@@ -249,7 +254,7 @@ async function shareAlert() {
                   class="rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide"
                   :class="stylesFor(selectedAlert).badge"
                 >
-                  {{ stylesFor(selectedAlert).label }}
+                  {{ severityLabel(selectedAlert) }}
                 </span>
               </div>
               <p v-if="selectedAlert.athlete_name && !detailItems.length" class="mt-2 text-base text-blue-400">
@@ -259,7 +264,7 @@ async function shareAlert() {
             <button
               type="button"
               class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-              aria-label="Fermer"
+              :aria-label="t('common.close')"
               @click="closeModal"
             >
               ✕
@@ -294,7 +299,7 @@ async function shareAlert() {
                     {{ item.label }}
                   </span>
                 </span>
-                <span class="shrink-0 text-xs font-medium text-blue-300">Voir →</span>
+                <span class="shrink-0 text-xs font-medium text-blue-300">{{ t('app.coachDash.viewArrow') }}</span>
               </Link>
             </li>
           </ul>
@@ -304,7 +309,7 @@ async function shareAlert() {
             class="mt-6 rounded-xl border border-blue-500/30 bg-slate-950/70 p-5"
           >
             <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-300/90">
-              Aperçu partage
+              {{ t('app.coachDash.sharePreview') }}
             </p>
             <div class="mt-2 rounded-xl border border-slate-700 bg-slate-900 p-4">
               <p class="text-base font-semibold text-white">{{ sharePreview.headline }}</p>
@@ -320,14 +325,14 @@ async function shareAlert() {
               class="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
               @click="closeModal"
             >
-              Fermer
+              {{ t('common.close') }}
             </button>
             <button
               type="button"
               class="rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-5 py-2.5 text-sm font-semibold text-emerald-100 hover:bg-emerald-600/25"
               @click="dismissAlert(selectedAlert)"
             >
-              OK, écarter
+              {{ t('app.coachDash.okDismiss') }}
             </button>
             <button
               v-if="canShare"
@@ -335,7 +340,7 @@ async function shareAlert() {
               class="rounded-xl border border-blue-500/40 bg-blue-600/20 px-5 py-2.5 text-sm font-semibold text-blue-100 hover:bg-blue-600/30"
               @click="shareAlert"
             >
-              Partager
+              {{ t('app.coachDash.share') }}
             </button>
             <Link
               v-if="!detailItems.length"
@@ -343,7 +348,7 @@ async function shareAlert() {
               class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-blue-500"
               @click="closeModal"
             >
-              Voir le détail
+              {{ t('app.coachDash.viewDetail') }}
             </Link>
             <Link
               v-else
@@ -351,7 +356,7 @@ async function shareAlert() {
               class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-blue-500"
               @click="closeModal"
             >
-              Voir tous les retours
+              {{ t('app.coachDash.viewAllFeedback') }}
             </Link>
           </div>
         </div>

@@ -3,7 +3,6 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   ATTEMPT_KEYS,
-  ATTEMPT_LABELS,
   LIFTS,
   LIFT_LABELS,
   MAX_WARMUP_BARS,
@@ -105,43 +104,66 @@ function convertLegacyToStructured() {
   };
 }
 
-function removeWarmupBar(lift, index) {
-  const current = [...(warmups.value[lift] ?? [])];
-  current.splice(index, 1);
-  updateWarmups({ ...warmups.value, [lift]: current });
-}
-
 function warmupSlots(lift) {
-  const bars = warmups.value[lift] ?? [];
-  if (bars.length >= MAX_WARMUP_BARS) {
-    return bars.map((v) => (v == null ? '' : String(v)));
-  }
-  return [...bars.map((v) => (v == null ? '' : String(v))), ''];
+  return (warmups.value[lift] ?? []).map((bar) => ({
+    weight: bar.weight == null ? '' : String(bar.weight),
+    reps: bar.reps == null ? '' : String(bar.reps),
+  }));
 }
 
-function onWarmupInput(lift, index, raw) {
+function canAddWarmupBar(lift) {
+  return (warmups.value[lift]?.length ?? 0) < MAX_WARMUP_BARS;
+}
+
+function addWarmupBar(lift) {
+  if (!canAddWarmupBar(lift)) {
+    return;
+  }
+  updateWarmups({
+    ...warmups.value,
+    [lift]: [...(warmups.value[lift] ?? []), { weight: 0, reps: null }].slice(0, MAX_WARMUP_BARS),
+  });
+}
+
+function onWarmupWeight(lift, index, raw) {
   const cleaned = String(raw).trim().replace(',', '.');
   const bars = [...(warmups.value[lift] ?? [])];
+  if (index >= bars.length) {
+    return;
+  }
   if (cleaned === '') {
-    if (index < bars.length) {
-      bars.splice(index, 1);
-      updateWarmups({ ...warmups.value, [lift]: bars });
-    }
+    bars.splice(index, 1);
+    updateWarmups({ ...warmups.value, [lift]: bars });
     return;
   }
   const val = Number(cleaned);
   if (!Number.isFinite(val)) {
     return;
   }
-  if (index < bars.length) {
-    bars[index] = val;
-  } else {
-    bars.push(val);
+  bars[index] = { ...bars[index], weight: val };
+  updateWarmups({ ...warmups.value, [lift]: bars });
+}
+
+function onWarmupReps(lift, index, raw) {
+  const cleaned = String(raw).trim();
+  const bars = [...(warmups.value[lift] ?? [])];
+  if (index >= bars.length) {
+    return;
   }
-  updateWarmups({
-    ...warmups.value,
-    [lift]: bars.slice(0, MAX_WARMUP_BARS),
-  });
+  if (cleaned === '') {
+    bars[index] = { ...bars[index], reps: null };
+  } else {
+    const val = Number(cleaned);
+    if (!Number.isFinite(val)) {
+      return;
+    }
+    const reps = Math.round(val);
+    if (reps < 1 || reps > 50) {
+      return;
+    }
+    bars[index] = { ...bars[index], reps };
+  }
+  updateWarmups({ ...warmups.value, [lift]: bars });
 }
 </script>
 
@@ -212,7 +234,7 @@ function onWarmupInput(lift, index, raw) {
                   :key="key"
                   class="pb-1.5 px-1 text-center font-medium"
                 >
-                  {{ ATTEMPT_LABELS[key] }}
+                  {{ t(`programBuilder.matchPlan.${key}`) }}
                 </th>
               </tr>
             </thead>
@@ -269,27 +291,39 @@ function onWarmupInput(lift, index, raw) {
             <div
               v-for="(slot, index) in warmupSlots(lift)"
               :key="`${lift}-${index}`"
-              class="relative"
+              class="inline-flex items-center gap-0.5 rounded-lg border border-slate-700 bg-slate-950 px-1 py-0.5"
             >
               <input
-                :value="slot"
+                :value="slot.weight"
                 type="text"
                 inputmode="decimal"
                 autocomplete="off"
-                class="match-plan-weight-input w-14 rounded-lg border border-slate-700 bg-slate-950 px-1 py-1 text-center font-mono text-xs text-white sm:w-16"
+                class="match-plan-weight-input w-11 bg-transparent py-0.5 text-center font-mono text-xs text-white sm:w-12"
                 :placeholder="index === 0 ? 'kg' : ''"
-                @input="onWarmupInput(lift, index, $event.target.value)"
+                :aria-label="t('programBuilder.matchPlan.warmupWeight')"
+                @input="onWarmupWeight(lift, index, $event.target.value)"
               />
-              <button
-                v-if="slot !== '' && index < (warmups[lift]?.length ?? 0)"
-                type="button"
-                class="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-[9px] text-slate-300 hover:bg-red-600 hover:text-white sm:flex"
-                :aria-label="t('common.delete')"
-                @click="removeWarmupBar(lift, index)"
-              >
-                ×
-              </button>
+              <span class="text-[10px] text-slate-500">×</span>
+              <input
+                :value="slot.reps"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                class="match-plan-weight-input w-7 bg-transparent py-0.5 text-center font-mono text-xs text-white sm:w-8"
+                :placeholder="index === 0 ? t('programBuilder.matchPlan.repsShort') : ''"
+                :aria-label="t('programBuilder.matchPlan.warmupReps')"
+                @input="onWarmupReps(lift, index, $event.target.value)"
+              />
             </div>
+            <button
+              v-if="canAddWarmupBar(lift)"
+              type="button"
+              class="inline-flex h-7 w-7 items-center justify-center rounded-md text-base leading-none text-slate-500 transition hover:bg-slate-800/80 hover:text-slate-300"
+              :aria-label="t('programBuilder.matchPlan.addWarmupBar')"
+              @click="addWarmupBar(lift)"
+            >
+              +
+            </button>
           </div>
         </div>
       </div>

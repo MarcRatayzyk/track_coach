@@ -85,8 +85,8 @@ class CoachAlertsService
                     key: "no-program-{$athlete->id}",
                     type: 'no_program',
                     severity: 'info',
-                    title: 'Sans programme actif',
-                    body: "{$athlete->name} n'a pas de bloc en cours.",
+                    title: 'No active program',
+                    body: "{$athlete->name} has no block in progress.",
                     href: '/program-builder',
                     athleteId: $athlete->id,
                     athleteName: $athlete->name,
@@ -162,19 +162,19 @@ class CoachAlertsService
             return collect();
         }
 
-        $blockName = $assignment->template?->name ?? 'Bloc';
+        $blockName = $assignment->template?->name ?? 'Block';
         $severity = $daysUntilEnd <= self::BLOCK_CRITICAL_DAYS ? 'critical' : 'warning';
         $when = $daysUntilEnd === 0
-            ? "aujourd'hui"
-            : ($daysUntilEnd === 1 ? 'demain' : "dans {$daysUntilEnd} jours");
+            ? 'today'
+            : ($daysUntilEnd === 1 ? 'tomorrow' : "in {$daysUntilEnd} days");
 
         return collect([
             $this->makeAlert(
                 key: "block-ending-{$assignment->id}",
                 type: 'block_ending',
                 severity: $severity,
-                title: 'Fin de bloc proche',
-                body: "Le bloc « {$blockName} » de {$athlete->name} se termine {$when}.",
+                title: 'Block ending soon',
+                body: "{$athlete->name}'s block \"{$blockName}\" ends {$when}.",
                 href: "/program-builder?assignment={$assignment->id}",
                 athleteId: $athlete->id,
                 athleteName: $athlete->name,
@@ -205,18 +205,18 @@ class CoachAlertsService
                 $daysUntil = $today->diffInDays($compDate, false);
                 $severity = $daysUntil <= self::COMPETITION_CRITICAL_DAYS ? 'critical' : 'warning';
                 $when = $daysUntil === 0
-                    ? "aujourd'hui"
-                    : ($daysUntil === 1 ? 'demain' : "dans {$daysUntil} jours");
-                $name = $competition->name ?: 'Compétition';
-                $athleteName = $competition->athlete?->name ?? 'Athlète';
+                    ? 'today'
+                    : ($daysUntil === 1 ? 'tomorrow' : "in {$daysUntil} days");
+                $name = $competition->name ?: 'Competition';
+                $athleteName = $competition->athlete?->name ?? 'Athlete';
 
-                $body = "{$athleteName} · {$name} {$when} — le plan de match n'est pas encore défini.";
+                $body = "{$athleteName} · {$name} {$when} — match plan not set yet.";
 
                 return $this->makeAlert(
                     key: "competition-{$competition->id}",
                     type: 'competition_soon',
                     severity: $severity,
-                    title: 'Plan de match à définir',
+                    title: 'Match plan needed',
                     body: $body,
                     href: "/athletes/{$competition->athlete_id}",
                     athleteId: $competition->athlete_id,
@@ -268,10 +268,10 @@ class CoachAlertsService
                 key: "adherence-drop-{$athlete->id}",
                 type: 'adherence_drop',
                 severity: 'warning',
-                title: "Baisse d'adhérence",
+                title: 'Adherence drop',
                 body: "{$athlete->name} {$gapSummary} "
-                    ."Son adhérence a baissé à {$recent['percentage']} % sur 7 jours "
-                    ."(contre {$previous['percentage']} % la semaine précédente, −{$drop} pts).",
+                    ."Adherence dropped to {$recent['percentage']}% over 7 days "
+                    ."(vs {$previous['percentage']}% the previous week, −{$drop} pts).",
                 href: "/athletes/{$athlete->id}",
                 athleteId: $athlete->id,
                 athleteName: $athlete->name,
@@ -287,9 +287,9 @@ class CoachAlertsService
                 key: "adherence-low-{$athlete->id}",
                 type: 'adherence_low',
                 severity: 'warning',
-                title: 'Adhérence faible',
+                title: 'Low adherence',
                 body: "{$athlete->name} {$gapSummary} "
-                    ."Adhérence à {$recent['percentage']} % sur les 7 derniers jours.",
+                    ."Adherence at {$recent['percentage']}% over the last 7 days.",
                 href: "/athletes/{$athlete->id}",
                 athleteId: $athlete->id,
                 athleteName: $athlete->name,
@@ -318,42 +318,41 @@ class CoachAlertsService
 
         if ($missedSessions > 0) {
             $parts[] = sprintf(
-                "n'a pas enregistré %d séance%s sur %d",
+                'did not log %d of %d session%s',
                 $missedSessions,
-                $missedSessions > 1 ? 's' : '',
                 $coverage['planned'],
+                $coverage['planned'] > 1 ? 's' : '',
             );
         } else {
             $parts[] = sprintf(
-                'a enregistré %d séance%s sur %d',
+                'logged %d of %d session%s',
                 $coverage['completed'],
-                $coverage['completed'] > 1 ? 's' : '',
                 $coverage['planned'],
+                $coverage['planned'] > 1 ? 's' : '',
             );
         }
 
         if ($missedExercises > 0) {
             $parts[] = sprintf(
-                '%d exercice%s non réalisé%s',
+                '%d exercise%s not completed',
                 $missedExercises,
-                $missedExercises > 1 ? 's' : '',
                 $missedExercises > 1 ? 's' : '',
             );
         }
 
         if ($mismatchedSets > 0) {
             $parts[] = sprintf(
-                '%d ligne%s avec séries non respectées',
+                '%d line%s with sets not followed',
                 $mismatchedSets,
                 $mismatchedSets > 1 ? 's' : '',
             );
         }
 
         if (count($parts) === 0) {
-            return 'a un suivi incomplet sur la période.';
+            return 'has incomplete tracking for the period.';
         }
 
-        return implode(' ; ', $parts).'.';
+        return implode('; ', $parts).'.';
     }
 
     /**
@@ -388,11 +387,11 @@ class CoachAlertsService
                 key: "adherence-high-{$athlete->id}-{$today->toDateString()}",
                 type: 'adherence_high',
                 severity: 'info',
-                title: 'Adhérence élevée',
-                body: "{$athlete->name} maintient {$recent['percentage']} % d'adhérence sur 7 jours "
-                    ."({$recent['completed']}/{$recent['planned']} séances"
+                title: 'High adherence',
+                body: "{$athlete->name} is holding {$recent['percentage']}% adherence over 7 days "
+                    ."({$recent['completed']}/{$recent['planned']} sessions"
                     .($recent['missed_exercises'] > 0
-                        ? ", {$recent['missed_exercises']} exercice".($recent['missed_exercises'] > 1 ? 's' : '').' manquant'.($recent['missed_exercises'] > 1 ? 's' : '')
+                        ? ", {$recent['missed_exercises']} missing exercise".($recent['missed_exercises'] > 1 ? 's' : '')
                         : '')
                     .').',
                 href: "/athletes/{$athlete->id}",
@@ -403,8 +402,8 @@ class CoachAlertsService
                     variant: 'adherence_high',
                     athleteName: $athlete->name,
                     date: $today->toDateString(),
-                    headline: "Adhérence {$recent['percentage']} %",
-                    subline: "7 derniers jours · {$recent['completed']}/{$recent['planned']} séances",
+                    headline: "{$recent['percentage']}% adherence",
+                    subline: "Last 7 days · {$recent['completed']}/{$recent['planned']} sessions",
                     metrics: [
                         'adherence_percent' => $recent['percentage'],
                         'completed_sessions' => $recent['completed'],
@@ -439,9 +438,9 @@ class CoachAlertsService
                 key: "pr-celebration-{$athlete->id}-{$latestPr->reference_date->toDateString()}",
                 type: 'pr_celebration',
                 severity: 'info',
-                title: 'Nouveau PR enregistré',
-                body: "{$athlete->name} a mis à jour ses records : "
-                    ."S {$latestPr->squat} · B {$latestPr->bench} · T {$latestPr->deadlift} (total {$total}).",
+                title: 'New PR logged',
+                body: "{$athlete->name} updated their records: "
+                    ."S {$latestPr->squat} · B {$latestPr->bench} · D {$latestPr->deadlift} (total {$total}).",
                 href: "/athletes/{$athlete->id}",
                 athleteId: $athlete->id,
                 athleteName: $athlete->name,
@@ -450,8 +449,8 @@ class CoachAlertsService
                     variant: 'pr_celebration',
                     athleteName: $athlete->name,
                     date: $latestPr->reference_date->toDateString(),
-                    headline: "Nouveau total {$total} kg",
-                    subline: "S {$latestPr->squat} · B {$latestPr->bench} · T {$latestPr->deadlift}",
+                    headline: "New total {$total} kg",
+                    subline: "S {$latestPr->squat} · B {$latestPr->bench} · D {$latestPr->deadlift}",
                     metrics: [
                         'squat' => (int) $latestPr->squat,
                         'bench' => (int) $latestPr->bench,
@@ -487,9 +486,9 @@ class CoachAlertsService
                 key: "inactive-{$athlete->id}",
                 type: 'inactive_athlete',
                 severity: 'warning',
-                title: 'Aucune séance récente',
-                body: "{$athlete->name} n'a pas enregistré de séance depuis {$daysSince} jours "
-                    .'malgré un programme actif.',
+                title: 'No recent session',
+                body: "{$athlete->name} hasn't logged a session in {$daysSince} days "
+                    .'despite an active program.',
                 href: "/athletes/{$athlete->id}",
                 athleteId: $athlete->id,
                 athleteName: $athlete->name,
@@ -499,7 +498,7 @@ class CoachAlertsService
     }
 
     /**
-     * Alerte agrégée : athlètes qui n'ont pas encore envoyé leur retour (après le jour / la semaine).
+     * Aggregated alert: athletes who have not sent their feedback yet (after the day / week).
      *
      * @return Collection<int, array<string, mixed>>
      */
@@ -536,7 +535,7 @@ class CoachAlertsService
         $items = collect();
 
         foreach ($dailyTasks as $task) {
-            $athleteName = $task->athlete?->name ?? 'Athlète';
+            $athleteName = $task->athlete?->name ?? 'Athlete';
             $sessionLabel = $task->session_date?->locale(app()->getLocale())->isoFormat('ddd D MMMM')
                 ?? $todayString;
 
@@ -544,26 +543,26 @@ class CoachAlertsService
                 'athlete_id' => $task->athlete_id,
                 'athlete_name' => $athleteName,
                 'kind' => 'daily',
-                'label' => "Journalier · {$sessionLabel}",
+                'label' => "Daily · {$sessionLabel}",
                 'href' => "/athletes/{$task->athlete_id}",
                 'session_feedback_id' => null,
             ]);
         }
 
         foreach ($weeklyTasks as $task) {
-            $athleteName = $task->athlete?->name ?? 'Athlète';
+            $athleteName = $task->athlete?->name ?? 'Athlete';
             $weekStart = $task->period_week_start;
             $weekLabel = $weekStart !== null
                 ? $weekStart->locale(app()->getLocale())->isoFormat('D MMM')
                     .' – '
                     .$weekStart->copy()->endOfWeek(Carbon::SUNDAY)->locale(app()->getLocale())->isoFormat('D MMM')
-                : 'semaine passée';
+                : 'last week';
 
             $items->push([
                 'athlete_id' => $task->athlete_id,
                 'athlete_name' => $athleteName,
                 'kind' => 'weekly',
-                'label' => "Hebdo · {$weekLabel}",
+                'label' => "Weekly · {$weekLabel}",
                 'href' => "/athletes/{$task->athlete_id}",
                 'session_feedback_id' => null,
             ]);
@@ -575,15 +574,15 @@ class CoachAlertsService
 
         $athleteCount = $items->pluck('athlete_id')->unique()->count();
         $subtitle = $athleteCount === 1
-            ? "1 athlète ne t'a pas envoyé son retour"
-            : "{$athleteCount} athlètes ne t'ont pas envoyé leurs retours";
+            ? "1 athlete hasn't sent their feedback"
+            : "{$athleteCount} athletes haven't sent their feedback";
 
         return collect([
             $this->makeAlert(
                 key: "feedback-not-sent-{$todayString}",
                 type: 'feedback_not_sent',
                 severity: 'warning',
-                title: 'Retours non envoyés',
+                title: 'Feedback not sent',
                 body: $subtitle,
                 href: '/feedbacks?filter=pending',
                 athleteId: null,
@@ -595,7 +594,7 @@ class CoachAlertsService
     }
 
     /**
-     * Alerte agrégée : retours déjà envoyés mais non traités après l'échéance.
+     * Aggregated alert: feedback already submitted but not handled after the due date.
      *
      * @return Collection<int, array<string, mixed>>
      */
@@ -640,7 +639,7 @@ class CoachAlertsService
         $items = collect();
 
         foreach ($dailyTasks as $task) {
-            $athleteName = $task->athlete?->name ?? 'Athlète';
+            $athleteName = $task->athlete?->name ?? 'Athlete';
             $sessionLabel = $task->session_date?->locale(app()->getLocale())->isoFormat('ddd D MMMM')
                 ?? $todayString;
             $feedbackId = $task->session_feedback_id;
@@ -649,7 +648,7 @@ class CoachAlertsService
                 'athlete_id' => $task->athlete_id,
                 'athlete_name' => $athleteName,
                 'kind' => 'daily',
-                'label' => "Journalier · {$sessionLabel}",
+                'label' => "Daily · {$sessionLabel}",
                 'href' => $feedbackId
                     ? "/feedbacks?feedback={$feedbackId}&filter=pending"
                     : '/feedbacks?filter=overdue',
@@ -658,20 +657,20 @@ class CoachAlertsService
         }
 
         foreach ($weeklyTasks as $task) {
-            $athleteName = $task->athlete?->name ?? 'Athlète';
+            $athleteName = $task->athlete?->name ?? 'Athlete';
             $weekStart = $task->period_week_start;
             $weekLabel = $weekStart !== null
                 ? $weekStart->locale(app()->getLocale())->isoFormat('D MMM')
                     .' – '
                     .$weekStart->copy()->endOfWeek(Carbon::SUNDAY)->locale(app()->getLocale())->isoFormat('D MMM')
-                : 'semaine passée';
+                : 'last week';
             $feedbackId = $task->session_feedback_id;
 
             $items->push([
                 'athlete_id' => $task->athlete_id,
                 'athlete_name' => $athleteName,
                 'kind' => 'weekly',
-                'label' => "Hebdo · {$weekLabel}",
+                'label' => "Weekly · {$weekLabel}",
                 'href' => $feedbackId
                     ? "/feedbacks?feedback={$feedbackId}&filter=pending"
                     : '/feedbacks?filter=overdue',
@@ -685,15 +684,15 @@ class CoachAlertsService
 
         $count = $items->count();
         $subtitle = $count === 1
-            ? '1 retour en retard'
-            : "{$count} retours en retard";
+            ? '1 overdue feedback'
+            : "{$count} overdue feedback items";
 
         return collect([
             $this->makeAlert(
                 key: "feedback-overdue-{$todayString}",
                 type: 'feedback_overdue',
                 severity: 'critical',
-                title: 'Retours en retard',
+                title: 'Overdue feedback',
                 body: $subtitle,
                 href: '/feedbacks?filter=overdue',
                 athleteId: null,
@@ -719,15 +718,15 @@ class CoachAlertsService
             ->values()
             ->map(function (MessageThread $thread): array {
                 $count = (int) $thread->unread_messages_count;
-                $athleteName = $thread->athlete?->name ?? 'Athlète';
+                $athleteName = $thread->athlete?->name ?? 'Athlete';
 
                 return $this->makeAlert(
                     key: "unread-thread-{$thread->id}",
                     type: 'unread_message',
                     severity: 'info',
-                    title: 'Message non lu',
-                    body: "{$count} message".($count > 1 ? 's' : '')." non lu".($count > 1 ? 's' : '')
-                        ." de {$athleteName}.",
+                    title: 'Unread message',
+                    body: "{$count} unread message".($count > 1 ? 's' : '')
+                        ." from {$athleteName}.",
                     href: "/messaging?thread={$thread->id}",
                     athleteId: $thread->athlete_id,
                     athleteName: $athleteName,
@@ -818,13 +817,13 @@ class CoachAlertsService
             'headline' => $headline,
             'subline' => $subline,
             'metrics' => $metrics,
-            'social_text' => "{$athleteName} · {$headline} sur Power Roster",
+            'social_text' => "{$athleteName} · {$headline} on Power Roster",
             'share_url' => '/dashboard',
             'templates' => [
-                ['id' => 'block_recap', 'label' => 'Fin de bloc'],
-                ['id' => 'weekly_recap', 'label' => 'Récap hebdomadaire'],
-                ['id' => 'meet_day', 'label' => 'Compétition'],
-                ['id' => 'checkin_streak', 'label' => 'Streak check-in'],
+                ['id' => 'block_recap', 'label' => 'End of block'],
+                ['id' => 'weekly_recap', 'label' => 'Weekly recap'],
+                ['id' => 'meet_day', 'label' => 'Competition'],
+                ['id' => 'checkin_streak', 'label' => 'Check-in streak'],
             ],
         ];
     }

@@ -110,9 +110,11 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
                 'prs' => ['squat' => 150, 'bench' => 90, 'deadlift' => 185],
                 'competition_name' => 'Open de Lyon',
-                'competition_days' => 12,
+                'competition_date' => '2026-08-10',
+                'competition_days' => 8,
                 'block_end_days' => 45,
                 'competition_location' => 'Palais des Sports, Lyon',
+                'body_weight_kg' => 61.2,
                 'skip_sessions' => ['3-6'],
             ],
             'weekly' => [
@@ -125,9 +127,11 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 215, 'bench' => 145, 'deadlift' => 250],
                 'competition_name' => 'Coupe Grand Est',
-                'competition_days' => 96,
+                'competition_date' => '2026-11-02',
+                'competition_days' => 92,
                 'block_end_days' => 55,
                 'competition_location' => 'Complexe sportif Marcel-Cerdan, Metz',
+                'body_weight_kg' => 90.6,
                 'seed_match_plan' => true,
                 'skip_sessions' => ['2-4', '4-6'],
             ],
@@ -172,9 +176,11 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
                 'prs' => ['squat' => 125, 'bench' => 72, 'deadlift' => 155],
                 'competition_name' => 'Open de Toulouse',
-                'competition_days' => 54,
+                'competition_date' => '2026-09-21',
+                'competition_days' => 50,
                 'block_end_days' => 50,
                 'competition_location' => 'Palais des Sports, Toulouse',
+                'body_weight_kg' => 55.5,
                 'skip_sessions' => [],
             ],
             'nicolas' => [
@@ -203,9 +209,11 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 165, 'bench' => 95, 'deadlift' => 195],
                 'competition_name' => 'Coupe de Bretagne',
-                'competition_days' => 82,
+                'competition_date' => '2026-10-19',
+                'competition_days' => 78,
                 'block_end_days' => 75,
                 'competition_location' => 'Salle Omnisports, Rennes',
+                'body_weight_kg' => 66.8,
                 'skip_sessions' => ['4-4'],
             ],
             'antoine' => [
@@ -234,9 +242,11 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
                 'prs' => ['squat' => 105, 'bench' => 60, 'deadlift' => 130],
                 'competition_name' => 'Challenge Féminin Nord',
-                'competition_days' => 26,
+                'competition_date' => '2026-08-24',
+                'competition_days' => 22,
                 'block_end_days' => 60,
                 'competition_location' => 'Complexe sportif, Lille',
+                'body_weight_kg' => 45.9,
                 'skip_sessions' => ['3-6'],
             ],
             'maxime' => [
@@ -249,9 +259,11 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 180, 'bench' => 125, 'deadlift' => 215],
                 'competition_name' => 'Open de Bordeaux',
-                'competition_days' => 110,
+                'competition_date' => '2026-11-16',
+                'competition_days' => 106,
                 'block_end_days' => 90,
                 'competition_location' => 'Palais des Sports, Bordeaux',
+                'body_weight_kg' => 72.2,
                 'skip_sessions' => ['2-4', '3-4'],
             ],
             'chloe' => [
@@ -280,9 +292,11 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_WEEKLY,
                 'prs' => ['squat' => 140, 'bench' => 85, 'deadlift' => 175],
                 'competition_name' => 'Open de Nantes',
-                'competition_days' => 68,
+                'competition_date' => '2026-10-05',
+                'competition_days' => 64,
                 'block_end_days' => 65,
                 'competition_location' => 'Salle de la Trocardière, Nantes',
+                'body_weight_kg' => 57.8,
                 'skip_sessions' => ['5-6'],
             ],
             'ines' => [
@@ -295,9 +309,11 @@ class DatabaseSeeder extends Seeder
                 'feedback_frequency' => AthleteProfile::FREQUENCY_DAILY,
                 'prs' => ['squat' => 170, 'bench' => 100, 'deadlift' => 200],
                 'competition_name' => 'Open de Strasbourg',
-                'competition_days' => 40,
+                'competition_date' => '2026-09-07',
+                'competition_days' => 36,
                 'block_end_days' => 80,
                 'competition_location' => 'Palais des Sports, Strasbourg',
+                'body_weight_kg' => 73.6,
                 'skip_sessions' => ['2-6'],
             ],
         ];
@@ -489,7 +505,8 @@ class DatabaseSeeder extends Seeder
         $payload = [
             'athlete_id' => $athlete->id,
             'name' => $definition['competition_name'],
-            'competition_date' => now()->addDays($definition['competition_days'])->toDateString(),
+            'competition_date' => $definition['competition_date']
+                ?? now()->addDays($definition['competition_days'])->toDateString(),
             'goal' => $goal,
             'location' => $definition['competition_location'],
         ];
@@ -1172,13 +1189,17 @@ class DatabaseSeeder extends Seeder
                 continue;
             }
 
-            $base = $baseByCategory[$definition['weight_category']] ?? 75.0;
+            $base = isset($definition['body_weight_kg'])
+                ? (float) $definition['body_weight_kg']
+                : ($baseByCategory[$definition['weight_category']] ?? 75.0);
             $athlete = $athletes[$key];
 
             for ($offset = 0; $offset < 42; $offset++) {
                 $wave = sin($offset / 4.5) * 0.6;
                 $trend = ($offset / 42) * 0.8;
-                $weight = round($base + $wave - $trend, 2);
+                $weight = $offset === 41 && isset($definition['body_weight_kg'])
+                    ? (float) $definition['body_weight_kg']
+                    : round($base + $wave - $trend, 2);
 
                 AthleteBodyWeightEntry::query()->updateOrCreate(
                     [

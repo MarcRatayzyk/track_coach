@@ -101,6 +101,8 @@ class CoachCompetitionsPresenter
             'name' => $competition->name,
             'competition_date' => $competition->competition_date?->toDateString(),
             'location' => $competition->location,
+            'goal' => $competition->goal,
+            'match_plan_data' => MatchPlanData::normalize($competition->match_plan_data),
             'athlete' => [
                 'id' => $athlete?->id,
                 'name' => $athlete?->name,

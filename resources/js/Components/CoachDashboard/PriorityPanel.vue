@@ -136,11 +136,19 @@ const cards = computed(() => [
             <p class="text-4xl font-bold tracking-tight text-white tabular-nums leading-none">
               <AnimatedCounter :value="card.value" />
             </p>
-            <p class="text-sm font-medium text-slate-400">{{ card.unit }}</p>
+            <p
+              v-if="card.value > 0"
+              class="text-sm font-medium text-slate-400"
+            >
+              {{ card.unit }}
+            </p>
           </div>
 
-          <div v-if="card.value === 0 || card.detail" class="mt-4 flex-1">
-            <p class="text-xs leading-relaxed text-slate-500">
+          <div v-if="card.value === 0 || card.detail" class="mt-3 flex-1">
+            <p
+              class="text-sm leading-relaxed"
+              :class="card.value === 0 ? 'font-medium text-emerald-400/90' : 'text-xs text-slate-500'"
+            >
               {{ card.value > 0 ? card.detail : card.emptyLabel }}
             </p>
           </div>

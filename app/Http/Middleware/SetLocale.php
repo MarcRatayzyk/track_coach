@@ -13,7 +13,7 @@ class SetLocale
 
     public const SUPPORTED = ['fr', 'en'];
 
-    public const DEFAULT = 'fr';
+    public const DEFAULT = 'en';
 
     public function handle(Request $request, Closure $next): Response
     {

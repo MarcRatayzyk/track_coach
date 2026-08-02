@@ -9,11 +9,11 @@ export default {
 <script setup>
 import { useI18n } from 'vue-i18n';
 import { Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import CompetitionAttemptsCell from '../Components/CompetitionAttemptsCell.vue';
 import MatchPlanBuilder from '../Components/MatchPlanBuilder.vue';
 import { CATEGORY_LABELS } from '../config/ipfWeightCategories';
-import { defaultStructuredPlan, formatWeight } from '../utils/matchPlan';
+import { defaultStructuredPlan, formatWeight, normalizePlan } from '../utils/matchPlan';
 import { localeTag } from '../i18n';
 const { t, locale } = useI18n();
 
@@ -33,8 +33,11 @@ const props = defineProps({
 });
 
 const openWeightKey = ref(null);
-const showAddModal = ref(false);
+const showModal = ref(false);
+const editingId = ref(null);
 const today = new Date().toISOString().slice(0, 10);
+
+const isEditing = computed(() => editingId.value != null);
 
 const form = useForm({
   athlete_id: '',
@@ -45,16 +48,38 @@ const form = useForm({
   match_plan_data: defaultStructuredPlan(),
 });
 
-function openAddModal() {
+function resetFormDefaults() {
   form.reset();
+  form.clearErrors();
   form.competition_date = today;
   form.match_plan_data = defaultStructuredPlan();
   form.athlete_id = props.athletes[0]?.id ? String(props.athletes[0].id) : '';
-  showAddModal.value = true;
 }
 
-function closeAddModal() {
-  showAddModal.value = false;
+function openAddModal() {
+  editingId.value = null;
+  resetFormDefaults();
+  showModal.value = true;
+}
+
+function openEditModal(row) {
+  if (!row?.athlete?.id) {
+    return;
+  }
+  editingId.value = row.id;
+  form.clearErrors();
+  form.athlete_id = String(row.athlete.id);
+  form.name = row.name ?? '';
+  form.competition_date = row.competition_date ?? today;
+  form.goal = row.goal ?? '';
+  form.location = row.location ?? '';
+  form.match_plan_data = normalizePlan(row.match_plan_data);
+  showModal.value = true;
+}
+
+function closeModal() {
+  showModal.value = false;
+  editingId.value = null;
 }
 
 function submitCompetition() {
@@ -62,23 +87,32 @@ function submitCompetition() {
     return;
   }
 
+  const payload = (data) => ({
+    name: data.name,
+    competition_date: data.competition_date,
+    goal: data.goal || null,
+    location: data.location || null,
+    match_plan_data: data.match_plan_data,
+  });
+
+  const options = {
+    preserveScroll: true,
+    onSuccess: () => {
+      closeModal();
+      resetFormDefaults();
+    },
+  };
+
+  if (isEditing.value) {
+    form
+      .transform(payload)
+      .patch(`/coach/athletes/${form.athlete_id}/competitions/${editingId.value}`, options);
+    return;
+  }
+
   form
-    .transform((data) => ({
-      name: data.name,
-      competition_date: data.competition_date,
-      goal: data.goal || null,
-      location: data.location || null,
-      match_plan_data: data.match_plan_data,
-    }))
-    .post(`/coach/athletes/${form.athlete_id}/competitions`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        showAddModal.value = false;
-        form.reset();
-        form.competition_date = today;
-        form.match_plan_data = defaultStructuredPlan();
-      },
-    });
+    .transform(payload)
+    .post(`/coach/athletes/${form.athlete_id}/competitions`, options);
 }
 
 function categoryLabel(code) {
@@ -136,23 +170,25 @@ function formatTotal(value) {
 
     <Teleport to="body">
       <div
-        v-if="showAddModal"
+        v-if="showModal"
         class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:p-4"
         role="dialog"
         aria-modal="true"
-        @click.self="closeAddModal"
+        @click.self="closeModal"
       >
         <div
           class="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
           @click.stop
         >
           <div class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-800 px-4 py-3 sm:px-5">
-            <h2 class="text-base font-semibold text-white sm:text-lg">{{ t('app.competitions.new') }}</h2>
+            <h2 class="text-base font-semibold text-white sm:text-lg">
+              {{ isEditing ? t('app.competitions.edit') : t('app.competitions.new') }}
+            </h2>
             <button
               type="button"
               class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
               :aria-label="t('common.close')"
-              @click="closeAddModal"
+              @click="closeModal"
             >
               ✕
             </button>
@@ -166,7 +202,8 @@ function formatTotal(value) {
                   <select
                     v-model="form.athlete_id"
                     required
-                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                    :disabled="isEditing"
+                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white disabled:opacity-60"
                   >
                     <option disabled value="">{{ t('app.competitions.chooseAthlete') }}</option>
                     <option
@@ -221,7 +258,6 @@ function formatTotal(value) {
                 <MatchPlanBuilder
                   v-model="form.match_plan_data"
                   compact
-                  single-scenario
                 />
               </div>
 
@@ -234,7 +270,7 @@ function formatTotal(value) {
               <button
                 type="button"
                 class="rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800"
-                @click="closeAddModal"
+                @click="closeModal"
               >
                 {{ t('common.cancel') }}
               </button>
@@ -271,13 +307,14 @@ function formatTotal(value) {
             >
               <div class="flex min-w-0 items-start justify-between gap-3">
                 <div class="min-w-0 flex-1 overflow-hidden">
-                  <Link
+                  <button
                     v-if="row.athlete?.id"
-                    :href="`/athletes/${row.athlete.id}?competition=${row.id}`"
-                    class="block truncate font-semibold text-blue-400 hover:text-blue-300"
+                    type="button"
+                    class="block w-full truncate text-left font-semibold text-blue-400 hover:text-blue-300"
+                    @click="openEditModal(row)"
                   >
                     {{ row.athlete.name }}
-                  </Link>
+                  </button>
                   <span v-else class="font-semibold text-slate-300">—</span>
                   <p v-if="row.name" class="mt-0.5 truncate text-xs text-slate-500">
                     {{ row.name }}
@@ -363,7 +400,8 @@ function formatTotal(value) {
                     <CompetitionAttemptsCell
                       mode="planned"
                       :scenario="row.primary_scenario"
-                      :href="row.athlete?.id ? `/athletes/${row.athlete.id}?competition=${row.id}` : null"
+                      clickable
+                      @click="openEditModal(row)"
                     />
                   </td>
                   <td class="px-4 py-5 text-right font-mono text-base font-semibold text-rose-200">

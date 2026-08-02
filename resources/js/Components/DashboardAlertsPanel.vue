@@ -1,10 +1,13 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { motion } from 'motion-v';
 import UiIcon from './UiIcon.vue';
 import SectionHeader from './Dashboard/SectionHeader.vue';
 import { useDismissedAlerts } from '../composables/useDismissedAlerts';
+
+const { t } = useI18n();
 
 const props = defineProps({
   alerts: {
@@ -23,7 +26,7 @@ const severityStyles = {
     icon: 'text-red-400',
     badge: 'border border-red-500/40 bg-red-500/20 text-red-200',
     bar: 'bg-red-500',
-    label: 'Critique',
+    labelKey: 'severityCritical',
   },
   warning: {
     border: 'border-amber-500/35',
@@ -32,7 +35,7 @@ const severityStyles = {
     icon: 'text-amber-400',
     badge: 'border border-amber-500/50 bg-amber-500/20 text-amber-200',
     bar: 'bg-amber-500',
-    label: 'Attention',
+    labelKey: 'severityWarning',
   },
   info: {
     border: 'border-blue-500/30',
@@ -41,7 +44,7 @@ const severityStyles = {
     icon: 'text-blue-400',
     badge: 'border border-blue-500/40 bg-blue-500/20 text-blue-200',
     bar: 'bg-blue-500',
-    label: 'Information',
+    labelKey: 'severityInfo',
   },
 };
 
@@ -74,6 +77,10 @@ const modalOpen = computed(() => selectedAlert.value !== null);
 
 function stylesFor(alert) {
   return severityStyles[alert.severity] ?? severityStyles.info;
+}
+
+function severityLabel(alert) {
+  return t(`app.coachDash.${stylesFor(alert).labelKey}`);
 }
 
 function iconFor(alert) {
@@ -138,14 +145,14 @@ async function shareAlert() {
   try {
     if (navigator.share) {
       await navigator.share(shareData);
-      shareFeedback.value = 'Partagé avec succès.';
+      shareFeedback.value = t('app.coachDash.sharedOk');
       return;
     }
 
     await navigator.clipboard.writeText(shareText);
-    shareFeedback.value = 'Texte copié. Tu peux le coller où tu veux.';
+    shareFeedback.value = t('app.coachDash.copiedOk');
   } catch (_error) {
-    shareFeedback.value = 'Partage annulé ou impossible sur cet appareil.';
+    shareFeedback.value = t('app.coachDash.shareFailed');
   }
 }
 
@@ -162,8 +169,8 @@ const counts = computed(() => ({
     class="flex h-full min-h-0 flex-col rounded-[20px] border border-orange-500/25 bg-slate-900/50 p-4 shadow-lg backdrop-blur-sm sm:p-5"
   >
     <SectionHeader
-      eyebrow="Surveillance"
-      title="Alertes"
+      :eyebrow="t('app.coachDash.signals')"
+      :title="t('app.coachDash.alerts')"
     >
       <template #actions>
         <div class="flex flex-wrap gap-1.5">
@@ -171,19 +178,19 @@ const counts = computed(() => ({
             v-if="counts.critical"
             class="rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-200"
           >
-            {{ counts.critical }} critique{{ counts.critical > 1 ? 's' : '' }}
+            {{ t('app.coachDash.criticalCount', counts.critical, { count: counts.critical }) }}
           </span>
           <span
             v-if="counts.warning"
             class="rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-200"
           >
-            {{ counts.warning }} attention
+            {{ t('app.coachDash.warningCount', counts.warning, { count: counts.warning }) }}
           </span>
           <span
             v-if="counts.info"
             class="rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-200"
           >
-            {{ counts.info }} info
+            {{ t('app.coachDash.infoCount', counts.info, { count: counts.info }) }}
           </span>
         </div>
       </template>
@@ -193,7 +200,7 @@ const counts = computed(() => ({
       v-if="!items.length"
       class="mt-4 rounded-[16px] border border-dashed border-slate-700 bg-slate-950/40 px-4 py-8 text-center text-sm text-slate-500"
     >
-      Aucune alerte pour le moment — tout semble sous contrôle.
+      {{ t('app.coachDash.noAlertsEmpty') }}
     </p>
 
     <ul
@@ -233,7 +240,7 @@ const counts = computed(() => ({
                   class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
                   :class="stylesFor(alert).badge"
                 >
-                  {{ stylesFor(alert).label }}
+                  {{ severityLabel(alert) }}
                 </span>
               </div>
               <p class="mt-0.5 line-clamp-2 break-words text-xs leading-snug text-slate-400">
@@ -244,7 +251,7 @@ const counts = computed(() => ({
           <button
             type="button"
             class="shrink-0 self-stretch border-l border-slate-700/60 px-3 text-xs font-semibold text-slate-300 transition hover:bg-slate-900/60 hover:text-white"
-            title="Écarter cette alerte"
+            :title="t('app.coachDash.dismissAlertTitle')"
             @click.stop="dismissAlert(alert)"
           >
             OK
@@ -273,7 +280,7 @@ const counts = computed(() => ({
                   class="rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide"
                   :class="stylesFor(selectedAlert).badge"
                 >
-                  {{ stylesFor(selectedAlert).label }}
+                  {{ severityLabel(selectedAlert) }}
                 </span>
               </div>
               <p v-if="selectedAlert.athlete_name && !detailItems.length" class="mt-2 text-base text-blue-400">
@@ -283,7 +290,7 @@ const counts = computed(() => ({
             <button
               type="button"
               class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-              aria-label="Fermer"
+              :aria-label="t('common.close')"
               @click="closeModal"
             >
               ✕
@@ -318,7 +325,7 @@ const counts = computed(() => ({
                     {{ item.label }}
                   </span>
                 </span>
-                <span class="shrink-0 text-xs font-medium text-blue-300">Voir →</span>
+                <span class="shrink-0 text-xs font-medium text-blue-300">{{ t('app.coachDash.viewArrow') }}</span>
               </Link>
             </li>
           </ul>
@@ -328,7 +335,7 @@ const counts = computed(() => ({
             class="mt-6 rounded-xl border border-blue-500/30 bg-slate-950/70 p-5"
           >
             <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-300/90">
-              Aperçu partage
+              {{ t('app.coachDash.sharePreview') }}
             </p>
             <div class="mt-2 rounded-xl border border-slate-700 bg-slate-900 p-4">
               <p class="animate-pulse text-base font-semibold text-white">{{ sharePreview.headline }}</p>
@@ -353,14 +360,14 @@ const counts = computed(() => ({
               class="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800"
               @click="closeModal"
             >
-              Fermer
+              {{ t('common.close') }}
             </button>
             <button
               type="button"
               class="rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-5 py-2.5 text-sm font-semibold text-emerald-100 hover:bg-emerald-600/25"
               @click="dismissAlert(selectedAlert)"
             >
-              OK, écarter
+              {{ t('app.coachDash.okDismiss') }}
             </button>
             <button
               v-if="canShare"
@@ -368,14 +375,14 @@ const counts = computed(() => ({
               class="rounded-xl border border-blue-500/40 bg-blue-600/20 px-5 py-2.5 text-sm font-semibold text-blue-100 hover:bg-blue-600/30"
               @click="shareAlert"
             >
-              Partager
+              {{ t('app.coachDash.share') }}
             </button>
             <Link
               :href="selectedAlert.href"
               class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-blue-500"
               @click="closeModal"
             >
-              {{ detailItems.length ? 'Voir tous les retours' : 'Voir le détail' }}
+              {{ detailItems.length ? t('app.coachDash.viewAllFeedback') : t('app.coachDash.viewDetail') }}
             </Link>
           </div>
         </div>

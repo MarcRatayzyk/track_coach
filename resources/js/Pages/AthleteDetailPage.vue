@@ -387,12 +387,12 @@ const feedbackLabels = {
 
 const timeRange = ref('6m');
 
-const timeRangeOptions = [
-  { value: '1m', label: '1 mois' },
-  { value: '6m', label: '6 mois' },
-  { value: '1y', label: '1 an' },
+const timeRangeOptions = computed(() => [
+  { value: '1m', label: t('athleteUi.stats.range1m') },
+  { value: '6m', label: t('athleteUi.stats.range6m') },
+  { value: '1y', label: t('athleteUi.stats.range1y') },
   { value: 'all', label: t('app.athleteDetail.sinceStart') },
-];
+]);
 
 const currentFeedbackFrequency = computed(
   () => props.athlete.profile?.feedback_frequency ?? 'weekly',

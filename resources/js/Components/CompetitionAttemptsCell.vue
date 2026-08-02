@@ -21,7 +21,13 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  clickable: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+const emit = defineEmits(['click']);
 
 const shortLiftLabels = {
   squat: 'S',
@@ -85,18 +91,50 @@ function attemptClass(attempt) {
 
 const shellClass =
   'inline-flex items-baseline gap-x-6 whitespace-nowrap px-1 py-0.5 font-mono tabular-nums';
+
+const interactiveClass =
+  'rounded-md transition hover:bg-slate-800/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500';
+
+const tag = computed(() => {
+  if (props.clickable) {
+    return 'button';
+  }
+  if (props.href) {
+    return Link;
+  }
+  return 'div';
+});
+
+const tagBind = computed(() => {
+  if (props.clickable) {
+    return { type: 'button' };
+  }
+  if (props.href) {
+    return { href: props.href };
+  }
+  return {};
+});
 </script>
 
 <template>
-  <div v-if="!rows" class="text-slate-600">—</div>
   <component
-    :is="href ? Link : 'div'"
-    v-else
-    v-bind="href ? { href } : {}"
+    v-if="!rows"
+    :is="clickable ? 'button' : 'div'"
+    v-bind="clickable ? { type: 'button' } : {}"
     :class="[
-      shellClass,
-      href ? 'rounded-md transition hover:bg-slate-800/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500' : '',
+      'text-slate-600',
+      clickable ? interactiveClass + ' px-1 py-0.5' : '',
     ]"
+    @click="clickable ? emit('click', $event) : undefined"
+  >
+    —
+  </component>
+  <component
+    :is="tag"
+    v-else
+    v-bind="tagBind"
+    :class="[shellClass, clickable || href ? interactiveClass : '']"
+    @click="clickable ? emit('click', $event) : undefined"
   >
     <div
       v-for="row in rows"

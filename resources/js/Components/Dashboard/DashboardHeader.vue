@@ -52,19 +52,25 @@ const chips = computed(() => {
   const items = [
     {
       key: 'reviews',
-      label: t('app.coachDash.pendingToValidate', s.pendingReviews),
+      label: t('app.coachDash.pendingToValidate', s.pendingReviews, {
+        count: s.pendingReviews,
+      }),
       tone: s.pendingReviews > 0 ? 'amber' : 'slate',
       href: '/feedbacks?filter=pending',
     },
     {
       key: 'alerts',
-      label: t('app.coachDash.importantAlertsCount', s.importantAlerts),
+      label: t('app.coachDash.importantAlertsCount', s.importantAlerts, {
+        count: s.importantAlerts,
+      }),
       tone: s.importantAlerts > 0 ? 'rose' : 'slate',
       href: '#dashboard-alerts',
     },
     {
       key: 'programs',
-      label: t('app.coachDash.activeProgramsCount', s.activePrograms),
+      label: t('app.coachDash.activeProgramsCount', s.activePrograms, {
+        count: s.activePrograms,
+      }),
       tone: 'blue',
       href: '/program-builder',
     },
@@ -76,7 +82,9 @@ const chips = computed(() => {
       label:
         s.nextCompetitionDays === 0
           ? t('app.coachDash.competitionToday')
-          : t('app.coachDash.nextCompetitionIn', s.nextCompetitionDays),
+          : t('app.coachDash.nextCompetitionIn', s.nextCompetitionDays, {
+              days: s.nextCompetitionDays,
+            }),
       tone: 'indigo',
       href: '/competitions',
     });

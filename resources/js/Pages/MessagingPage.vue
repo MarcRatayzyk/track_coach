@@ -341,8 +341,8 @@ onUnmounted(() => {
             <ChatInput
               v-model="messageForm.content"
               :placeholder="isFeedbackReply
-                ? (isCoach ? 'Commentaire pour l’athlète…' : 'Répondre au coach…')
-                : 'Écrire un message…'"
+                ? (isCoach ? t('app.messaging.commentForAthlete') : t('app.messaging.replyToCoach'))
+                : t('app.messaging.placeholder')"
               :processing="messageForm.processing"
               :audio-files="recordedAudioFiles"
               :allow-voice="false"

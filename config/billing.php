@@ -31,7 +31,7 @@ return [
             'name' => 'Starter',
             'price_eur' => 34.99,
             'max_athletes' => 15,
-            'description' => 'Jusqu’à 15 athlètes',
+            'description' => 'Up to 15 athletes',
             'price_id' => env('STRIPE_PRICE_STARTER'),
         ],
         'growth' => [
@@ -39,7 +39,7 @@ return [
             'name' => 'Growth',
             'price_eur' => 49.99,
             'max_athletes' => 40,
-            'description' => 'De 16 à 40 athlètes',
+            'description' => '16 to 40 athletes',
             'price_id' => env('STRIPE_PRICE_GROWTH'),
         ],
         'scale' => [
@@ -47,7 +47,7 @@ return [
             'name' => 'Scale',
             'price_eur' => 74.99,
             'max_athletes' => null,
-            'description' => '41 athlètes et plus',
+            'description' => '41+ athletes',
             'price_id' => env('STRIPE_PRICE_SCALE'),
         ],
     ],

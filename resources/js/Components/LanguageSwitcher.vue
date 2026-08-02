@@ -14,7 +14,7 @@ const props = defineProps({
 const page = usePage();
 const { t } = useI18n();
 
-const current = computed(() => (page.props.locale === 'en' ? 'en' : 'fr'));
+const current = computed(() => (page.props.locale === 'fr' ? 'fr' : 'en'));
 
 function switchTo(locale) {
     if (locale === current.value) {

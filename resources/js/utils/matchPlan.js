@@ -52,6 +52,34 @@ function nullableWeight(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+function nullableReps(value) {
+  if (value === null || value === '' || value === undefined) {
+    return null;
+  }
+  const n = Number(value);
+  if (!Number.isFinite(n)) {
+    return null;
+  }
+  const reps = Math.round(n);
+  return reps >= 1 && reps <= 50 ? reps : null;
+}
+
+/** @returns {{ weight: number, reps: number|null }|null} */
+export function normalizeWarmupBar(value) {
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    const weight = nullableWeight(value.weight);
+    if (weight === null) {
+      return null;
+    }
+    return { weight, reps: nullableReps(value.reps) };
+  }
+  const weight = nullableWeight(value);
+  if (weight === null) {
+    return null;
+  }
+  return { weight, reps: null };
+}
+
 export function normalizeWarmups(raw) {
   const out = emptyWarmups();
   if (!raw || typeof raw !== 'object') {
@@ -60,7 +88,7 @@ export function normalizeWarmups(raw) {
   for (const lift of LIFTS) {
     const list = Array.isArray(raw[lift]) ? raw[lift] : [];
     out[lift] = list
-      .map(nullableWeight)
+      .map(normalizeWarmupBar)
       .filter((v) => v !== null)
       .slice(0, MAX_WARMUP_BARS);
   }
@@ -125,6 +153,17 @@ export function formatWeight(value) {
     return String(Math.round(n));
   }
   return String(n).replace(/\.?0+$/, '') || String(n);
+}
+
+export function formatWarmupBar(bar) {
+  if (!bar || bar.weight == null) {
+    return '—';
+  }
+  const weight = formatWeight(bar.weight);
+  if (bar.reps != null) {
+    return `${weight}×${bar.reps}`;
+  }
+  return `${weight} kg`;
 }
 
 export function scenarioTotal(scenario) {

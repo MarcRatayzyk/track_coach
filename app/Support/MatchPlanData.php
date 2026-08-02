@@ -88,20 +88,36 @@ class MatchPlanData
 
         $lines = [];
         foreach (self::LIFTS as $lift) {
-            $bars = array_values(array_filter(
-                array_map(fn ($v) => self::nullableWeight($v), $warmups[$lift] ?? []),
-                fn ($v) => $v !== null,
-            ));
+            $bars = [];
+            foreach ($warmups[$lift] ?? [] as $value) {
+                $bar = self::normalizeWarmupBar($value);
+                if ($bar !== null) {
+                    $bars[] = $bar;
+                }
+            }
             if ($bars === []) {
                 continue;
             }
             $lines[] = self::LIFT_LABELS[$lift].' : '.implode(' / ', array_map(
-                fn ($v) => self::formatWeight($v),
+                [self::class, 'formatWarmupBar'],
                 $bars,
-            )).' kg';
+            ));
         }
 
         return $lines;
+    }
+
+    /**
+     * @param  array{weight: float, reps: int|null}  $bar
+     */
+    public static function formatWarmupBar(array $bar): string
+    {
+        $weight = self::formatWeight($bar['weight']);
+        if (($bar['reps'] ?? null) !== null) {
+            return $weight.'×'.$bar['reps'];
+        }
+
+        return $weight.' kg';
     }
 
     /**
@@ -175,7 +191,7 @@ class MatchPlanData
 
     /**
      * @param  array<string, mixed>|null  $raw
-     * @return array{squat: list<float>, bench: list<float>, deadlift: list<float>}
+     * @return array{squat: list<array{weight: float, reps: int|null}>, bench: list<array{weight: float, reps: int|null}>, deadlift: list<array{weight: float, reps: int|null}>}
      */
     public static function normalizeWarmups(?array $raw): array
     {
@@ -187,9 +203,9 @@ class MatchPlanData
         foreach (self::LIFTS as $lift) {
             $bars = [];
             foreach ($raw[$lift] ?? [] as $value) {
-                $weight = self::nullableWeight($value);
-                if ($weight !== null) {
-                    $bars[] = $weight;
+                $bar = self::normalizeWarmupBar($value);
+                if ($bar !== null) {
+                    $bars[] = $bar;
                 }
                 if (count($bars) >= self::MAX_WARMUP_BARS) {
                     break;
@@ -202,7 +218,39 @@ class MatchPlanData
     }
 
     /**
-     * @return array{squat: list<float>, bench: list<float>, deadlift: list<float>}
+     * Accepts legacy numeric bars or `{ weight, reps }` objects.
+     *
+     * @return array{weight: float, reps: int|null}|null
+     */
+    public static function normalizeWarmupBar(mixed $value): ?array
+    {
+        if (is_array($value)) {
+            $weight = self::nullableWeight($value['weight'] ?? null);
+            if ($weight === null) {
+                return null;
+            }
+
+            $reps = null;
+            if (array_key_exists('reps', $value) && $value['reps'] !== null && $value['reps'] !== '') {
+                $repsInt = (int) $value['reps'];
+                if ($repsInt >= 1 && $repsInt <= 50) {
+                    $reps = $repsInt;
+                }
+            }
+
+            return ['weight' => $weight, 'reps' => $reps];
+        }
+
+        $weight = self::nullableWeight($value);
+        if ($weight === null) {
+            return null;
+        }
+
+        return ['weight' => $weight, 'reps' => null];
+    }
+
+    /**
+     * @return array{squat: list<array{weight: float, reps: int|null}>, bench: list<array{weight: float, reps: int|null}>, deadlift: list<array{weight: float, reps: int|null}>}
      */
     public static function emptyWarmups(): array
     {
@@ -307,7 +355,7 @@ class MatchPlanData
 
             foreach (self::LIFTS as $lift) {
                 foreach ($data['warmups'][$lift] ?? [] as $value) {
-                    if (self::nullableWeight($value) !== null) {
+                    if (self::normalizeWarmupBar($value) !== null) {
                         return true;
                     }
                 }

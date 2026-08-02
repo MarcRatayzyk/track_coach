@@ -3,10 +3,10 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   ATTEMPT_KEYS,
-  ATTEMPT_LABELS,
   LIFTS,
   LIFT_LABELS,
   emptyWarmups,
+  formatWarmupBar,
   formatWeight,
   hasMatchPlanContent,
   matchPlanFromCompetition,
@@ -66,7 +66,7 @@ const hasWarmups = computed(() =>
                 :key="key"
                 class="pb-2 px-2 text-center font-medium"
               >
-                {{ ATTEMPT_LABELS[key] }}
+                {{ t(`programBuilder.matchPlan.${key}`) }}
               </th>
             </tr>
           </thead>
@@ -107,7 +107,7 @@ const hasWarmups = computed(() =>
       >
         <span class="w-24 shrink-0 font-medium text-slate-300">{{ LIFT_LABELS[lift] }}</span>
         <span class="font-mono">
-          {{ (warmups[lift] ?? []).map((w) => `${formatWeight(w)} kg`).join(' · ') }}
+          {{ (warmups[lift] ?? []).map((bar) => formatWarmupBar(bar)).join(' · ') }}
         </span>
       </li>
     </ul>

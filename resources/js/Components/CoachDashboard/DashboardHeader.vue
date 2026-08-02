@@ -31,13 +31,17 @@ const chips = computed(() => {
   const items = [
     {
       key: 'programs',
-      label: t('app.coachDash.activeProgramsCount', props.activePrograms),
+      label: t('app.coachDash.activeProgramsCount', props.activePrograms, {
+        count: props.activePrograms,
+      }),
       href: '/program-builder',
       tone: 'blue',
     },
     {
       key: 'athletes',
-      label: t('app.coachDash.athletesFollowedCount', props.athleteCount),
+      label: t('app.coachDash.athletesFollowedCount', props.athleteCount, {
+        count: props.athleteCount,
+      }),
       href: '/athletes',
       tone: 'sky',
     },
@@ -49,7 +53,9 @@ const chips = computed(() => {
       label:
         daysToComp.value <= 0
           ? t('app.coachDash.competitionToday')
-          : t('app.coachDash.nextCompetitionIn', daysToComp.value),
+          : t('app.coachDash.nextCompetitionIn', daysToComp.value, {
+              days: daysToComp.value,
+            }),
       href: '/competitions',
       tone: daysToComp.value <= 7 ? 'rose' : 'slate',
     });
