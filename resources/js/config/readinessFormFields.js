@@ -184,11 +184,54 @@ export function resolveOptionLabel(field, value) {
   if (value == null || value === '') {
     return '—';
   }
-  if (!field || field.type !== 'select') {
+  const localized = localizeReadinessField(field);
+  if (!localized || localized.type !== 'select') {
     return String(value);
   }
-  const option = (field.options ?? []).find((opt) => String(opt.value) === String(value));
+  const option = (localized.options ?? []).find((opt) => String(opt.value) === String(value));
   return option?.label ?? String(value);
+}
+
+/** Applique les libellés i18n des presets connus (labels stockés en FR en base). */
+export function localizeReadinessField(field) {
+  if (!field || typeof field !== 'object') {
+    return field;
+  }
+
+  const presetKey =
+    field.preset_key
+    || (typeof field.id === 'string' && field.id.startsWith('preset-')
+      ? field.id.slice('preset-'.length)
+      : null);
+
+  if (!presetKey) {
+    return field;
+  }
+
+  const preset = READINESS_PRESET_CATALOG.find((item) => item.key === presetKey);
+  if (!preset) {
+    return field;
+  }
+
+  return {
+    ...field,
+    label: preset.label,
+    options: Array.isArray(field.options)
+      ? field.options.map((opt) => {
+          const presetOpt = (preset.options ?? []).find(
+            (candidate) => String(candidate.value) === String(opt.value),
+          );
+          return {
+            ...opt,
+            label: presetOpt?.label ?? opt.label,
+          };
+        })
+      : [],
+  };
+}
+
+export function localizeReadinessFields(fields) {
+  return (fields ?? []).map((field) => localizeReadinessField(field));
 }
 
 export function validateReadinessFieldsDraft(fields) {

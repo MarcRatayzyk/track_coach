@@ -1,5 +1,6 @@
 import i18n from '../i18n';
 import { localeTag } from '../i18n';
+import { sectionWithSchemeLabel } from '../config/programTableSections';
 import { epleyE1rm, resolveLoadKg } from './trainingVolume';
 
 function tt(key) {
@@ -612,6 +613,12 @@ export function itemSectionTitle(item, items) {
   if (item.section === 'warmup') {
     return `Échauffement ${warmupOrdinal(items, item.id)}`;
   }
+
+  const scheme = item.line?.set_scheme ?? 'standard';
+  if (scheme === 'ramp' || scheme === 'cluster') {
+    return sectionWithSchemeLabel(item.section, scheme);
+  }
+
   return SESSION_SECTION_LABELS[item.section] ?? item.section;
 }
 

@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { localeTag } from '../i18n';
 import { formatCalendarFr } from '../utils/formatDates';
-import { resolveOptionColor, resolveOptionLabel } from '../config/readinessFormFields';
+import { localizeReadinessFields, resolveOptionColor, resolveOptionLabel } from '../config/readinessFormFields';
 
 const { t, locale } = useI18n();
 
@@ -33,7 +33,9 @@ const DAY_LABELS = computed(() => [
 ]);
 
 const sortedFields = computed(() =>
-  [...(props.fields ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+  localizeReadinessFields(props.fields)
+    .slice()
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
 );
 
 /** Semaine en cours (lundi → dimanche). */

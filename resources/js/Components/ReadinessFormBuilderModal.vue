@@ -13,6 +13,8 @@ import {
   emptyCustomField,
   emptySelectOption,
   emptyValuesForFields,
+  localizeReadinessField,
+  localizeReadinessFields,
   validateReadinessFieldsDraft,
 } from '../config/readinessFormFields';
 
@@ -73,7 +75,9 @@ watch(
     clientErrors.value = [];
     showPresetPicker.value = false;
     fields.value = cloneFields(
-      props.initialFields?.length ? props.initialFields : defaultReadinessFields(),
+      localizeReadinessFields(
+        props.initialFields?.length ? props.initialFields : defaultReadinessFields(),
+      ),
     );
     selectedIndex.value = 0;
     previewValues.value = emptyValuesForFields(fields.value);
@@ -283,7 +287,7 @@ function submit() {
                   class="flex w-full items-center justify-between gap-2 text-left"
                   @click="selectField(index)"
                 >
-                  <span class="text-sm font-semibold text-white">{{ field.label }}</span>
+                  <span class="text-sm font-semibold text-white">{{ localizeReadinessField(field).label }}</span>
                   <span class="text-[10px] uppercase tracking-wide text-slate-500">{{ field.type }}</span>
                 </button>
                 <div class="mt-2 flex flex-wrap gap-1">

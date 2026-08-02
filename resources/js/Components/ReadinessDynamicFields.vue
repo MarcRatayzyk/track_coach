@@ -1,6 +1,9 @@
 <script setup>
 import { computed } from 'vue';
-import { resolveOptionColor } from '../config/readinessFormFields';
+import { useI18n } from 'vue-i18n';
+import { localizeReadinessFields, resolveOptionColor } from '../config/readinessFormFields';
+
+const { t } = useI18n();
 
 const props = defineProps({
   fields: {
@@ -28,7 +31,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 const sortedFields = computed(() =>
-  [...(props.fields ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+  localizeReadinessFields(props.fields)
+    .slice()
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
 );
 
 function valueFor(fieldId) {
@@ -85,7 +90,7 @@ function optionButtonStyle(field, option, selected) {
     >
       <div class="flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
         <span>{{ field.label }}</span>
-        <span v-if="field.required" class="font-normal normal-case text-slate-500">requis</span>
+        <span v-if="field.required" class="font-normal normal-case text-slate-500">{{ t('common.required') }}</span>
       </div>
 
       <input

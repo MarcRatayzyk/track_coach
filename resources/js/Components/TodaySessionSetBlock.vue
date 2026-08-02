@@ -80,32 +80,6 @@ const totalSets = computed(() =>
 
 const fullyValidated = computed(() => props.validatedSetsCount >= totalSets.value);
 
-/** Libellé du prochain palier (ex. 3@230 kg), sans la chaîne complète du ramp. */
-const nextStepRecap = computed(() => {
-  if (!isRamp.value || fullyValidated.value) {
-    return null;
-  }
-
-  const reps = line.value.reps != null && line.value.reps !== '' ? line.value.reps : '—';
-  let loadLabel = '—';
-
-  if (line.value.load != null && line.value.load !== '') {
-    loadLabel = `${line.value.load} kg`;
-  } else if (line.value.load_percent != null && line.value.load_percent !== '') {
-    const kg = resolveLoadKg(line.value, props.oneRm, props.mainLift);
-    loadLabel =
-      kg != null
-        ? `${line.value.load_percent}% · ${Math.round(kg)} kg`
-        : `${line.value.load_percent}%`;
-  } else if (line.value.rpe != null && line.value.rpe !== '') {
-    loadLabel = `RPE ${line.value.rpe}`;
-  } else {
-    return null;
-  }
-
-  return `${reps}@${loadLabel}`;
-});
-
 const collapsedRecapLines = computed(() => {
   if (props.validatedSetsCount > 0 && props.validatedSets.length > 0) {
     return formatValidatedSetsRecapLines(
@@ -116,23 +90,17 @@ const collapsedRecapLines = computed(() => {
     );
   }
 
-  // Ramp : afficher le prochain palier, pas toute la montée.
-  if (isRamp.value && nextStepRecap.value) {
-    const name = line.value.exercise_name?.trim() || t('athleteUi.todaySessionSet.setToFill');
-    return [`${name} — ${nextStepRecap.value}`];
-  }
-
   const withKg = formatLineRecapWithKg(line.value, props.oneRm, props.mainLift);
   const fallback = withKg ?? formatLineRecap(line.value) ?? t('athleteUi.todaySessionSet.setToFill');
   return [fallback];
 });
 
 const headerTitle = computed(() => {
-  const scheme = line.value.set_scheme ?? 'standard';
-  if (schemeShortLabel(scheme)) {
-    return sectionWithSchemeLabel(props.item.section, scheme);
+  const schemeLabel = schemeShortLabel(scheme.value);
+  if (!schemeLabel) {
+    return props.title;
   }
-  return props.title;
+  return sectionWithSchemeLabel(props.item.section, scheme.value);
 });
 
 const sectionClass = computed(() => {
@@ -481,7 +449,7 @@ const pickerVisible = 3;
       <div class="min-w-0 flex-1">
         <p
           class="text-[10px] font-semibold tracking-wide"
-          :class="[sectionClass, schemeShortLabel(line.set_scheme ?? 'standard') ? 'normal-case' : 'uppercase']"
+          :class="[sectionClass, isRamp || isCluster ? 'normal-case' : 'uppercase']"
         >
           {{ headerTitle }}
         </p>
@@ -538,13 +506,7 @@ const pickerVisible = 3;
         </p>
 
         <p v-else-if="totalSets > 1" class="mb-3 text-xs font-medium text-blue-300/90">
-          <template v-if="isRamp">
-            {{ t('athleteUi.todaySessionSet.rampProgress', { current: currentSetNumber, total: totalSets }) }}
-            <template v-if="nextStepRecap">
-              <span class="text-slate-500"> · </span>
-              <span class="text-slate-200">{{ nextStepRecap }}</span>
-            </template>
-          </template>
+          <template v-if="isRamp">{{ t('athleteUi.todaySessionSet.rampProgress', { current: currentSetNumber, total: totalSets }) }}</template>
           <template v-else>{{ t('athleteUi.todaySessionSet.setProgress', { current: currentSetNumber, total: totalSets }) }}</template>
         </p>
 
