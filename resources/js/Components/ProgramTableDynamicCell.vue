@@ -47,15 +47,6 @@ const isRamp = computed(() => scheme.value === 'ramp');
 const isCluster = computed(() => scheme.value === 'cluster');
 const isSpecialScheme = computed(() => isRamp.value || isCluster.value);
 const schemeText = computed(() => formatSchemePrescription(props.row));
-const schemeBadge = computed(() => {
-  if (isRamp.value) {
-    return 'Ramp';
-  }
-  if (isCluster.value) {
-    return 'Cluster';
-  }
-  return '';
-});
 const schemeSetsDisplay = computed(() => {
   if (isRamp.value) {
     return plannedSetsForLine(props.row);
@@ -159,6 +150,7 @@ function openQuickEdit() {
   <template v-else-if="columnId === 'section'">
     <ProgramTableSectionSelect
       :model-value="row.section ?? 'accessory'"
+      :set-scheme="scheme"
       :preview="preview"
       @update:model-value="updateField('section', $event)"
     />
@@ -168,13 +160,10 @@ function openQuickEdit() {
     <button
       v-if="isSpecialScheme"
       type="button"
-      class="flex w-full flex-col items-center justify-center gap-0.5 px-0.5 py-0.5 text-center"
+      class="flex w-full items-center justify-center px-0.5 py-1 font-mono text-sm font-semibold tabular-nums text-white"
       @click="openQuickEdit"
     >
-      <span class="rounded bg-violet-500/20 px-1 py-px text-[9px] font-bold uppercase tracking-wide text-violet-300">
-        {{ schemeBadge }}
-      </span>
-      <span class="font-mono text-sm font-semibold tabular-nums text-white">{{ schemeSetsDisplay }}</span>
+      {{ schemeSetsDisplay }}
     </button>
     <input
       v-else
@@ -213,14 +202,9 @@ function openQuickEdit() {
     <button
       v-if="isSpecialScheme"
       type="button"
-      class="flex w-full flex-col items-stretch gap-0.5 px-0.5 py-0.5 text-left"
+      class="flex w-full items-center px-0.5 py-0.5 text-left"
       @click="openQuickEdit"
     >
-      <span
-        class="self-start rounded bg-violet-500/20 px-1 py-px text-[9px] font-bold uppercase tracking-wide text-violet-300"
-      >
-        {{ schemeBadge }}
-      </span>
       <span class="text-[11px] font-semibold leading-snug text-white">
         {{ schemeText || '—' }}
       </span>

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AthleteSessionNotesModal from './AthleteSessionNotesModal.vue';
+import ScrollingLabel from './ScrollingLabel.vue';
 import {
   athleteColumnHeaderLabel,
   athleteSpacedColumnPercent,
@@ -9,7 +10,7 @@ import {
   normalizeTableLayout,
   resolveVisibleColumns,
 } from '../config/dayTableColumns';
-import { sectionOption } from '../config/programTableSections';
+import { sectionOption, sectionWithSchemeLabel } from '../config/programTableSections';
 import {
   formatRestMinutesLabel,
   formatSchemePrescription,
@@ -61,7 +62,10 @@ function columnStyle(column) {
   return { width: athleteSpacedColumnPercent(column.id, visibleColumns.value) };
 }
 
-function sectionLabel(section) {
+function sectionLabel(section, setScheme = 'standard') {
+  if (setScheme === 'ramp' || setScheme === 'cluster') {
+    return sectionWithSchemeLabel(section, setScheme);
+  }
   return sectionOption(section).compactLabel;
 }
 
@@ -77,7 +81,7 @@ function cellValue(row, columnId) {
     case 'variant':
       return row.exercise_variant_id ? t('athleteUi.programTableDay.variant') : '—';
     case 'section':
-      return sectionLabel(row.section);
+      return sectionLabel(row.section, scheme);
     case 'sets':
       if (scheme === 'ramp' || scheme === 'cluster') {
         return plannedSetsForLine(row);
@@ -129,7 +133,7 @@ function loadLabel(row) {
 
 function prescriptionSummary(row) {
   const parts = [];
-  const type = sectionOption(row.section).label;
+  const type = sectionWithSchemeLabel(row.section, row.set_scheme ?? 'standard');
   if (type) {
     parts.push(type);
   }
@@ -179,7 +183,7 @@ function cellTitle(row, columnId) {
   }
 
   if (columnId === 'section') {
-    return sectionOption(row.section).label;
+    return sectionWithSchemeLabel(row.section, row.set_scheme ?? 'standard');
   }
 
   return undefined;
@@ -282,6 +286,12 @@ function isPrescriptionColumn(columnId) {
               >
                 {{ cellValue(row, column.id) }}
               </span>
+              <div
+                v-else-if="column.id === 'section' && (row.set_scheme === 'ramp' || row.set_scheme === 'cluster')"
+                class="mx-auto max-w-full"
+              >
+                <ScrollingLabel :text="cellValue(row, column.id)" />
+              </div>
               <template v-else>
                 {{ cellValue(row, column.id) }}
               </template>

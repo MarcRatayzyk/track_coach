@@ -881,7 +881,10 @@
       "backoff": "Back off",
       "backoffShort": "Back",
       "accessory": "Accessoires",
-      "accessoryShort": "Acc."
+      "accessoryShort": "Acc.",
+      "rampUp": "Ramp-up",
+      "cluster": "Cluster",
+      "withScheme": "{section} - {scheme}"
     },
     "charts": {
       "types": {

@@ -8,6 +8,7 @@ import {
   formatLineRecapWithKg,
   formatValidatedSetsRecapLines,
   inferLoadMode,
+  plannedSetsForLine,
 } from '../utils/programBuilder';
 import { resolveLoadKg } from '../utils/trainingVolume';
 
@@ -73,7 +74,7 @@ const clusterTarget = computed(() => {
 });
 
 const totalSets = computed(() =>
-  Math.max(1, Number(props.plannedSets ?? line.value.sets ?? 1)),
+  Math.max(1, Number(props.plannedSets ?? plannedSetsForLine(line.value) ?? 1)),
 );
 
 const fullyValidated = computed(() => props.validatedSetsCount >= totalSets.value);

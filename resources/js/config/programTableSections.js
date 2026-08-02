@@ -63,3 +63,24 @@ export function sectionBadgeClass(section) {
     accessory: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200',
   }[option.value] ?? 'border-slate-600 bg-slate-800 text-slate-300';
 }
+
+export function schemeShortLabel(setScheme) {
+  if (setScheme === 'ramp') {
+    return tt('config.programSections.rampUp');
+  }
+  if (setScheme === 'cluster') {
+    return tt('config.programSections.cluster');
+  }
+  return '';
+}
+
+/** Ex. "Topset - Ramp-up" pour les séries spéciales. */
+export function sectionWithSchemeLabel(section, setScheme) {
+  const base = sectionOption(section).label;
+  const scheme = schemeShortLabel(setScheme);
+  if (!scheme) {
+    return base;
+  }
+  return tt('config.programSections.withScheme', { section: base, scheme });
+}
+

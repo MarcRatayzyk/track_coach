@@ -435,8 +435,10 @@ export function formatValidatedSetsRecapLines(line, validatedSets = [], oneRm = 
 export function expandValidatedSetsToItems(items = []) {
   return (items ?? []).flatMap((item) => {
     const validatedSets = item?.validatedSets ?? [];
+    // Ne pas persister les exercices non commencés : sinon un seul palier
+    // enregistrait aussi le reste du programme comme « fait ».
     if (!validatedSets.length) {
-      return [item];
+      return [];
     }
 
     const groups = groupValidatedSets(validatedSets);
@@ -445,8 +447,9 @@ export function expandValidatedSetsToItems(items = []) {
         exercise_variant_id: item.line?.exercise_variant_id ?? null,
         exercise_name: item.line?.exercise_name ?? '',
         lift: item.line?.lift ?? null,
-        set_scheme: item.line?.set_scheme ?? 'standard',
-        scheme_config: item.line?.scheme_config ?? null,
+        // Perf réalisée (pas la prescription ramp/cluster complète).
+        set_scheme: 'standard',
+        scheme_config: null,
         sets: group.count,
         reps: group.reps,
         load: group.load,
@@ -873,14 +876,26 @@ export function normalizeLineForSave(line) {
   }
   const derived = applySchemeDerivedFields({ ...line });
   const note = typeof derived.athlete_note === 'string' ? derived.athlete_note.trim() : '';
+
+  // Préférer les valeurs de perf saisies (ex. 1 palier validé) plutôt que
+  // les champs dérivés de la prescription ramp (sets = nb de paliers).
+  const pickNum = (key) => {
+    const raw = line[key];
+    if (raw == null || raw === '') {
+      return null;
+    }
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  };
+
   const normalized = {
     exercise_variant_id: derived.exercise_variant_id ? Number(derived.exercise_variant_id) : null,
     exercise_name: derived.exercise_name,
     lift: derived.lift,
     set_scheme: derived.set_scheme ?? 'standard',
     scheme_config: derived.set_scheme === 'standard' ? null : derived.scheme_config ?? null,
-    sets: Number(derived.sets ?? 1),
-    reps: Number(derived.reps ?? 1),
+    sets: pickNum('sets') ?? Number(derived.sets ?? 1),
+    reps: pickNum('reps') ?? Number(derived.reps ?? 1),
     load: null,
     load_percent: null,
     rpe: null,
@@ -890,30 +905,41 @@ export function normalizeLineForSave(line) {
     athlete_note: note !== '' ? note : null,
   };
 
+  const load = pickNum('load');
+  const loadPercent = pickNum('load_percent');
+  const rpe = pickNum('rpe');
+  const mode = line.load_mode ?? derived.load_mode ?? inferLoadMode(line) ?? inferLoadMode(derived);
+
   if (derived.set_scheme === 'ramp' || derived.set_scheme === 'cluster') {
-    if (derived.load != null && derived.load !== '') {
+    if (load != null) {
+      normalized.load = load;
+    } else if (derived.load != null && derived.load !== '') {
       normalized.load = Number(derived.load);
     }
-    if (derived.load_percent != null && derived.load_percent !== '') {
+    if (loadPercent != null) {
+      normalized.load_percent = loadPercent;
+    } else if (derived.load_percent != null && derived.load_percent !== '') {
       normalized.load_percent = Number(derived.load_percent);
     }
-    if (derived.rpe != null && derived.rpe !== '') {
+    if (rpe != null) {
+      normalized.rpe = rpe;
+    } else if (derived.rpe != null && derived.rpe !== '') {
       normalized.rpe = derived.rpe;
     }
     return normalized;
   }
 
-  const mode = derived.load_mode ?? inferLoadMode(derived);
   if (mode === 'percent') {
-    normalized.load_percent = derived.load_percent;
+    normalized.load_percent = loadPercent ?? derived.load_percent;
   } else if (mode === 'kg') {
-    normalized.load =
-      derived.load != null && derived.load !== '' ? Number(derived.load) : null;
-  } else if (mode === 'rpe') {
-    // RPE-only prescription (coach)
+    normalized.load = load ?? (
+      derived.load != null && derived.load !== '' ? Number(derived.load) : null
+    );
   }
 
-  if (derived.rpe != null && derived.rpe !== '') {
+  if (rpe != null) {
+    normalized.rpe = rpe;
+  } else if (derived.rpe != null && derived.rpe !== '') {
     normalized.rpe = derived.rpe;
   }
 

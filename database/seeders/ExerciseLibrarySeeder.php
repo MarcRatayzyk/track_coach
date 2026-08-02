@@ -16,7 +16,7 @@ class ExerciseLibrarySeeder extends Seeder
                 'lift' => Exercise::LIFT_SQUAT,
                 'category' => Exercise::CATEGORY_MAIN_LIFT,
                 'equipment' => 'barbell',
-                'variants' => ['Squat', 'Squat pause', 'Squat tempo', 'Squat pin', 'Box squat'],
+                'variants' => ['Squat', 'Squat pause', 'Squat tempo', 'Squat pin', 'Box squat', 'Squat high bar'],
             ],
             [
                 'name' => 'Bench press',
