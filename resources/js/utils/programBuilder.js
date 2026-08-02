@@ -410,16 +410,31 @@ export function groupValidatedSets(validatedSets = []) {
 
 /** Une ligne de récap par groupe de séries distinctes. */
 export function formatValidatedSetsRecapLines(line, validatedSets = [], oneRm = {}, mainLift = 'squat') {
-  const groups = groupValidatedSets(validatedSets);
-  if (!groups.length) {
+  const snaps = (validatedSets ?? []).filter(Boolean);
+  if (!snaps.length) {
     const recap = formatLineRecapWithKg(line, oneRm, mainLift) ?? formatLineRecap(line);
     return recap ? [recap] : [];
   }
 
+  // Ramp-up : une seule ligne (chaîne des paliers), jamais une ligne par validation.
+  if ((line?.set_scheme ?? 'standard') === 'ramp') {
+    const label =
+      line.exercise_name?.trim()
+      || (line.lift ? defaultLiftName(line.lift) : 'Exercice');
+    const chain = snaps
+      .map((snap) => `${snap.reps ?? '—'}@${formatStepLoad(snap)}`)
+      .join(' → ');
+    return [`${label} - ${chain}`];
+  }
+
+  const groups = groupValidatedSets(snaps);
   return groups
     .map((group) => {
       const groupLine = {
         ...line,
+        // Évite de réafficher la prescription ramp/cluster sur chaque groupe.
+        set_scheme: 'standard',
+        scheme_config: null,
         sets: group.count,
         reps: group.reps,
         load: group.load,
