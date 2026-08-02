@@ -33,7 +33,13 @@ class SecurityHeaders
 
     private function contentSecurityPolicy(): string
     {
-        $scriptSrc = ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'"];
+        $scriptSrc = [
+            "'self'",
+            "'unsafe-inline'",
+            "'wasm-unsafe-eval'",
+            'https://*.posthog.com',
+            'https://*.i.posthog.com',
+        ];
         $styleSrc = ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'];
         $connectSrc = array_values(array_unique(array_filter([
             "'self'",
