@@ -49,16 +49,22 @@ export function repFormatBucket(reps) {
 }
 
 function inferLoadMode(line) {
-  if (line?.rpe != null && line.rpe !== '') {
-    return 'rpe';
-  }
-  if (line?.load_percent != null && line.load_percent !== '') {
-    return 'percent';
+  // Aligné sur programBuilder / chartBuilderEngine :
+  // RPE cible peut coexister avec une charge en kg/% — ne pas l'écraser.
+  const explicit = line?.load_mode;
+  if (explicit === 'kg' || explicit === 'percent' || explicit === 'rpe') {
+    return explicit;
   }
   if (line?.load != null && line.load !== '') {
     return 'kg';
   }
-  return line?.load_mode ?? null;
+  if (line?.load_percent != null && line.load_percent !== '') {
+    return 'percent';
+  }
+  if (line?.rpe != null && line.rpe !== '') {
+    return 'rpe';
+  }
+  return null;
 }
 
 function resolveLift(line, fallbackLift = 'squat') {
@@ -108,6 +114,41 @@ export function resolveLoadKg(line, oneRm = {}, fallbackLift = 'squat') {
  * @returns {number|null}
  */
 export function lineVolume(line, oneRm = {}, sessionMainLift = 'squat') {
+  if (!line) {
+    return null;
+  }
+
+  // Ramp : sommer chaque palier (sets plats seuls sous-estiment ou sont vides en UI).
+  if ((line.set_scheme ?? 'standard') === 'ramp') {
+    const steps = Array.isArray(line.scheme_config?.steps) ? line.scheme_config.steps : [];
+    if (steps.length > 0) {
+      let total = 0;
+      let any = false;
+      for (const step of steps) {
+        const stepVol = lineVolume(
+          {
+            ...line,
+            set_scheme: 'standard',
+            scheme_config: null,
+            load_mode: null,
+            sets: 1,
+            reps: step?.reps,
+            load: step?.load,
+            load_percent: step?.load_percent,
+            rpe: step?.rpe,
+          },
+          oneRm,
+          sessionMainLift,
+        );
+        if (stepVol != null) {
+          total += stepVol;
+          any = true;
+        }
+      }
+      return any ? total : null;
+    }
+  }
+
   const loadKg = resolveLoadKg(line, oneRm, sessionMainLift);
   const sets = Number(line?.sets ?? 0);
   const reps = Number(line?.reps ?? 0);

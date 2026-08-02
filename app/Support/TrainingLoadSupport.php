@@ -166,21 +166,24 @@ class TrainingLoadSupport
      */
     private static function inferLoadMode(array $line): ?string
     {
-        if (self::hasNumericValue($line['rpe'] ?? null)) {
-            return 'rpe';
-        }
-
-        if (self::hasNumericValue($line['load_percent'] ?? null)) {
-            return 'percent';
+        $explicit = $line['load_mode'] ?? null;
+        if (is_string($explicit) && in_array($explicit, ['kg', 'percent', 'rpe'], true)) {
+            return $explicit;
         }
 
         if (self::hasNumericValue($line['load'] ?? null)) {
             return 'kg';
         }
 
-        $mode = $line['load_mode'] ?? null;
+        if (self::hasNumericValue($line['load_percent'] ?? null)) {
+            return 'percent';
+        }
 
-        return is_string($mode) && $mode !== '' ? $mode : null;
+        if (self::hasNumericValue($line['rpe'] ?? null)) {
+            return 'rpe';
+        }
+
+        return null;
     }
 
     /**
