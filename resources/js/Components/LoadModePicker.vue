@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import OptionButtonGroup from './OptionButtonGroup.vue';
 import { RPE_OPTIONS } from '../utils/programBuilder';
 
@@ -8,20 +8,29 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  /** Quand la colonne RPE cible est gérée à part, on n’offre que kg / %. */
+  excludeRpeMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const line = defineModel({ type: Object, required: true });
 
-const modes = [
+const allModes = [
   { id: 'rpe', label: 'RPE' },
   { id: 'percent', label: '% 1RM' },
   { id: 'kg', label: 'kg' },
 ];
 
+const modes = computed(() =>
+  props.excludeRpeMode ? allModes.filter((mode) => mode.id !== 'rpe') : allModes,
+);
+
 const activeMode = ref(inferMode(line.value));
 
 function inferMode(value) {
-  if (value?.rpe != null && value.rpe !== '') {
+  if (!props.excludeRpeMode && value?.rpe != null && value.rpe !== '') {
     return 'rpe';
   }
   if (value?.load_percent != null && value.load_percent !== '') {
@@ -30,13 +39,19 @@ function inferMode(value) {
   if (value?.load != null && value.load !== '') {
     return 'kg';
   }
-  return line.value?.load_mode ?? null;
+  const fallback = line.value?.load_mode ?? null;
+  if (props.excludeRpeMode && fallback === 'rpe') {
+    return 'kg';
+  }
+  return fallback;
 }
 
 function setMode(mode) {
   activeMode.value = mode;
   line.value.load_mode = mode;
-  line.value.rpe = null;
+  if (!props.excludeRpeMode) {
+    line.value.rpe = null;
+  }
   line.value.load_percent = null;
   line.value.load = null;
 }
@@ -86,7 +101,7 @@ watch(
       </button>
     </div>
 
-    <div v-if="activeMode === 'rpe'" :class="compact ? 'mt-1.5' : 'mt-3'">
+    <div v-if="activeMode === 'rpe' && !excludeRpeMode" :class="compact ? 'mt-1.5' : 'mt-3'">
       <OptionButtonGroup
         :model-value="line.rpe"
         :options="RPE_OPTIONS"

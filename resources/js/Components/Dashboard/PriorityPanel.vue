@@ -1,9 +1,12 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import { Link } from '@inertiajs/vue3';
 import { motion } from 'motion-v';
 import UiIcon from '../UiIcon.vue';
 import SectionHeader from './SectionHeader.vue';
 import AnimatedCounter from './AnimatedCounter.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   items: {
@@ -55,8 +58,8 @@ function accent(item) {
 <template>
   <section>
     <SectionHeader
-      eyebrow="Priorité"
-      title="Actions prioritaires"
+      :eyebrow="t('app.coachDash.priority')"
+      :title="t('app.coachDash.priorityActions')"
     />
 
     <div class="-mx-1 mt-4 flex gap-3 overflow-x-auto px-1 pb-1 sm:grid sm:grid-cols-2 sm:overflow-visible xl:grid-cols-4">

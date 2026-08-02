@@ -10,6 +10,7 @@ use App\Models\SessionFeedback;
 use App\Services\CoachAlertsService;
 use App\Services\CoachAthleteRosterService;
 use App\Services\CoachFeedbackMetricsService;
+use App\Services\CoachTodaySessionsService;
 use App\Models\ProgramTemplate;
 use App\Models\User;
 use App\Support\ActiveProgramAssignmentSupport;
@@ -42,6 +43,7 @@ class AppPageController extends Controller
     public function dashboard(
         CoachFeedbackMetricsService $feedbackMetrics,
         CoachAlertsService $alertsService,
+        CoachTodaySessionsService $todaySessionsService,
     ): Response {
         $coach = auth()->user();
 
@@ -50,6 +52,7 @@ class AppPageController extends Controller
             ->pluck('users.id');
 
         $feedback = $feedbackMetrics->forCoach($coach);
+        $todaySessions = $todaySessionsService->forCoach($coach);
 
         $upcomingCompetitions = Competition::query()
             ->whereIn('athlete_id', $athleteIds)
@@ -167,6 +170,7 @@ class AppPageController extends Controller
             'athleteCount' => $athleteIds->count(),
             'onboarding' => $onboarding,
             'feedback' => $feedback,
+            'todaySessions' => $todaySessions,
             'competitionSummary' => $competitionSummary,
             'upcomingCompetitions' => $upcomingCompetitions,
             'recentThreads' => $recentThreads,

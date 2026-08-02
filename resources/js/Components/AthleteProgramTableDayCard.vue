@@ -10,6 +10,11 @@ import {
   resolveVisibleColumns,
 } from '../config/dayTableColumns';
 import { sectionOption } from '../config/programTableSections';
+import {
+  formatRestMinutesLabel,
+  formatSchemePrescription,
+  plannedSetsForLine,
+} from '../utils/programBuilder';
 
 const { t } = useI18n();
 
@@ -61,6 +66,9 @@ function sectionLabel(section) {
 }
 
 function cellValue(row, columnId) {
+  const scheme = row.set_scheme ?? 'standard';
+  const schemeText = formatSchemePrescription(row);
+
   switch (columnId) {
     case 'exercise':
       return row.exercise_name || '—';
@@ -71,15 +79,27 @@ function cellValue(row, columnId) {
     case 'section':
       return sectionLabel(row.section);
     case 'sets':
+      if (scheme === 'ramp' || scheme === 'cluster') {
+        return plannedSetsForLine(row);
+      }
       return row.sets ?? '—';
     case 'reps':
+      if (scheme === 'cluster') {
+        return row.scheme_config?.reps ?? row.reps ?? '—';
+      }
+      if (scheme === 'ramp') {
+        return '—';
+      }
       return row.reps ?? '—';
     case 'load':
+      if (schemeText) {
+        return schemeText;
+      }
       return loadLabel(row);
     case 'rpe':
       return row.rpe != null && row.rpe !== '' ? String(row.rpe) : '—';
     case 'rest':
-      return row.rest_seconds != null ? `${row.rest_seconds}s` : '—';
+      return formatRestMinutesLabel(row.rest_seconds) ?? '—';
     case 'muscles':
       return row.movement_pattern || '—';
     default:
@@ -114,23 +134,31 @@ function prescriptionSummary(row) {
     parts.push(type);
   }
 
-  const sets = row.sets != null && row.sets !== '' ? row.sets : null;
-  const reps = row.reps != null && row.reps !== '' ? row.reps : null;
-  if (sets != null && reps != null) {
-    parts.push(`${sets}×${reps}`);
-  } else if (sets != null) {
-    parts.push(t('athleteUi.programTableDay.setsShort', { count: sets }));
-  } else if (reps != null) {
-    parts.push(`${reps} reps`);
-  }
+  const schemeText = formatSchemePrescription(row);
+  if (schemeText) {
+    parts.push(schemeText);
+  } else {
+    const sets = row.sets != null && row.sets !== '' ? row.sets : null;
+    const reps = row.reps != null && row.reps !== '' ? row.reps : null;
+    if (sets != null && reps != null) {
+      parts.push(`${sets}×${reps}`);
+    } else if (sets != null) {
+      parts.push(t('athleteUi.programTableDay.setsShort', { count: sets }));
+    } else if (reps != null) {
+      parts.push(`${reps} reps`);
+    }
 
-  const load = loadLabel(row);
-  if (load !== '—') {
-    parts.push(load);
+    const load = loadLabel(row);
+    if (load !== '—') {
+      parts.push(load);
+    }
   }
 
   if (row.rest_seconds != null && row.rest_seconds !== '') {
-    parts.push(`${row.rest_seconds}s`);
+    const restLabel = formatRestMinutesLabel(row.rest_seconds);
+    if (restLabel) {
+      parts.push(restLabel);
+    }
   }
 
   return parts.join(' · ');

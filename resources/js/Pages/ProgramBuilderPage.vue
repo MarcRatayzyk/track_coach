@@ -125,7 +125,12 @@ const props = defineProps({
 
 
 const layoutModalOpen = ref(false);
+const layoutModalPreferredId = ref(null);
 
+function openLayoutModal(preferredId = null) {
+  layoutModalPreferredId.value = preferredId ? Number(preferredId) : null;
+  layoutModalOpen.value = true;
+}
 
 
 const initialTab =
@@ -915,7 +920,7 @@ function clearClipboard() {
         v-if="showCalendar && activeTab === 'table_v2'"
         type="button"
         class="shrink-0 self-start rounded-xl border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 sm:self-auto"
-        @click="layoutModalOpen = true"
+        @click="openLayoutModal()"
       >
         {{ t('programBuilder.shared.dayTable') }}
       </button>
@@ -933,6 +938,7 @@ function clearClipboard() {
       :existing-blocks="existingBlocks"
       :day-table-layouts="dayTableLayouts"
       :default-day-table-layout-id="defaultDayTableLayoutId"
+      @edit-layouts="openLayoutModal"
     />
 
     <template v-else>
@@ -1162,7 +1168,8 @@ function clearClipboard() {
       :open="layoutModalOpen"
       :layouts="dayTableLayouts"
       :default-layout-id="defaultDayTableLayoutId"
-      @close="layoutModalOpen = false"
+      :preferred-layout-id="layoutModalPreferredId"
+      @close="layoutModalOpen = false; layoutModalPreferredId = null"
     />
 
     <ProgramPasteIncrementModal

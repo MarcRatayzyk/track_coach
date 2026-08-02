@@ -22,8 +22,8 @@ import AlertsPanel from '../Components/CoachDashboard/AlertsPanel.vue';
 import CalendarWidget from '../Components/CoachDashboard/CalendarWidget.vue';
 import ConversationPreview from '../Components/CoachDashboard/ConversationPreview.vue';
 import DashboardHeader from '../Components/CoachDashboard/DashboardHeader.vue';
-import PendingReviews from '../Components/CoachDashboard/PendingReviews.vue';
 import PriorityPanel from '../Components/CoachDashboard/PriorityPanel.vue';
+import TodaySessions from '../Components/CoachDashboard/TodaySessions.vue';
 import ShortcutGrid from '../Components/CoachDashboard/ShortcutGrid.vue';
 import { useDismissedAlerts } from '../composables/useDismissedAlerts';
 import { formatCalendarFr } from '../utils/formatDates';
@@ -85,6 +85,7 @@ const props = defineProps({
   },
   activityFeed: { type: Array, default: () => [] },
   performance: { type: Object, default: () => ({}) },
+  todaySessions: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -323,12 +324,7 @@ onMounted(() => {
           :unread-messages="unreadMessages"
         />
 
-        <PendingReviews
-          :daily-tasks="dailyFeedbackList"
-          :weekly-tasks="weeklyFeedbackList"
-          :today="feedback.today"
-          :week-label="weekLabel"
-        />
+        <TodaySessions :sessions="todaySessions" />
 
         <div class="grid min-w-0 gap-4 lg:grid-cols-2 lg:items-stretch">
           <ConversationPreview :threads="threads" />

@@ -1,8 +1,10 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import OptionButtonGroup from './OptionButtonGroup.vue';
 import {
   SET_SCHEME_OPTIONS,
+  RPE_OPTIONS,
   createRampStep,
   emptySchemeConfig,
   inferLoadMode,
@@ -12,8 +14,10 @@ const { t } = useI18n();
 
 const line = defineModel({ type: Object, required: true });
 
-defineProps({
+const props = defineProps({
   dense: { type: Boolean, default: false },
+  /** Affiche un sélecteur RPE dédié (colonne RPE cible) en plus de la charge. */
+  showRpeSelector: { type: Boolean, default: false },
 });
 
 const scheme = computed(() => line.value?.set_scheme ?? 'standard');
@@ -103,12 +107,24 @@ function updateCluster(field, value) {
 }
 
 function stepLoadMode(step) {
+  if (props.showRpeSelector) {
+    if (step?.load_percent != null && step.load_percent !== '') {
+      return 'percent';
+    }
+    if (step?.load != null && step.load !== '') {
+      return 'kg';
+    }
+    return 'kg';
+  }
   return inferLoadMode(step) ?? 'kg';
 }
 
 function setStepLoadMode(index, mode) {
   const step = steps.value[index] ?? createRampStep();
-  const next = { ...step, load: null, load_percent: null, rpe: null };
+  const next = { ...step, load: null, load_percent: null };
+  if (!props.showRpeSelector) {
+    next.rpe = null;
+  }
   if (mode === 'kg') {
     next.load = step.load ?? 100;
   } else if (mode === 'percent') {
@@ -118,6 +134,10 @@ function setStepLoadMode(index, mode) {
   }
   updateStep(index, next);
 }
+
+const rampLoadModes = computed(() =>
+  props.showRpeSelector ? ['kg', 'percent'] : ['kg', 'percent', 'rpe'],
+);
 
 function parseNum(value) {
   if (value === '' || value == null) {
@@ -177,7 +197,7 @@ function parseNum(value) {
         <div>
           <div class="flex gap-1">
             <button
-              v-for="mode in ['kg', 'percent', 'rpe']"
+              v-for="mode in rampLoadModes"
               :key="mode"
               type="button"
               class="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase"
@@ -199,7 +219,7 @@ function parseNum(value) {
             step="0.5"
             placeholder="kg"
             class="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-white"
-            @input="updateStep(index, { load: parseNum($event.target.value), load_percent: null, rpe: null })"
+            @input="updateStep(index, { load: parseNum($event.target.value), load_percent: null, ...(showRpeSelector ? {} : { rpe: null }) })"
           />
           <input
             v-else-if="stepLoadMode(step) === 'percent'"
@@ -210,18 +230,16 @@ function parseNum(value) {
             step="0.5"
             placeholder="%"
             class="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-white"
-            @input="updateStep(index, { load_percent: parseNum($event.target.value), load: null, rpe: null })"
+            @input="updateStep(index, { load_percent: parseNum($event.target.value), load: null, ...(showRpeSelector ? {} : { rpe: null }) })"
           />
-          <input
+          <OptionButtonGroup
             v-else
-            :value="step.rpe ?? ''"
-            type="number"
-            min="1"
-            max="10"
-            step="0.5"
-            placeholder="RPE"
-            class="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-white"
-            @input="updateStep(index, { rpe: parseNum($event.target.value), load: null, load_percent: null })"
+            class="mt-1"
+            :model-value="step.rpe"
+            :options="RPE_OPTIONS"
+            dense
+            label="RPE"
+            @update:model-value="updateStep(index, { rpe: $event, load: null, load_percent: null })"
           />
         </div>
         <button

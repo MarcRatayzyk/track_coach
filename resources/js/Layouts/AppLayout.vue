@@ -411,12 +411,14 @@ onMounted(() => {
         return;
     }
 
+    document.documentElement.classList.add('tc-app-shell');
     window.localStorage.removeItem('tc-sidebar-collapsed');
     setupMessagingRealtime();
     bindKeyboardListeners();
 });
 
 onUnmounted(() => {
+    document.documentElement.classList.remove('tc-app-shell');
     leaveMessagingChannels();
     if (viewportCleanup) {
         viewportCleanup();
@@ -434,7 +436,7 @@ watch(() => page.url, () => {
 </script>
 
 <template>
-    <div class="h-screen overflow-hidden bg-slate-950 text-slate-200">
+    <div class="h-dvh max-h-dvh overflow-hidden bg-slate-950 text-slate-200">
         <div
             v-if="showBillingBanner"
             class="fixed inset-x-0 top-0 z-[45] flex items-center justify-center gap-3 border-b px-4 py-2 text-center text-xs sm:text-sm lg:left-64"
@@ -749,7 +751,7 @@ watch(() => page.url, () => {
             </div>
 
             <main
-                class="app-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-b from-slate-950 to-slate-900/80 px-3 py-2 text-sm leading-relaxed text-slate-200 sm:px-4 sm:py-5 lg:px-8 lg:py-8"
+                class="app-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain bg-gradient-to-b from-slate-950 to-slate-900/80 px-3 py-2 text-sm leading-relaxed text-slate-200 sm:px-4 sm:py-5 lg:px-8 lg:py-8"
             >
                 <div class="mx-auto" :class="contentWidthClasses">
                     <slot />

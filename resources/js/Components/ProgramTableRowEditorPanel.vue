@@ -4,7 +4,15 @@ import LoadModePicker from './LoadModePicker.vue';
 import OptionButtonGroup from './OptionButtonGroup.vue';
 import SetSchemeEditor from './SetSchemeEditor.vue';
 import { PROGRAM_TABLE_SECTIONS } from '../config/programTableSections';
-import { SET_OPTIONS, REP_OPTIONS, formatEditorLineRecapParts } from '../utils/programBuilder';
+import { normalizeTableLayout } from '../config/dayTableColumns';
+import {
+  SET_OPTIONS,
+  REP_OPTIONS,
+  RPE_OPTIONS,
+  formatEditorLineRecapParts,
+  restMinutesToSeconds,
+  restSecondsToMinutes,
+} from '../utils/programBuilder';
 import { useTableRowEditor } from '../composables/useTableRowEditor';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -16,6 +24,10 @@ const props = defineProps({
     type: Object,
     default: () => ({ squat: 0, bench: 0, deadlift: 0 }),
   },
+  tableLayout: {
+    type: Object,
+    default: null,
+  },
 });
 
 const editor = useTableRowEditor();
@@ -25,6 +37,9 @@ const sessionHeading = computed(() => editor?.state.sessionHeading ?? '');
 const defaultLift = computed(() => editor?.state.defaultLift ?? 'squat');
 const rowNumber = computed(() => (editor?.state.rowIndex ?? 0) + 1);
 const scheme = computed(() => row.value?.set_scheme ?? 'standard');
+const normalizedLayout = computed(() => normalizeTableLayout(props.tableLayout));
+const showTargetRpe = computed(() => normalizedLayout.value.columns.includes('rpe'));
+
 const recapParts = computed(() => {
   if (!row.value) {
     return null;
@@ -50,6 +65,8 @@ const recapSectionClass = computed(() => {
   }
   return 'text-slate-300';
 });
+
+const restMinutes = computed(() => restSecondsToMinutes(row.value?.rest_seconds));
 
 function patchRow(patch) {
   if (!row.value || !editor?.state.onUpdate) {
@@ -96,14 +113,13 @@ function updateField(field, value) {
   patchRow({ [field]: normalizeFieldValue(field, value) });
 }
 
-function parseRest(value) {
-  if (value === '' || value === null || typeof value === 'undefined') {
-    return '';
-  }
+function updateRestMinutes(rawValue) {
+  const seconds = restMinutesToSeconds(rawValue);
+  updateField('rest_seconds', seconds === '' ? '' : seconds);
+}
 
-  const parsed = Number.parseInt(value, 10);
-
-  return Number.isNaN(parsed) ? '' : parsed;
+function updateTargetRpe(value) {
+  updateField('rpe', value === '' || value == null ? '' : Number(value));
 }
 
 function goToNextRow() {
@@ -188,7 +204,12 @@ function removeRow() {
       </div>
 
       <div>
-        <SetSchemeEditor v-if="editor?.state.row" v-model="editor.state.row" dense />
+        <SetSchemeEditor
+          v-if="editor?.state.row"
+          v-model="editor.state.row"
+          dense
+          :show-rpe-selector="showTargetRpe"
+        />
       </div>
 
       <div v-if="scheme === 'standard'" class="grid grid-cols-2 gap-3">
@@ -214,20 +235,30 @@ function removeRow() {
         v-if="editor?.state.row && (scheme === 'standard' || scheme === 'cluster')"
         v-model="editor.state.row"
         compact
+        :exclude-rpe-mode="showTargetRpe"
+      />
+
+      <OptionButtonGroup
+        v-if="showTargetRpe && editor?.state.row"
+        :model-value="row.rpe"
+        :options="RPE_OPTIONS"
+        :label="t('programBuilder.rowEditor.targetRpe')"
+        dense
+        @update:model-value="updateTargetRpe"
       />
 
       <div class="flex items-end gap-2.5">
         <label class="block min-w-0 flex-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
           {{ t('programBuilder.rowEditor.restSeconds') }}
           <input
-            :value="row.rest_seconds"
+            :value="restMinutes"
             type="number"
             min="0"
-            max="900"
-            step="15"
-            placeholder="120"
+            max="30"
+            step="0.5"
+            placeholder="3"
             class="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-white placeholder:text-slate-600"
-            @input="updateField('rest_seconds', parseRest($event.target.value))"
+            @input="updateRestMinutes($event.target.value)"
           />
         </label>
         <div class="min-w-0 flex-[2] rounded-lg border border-blue-500/20 bg-blue-950/25 px-2.5 py-2">

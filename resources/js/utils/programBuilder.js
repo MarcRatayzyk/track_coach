@@ -196,6 +196,39 @@ export const RPE_OPTIONS = (() => {
   return values;
 })();
 
+/** Affichage UI : secondes stockées → minutes. */
+export function restSecondsToMinutes(seconds) {
+  if (seconds == null || seconds === '') {
+    return '';
+  }
+  const n = Number(seconds);
+  if (!Number.isFinite(n)) {
+    return '';
+  }
+  const mins = n / 60;
+  return Number.isInteger(mins) ? mins : Number(mins.toFixed(2));
+}
+
+/** Saisie UI : minutes → secondes stockées. */
+export function restMinutesToSeconds(minutes) {
+  if (minutes === '' || minutes == null) {
+    return '';
+  }
+  const n = Number(String(minutes).replace(',', '.'));
+  if (!Number.isFinite(n) || n < 0) {
+    return '';
+  }
+  return Math.round(n * 60);
+}
+
+export function formatRestMinutesLabel(seconds) {
+  const mins = restSecondsToMinutes(seconds);
+  if (mins === '') {
+    return null;
+  }
+  return `${mins} min`;
+}
+
 export const PERCENT_OPTIONS = (() => {
   const values = [];
   for (let v = 50; v <= 100; v += 2.5) {

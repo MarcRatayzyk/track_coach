@@ -29,6 +29,10 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  preferredLayoutId: {
+    type: Number,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['close']);
@@ -58,7 +62,9 @@ watch(
     }
 
     clientErrors.value = [];
+    const preferredId = props.preferredLayoutId ?? props.defaultLayoutId;
     const defaultLayout =
+      props.layouts.find((layout) => layout.id === preferredId) ??
       props.layouts.find((layout) => layout.id === props.defaultLayoutId) ??
       props.layouts.find((layout) => layout.is_default) ??
       props.layouts[0] ??

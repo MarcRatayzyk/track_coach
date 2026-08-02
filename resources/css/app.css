@@ -15,6 +15,18 @@ body {
     @apply bg-slate-950 text-slate-100 antialiased;
 }
 
+/* App shell : un seul scroll (dans .app-main), pas de scrollbar document */
+html.tc-app-shell,
+html.tc-app-shell body {
+    height: 100%;
+    overflow: hidden;
+}
+
+html.tc-app-shell #app {
+    height: 100%;
+    overflow: hidden;
+}
+
 /* Centrage optique du label dans les CTA primaires (Inter) */
 a.lp-btn-primary,
 a.lp-btn-secondary,

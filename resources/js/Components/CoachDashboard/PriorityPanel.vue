@@ -7,6 +7,7 @@ import UiIcon from '../UiIcon.vue';
 import AnimatedCounter from './AnimatedCounter.vue';
 import SectionHeader from './SectionHeader.vue';
 import { cardHover, cardShell } from './dashboardUi';
+
 const { t } = useI18n();
 
 const props = defineProps({
@@ -35,7 +36,7 @@ function feedbackCard({
     emptyLabel: t('app.coachDash.allUpToDate'),
     detail: null,
     href,
-    cta: remaining > 0 ? 'Traiter maintenant' : 'Voir les retours',
+    cta: remaining > 0 ? t('app.coachDash.treatNow') : t('app.coachDash.seeFeedbacks'),
     icon,
     accent,
   };
@@ -44,7 +45,7 @@ function feedbackCard({
 const cards = computed(() => [
   feedbackCard({
     key: 'daily',
-    title: 'Retours journaliers',
+    title: t('app.coachDash.dailyFeedback'),
     pending: props.dailyPending,
     href: '/feedbacks?filter=pending',
     icon: 'list',
@@ -52,7 +53,7 @@ const cards = computed(() => [
   }),
   feedbackCard({
     key: 'weekly',
-    title: 'Retours hebdomadaires',
+    title: t('app.coachDash.weeklyFeedback'),
     pending: props.weeklyPending,
     href: '/feedbacks?filter=pending',
     icon: 'calendar',
@@ -60,33 +61,38 @@ const cards = computed(() => [
   }),
   {
     key: 'alerts',
-    title: 'Alertes',
+    title: t('app.coachDash.alerts'),
     value: props.alertsCount,
-    unit: 'alertes',
-    emptyLabel: 'Aucune alerte',
+    unit: t('app.coachDash.alertsUnit', props.alertsCount || 1),
+    emptyLabel: t('app.coachDash.noAlerts'),
     detail:
       props.alertsCount === 0
         ? t('app.coachDash.nothingToWatch')
         : props.criticalAlerts > 0
-          ? `${props.criticalAlerts} critique${props.criticalAlerts > 1 ? 's' : ''} · ${props.alertsCount} au total`
+          ? t('app.coachDash.criticalSummary', props.criticalAlerts, {
+              critical: props.criticalAlerts,
+              total: props.alertsCount,
+            })
           : t('app.coachDash.alertsToReview', { count: props.alertsCount }),
     href: '#dashboard-alerts',
-    cta: props.alertsCount > 0 ? 'Voir les alertes' : 'Tout va bien',
+    cta: props.alertsCount > 0 ? t('app.coachDash.seeAlerts') : t('app.coachDash.allGood'),
     icon: 'alert',
     accent: 'border-rose-500/30 bg-gradient-to-br from-rose-500/10 to-transparent',
   },
   {
     key: 'messages',
-    title: 'Messagerie',
+    title: t('app.coachDash.messaging'),
     value: props.unreadMessages,
-    unit: 'non lus',
+    unit: t('app.coachDash.unreadUnit', props.unreadMessages || 1),
     emptyLabel: t('app.coachDash.inboxUpToDate'),
     detail:
       props.unreadMessages > 0
-        ? `${props.unreadMessages} conversation${props.unreadMessages > 1 ? 's' : ''} en attente de lecture`
-        : 'Aucun message en attente',
+        ? t('app.coachDash.conversationsWaiting', props.unreadMessages, {
+            count: props.unreadMessages,
+          })
+        : t('app.coachDash.noPendingMessages'),
     href: '/messaging',
-    cta: props.unreadMessages > 0 ? 'Ouvrir la messagerie' : 'Ouvrir',
+    cta: props.unreadMessages > 0 ? t('app.coachDash.openMessaging') : t('app.coachDash.open'),
     icon: 'chat',
     accent: 'border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-transparent',
   },
@@ -97,7 +103,7 @@ const cards = computed(() => [
   <section>
     <SectionHeader
       :eyebrow="t('app.coachDash.priority')"
-      title="Actions prioritaires"
+      :title="t('app.coachDash.priorityActions')"
     />
 
     <div

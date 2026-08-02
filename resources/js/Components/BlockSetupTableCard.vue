@@ -25,6 +25,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['edit-layouts']);
+
 const today = new Date().toISOString().slice(0, 10);
 
 const form = useForm({
@@ -156,6 +158,14 @@ const fieldClass =
         {{ t('programBuilder.blockSetupTable.dateStart') }}
         <input v-model="form.date_start" type="date" required :class="fieldClass" />
       </label>
+
+      <button
+        type="button"
+        class="shrink-0 rounded-md border border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-slate-800"
+        @click="emit('edit-layouts', form.day_table_layout_id || null)"
+      >
+        {{ t('programBuilder.blockSetupTable.editDayTable') }}
+      </button>
 
       <button
         type="submit"
