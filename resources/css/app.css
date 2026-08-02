@@ -29,11 +29,15 @@ a[class*='from-blue-600'] {
     :root {
         --tc-mobile-safe-top: max(0.5rem, env(safe-area-inset-top, 0px));
         --tc-mobile-safe-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+        /* py-2 bottom (0.5rem) + logo h-12 (3rem) + gap sous header (0.5rem) */
+        --tc-mobile-header-offset: 4rem;
+        --tc-mobile-banner-offset: 2.25rem;
     }
 
     html.tc-native-app {
         --tc-mobile-safe-top: max(0.75rem, env(safe-area-inset-top, 0px));
         --tc-mobile-safe-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+        --tc-mobile-header-offset: 4rem;
     }
 
     .tc-app-mobile-header {
@@ -41,13 +45,14 @@ a[class*='from-blue-600'] {
     }
 
     .tc-app-content {
-        padding-top: calc(2.75rem + var(--tc-mobile-safe-top));
+        padding-top: calc(var(--tc-mobile-header-offset) + var(--tc-mobile-safe-top));
         padding-bottom: calc(3.75rem + var(--tc-mobile-safe-bottom));
     }
 
-    html.tc-native-app .tc-app-content {
-        padding-top: calc(2.5rem + var(--tc-mobile-safe-top));
-        padding-bottom: calc(3.5rem + var(--tc-mobile-safe-bottom));
+    .tc-app-content.tc-app-content--banner {
+        padding-top: calc(
+            var(--tc-mobile-header-offset) + var(--tc-mobile-banner-offset) + var(--tc-mobile-safe-top)
+        );
     }
 
     .tc-app-content.tc-app-content--keyboard {
@@ -59,7 +64,13 @@ a[class*='from-blue-600'] {
     }
 
     .tc-mobile-overlay-menu {
-        top: calc(3rem + var(--tc-mobile-safe-top));
+        top: calc(var(--tc-mobile-header-offset) + var(--tc-mobile-safe-top));
+    }
+
+    .tc-mobile-overlay-menu.tc-mobile-overlay-menu--banner {
+        top: calc(
+            var(--tc-mobile-header-offset) + var(--tc-mobile-banner-offset) + var(--tc-mobile-safe-top)
+        );
     }
 }
 
@@ -67,7 +78,7 @@ a[class*='from-blue-600'] {
     .tc-message-layout {
         height: calc(
             100dvh
-            - 3rem - var(--tc-mobile-safe-top, 0.5rem)
+            - var(--tc-mobile-header-offset, 4rem) - var(--tc-mobile-safe-top, 0.5rem)
             - 3.75rem - var(--tc-mobile-safe-bottom, 0.5rem)
             - 2.5rem
         );

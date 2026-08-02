@@ -370,11 +370,14 @@ const sidebarClasses = 'w-56 px-3 lg:w-64 lg:px-4';
 
 const contentPaddingClasses = computed(() => {
     // Quand le clavier est ouvert, on retire le padding bas réservé à la nav (masquée).
-    const mobile = isKeyboardOpen.value
-        ? 'pl-0 tc-app-content tc-app-content--keyboard lg:pb-0'
-        : 'pl-0 tc-app-content lg:pb-0';
-
-    return `${mobile} lg:pl-56 xl:pl-64`;
+    const parts = ['pl-0', 'tc-app-content', 'lg:pb-0'];
+    if (isKeyboardOpen.value) {
+        parts.push('tc-app-content--keyboard');
+    }
+    if (showBillingBanner.value) {
+        parts.push('tc-app-content--banner');
+    }
+    return `${parts.join(' ')} lg:pl-56 xl:pl-64`;
 });
 
 const contentWidthClasses = computed(() => {
@@ -504,7 +507,10 @@ watch(() => page.url, () => {
 
         <div
             class="tc-mobile-overlay-menu fixed inset-x-0 z-50 mx-3 rounded-2xl border border-slate-700 bg-slate-900 p-2 shadow-2xl transition lg:hidden"
-            :class="isMobileMenuOpen ? 'visible opacity-100' : 'pointer-events-none invisible opacity-0'"
+            :class="[
+                isMobileMenuOpen ? 'visible opacity-100' : 'pointer-events-none invisible opacity-0',
+                showBillingBanner ? 'tc-mobile-overlay-menu--banner' : '',
+            ]"
         >
             <Link
                 v-if="showSidebarProfile"

@@ -6,6 +6,7 @@ import LandingNav from '../Components/Landing/LandingNav.vue';
 import LandingHero from '../Components/Landing/LandingHero.vue';
 import PainPointsSection from '../Components/Landing/PainPointsSection.vue';
 import FeaturesSection from '../Components/Landing/FeaturesSection.vue';
+import TrackingSection from '../Components/Landing/TrackingSection.vue';
 import ModularitySection from '../Components/Landing/ModularitySection.vue';
 import AthleteAppSection from '../Components/Landing/AthleteAppSection.vue';
 import DemoSection from '../Components/Landing/DemoSection.vue';
@@ -45,6 +46,7 @@ const { t } = useI18n();
             <LandingHero />
             <PainPointsSection />
             <FeaturesSection />
+            <TrackingSection />
             <ModularitySection />
             <AthleteAppSection />
             <DemoSection />

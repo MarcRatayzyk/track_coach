@@ -72,19 +72,19 @@ function deleteBlock(block) {
 </script>
 
 <template>
-  <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-lg lg:p-6">
-<h2 class="text-lg font-semibold text-white">{{ t('programBuilder.blockSetupTable.title') }}</h2>
-    <p class="mt-2 text-sm text-slate-400">
+  <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg sm:p-5">
+    <h2 class="text-base font-semibold text-white sm:text-lg">{{ t('programBuilder.blockSetupTable.title') }}</h2>
+    <p class="mt-1 text-xs leading-relaxed text-slate-400 sm:text-sm">
       {{ t('programBuilder.blockSetupTable.subtitle') }}
     </p>
 
-    <form class="mt-5 grid gap-4 sm:grid-cols-2" @submit.prevent="submit">
-      <label class="block text-sm text-slate-400 sm:col-span-2">
+    <form class="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4" @submit.prevent="submit">
+      <label class="block text-xs text-slate-400 sm:col-span-2 lg:col-span-2">
         {{ t('common.athlete') }}
         <select
           v-model="form.athlete_id"
           required
-          class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
         >
           <option v-for="athlete in athletes" :key="athlete.id" :value="athlete.id">
             {{ athlete.name }}
@@ -92,18 +92,30 @@ function deleteBlock(block) {
         </select>
       </label>
 
-      <label class="block text-sm text-slate-400">
+      <label class="block text-xs text-slate-400 sm:col-span-2 lg:col-span-2">
+        {{ t('programBuilder.blockSetupTable.tableStructure') }}
+        <select
+          v-model="form.day_table_layout_id"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+        >
+          <option v-for="layout in dayTableLayouts" :key="layout.id" :value="layout.id">
+            {{ layout.name }}{{ layout.is_default ? t('programBuilder.shared.defaultSuffix') : '' }}
+          </option>
+        </select>
+      </label>
+
+      <label class="block text-xs text-slate-400 sm:col-span-2 lg:col-span-2">
         {{ t('programBuilder.blockSetupTable.blockName') }}
         <input
           v-model="form.name"
           type="text"
           required
-:placeholder="t('programBuilder.blockSetupTable.blockNamePlaceholder')"
-          class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+          :placeholder="t('programBuilder.blockSetupTable.blockNamePlaceholder')"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
         />
       </label>
 
-      <label class="block text-sm text-slate-400">
+      <label class="block text-xs text-slate-400">
         {{ t('programBuilder.blockSetupTable.weekCount') }}
         <input
           v-model.number="form.week_count"
@@ -111,11 +123,11 @@ function deleteBlock(block) {
           min="1"
           max="16"
           required
-          class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
         />
       </label>
 
-      <label class="block text-sm text-slate-400">
+      <label class="block text-xs text-slate-400">
         {{ t('programBuilder.blockSetupTable.daysPerWeek') }}
         <input
           v-model.number="form.days_per_week"
@@ -123,58 +135,46 @@ function deleteBlock(block) {
           min="1"
           max="7"
           required
-          class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
         />
       </label>
 
-      <label class="block text-sm text-slate-400">
+      <label class="block text-xs text-slate-400 sm:col-span-2 lg:col-span-2">
         {{ t('programBuilder.blockSetupTable.dateStart') }}
         <input
           v-model="form.date_start"
           type="date"
           required
-          class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
         />
       </label>
 
-      <label class="block text-sm text-slate-400 sm:col-span-2">
-        {{ t('programBuilder.blockSetupTable.tableStructure') }}
-        <select
-          v-model="form.day_table_layout_id"
-          class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-        >
-          <option v-for="layout in dayTableLayouts" :key="layout.id" :value="layout.id">
-{{ layout.name }}{{ layout.is_default ? t('programBuilder.shared.defaultSuffix') : '' }}
-          </option>
-        </select>
-      </label>
-
-      <p v-if="Object.keys(form.errors).length" class="text-sm text-red-400 sm:col-span-2">
+      <p v-if="Object.keys(form.errors).length" class="text-sm text-red-400 sm:col-span-2 lg:col-span-4">
         {{ Object.values(form.errors).flat().join(' ') }}
       </p>
 
-      <div class="sm:col-span-2">
+      <div class="sm:col-span-2 lg:col-span-4">
         <button
           type="submit"
           :disabled="form.processing || !athletes.length"
-          class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 disabled:opacity-50"
+          class="rounded-lg bg-blue-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 disabled:opacity-50"
         >
           {{ t('programBuilder.blockSetupTable.create') }}
         </button>
       </div>
     </form>
 
-    <div v-if="existingBlocks.length" class="mt-8 border-t border-slate-800 pt-6">
-<h3 class="text-sm font-semibold text-white">{{ t('programBuilder.blockSetupTable.resume') }}</h3>
-      <ul class="mt-3 space-y-2">
+    <div v-if="existingBlocks.length" class="mt-5 border-t border-slate-800 pt-4">
+      <h3 class="text-sm font-semibold text-white">{{ t('programBuilder.blockSetupTable.resume') }}</h3>
+      <ul class="mt-2 space-y-2">
         <li
           v-for="block in existingBlocks"
           :key="block.id"
-          class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3"
+          class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2.5"
         >
-          <div>
+          <div class="min-w-0">
             <p class="font-medium text-white">{{ block.name }}</p>
-            <p class="mt-1 text-sm text-slate-400">
+            <p class="mt-0.5 text-xs text-slate-400">
               {{ t('programBuilder.shared.blockMeta', { athlete: block.athlete_name, weeks: block.week_count, start: block.date_start }) }}
               <span v-if="block.date_end">{{ t('programBuilder.shared.blockMetaTo', { end: block.date_end }) }}</span>
               <span
@@ -188,18 +188,18 @@ function deleteBlock(block) {
           <div class="flex shrink-0 flex-wrap gap-2">
             <button
               type="button"
-              class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-medium text-blue-300 hover:bg-slate-800"
+              class="rounded-lg border border-slate-700 px-2.5 py-1 text-xs font-medium text-blue-300 hover:bg-slate-800 sm:text-sm"
               @click="openBlock(block.id)"
             >
               {{ t('programBuilder.blockSetupTable.openV2') }}
             </button>
             <button
               type="button"
-              class="rounded-lg border border-red-500/40 px-3 py-1.5 text-sm font-medium text-red-300 hover:bg-red-950/40 disabled:opacity-50"
+              class="rounded-lg border border-red-500/40 px-2.5 py-1 text-xs font-medium text-red-300 hover:bg-red-950/40 disabled:opacity-50 sm:text-sm"
               :disabled="deletingId === block.id"
               @click="deleteBlock(block)"
             >
-{{ deletingId === block.id ? t('common.deleting') : t('common.delete') }}
+              {{ deletingId === block.id ? t('common.deleting') : t('common.delete') }}
             </button>
           </div>
         </li>

@@ -26,6 +26,13 @@ trait ValidatesMatchPlanData
             'match_plan_data.scenarios.*.lifts.deadlift.attempt1' => ['nullable', 'numeric', 'min:0', 'max:999'],
             'match_plan_data.scenarios.*.lifts.deadlift.attempt2' => ['nullable', 'numeric', 'min:0', 'max:999'],
             'match_plan_data.scenarios.*.lifts.deadlift.attempt3' => ['nullable', 'numeric', 'min:0', 'max:999'],
+            'match_plan_data.warmups' => ['nullable', 'array'],
+            'match_plan_data.warmups.squat' => ['nullable', 'array', 'max:10'],
+            'match_plan_data.warmups.squat.*' => ['nullable', 'numeric', 'min:0', 'max:999'],
+            'match_plan_data.warmups.bench' => ['nullable', 'array', 'max:10'],
+            'match_plan_data.warmups.bench.*' => ['nullable', 'numeric', 'min:0', 'max:999'],
+            'match_plan_data.warmups.deadlift' => ['nullable', 'array', 'max:10'],
+            'match_plan_data.warmups.deadlift.*' => ['nullable', 'numeric', 'min:0', 'max:999'],
             'match_plan' => ['nullable', 'string', 'max:5000'],
         ];
     }

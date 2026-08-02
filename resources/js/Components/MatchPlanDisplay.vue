@@ -6,6 +6,7 @@ import {
   ATTEMPT_LABELS,
   LIFTS,
   LIFT_LABELS,
+  emptyWarmups,
   formatWeight,
   hasMatchPlanContent,
   matchPlanFromCompetition,
@@ -23,6 +24,10 @@ const props = defineProps({
 
 const plan = computed(() => matchPlanFromCompetition(props.competition));
 const hasContent = computed(() => hasMatchPlanContent(props.competition));
+const warmups = computed(() => plan.value.warmups ?? emptyWarmups());
+const hasWarmups = computed(() =>
+  LIFTS.some((lift) => (warmups.value[lift] ?? []).length > 0),
+);
 </script>
 
 <template>
@@ -84,5 +89,27 @@ const hasContent = computed(() => hasMatchPlanContent(props.competition));
         </table>
       </div>
     </div>
+  </div>
+
+  <div
+    v-if="hasWarmups"
+    class="mt-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4"
+  >
+    <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+      {{ t('programBuilder.matchPlan.warmupsTitle') }}
+    </h4>
+    <ul class="mt-3 space-y-2 text-xs text-slate-200">
+      <li
+        v-for="lift in LIFTS"
+        v-show="(warmups[lift] ?? []).length"
+        :key="`disp-wu-${lift}`"
+        class="flex flex-wrap items-baseline gap-x-2 gap-y-1"
+      >
+        <span class="w-24 shrink-0 font-medium text-slate-300">{{ LIFT_LABELS[lift] }}</span>
+        <span class="font-mono">
+          {{ (warmups[lift] ?? []).map((w) => `${formatWeight(w)} kg`).join(' · ') }}
+        </span>
+      </li>
+    </ul>
   </div>
 </template>

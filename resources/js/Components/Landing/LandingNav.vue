@@ -14,6 +14,7 @@ function trackCta(ctaId) {
 
 const links = computed(() => [
     { href: '#fonctionnalites', label: t('landing.nav.features') },
+    { href: '#suivi', label: t('landing.nav.tracking') },
     { href: '#modularite', label: t('landing.nav.modularity') },
     { href: '#demo', label: t('landing.nav.demo') },
     { href: '#pricing', label: t('landing.nav.pricing') },

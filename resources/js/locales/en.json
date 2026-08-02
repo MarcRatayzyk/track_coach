@@ -259,7 +259,8 @@
       "pricing": "Pricing",
       "faq": "FAQ",
       "logIn": "Log in",
-      "start": "Get started"
+      "start": "Get started",
+      "tracking": "Tracking"
     },
     "hero": {
       "badge": "Built for powerlifting coaches",
@@ -326,6 +327,18 @@
           "description": "Volume, e1RM and SBD distribution charts: customizable stats dashboard."
         }
       }
+    },
+    "tracking": {
+      "eyebrow": "Tracking",
+      "heading": "Coaching calls backed by data, not guesswork.",
+      "body": "Estimated 1RM and intensity trends for squat, bench, and deadlift. RPE distributions and volume overviews. A full training log and a PR page for every athlete. The numbers that drive your coaching decisions, updated automatically with every log.",
+      "highlights": {
+        "e1rm": "e1RM curves and average load per lift, week after week.",
+        "volume": "SBD volume, distribution and topsets — the whole block at a glance.",
+        "prs": "Records and history per athlete, ready for the call brief."
+      },
+      "mockupAlt": "Power Roster stats dashboard: volume, e1RM and SBD distribution",
+      "mockupLabel": "app.powerroster.fr / stats"
     },
     "modularity": {
       "eyebrow": "Modularity",
@@ -1118,7 +1131,8 @@
       "goal": "Goal",
       "upcomingShort": "Upcoming",
       "past": "Past",
-      "nonePast": "No past competitions."
+      "nonePast": "No past competitions.",
+      "matchPlan": "Match plan"
     },
     "feedbacks": {
       "sendWeekly": "Send your weekly feedback",
@@ -1684,7 +1698,9 @@
       "convertStructured": "Switch to structured plan",
       "scenarioLabel": "Scenario name",
       "scenarioPlaceholder": "E.g. Total goal, Plan B…",
-      "addScenario": "+ Add a scenario"
+      "addScenario": "+ Add a scenario",
+      "warmupsTitle": "Warm-up bars",
+      "warmupsHint": "Free entry, one field = one weight (kg)"
     },
     "matchPlanDisplay": {
       "empty": "Not set",

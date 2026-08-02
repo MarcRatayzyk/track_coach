@@ -11,6 +11,7 @@ import { useI18n } from 'vue-i18n';
 import { Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import CompetitionAttemptsCell from '../Components/CompetitionAttemptsCell.vue';
+import MatchPlanBuilder from '../Components/MatchPlanBuilder.vue';
 import { CATEGORY_LABELS } from '../config/ipfWeightCategories';
 import { defaultStructuredPlan, formatWeight } from '../utils/matchPlan';
 import { localeTag } from '../i18n';
@@ -136,20 +137,20 @@ function formatTotal(value) {
     <Teleport to="body">
       <div
         v-if="showAddModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:p-4"
         role="dialog"
         aria-modal="true"
         @click.self="closeAddModal"
       >
         <div
-          class="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl"
+          class="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
           @click.stop
         >
-          <div class="flex items-start justify-between gap-4">
-            <h2 class="text-lg font-semibold text-white">{{ t('app.competitions.new') }}</h2>
+          <div class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-800 px-4 py-3 sm:px-5">
+            <h2 class="text-base font-semibold text-white sm:text-lg">{{ t('app.competitions.new') }}</h2>
             <button
               type="button"
-              class="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+              class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
               :aria-label="t('common.close')"
               @click="closeAddModal"
             >
@@ -157,65 +158,82 @@ function formatTotal(value) {
             </button>
           </div>
 
-          <form class="mt-5 space-y-4" @submit.prevent="submitCompetition">
-            <label class="block text-sm text-slate-400">
-              {{ t('app.competitions.athlete') }}
-              <select
-                v-model="form.athlete_id"
-                required
-                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              >
-                <option disabled value="">{{ t('app.competitions.chooseAthlete') }}</option>
-                <option
-                  v-for="athlete in athletes"
-                  :key="athlete.id"
-                  :value="String(athlete.id)"
-                >
-                  {{ athlete.name }}
-                </option>
-              </select>
-            </label>
-            <label class="block text-sm text-slate-400">
-              {{ t('common.name') }}
-              <input
-                v-model="form.name"
-                type="text"
-                required
-                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              />
-            </label>
-            <label class="block text-sm text-slate-400">
-              {{ t('common.date') }}
-              <input
-                v-model="form.competition_date"
-                type="date"
-                required
-                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              />
-            </label>
-            <label class="block text-sm text-slate-400">
-              {{ t('app.competitions.venue') }}
-              <input
-                v-model="form.location"
-                type="text"
-                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              />
-            </label>
-            <label class="block text-sm text-slate-400">
-              {{ t('app.competitions.goal') }}
-              <input
-                v-model="form.goal"
-                type="text"
-                class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white"
-              />
-            </label>
-            <p v-if="Object.keys(form.errors).length" class="text-sm text-red-400">
-              {{ Object.values(form.errors).flat().join(' ') }}
-            </p>
-            <div class="flex flex-wrap gap-3 pt-1">
+          <form class="flex min-h-0 flex-1 flex-col" @submit.prevent="submitCompetition">
+            <div class="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4">
+              <div class="grid gap-3 sm:grid-cols-2">
+                <label class="block text-xs text-slate-400">
+                  {{ t('app.competitions.athlete') }}
+                  <select
+                    v-model="form.athlete_id"
+                    required
+                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                  >
+                    <option disabled value="">{{ t('app.competitions.chooseAthlete') }}</option>
+                    <option
+                      v-for="athlete in athletes"
+                      :key="athlete.id"
+                      :value="String(athlete.id)"
+                    >
+                      {{ athlete.name }}
+                    </option>
+                  </select>
+                </label>
+                <label class="block text-xs text-slate-400">
+                  {{ t('common.name') }}
+                  <input
+                    v-model="form.name"
+                    type="text"
+                    required
+                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                  />
+                </label>
+                <label class="block text-xs text-slate-400">
+                  {{ t('common.date') }}
+                  <input
+                    v-model="form.competition_date"
+                    type="date"
+                    required
+                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                  />
+                </label>
+                <label class="block text-xs text-slate-400">
+                  {{ t('app.competitions.venue') }}
+                  <input
+                    v-model="form.location"
+                    type="text"
+                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                  />
+                </label>
+                <label class="block text-xs text-slate-400 sm:col-span-2">
+                  {{ t('app.competitions.goal') }}
+                  <input
+                    v-model="form.goal"
+                    type="text"
+                    class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+                  />
+                </label>
+              </div>
+
+              <div>
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  {{ t('app.competitions.matchPlan') }}
+                </p>
+                <MatchPlanBuilder
+                  v-model="form.match_plan_data"
+                  compact
+                  single-scenario
+                />
+              </div>
+
+              <p v-if="Object.keys(form.errors).length" class="text-sm text-red-400">
+                {{ Object.values(form.errors).flat().join(' ') }}
+              </p>
+            </div>
+
+            <div class="flex shrink-0 flex-wrap gap-2 border-t border-slate-800 px-4 py-3 sm:px-5">
               <button
                 type="button"
-                class="rounded-xl border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+                class="rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800"
                 @click="closeAddModal"
               >
                 {{ t('common.cancel') }}
@@ -223,7 +241,7 @@ function formatTotal(value) {
               <button
                 type="submit"
                 :disabled="form.processing || !form.athlete_id"
-                class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+                class="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
                 {{ t('common.save') }}
               </button>

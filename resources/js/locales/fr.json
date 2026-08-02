@@ -259,7 +259,8 @@
       "pricing": "Tarifs",
       "faq": "FAQ",
       "logIn": "Se connecter",
-      "start": "Commencer"
+      "start": "Commencer",
+      "tracking": "Suivi"
     },
     "hero": {
       "badge": "Conçu pour les coachs de powerlifting",
@@ -326,6 +327,18 @@
           "description": "Graphiques volume, e1RM et répartition SBD : dashboard stats personnalisable."
         }
       }
+    },
+    "tracking": {
+      "eyebrow": "Suivi",
+      "heading": "Des décisions de coaching basées sur les données, pas sur l’intuition.",
+      "body": "e1RM estimé et tendances d’intensité pour squat, bench et deadlift. Répartitions RPE et volumes. Journal d’entraînement et page PR pour chaque athlète. Les chiffres qui pilotent tes choix, mis à jour à chaque log.",
+      "highlights": {
+        "e1rm": "Courbes e1RM et charge moyenne par mouvement, semaine après semaine.",
+        "volume": "Volume SBD, répartition et topsets — tout le bloc en un coup d’œil.",
+        "prs": "Records et historique par athlète, prêts pour le brief d’appel."
+      },
+      "mockupAlt": "Tableau de bord stats Power Roster : volume, e1RM et répartition SBD",
+      "mockupLabel": "app.powerroster.fr / stats"
     },
     "modularity": {
       "eyebrow": "Modularité",
@@ -1118,7 +1131,8 @@
       "goal": "Objectif",
       "upcomingShort": "À venir",
       "past": "Passées",
-      "nonePast": "Aucune compétition passée."
+      "nonePast": "Aucune compétition passée.",
+      "matchPlan": "Plan de match"
     },
     "feedbacks": {
       "sendWeekly": "Envoyer votre retour hebdomadaire",
@@ -1684,7 +1698,9 @@
       "convertStructured": "Passer au plan structuré",
       "scenarioLabel": "Nom du scénario",
       "scenarioPlaceholder": "Ex. Objectif total, Plan B…",
-      "addScenario": "+ Ajouter un scénario"
+      "addScenario": "+ Ajouter un scénario",
+      "warmupsTitle": "Barres d'échauffement",
+      "warmupsHint": "Saisie libre, une case = un poids (kg)"
     },
     "matchPlanDisplay": {
       "empty": "Non renseigné",

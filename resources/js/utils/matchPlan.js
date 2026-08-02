@@ -14,6 +14,8 @@ export const ATTEMPT_LABELS = {
   attempt3: 'Essai 3',
 };
 
+export const MAX_WARMUP_BARS = 10;
+
 function newId() {
   return `sc_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -26,15 +28,20 @@ export function emptyScenario(name = 'Scénario') {
   return { id: newId(), name, lifts };
 }
 
+export function emptyWarmups() {
+  return { squat: [], bench: [], deadlift: [] };
+}
+
 export function defaultStructuredPlan() {
   return {
     mode: 'structured',
     scenarios: [emptyScenario('Scénario principal')],
+    warmups: emptyWarmups(),
   };
 }
 
 export function defaultTextPlan(text = '') {
-  return { mode: 'text', text };
+  return { mode: 'text', text, warmups: emptyWarmups() };
 }
 
 function nullableWeight(value) {
@@ -43,6 +50,21 @@ function nullableWeight(value) {
   }
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+export function normalizeWarmups(raw) {
+  const out = emptyWarmups();
+  if (!raw || typeof raw !== 'object') {
+    return out;
+  }
+  for (const lift of LIFTS) {
+    const list = Array.isArray(raw[lift]) ? raw[lift] : [];
+    out[lift] = list
+      .map(nullableWeight)
+      .filter((v) => v !== null)
+      .slice(0, MAX_WARMUP_BARS);
+  }
+  return out;
 }
 
 export function normalizeScenario(scenario) {
@@ -67,8 +89,10 @@ export function normalizePlan(data) {
     return defaultStructuredPlan();
   }
 
+  const warmups = normalizeWarmups(data.warmups);
+
   if (data.mode === 'text') {
-    return { mode: 'text', text: data.text ?? '' };
+    return { mode: 'text', text: data.text ?? '', warmups };
   }
 
   const scenarios = (data.scenarios ?? []).map(normalizeScenario);
@@ -76,7 +100,7 @@ export function normalizePlan(data) {
     scenarios.push(emptyScenario('Scénario principal'));
   }
 
-  return { mode: 'structured', scenarios };
+  return { mode: 'structured', scenarios, warmups };
 }
 
 export function matchPlanFromCompetition(comp) {
@@ -116,12 +140,26 @@ export function scenarioTotal(scenario) {
   return has ? sum : null;
 }
 
+function hasWarmupContent(warmups) {
+  if (!warmups) {
+    return false;
+  }
+  return LIFTS.some((lift) => (warmups[lift] ?? []).length > 0);
+}
+
+export function hasWarmupBars(compOrPlan) {
+  const plan = compOrPlan?.match_plan_data
+    ? matchPlanFromCompetition(compOrPlan)
+    : normalizePlan(compOrPlan);
+  return hasWarmupContent(plan.warmups);
+}
+
 export function hasMatchPlanContent(comp) {
   const plan = matchPlanFromCompetition(comp);
   if (plan.mode === 'text') {
-    return Boolean(plan.text?.trim());
+    return Boolean(plan.text?.trim()) || hasWarmupContent(plan.warmups);
   }
-  return (plan.scenarios ?? []).some((s) =>
+  const hasAttempts = (plan.scenarios ?? []).some((s) =>
     LIFTS.some((lift) =>
       ATTEMPT_KEYS.some((key) => {
         const v = s.lifts?.[lift]?.[key];
@@ -129,4 +167,5 @@ export function hasMatchPlanContent(comp) {
       }),
     ),
   );
+  return hasAttempts || hasWarmupContent(plan.warmups);
 }

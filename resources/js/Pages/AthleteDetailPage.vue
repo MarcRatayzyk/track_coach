@@ -927,7 +927,7 @@ onMounted(() => {
             </label>
             <div class="block text-sm text-slate-400">
               <span class="block">{{ t('app.athleteDetail.matchPlanOptional') }}</span>
-              <MatchPlanBuilder v-model="compForm.match_plan_data" class="mt-3" />
+              <MatchPlanBuilder v-model="compForm.match_plan_data" compact single-scenario class="mt-3" />
             </div>
             <p v-if="Object.keys(compForm.errors).length" class="text-sm text-red-400">
               {{ Object.values(compForm.errors).flat().join(' ') }}
