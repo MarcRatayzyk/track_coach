@@ -149,11 +149,10 @@ class AthleteEligibleFeedbackSessionsService
             $eligible[] = [
                 'session_date' => $latestSessionDate->toDateString(),
                 'program_training_day_id' => $latestTrainingDay->id,
-                'session_label' => sprintf(
-                    'Semaine du %s au %s',
-                    $weekStartBound->locale(app()->getLocale())->isoFormat('D MMM'),
-                    $weekEndBound->locale(app()->getLocale())->isoFormat('D MMM YYYY'),
-                ),
+                'session_label' => __('messages.feedback.week_from_to', [
+                    'start' => $weekStartBound->locale(app()->getLocale())->isoFormat('D MMM'),
+                    'end' => $weekEndBound->locale(app()->getLocale())->isoFormat('D MMM YYYY'),
+                ]),
                 'exercises' => $this->exercisesFor($latestTrainingDay),
                 'logged_notes' => SessionFeedbackPresenter::loggedNotesForAthleteBetween(
                     $athlete->id,

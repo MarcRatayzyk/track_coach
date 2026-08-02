@@ -1107,7 +1107,11 @@
       "weeks": "{n} semaine | {n} semaines",
       "weekProgress": "Semaine {current} / {total}",
       "emptyTitle": "Programme",
-      "emptyBody": "Aucun bloc actif pour le moment. Ton coach te l’assignera bientôt."
+      "emptyBody": "Aucun bloc actif pour le moment. Ton coach te l’assignera bientôt.",
+      "tabCalendar": "Calendrier",
+      "tabSpreadsheet": "Tableur",
+      "tabStats": "Graphiques & stats",
+      "calendarReady": " — ton calendrier est déjà prêt."
     },
     "competitions": {
       "title": "Compétitions",
@@ -1135,6 +1139,16 @@
       "matchPlan": "Plan de match"
     },
     "feedbacks": {
+      "pageTitle": "Retours de séance",
+      "pageSubtitleAthlete": "Suivez vos retours, la séance réalisée et la réponse de votre coach.",
+      "pageSubtitleCoach": "Analysez la séance, visionnez les vidéos et répondez — sans changer d’écran.",
+      "makeFeedback": "Faire un retour",
+      "pastFeedbacks": "Retours passés",
+      "navAria": "Navigation retours",
+      "noPendingSession": "Aucune séance en attente de retour.",
+      "notesCount": "{n} note | {n} notes",
+      "weekFromTo": "Semaine du {start} au {end}",
+      "noComment": "Sans commentaire",
       "sendWeekly": "Envoyer votre retour hebdomadaire",
       "send": "Envoyer un retour",
       "due": "Retours à faire",
@@ -1394,7 +1408,10 @@
       "title": "Séance du jour",
       "validated": "Séance validée",
       "noExercises": "Séance prévue, exercices non renseignés.",
-      "noneUpcoming": "Aucune séance prévue sous 2 semaines."
+      "noneUpcoming": "Aucune séance prévue sous 2 semaines.",
+      "restToday": "Pas de séance aujourd’hui.",
+      "next": "Prochaine :",
+      "viewInProgram": "Voir dans le programme"
     },
     "athletePr": {
       "titleDefault": "Enregistrer un PR officiel",
@@ -1503,6 +1520,11 @@
       "deleteBlockConfirm": "Supprimer le bloc « {name} » ? Toutes les séances programmées seront perdues.",
       "sessionsCount": "{count} séance | {count} séances",
       "sessionLabel": "Nom de la séance",
+      "tabSpreadsheet": "Tableur",
+      "tabStats": "Graphiques & stats",
+      "exportPdf": "Exporter PDF",
+      "newBlock": "← Nouveau bloc",
+      "dayTable": "Mon tableau jour",
       "movement": "Mouvement",
       "add": "Ajouter"
     },
@@ -1537,13 +1559,13 @@
       "nextLine": "Ligne suivante →"
     },
     "tableBuilderV2": {
-      "title": "Builder tableur V2",
+      "title": "Tableur",
       "subtitle": "Une semaine à la fois, jours empilés du lundi au dimanche pour des séances en pleine largeur.",
       "maxSessions": "Jusqu'à {count} séance par semaine | Jusqu'à {count} séances par semaine",
       "pasteHint": "Le collage demandera des incréments (kg, %, RPE)."
     },
     "tableBuilder": {
-      "title": "Builder tableur",
+      "title": "Tableur",
       "subtitle": "7 colonnes = une semaine calendaire. Clique sur Repos pour ajouter une séance.",
       "maxSessions": "Jusqu'à {count} séance par semaine | Jusqu'à {count} séances par semaine",
       "pasteHint": "Le collage demandera des incréments (kg, %, RPE)."
@@ -1649,17 +1671,19 @@
       "assignCount": "Assigner ({count})"
     },
     "blockSetupTable": {
-      "title": "Nouveau bloc tableur",
+      "title": "Nouveau tableur",
       "subtitle": "Choisis l’athlète, le nombre de semaines et le nombre de jours à afficher, puis remplis les séances dans une vue type tableur.",
       "blockName": "Nom du bloc",
       "blockNamePlaceholder": "Ex. Bloc force tableur",
-      "weekCount": "Nombre de semaines",
-      "daysPerWeek": "Nombre de jours / semaine",
+      "weekCount": "Semaines",
+      "daysPerWeek": "Jours / sem.",
       "dateStart": "Date de début",
-      "tableStructure": "Structure du tableau",
-      "create": "Créer le bloc tableur",
+      "tableStructure": "Structure",
+      "create": "Créer le tableur",
       "resume": "Reprendre un bloc",
-      "openV2": "Ouvrir en tableur V2"
+      "searchPlaceholder": "Rechercher un bloc…",
+      "searchEmpty": "Aucun bloc ne correspond.",
+      "openV2": "Ouvrir"
     },
     "warmup": {
       "title": "Échauffement du bloc",

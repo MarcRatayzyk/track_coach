@@ -105,6 +105,7 @@ return [
         'marked_done' => 'Retour marqué comme traité.',
         'write_before_send' => 'Écrivez votre retour avant de l’envoyer.',
         'annotation_deleted' => 'Annotation supprimée.',
+        'week_from_to' => 'Semaine du :start au :end',
     ],
 
     'messaging' => [

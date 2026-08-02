@@ -131,13 +131,16 @@ const weeklyPendingCount = computed(
 
 const weekLabel = computed(() => {
   if (!props.feedback.week_start || !props.feedback.week_end) {
-    return 'Cette semaine';
+    return t('app.dashboard.thisWeek');
   }
-  return `Semaine du ${formatCalendarFr(props.feedback.week_start)} au ${formatCalendarFr(props.feedback.week_end)}`;
+  return t('app.feedbacks.weekFromTo', {
+    start: formatCalendarFr(props.feedback.week_start),
+    end: formatCalendarFr(props.feedback.week_end),
+  });
 });
 
 const todayLabel = computed(() =>
-  props.feedback.today ? formatCalendarFr(props.feedback.today) : "Aujourd'hui",
+  props.feedback.today ? formatCalendarFr(props.feedback.today) : t('app.dashboard.today'),
 );
 
 const upcomingComps = computed(() => props.upcomingCompetitions ?? []);

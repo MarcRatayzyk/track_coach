@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import OptionButtonGroup from './OptionButtonGroup.vue';
+import ScrollPicker from './ScrollPicker.vue';
 import {
   RPE_OPTIONS,
   formatLineRecap,
@@ -9,6 +9,7 @@ import {
   formatValidatedSetsRecapLines,
   inferLoadMode,
 } from '../utils/programBuilder';
+import { resolveLoadKg } from '../utils/trainingVolume';
 
 const { t } = useI18n();
 
@@ -123,14 +124,205 @@ const hasAthleteNote = computed(() => Boolean(String(line.value.athlete_note ?? 
 
 const chargeModes = [
   { id: 'kg', label: 'kg' },
-  { id: 'percent', label: '% 1RM' },
+  { id: 'percent', label: '%' },
 ];
 
-const activeChargeMode = ref(inferLoadMode(line.value) === 'percent' ? 'percent' : 'kg');
+function resolveInitialChargeMode() {
+  const mode = inferLoadMode(line.value);
+  if (mode === 'percent') {
+    return 'percent';
+  }
+  if (mode === 'kg') {
+    return 'kg';
+  }
+  if (line.value.load_percent != null && line.value.load_percent !== '') {
+    return 'percent';
+  }
+  return 'kg';
+}
+
+const activeChargeMode = ref(resolveInitialChargeMode());
+
+/** Snapshot de la charge prévue (programme) pour réinitialiser / convertir. */
+const prescribed = ref(null);
+
+const REP_OPTIONS = Array.from({ length: 40 }, (_, i) => i + 1);
+const KG_OPTIONS = (() => {
+  const values = [0];
+  for (let kg = 2.5; kg <= 400; kg += 2.5) {
+    values.push(Number(kg.toFixed(1)));
+  }
+  return values;
+})();
+const PERCENT_OPTIONS = (() => {
+  const values = [];
+  for (let pct = 20; pct <= 110; pct += 0.5) {
+    values.push(Number(pct.toFixed(1)));
+  }
+  return values;
+})();
+
+const chargeOptions = computed(() =>
+  activeChargeMode.value === 'kg' ? KG_OPTIONS : PERCENT_OPTIONS,
+);
+
+function snapToKg(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0) {
+    return null;
+  }
+  return Number((Math.round(num / 2.5) * 2.5).toFixed(1));
+}
+
+function snapToPercent(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) {
+    return null;
+  }
+  return Number((Math.round(num * 2) / 2).toFixed(1));
+}
+
+function oneRmForLine() {
+  const lift = line.value.lift || props.mainLift || 'squat';
+  const raw = props.oneRm?.[lift];
+  const num = Number(raw);
+  return Number.isFinite(num) && num > 0 ? num : null;
+}
+
+function plannedKg() {
+  if (prescribed.value?.load != null && prescribed.value.load !== '') {
+    return snapToKg(prescribed.value.load);
+  }
+  return snapToKg(
+    resolveLoadKg(
+      {
+        load: prescribed.value?.load ?? line.value.load,
+        load_percent: prescribed.value?.load_percent ?? line.value.load_percent,
+        load_mode: prescribed.value?.mode ?? inferLoadMode(line.value),
+        lift: line.value.lift,
+        rpe: null,
+      },
+      props.oneRm,
+      props.mainLift,
+    ),
+  );
+}
+
+function plannedPercent() {
+  if (prescribed.value?.load_percent != null && prescribed.value.load_percent !== '') {
+    return snapToPercent(prescribed.value.load_percent);
+  }
+  const kg = prescribed.value?.load ?? line.value.load;
+  const orm = oneRmForLine();
+  if (kg != null && kg !== '' && orm) {
+    return snapToPercent((Number(kg) / orm) * 100);
+  }
+  return null;
+}
+
+function capturePrescribed({ force = false } = {}) {
+  if (prescribed.value && !force) {
+    return;
+  }
+  prescribed.value = {
+    load: line.value.load ?? null,
+    load_percent: line.value.load_percent ?? null,
+    mode: resolveInitialChargeMode(),
+    reps: line.value.reps ?? null,
+  };
+}
+
+function applyPrescribedCharge() {
+  capturePrescribed();
+  if (!activeChargeMode.value) {
+    activeChargeMode.value = prescribed.value.mode ?? resolveInitialChargeMode();
+  }
+
+  if (activeChargeMode.value === 'percent') {
+    if (line.value.load_percent == null || line.value.load_percent === '') {
+      const pct = plannedPercent();
+      if (pct != null) {
+        line.value.load_percent = pct;
+        line.value.load = null;
+        line.value.load_mode = 'percent';
+      }
+    }
+    return;
+  }
+
+  if (line.value.load == null || line.value.load === '') {
+    const kg = plannedKg();
+    if (kg != null) {
+      line.value.load = kg;
+      line.value.load_percent = null;
+      line.value.load_mode = 'kg';
+    }
+  }
+}
+
+const chargeValue = computed({
+  get() {
+    if (activeChargeMode.value === 'kg') {
+      return line.value.load ?? null;
+    }
+    return line.value.load_percent ?? null;
+  },
+  set(value) {
+    if (activeChargeMode.value === 'kg') {
+      line.value.load = value;
+      line.value.load_percent = null;
+      line.value.load_mode = 'kg';
+      return;
+    }
+    line.value.load_percent = value;
+    line.value.load = null;
+    line.value.load_mode = 'percent';
+  },
+});
+
+const repsValue = computed({
+  get() {
+    return line.value.reps ?? null;
+  },
+  set(value) {
+    line.value.reps = value;
+  },
+});
+
+const rpeValue = computed({
+  get() {
+    return line.value.rpe ?? null;
+  },
+  set(value) {
+    line.value.rpe = value;
+  },
+});
+
+watch(
+  () => props.expanded,
+  (open) => {
+    if (open && !fullyValidated.value && !isCluster.value) {
+      applyPrescribedCharge();
+    }
+  },
+  { immediate: true, flush: 'sync' },
+);
+
+watch(
+  () => props.validatedSetsCount,
+  () => {
+    // Après une série validée (ramp / multi-séries), re-synchronise la charge prévue.
+    capturePrescribed({ force: true });
+    activeChargeMode.value = resolveInitialChargeMode();
+  },
+);
 
 watch(
   () => [line.value.load, line.value.load_percent, line.value.load_mode],
   () => {
+    if (props.expanded) {
+      return;
+    }
     const mode = inferLoadMode(line.value);
     if (mode === 'percent') {
       activeChargeMode.value = 'percent';
@@ -140,28 +332,44 @@ watch(
   },
 );
 
-function updateIntegerField(field, rawValue) {
-  const parsed = rawValue === '' ? null : Number.parseInt(rawValue, 10);
-  line.value[field] = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
-function updateDecimalField(field, rawValue) {
-  const parsed = rawValue === '' ? null : Number.parseFloat(String(rawValue).replace(',', '.'));
-  line.value[field] = Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-}
-
 function setChargeMode(mode) {
-  activeChargeMode.value = mode;
-  line.value.load_mode = mode;
-  if (mode === 'kg') {
-    line.value.load_percent = null;
-  } else {
-    line.value.load = null;
+  if (mode === activeChargeMode.value) {
+    return;
   }
+
+  capturePrescribed();
+
+  if (mode === 'kg') {
+    const kg =
+      snapToKg(resolveLoadKg(line.value, props.oneRm, props.mainLift))
+      ?? plannedKg()
+      ?? 60;
+    line.value.load = kg;
+    line.value.load_percent = null;
+    line.value.load_mode = 'kg';
+  } else {
+    let pct = null;
+    if (line.value.load != null && line.value.load !== '') {
+      const orm = oneRmForLine();
+      if (orm) {
+        pct = snapToPercent((Number(line.value.load) / orm) * 100);
+      }
+    }
+    pct = pct ?? plannedPercent() ?? 70;
+    line.value.load_percent = pct;
+    line.value.load = null;
+    line.value.load_mode = 'percent';
+  }
+
+  activeChargeMode.value = mode;
 }
 
-function updateRpe(value) {
-  line.value.rpe = value;
+function formatChargeOption(value) {
+  return Number.isInteger(value) ? String(value) : String(value);
+}
+
+function formatRpeOption(value) {
+  return Number.isInteger(value) ? String(value) : String(value);
 }
 
 function updateAthleteNote(rawValue) {
@@ -198,8 +406,8 @@ const canValidate = computed(() => {
   return hasCharge.value && hasRpe.value;
 });
 
-const inputClass =
-  'mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-white placeholder:text-slate-600';
+const pickerHeight = 32;
+const pickerVisible = 3;
 </script>
 
 <template>
@@ -289,88 +497,74 @@ const inputClass =
           <template v-else>{{ t('athleteUi.todaySessionSet.setProgress', { current: currentSetNumber, total: totalSets }) }}</template>
         </p>
 
-        <div class="grid grid-cols-2 gap-3">
-          <label class="block text-xs font-medium text-slate-400">
-            {{ isCluster ? t('athleteUi.todaySessionSet.repsDone') : t('athleteUi.todaySessionSet.reps') }}
-            <input
-              :value="line.reps ?? ''"
-              type="number"
-              min="1"
-              max="200"
-              step="1"
-              inputmode="numeric"
-              :class="inputClass"
-              @input="updateIntegerField('reps', $event.target.value)"
+        <div :class="isCluster ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-3 gap-1.5'">
+          <div class="min-w-0">
+            <p class="mb-1 flex h-6 items-center justify-center text-center text-[10px] font-medium text-slate-400">
+              {{ isCluster ? t('athleteUi.todaySessionSet.repsDone') : t('athleteUi.todaySessionSet.reps') }}
+            </p>
+            <ScrollPicker
+              v-model="repsValue"
+              :options="REP_OPTIONS"
+              :item-height="pickerHeight"
+              :visible-count="pickerVisible"
+              :aria-label="t('athleteUi.todaySessionSet.reps')"
             />
-          </label>
+          </div>
 
-          <div v-if="!isCluster">
-            <p class="text-xs font-medium text-slate-400">{{ t('athleteUi.todaySessionSet.load') }}</p>
-            <div class="mt-1 flex flex-wrap gap-1.5">
+          <div v-if="!isCluster" class="min-w-0">
+            <div class="mb-1 flex h-6 items-center justify-center gap-0.5">
               <button
                 v-for="mode in chargeModes"
                 :key="mode.id"
                 type="button"
-                class="rounded-lg px-2.5 py-1 text-[11px] font-medium transition"
+                class="rounded px-1.5 py-0.5 text-[10px] font-semibold transition"
                 :class="
                   activeChargeMode === mode.id
                     ? 'bg-blue-600 text-white'
-                    : 'border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-white'
+                    : 'border border-slate-700 text-slate-400'
                 "
                 @click="setChargeMode(mode.id)"
               >
                 {{ mode.label }}
               </button>
             </div>
-
-            <label v-if="activeChargeMode === 'kg'" class="mt-2 block text-xs text-slate-500">
-              <input
-                :value="line.load ?? ''"
-                type="number"
-                min="0"
-                max="999"
-                step="0.5"
-                inputmode="decimal"
-                placeholder="kg"
-                :class="inputClass"
-                @input="updateDecimalField('load', $event.target.value)"
-              />
-            </label>
-
-            <label v-else class="mt-2 block text-xs text-slate-500">
-              <input
-                :value="line.load_percent ?? ''"
-                type="number"
-                min="0"
-                max="100"
-                step="0.5"
-                inputmode="decimal"
-                placeholder="% 1RM"
-                :class="inputClass"
-                @input="updateDecimalField('load_percent', $event.target.value)"
-              />
-            </label>
+            <ScrollPicker
+              v-model="chargeValue"
+              :options="chargeOptions"
+              :format="formatChargeOption"
+              :item-height="pickerHeight"
+              :visible-count="pickerVisible"
+              :aria-label="t('athleteUi.todaySessionSet.load')"
+            />
           </div>
-          <div v-else class="text-xs text-slate-500">
-            <p class="font-medium text-slate-400">{{ t('athleteUi.todaySessionSet.plannedDuration') }}</p>
-            <p class="mt-2 rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-2 text-sm text-slate-200">
-              {{ t('athleteUi.todaySessionSet.minutes', { count: line.scheme_config?.duration_minutes ?? '—' }) }}
+          <div v-else class="min-w-0">
+            <p class="mb-1 flex h-6 items-center justify-center text-center text-[10px] font-medium text-slate-400">
+              {{ t('athleteUi.todaySessionSet.plannedDuration') }}
             </p>
+            <div class="flex h-[96px] items-center justify-center rounded-lg border border-slate-700 bg-slate-950 px-2 text-xs font-medium text-slate-200">
+              {{ t('athleteUi.todaySessionSet.minutes', { count: line.scheme_config?.duration_minutes ?? '—' }) }}
+            </div>
           </div>
-        </div>
 
-        <div v-if="!isCluster" class="mt-4">
-          <OptionButtonGroup
-            :model-value="line.rpe"
-            :options="RPE_OPTIONS"
-            :label="t('athleteUi.todaySessionSet.rpeLabel')"
-            @update:model-value="updateRpe"
-          />
+          <div v-if="!isCluster" class="min-w-0">
+            <p class="mb-1 flex h-6 items-center justify-center text-center text-[10px] font-medium text-slate-400">
+              RPE
+            </p>
+            <ScrollPicker
+              v-model="rpeValue"
+              :options="RPE_OPTIONS"
+              :format="formatRpeOption"
+              :item-height="pickerHeight"
+              :visible-count="pickerVisible"
+              allow-empty
+              :aria-label="t('athleteUi.todaySessionSet.rpeLabel')"
+            />
+          </div>
         </div>
 
         <button
           type="button"
-          class="mt-4 w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+          class="mt-3 w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           :disabled="saving || !canValidate"
           @click="validateLine"
         >

@@ -774,7 +774,7 @@ function seriesPayload() {
         class="rounded-[18px] border border-blue-500/30 bg-slate-900/60 p-4 shadow-xl lg:p-6"
       >
         <h2 class="text-base font-semibold text-white">
-          {{ isWeekly ? 'Envoyer votre retour hebdomadaire' : 'Envoyer un retour' }}
+          {{ isWeekly ? t('app.feedbacks.sendWeekly') : t('app.feedbacks.send') }}
         </h2>
         <form class="mt-4 space-y-4" @submit.prevent="submitFeedback">
           <div>
@@ -787,7 +787,7 @@ function seriesPayload() {
                 v-if="eligibleSessions.length === 0"
                 class="rounded-xl border border-dashed border-slate-700 bg-slate-950/40 px-4 py-3 text-sm text-slate-500"
               >
-                Aucune séance en attente de retour.
+                {{ t('app.feedbacks.noPendingSession') }}
               </p>
               <div
                 v-else
@@ -819,7 +819,7 @@ function seriesPayload() {
                     v-if="(s.logged_notes || []).length"
                     class="mt-1.5 inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300"
                   >
-                    {{ s.logged_notes.length }} note{{ s.logged_notes.length > 1 ? 's' : '' }}
+                    {{ t('app.feedbacks.notesCount', s.logged_notes.length, { n: s.logged_notes.length }) }}
                   </span>
                 </button>
               </div>
@@ -934,7 +934,7 @@ function seriesPayload() {
                   ? '…'
                   : isUploading || submitForm.processing
                     ? '…'
-                    : 'Envoyer au coach'
+                    : t('app.feedbacks.sendToCoach')
             }}
           </button>
         </form>

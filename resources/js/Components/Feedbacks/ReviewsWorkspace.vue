@@ -60,9 +60,9 @@ function backToList() {
   <div class="space-y-4">
     <div class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-white">Retours de séance</h1>
+        <h1 class="text-2xl font-bold text-white">{{ t('app.feedbacks.pageTitle') }}</h1>
         <p class="mt-1 max-w-2xl text-sm text-slate-400">
-          Analysez la séance, visionnez les vidéos et répondez — sans changer d’écran.
+          {{ t('app.feedbacks.pageSubtitleCoach') }}
         </p>
       </div>
     </div>

@@ -180,7 +180,7 @@ onMounted(() => {
       class="rounded-xl border border-blue-500/30 bg-blue-950/20 px-4 py-3 text-sm text-blue-200"
     >
       {{ programUpcomingLabel }}
-      <span class="text-blue-300/80"> — ton calendrier est déjà prêt.</span>
+      <span class="text-blue-300/80">{{ t('app.athleteProgram.calendarReady') }}</span>
     </div>
 
     <template v-if="hasProgram">
@@ -195,7 +195,7 @@ onMounted(() => {
           "
           @click="setTab('calendar')"
         >
-          Calendrier
+          {{ t('app.athleteProgram.tabCalendar') }}
         </button>
         <button
           type="button"
@@ -207,7 +207,7 @@ onMounted(() => {
           "
           @click="setTab('table')"
         >
-          Tableur
+          {{ t('app.athleteProgram.tabSpreadsheet') }}
         </button>
         <button
           type="button"
@@ -219,7 +219,7 @@ onMounted(() => {
           "
           @click="setTab('stats')"
         >
-          Graphiques & stats
+          {{ t('app.athleteProgram.tabStats') }}
         </button>
       </div>
 

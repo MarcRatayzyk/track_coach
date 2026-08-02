@@ -41,7 +41,7 @@ const avatarLabel = computed(() =>
 
 const notePreview = computed(() => {
   const notes = (props.item.athlete_notes || '').trim();
-  if (!notes) return props.mode === 'athlete' ? 'Sans commentaire' : 'Sans commentaire';
+  if (!notes) return t('app.feedbacks.noComment');
   return notes.length > 72 ? `${notes.slice(0, 72)}…` : notes;
 });
 </script>

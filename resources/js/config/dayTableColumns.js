@@ -50,31 +50,31 @@ export const DAY_TABLE_COLUMNS = {
   sets: {
     id: 'sets',
     get label() { return tt('config.dayTable.sets'); },
-    widthClass: 'w-14',
+    widthClass: 'w-10',
     align: 'center',
   },
   reps: {
     id: 'reps',
     get label() { return tt('config.dayTable.reps'); },
-    widthClass: 'w-14',
+    widthClass: 'w-10',
     align: 'center',
   },
   load: {
     id: 'load',
     get label() { return tt('config.dayTable.load'); },
-    widthClass: 'w-28',
+    widthClass: 'w-24',
     align: 'center',
   },
   rpe: {
     id: 'rpe',
     get label() { return tt('config.dayTable.rpe'); },
-    widthClass: 'w-16',
+    widthClass: 'w-12',
     align: 'center',
   },
   rest: {
     id: 'rest',
     get label() { return tt('config.dayTable.rest'); },
-    widthClass: 'w-16',
+    widthClass: 'w-12',
     align: 'center',
   },
   muscles: {
@@ -133,15 +133,15 @@ export function normalizeTableLayout(layout) {
 }
 
 const SPACED_COLUMN_WEIGHTS = {
-  exercise: 3.4,
+  exercise: 3.8,
   main_lift: 1.1,
   variant: 2.3,
-  section: 0.9,
-  sets: 1.2,
-  reps: 1.2,
-  load: 2.8,
-  rpe: 1.0,
-  rest: 1.0,
+  section: 0.7,
+  sets: 0.55,
+  reps: 0.55,
+  load: 2.2,
+  rpe: 0.7,
+  rest: 0.7,
   muscles: 1.3,
 };
 

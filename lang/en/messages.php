@@ -105,6 +105,7 @@ return [
         'marked_done' => 'Feedback marked as done.',
         'write_before_send' => 'Write your feedback before sending.',
         'annotation_deleted' => 'Annotation deleted.',
+        'week_from_to' => 'Week of :start to :end',
     ],
 
     'messaging' => [

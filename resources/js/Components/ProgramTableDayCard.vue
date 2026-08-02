@@ -523,10 +523,9 @@ function selectRow(index) {
 
     <div class="overflow-x-auto overflow-y-visible">
       <table
-        class="w-full border-collapse"
-        :class="layoutVariant === 'spaced' ? 'table-fixed' : 'table-auto'"
+        class="w-full table-fixed border-collapse"
       >
-        <colgroup v-if="layoutVariant === 'spaced'">
+        <colgroup>
           <col
             v-for="column in visibleColumns"
             :key="`col-${column.id}`"
@@ -538,10 +537,9 @@ function selectRow(index) {
             <th
               v-for="(column, index) in visibleColumns"
               :key="column.id"
-              class="border-b border-t border-slate-700 px-1.5 py-1.5"
+              class="border-b border-t border-slate-700 px-1 py-1.5"
               :class="[
                 index < visibleColumns.length - 1 ? 'border-r' : '',
-                layoutVariant === 'stacked' ? column.widthClass : '',
                 column.align === 'left' ? 'text-left px-2' : 'text-center',
               ]"
             >

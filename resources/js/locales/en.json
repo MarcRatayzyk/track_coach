@@ -1107,7 +1107,11 @@
       "weeks": "{n} week | {n} weeks",
       "weekProgress": "Week {current} / {total}",
       "emptyTitle": "Program",
-      "emptyBody": "No active block yet. Your coach will assign one soon."
+      "emptyBody": "No active block yet. Your coach will assign one soon.",
+      "tabCalendar": "Calendar",
+      "tabSpreadsheet": "Spreadsheet",
+      "tabStats": "Charts & stats",
+      "calendarReady": " — your calendar is already ready."
     },
     "competitions": {
       "title": "Competitions",
@@ -1135,6 +1139,16 @@
       "matchPlan": "Match plan"
     },
     "feedbacks": {
+      "pageTitle": "Session feedback",
+      "pageSubtitleAthlete": "Track your feedback, the completed session and your coach’s reply.",
+      "pageSubtitleCoach": "Review the session, watch videos and reply — without switching screens.",
+      "makeFeedback": "Send feedback",
+      "pastFeedbacks": "Past feedback",
+      "navAria": "Feedback navigation",
+      "noPendingSession": "No session awaiting feedback.",
+      "notesCount": "{n} note | {n} notes",
+      "weekFromTo": "Week of {start} to {end}",
+      "noComment": "No comment",
       "sendWeekly": "Send your weekly feedback",
       "send": "Send feedback",
       "due": "Feedback due",
@@ -1394,7 +1408,10 @@
       "title": "Today's session",
       "validated": "Session validated",
       "noExercises": "Session scheduled, exercises not filled in.",
-      "noneUpcoming": "No session scheduled within 2 weeks."
+      "noneUpcoming": "No session scheduled within 2 weeks.",
+      "restToday": "No session today.",
+      "next": "Next:",
+      "viewInProgram": "View in program"
     },
     "athletePr": {
       "titleDefault": "Log an official PR",
@@ -1503,6 +1520,11 @@
       "deleteBlockConfirm": "Delete block \"{name}\"? All scheduled sessions will be lost.",
       "sessionsCount": "{count} session | {count} sessions",
       "sessionLabel": "Session name",
+      "tabSpreadsheet": "Spreadsheet",
+      "tabStats": "Charts & stats",
+      "exportPdf": "Export PDF",
+      "newBlock": "← New block",
+      "dayTable": "My day table",
       "movement": "Lift",
       "add": "Add"
     },
@@ -1537,13 +1559,13 @@
       "nextLine": "Next row →"
     },
     "tableBuilderV2": {
-      "title": "Spreadsheet builder V2",
+      "title": "Spreadsheet",
       "subtitle": "One week at a time, days stacked Monday to Sunday for full-width sessions.",
       "maxSessions": "Up to {count} session per week | Up to {count} sessions per week",
       "pasteHint": "Pasting will ask for increments (kg, %, RPE)."
     },
     "tableBuilder": {
-      "title": "Spreadsheet builder",
+      "title": "Spreadsheet",
       "subtitle": "7 columns = one calendar week. Click Rest to add a session.",
       "maxSessions": "Up to {count} session per week | Up to {count} sessions per week",
       "pasteHint": "Pasting will ask for increments (kg, %, RPE)."
@@ -1649,17 +1671,19 @@
       "assignCount": "Assign ({count})"
     },
     "blockSetupTable": {
-      "title": "New spreadsheet block",
+      "title": "New spreadsheet",
       "subtitle": "Choose the athlete, number of weeks and days to display, then fill sessions in a spreadsheet view.",
       "blockName": "Block name",
       "blockNamePlaceholder": "E.g. Spreadsheet strength block",
-      "weekCount": "Number of weeks",
-      "daysPerWeek": "Days per week",
+      "weekCount": "Weeks",
+      "daysPerWeek": "Days / wk",
       "dateStart": "Start date",
-      "tableStructure": "Table structure",
-      "create": "Create spreadsheet block",
+      "tableStructure": "Structure",
+      "create": "Create spreadsheet",
       "resume": "Resume a block",
-      "openV2": "Open in spreadsheet V2"
+      "searchPlaceholder": "Search a block…",
+      "searchEmpty": "No matching block.",
+      "openV2": "Open"
     },
     "warmup": {
       "title": "Block warm-up",

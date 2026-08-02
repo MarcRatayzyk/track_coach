@@ -426,16 +426,16 @@ function closeCelebration() {
           href="/feedbacks"
           class="flex w-full items-center justify-center rounded-lg border border-slate-700 px-3 py-2.5 text-sm font-semibold text-slate-200 hover:border-slate-500"
         >
-          Envoyer un retour
+          {{ t('app.feedbacks.send') }}
         </Link>
       </div>
     </template>
 
     <template v-else-if="status === 'rest'">
       <p class="mt-3 text-xs text-slate-400">
-        Pas de séance aujourd’hui.
+        {{ t('app.todaySession.restToday') }}
         <template v-if="todaySession.next_session_date">
-          Prochaine :
+          {{ t('app.todaySession.next') }}
           <span class="font-medium text-slate-200">
             {{ formatCalendarFr(todaySession.next_session_date, 'medium') }}
           </span>
@@ -449,7 +449,7 @@ function closeCelebration() {
           :href="programCalendarHref"
           class="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300 hover:border-slate-500"
         >
-          Voir dans le programme
+          {{ t('app.todaySession.viewInProgram') }}
         </Link>
       </div>
     </template>

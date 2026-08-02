@@ -75,16 +75,16 @@ function urgencyFor(item) {
 <template>
   <div class="space-y-3">
     <div>
-      <h1 class="text-xl font-bold text-white sm:text-2xl">Retours de séance</h1>
+      <h1 class="text-xl font-bold text-white sm:text-2xl">{{ t('app.feedbacks.pageTitle') }}</h1>
       <p class="mt-0.5 max-w-2xl text-sm text-slate-400">
-        Suivez vos retours, la séance réalisée et la réponse de votre coach.
+        {{ t('app.feedbacks.pageSubtitleAthlete') }}
       </p>
     </div>
 
     <div
       class="flex rounded-[14px] border border-slate-800 bg-slate-950/50 p-1"
       role="tablist"
-      aria-label="Navigation retours"
+      :aria-label="t('app.feedbacks.navAria')"
     >
       <button
         type="button"
@@ -98,7 +98,7 @@ function urgencyFor(item) {
         "
         @click="setTab('submit')"
       >
-        Faire un retour
+        {{ t('app.feedbacks.makeFeedback') }}
       </button>
       <button
         type="button"
@@ -115,7 +115,7 @@ function urgencyFor(item) {
         "
         @click="setTab('history')"
       >
-        Retours passés
+        {{ t('app.feedbacks.pastFeedbacks') }}
         <span
           v-if="feedbacks.length"
           class="ml-1.5 tabular-nums opacity-80"

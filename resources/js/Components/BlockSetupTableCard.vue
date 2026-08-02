@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { router, useForm } from '@inertiajs/vue3';
 import { track } from '../utils/analytics';
@@ -37,6 +37,23 @@ const form = useForm({
   builder_tab: 'table_v2',
 });
 
+const blockSearch = ref('');
+
+const filteredBlocks = computed(() => {
+  const term = blockSearch.value.trim().toLowerCase();
+  if (!term) {
+    return props.existingBlocks;
+  }
+
+  return props.existingBlocks.filter((block) => {
+    const haystack = [block.name, block.athlete_name, block.date_start, block.date_end]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(term);
+  });
+});
+
 function submit() {
   form.post('/coach/program-blocks', {
     preserveScroll: true,
@@ -69,53 +86,49 @@ function deleteBlock(block) {
     },
   });
 }
+
+const fieldClass =
+  'mt-0.5 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-white';
 </script>
 
 <template>
-  <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg sm:p-5">
-    <h2 class="text-base font-semibold text-white sm:text-lg">{{ t('programBuilder.blockSetupTable.title') }}</h2>
-    <p class="mt-1 text-xs leading-relaxed text-slate-400 sm:text-sm">
+  <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg sm:p-4">
+    <h2 class="text-base font-semibold text-white">{{ t('programBuilder.blockSetupTable.title') }}</h2>
+    <p class="mt-0.5 text-xs leading-relaxed text-slate-400">
       {{ t('programBuilder.blockSetupTable.subtitle') }}
     </p>
 
-    <form class="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4" @submit.prevent="submit">
-      <label class="block text-xs text-slate-400 sm:col-span-2 lg:col-span-2">
+    <form class="mt-3 flex flex-wrap items-end gap-2" @submit.prevent="submit">
+      <label class="min-w-[9rem] flex-1 text-[11px] text-slate-400">
         {{ t('common.athlete') }}
-        <select
-          v-model="form.athlete_id"
-          required
-          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
-        >
+        <select v-model="form.athlete_id" required :class="fieldClass">
           <option v-for="athlete in athletes" :key="athlete.id" :value="athlete.id">
             {{ athlete.name }}
           </option>
         </select>
       </label>
 
-      <label class="block text-xs text-slate-400 sm:col-span-2 lg:col-span-2">
+      <label class="min-w-[9rem] flex-1 text-[11px] text-slate-400">
         {{ t('programBuilder.blockSetupTable.tableStructure') }}
-        <select
-          v-model="form.day_table_layout_id"
-          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
-        >
+        <select v-model="form.day_table_layout_id" :class="fieldClass">
           <option v-for="layout in dayTableLayouts" :key="layout.id" :value="layout.id">
             {{ layout.name }}{{ layout.is_default ? t('programBuilder.shared.defaultSuffix') : '' }}
           </option>
         </select>
       </label>
 
-      <label class="block text-xs text-slate-400 sm:col-span-2 lg:col-span-2">
+      <label class="min-w-[10rem] flex-[1.2] text-[11px] text-slate-400">
         {{ t('programBuilder.blockSetupTable.blockName') }}
         <input
           v-model="form.name"
           type="text"
           required
           :placeholder="t('programBuilder.blockSetupTable.blockNamePlaceholder')"
-          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+          :class="fieldClass"
         />
       </label>
 
-      <label class="block text-xs text-slate-400">
+      <label class="w-[4.25rem] shrink-0 text-[11px] text-slate-400">
         {{ t('programBuilder.blockSetupTable.weekCount') }}
         <input
           v-model.number="form.week_count"
@@ -123,11 +136,11 @@ function deleteBlock(block) {
           min="1"
           max="16"
           required
-          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+          :class="fieldClass"
         />
       </label>
 
-      <label class="block text-xs text-slate-400">
+      <label class="w-[4.25rem] shrink-0 text-[11px] text-slate-400">
         {{ t('programBuilder.blockSetupTable.daysPerWeek') }}
         <input
           v-model.number="form.days_per_week"
@@ -135,73 +148,77 @@ function deleteBlock(block) {
           min="1"
           max="7"
           required
-          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
+          :class="fieldClass"
         />
       </label>
 
-      <label class="block text-xs text-slate-400 sm:col-span-2 lg:col-span-2">
+      <label class="w-[9.5rem] shrink-0 text-[11px] text-slate-400">
         {{ t('programBuilder.blockSetupTable.dateStart') }}
-        <input
-          v-model="form.date_start"
-          type="date"
-          required
-          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white"
-        />
+        <input v-model="form.date_start" type="date" required :class="fieldClass" />
       </label>
 
-      <p v-if="Object.keys(form.errors).length" class="text-sm text-red-400 sm:col-span-2 lg:col-span-4">
+      <button
+        type="submit"
+        :disabled="form.processing || !athletes.length"
+        class="shrink-0 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white shadow hover:bg-blue-500 disabled:opacity-50"
+      >
+        {{ t('programBuilder.blockSetupTable.create') }}
+      </button>
+
+      <p v-if="Object.keys(form.errors).length" class="w-full text-sm text-red-400">
         {{ Object.values(form.errors).flat().join(' ') }}
       </p>
-
-      <div class="sm:col-span-2 lg:col-span-4">
-        <button
-          type="submit"
-          :disabled="form.processing || !athletes.length"
-          class="rounded-lg bg-blue-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 disabled:opacity-50"
-        >
-          {{ t('programBuilder.blockSetupTable.create') }}
-        </button>
-      </div>
     </form>
 
-    <div v-if="existingBlocks.length" class="mt-5 border-t border-slate-800 pt-4">
-      <h3 class="text-sm font-semibold text-white">{{ t('programBuilder.blockSetupTable.resume') }}</h3>
-      <ul class="mt-2 space-y-2">
+    <div v-if="existingBlocks.length" class="mt-4 border-t border-slate-800 pt-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-sm font-semibold text-white">{{ t('programBuilder.blockSetupTable.resume') }}</h3>
+        <input
+          v-model="blockSearch"
+          type="search"
+          :placeholder="t('programBuilder.blockSetupTable.searchPlaceholder')"
+          class="w-full max-w-xs rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-white placeholder:text-slate-500 sm:w-56"
+        />
+      </div>
+      <ul class="mt-2 space-y-1.5">
         <li
-          v-for="block in existingBlocks"
+          v-for="block in filteredBlocks"
           :key="block.id"
-          class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2.5"
+          class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-2.5 py-2"
         >
           <div class="min-w-0">
-            <p class="font-medium text-white">{{ block.name }}</p>
-            <p class="mt-0.5 text-xs text-slate-400">
+            <p class="text-sm font-medium text-white">{{ block.name }}</p>
+            <p class="mt-0.5 text-[11px] text-slate-400">
               {{ t('programBuilder.shared.blockMeta', { athlete: block.athlete_name, weeks: block.week_count, start: block.date_start }) }}
               <span v-if="block.date_end">{{ t('programBuilder.shared.blockMetaTo', { end: block.date_end }) }}</span>
               <span
                 v-if="block.status === 'draft'"
-                class="ml-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-xs text-amber-300"
+                class="ml-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-300"
               >
                 {{ t('programBuilder.shared.draft') }}
               </span>
             </p>
           </div>
-          <div class="flex shrink-0 flex-wrap gap-2">
+          <div class="flex shrink-0 flex-wrap gap-1.5">
             <button
               type="button"
-              class="rounded-lg border border-slate-700 px-2.5 py-1 text-xs font-medium text-blue-300 hover:bg-slate-800 sm:text-sm"
+              class="rounded-md border border-slate-700 px-2.5 py-1 text-xs font-medium text-blue-300 hover:bg-slate-800"
               @click="openBlock(block.id)"
             >
               {{ t('programBuilder.blockSetupTable.openV2') }}
             </button>
             <button
               type="button"
-              class="rounded-lg border border-red-500/40 px-2.5 py-1 text-xs font-medium text-red-300 hover:bg-red-950/40 disabled:opacity-50 sm:text-sm"
+              class="rounded-md border border-red-500/40 px-2.5 py-1 text-xs font-medium text-red-300 hover:bg-red-950/40 disabled:opacity-50"
               :disabled="deletingId === block.id"
               @click="deleteBlock(block)"
             >
               {{ deletingId === block.id ? t('common.deleting') : t('common.delete') }}
             </button>
           </div>
+        </li>
+        <li v-if="!filteredBlocks.length" class="rounded-lg border border-dashed border-slate-800 px-3 py-4 text-center text-xs text-slate-500">
+          {{ t('programBuilder.blockSetupTable.searchEmpty') }}
         </li>
       </ul>
     </div>

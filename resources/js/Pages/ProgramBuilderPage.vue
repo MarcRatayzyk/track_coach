@@ -857,7 +857,7 @@ function clearClipboard() {
           :href="`/coach/program-blocks/${activeBlock.id}/export-pdf`"
           class="rounded-xl border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-800/60"
         >
-          Exporter PDF
+          {{ t('programBuilder.shared.exportPdf') }}
         </a>
 
       <button
@@ -872,7 +872,7 @@ function clearClipboard() {
 
       >
 
-        ← Nouveau bloc
+        {{ t('programBuilder.shared.newBlock') }}
 
       </button>
       </div>
@@ -894,7 +894,7 @@ function clearClipboard() {
           "
           @click="activeTab = 'table_v2'"
         >
-          Tableur
+          {{ t('programBuilder.shared.tabSpreadsheet') }}
         </button>
         <button
           v-if="showCalendar"
@@ -907,7 +907,7 @@ function clearClipboard() {
           "
           @click="activeTab = 'stats'"
         >
-          Graphiques & stats
+          {{ t('programBuilder.shared.tabStats') }}
         </button>
       </div>
 
@@ -917,7 +917,7 @@ function clearClipboard() {
         class="shrink-0 self-start rounded-xl border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 sm:self-auto"
         @click="layoutModalOpen = true"
       >
-        Mon tableau jour
+        {{ t('programBuilder.shared.dayTable') }}
       </button>
     </div>
 
