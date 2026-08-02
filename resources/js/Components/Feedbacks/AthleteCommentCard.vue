@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { formatCalendarFr, formatShortDateTimeFr } from '../../utils/formatDates';
 import { messagingInitials } from '../../utils/messagingFormat';
+import { localizedExerciseName } from '../../utils/exerciseNames';
 const { t } = useI18n();
 
 const props = defineProps({
@@ -60,7 +61,7 @@ const title = computed(() =>
           :key="`${entry.exercise_name}-${index}`"
           class="text-sm text-slate-300"
         >
-          <span class="font-medium text-slate-100">{{ entry.exercise_name }}</span>
+          <span class="font-medium text-slate-100">{{ localizedExerciseName(entry.exercise_name) }}</span>
           <span class="text-slate-600"> — </span>
           <span class="whitespace-pre-wrap">{{ entry.note }}</span>
         </li>

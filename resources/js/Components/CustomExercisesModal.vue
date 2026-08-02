@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
+import { localizedExerciseName } from '../utils/exerciseNames';
 
 const { t } = useI18n();
 
@@ -90,9 +91,9 @@ const filteredCustom = computed(() => customExercises.value.filter(matchesSearch
 function variantNames(exercise) {
   const variants = exercise.variants ?? [];
   if (!variants.length) {
-    return [exercise.name];
+    return [localizedExerciseName(exercise.name)];
   }
-  return variants.map((variant) => variant.name);
+  return variants.map((variant) => localizedExerciseName(variant.name));
 }
 
 function resetForm() {
@@ -266,7 +267,7 @@ function close() {
               >
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <p class="font-semibold text-white">{{ exercise.name }}</p>
+                    <p class="font-semibold text-white">{{ localizedExerciseName(exercise.name) }}</p>
                     <p class="mt-0.5 text-xs text-slate-500">{{ exerciseMeta(exercise) }}</p>
                   </div>
                   <div class="flex shrink-0 gap-2">
@@ -301,7 +302,7 @@ function close() {
                 :key="`main-${exercise.id}`"
                 class="rounded-xl border border-slate-800 bg-slate-950/50 p-3"
               >
-                <p class="font-semibold text-white">{{ exercise.name }}</p>
+                <p class="font-semibold text-white">{{ localizedExerciseName(exercise.name) }}</p>
                 <p class="mt-0.5 text-xs text-slate-500">{{ exerciseMeta(exercise) }}</p>
                 <div class="mt-2.5 flex flex-wrap gap-1.5">
                   <span
@@ -326,7 +327,7 @@ function close() {
                 :key="`acc-${exercise.id}`"
                 class="rounded-xl border border-emerald-900/40 bg-slate-950/50 p-3"
               >
-                <p class="font-semibold text-white">{{ exercise.name }}</p>
+                <p class="font-semibold text-white">{{ localizedExerciseName(exercise.name) }}</p>
                 <p class="mt-0.5 text-xs text-slate-500">{{ exerciseMeta(exercise) }}</p>
                 <div class="mt-2.5 flex flex-wrap gap-1.5">
                   <span

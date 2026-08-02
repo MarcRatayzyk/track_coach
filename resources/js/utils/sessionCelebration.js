@@ -1,8 +1,14 @@
 import { localeTag, resolveLocale } from '../i18n';
+import i18n from '../i18n';
 import { defaultLiftName } from './programBuilder';
+import { localizedExerciseName } from './exerciseNames';
 import { buildBarbellLoading, formatBarLoadKg } from './barbellLoading';
 import { scoreDayAdherence } from './sessionAdherence';
 import { lineVolume, resolveLoadKg } from './trainingVolume';
+
+function tt(key) {
+  return i18n.global.t(key);
+}
 
 function activeTag() {
   const raw =
@@ -27,10 +33,13 @@ function resolveTopsetLoadKg(line, oneRm, mainLift) {
 
 export function formatTopsetCelebration(line, oneRm = {}, mainLift = 'squat') {
   if (!line?.exercise_name?.trim() && !line?.lift) {
-    return 'TOPSET';
+    return tt('app.celebration.topset').toUpperCase();
   }
 
-  const name = (line.exercise_name?.trim() || defaultLiftName(line.lift ?? mainLift)).toUpperCase();
+  const name = (
+    localizedExerciseName(line.exercise_name)
+    || defaultLiftName(line.lift ?? mainLift)
+  ).toUpperCase();
   const parts = [name];
 
   if (line.sets != null && line.reps != null) {
@@ -132,7 +141,9 @@ export function buildSessionCelebrationPayload({
   const selectedTopsets = pickTopsets(workItems, plannedItems, oneRm, mainLift);
   const primaryTopset = selectedTopsets[0] ?? null;
   const topsetLine = primaryTopset?.line ?? null;
-  const topsetSubtitle = topsetLine ? formatTopsetCelebration(topsetLine, oneRm, mainLift) : 'SÉANCE TERMINÉE';
+  const topsetSubtitle = topsetLine
+    ? formatTopsetCelebration(topsetLine, oneRm, mainLift)
+    : tt('app.celebration.sessionEnded');
 
   const topsetLoadKg = primaryTopset?.loadKg ?? null;
   const barbell = topsetLoadKg ? buildBarbellLoading(topsetLoadKg, barWeightKg) : null;

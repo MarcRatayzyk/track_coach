@@ -1,9 +1,10 @@
 import i18n from '../i18n';
 import { cellDate, cellKey, WEEKDAY_LABELS } from './programBuilder';
 import { formatCalendarFr } from './formatDates';
+import { localizedExerciseName } from './exerciseNames';
 
-function tt(key) {
-  return i18n.global.t(key);
+function tt(key, params) {
+  return i18n.global.t(key, params);
 }
 
 const LIFTS = ['squat', 'bench', 'deadlift'];
@@ -468,7 +469,7 @@ export function formatTopsetSeriesLabel(detail) {
   const sets = detail.sets ?? 1;
   const reps = detail.reps ?? 1;
   const loadPart = detail.loadKg != null ? ` ${formatTopsetLoadPart(detail.line, detail.loadKg)}` : '';
-  const name = detail.exerciseName?.trim();
+  const name = localizedExerciseName(detail.exerciseName);
 
   if (name) {
     return `${name} · ${sets}×${reps}${loadPart}`;

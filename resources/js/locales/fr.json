@@ -68,6 +68,7 @@
     "privacy": "Confidentialité",
     "logOut": "Déconnexion",
     "moreOptions": "Plus d'options",
+    "hideOptions": "Masquer les options",
     "installApp": "Installer l'app",
     "closeBanner": "Fermer le bandeau",
     "close": "Fermer"
@@ -825,6 +826,52 @@
       "useThisForm": "Utiliser ce formulaire"
     }
   },
+  "exercises": {
+    "choose": "Choisir un exercice",
+    "select": "Sélectionner",
+    "noneFound": "Aucun exercice trouvé.",
+    "accessories": "Accessoires",
+    "sets": "séries",
+    "exercise": "Exercice",
+    "names": {
+      "squat": "Squat",
+      "squat-pause": "Squat pause",
+      "squat-tempo": "Squat tempo",
+      "squat-pin": "Squat pin",
+      "box-squat": "Box squat",
+      "squat-high-bar": "Squat high bar",
+      "bench-press": "Bench press",
+      "comp-bench": "Comp Bench",
+      "bench": "Bench",
+      "bench-pause": "Bench pause",
+      "spoto-press": "Spoto press",
+      "larsen-press": "Larsen press",
+      "close-grip-bench": "Close grip bench",
+      "deadlift": "Deadlift",
+      "deadlift-conventionnel": "Deadlift conventionnel",
+      "deadlift-sumo": "Deadlift sumo",
+      "romanian-deadlift": "Romanian deadlift",
+      "rowing-haltere": "Rowing haltère",
+      "rowing-machine": "Rowing machine",
+      "triceps": "Triceps",
+      "skull-crusher": "Skull crusher",
+      "extension-triceps-poulie": "Extension triceps poulie",
+      "dips": "Dips",
+      "epaules": "Épaules",
+      "developpe-militaire": "Développé militaire",
+      "elevations-laterales": "Élévations latérales",
+      "face-pull": "Face pull",
+      "jambes-accessoire": "Jambes accessoire",
+      "leg-press": "Leg press",
+      "leg-curl": "Leg curl",
+      "leg-extension": "Leg extension",
+      "fentes-marchees": "Fentes marchées",
+      "dos-accessoire": "Dos accessoire",
+      "tirage-poulie": "Tirage poulie",
+      "pull-over": "Pull-over",
+      "hyperextension": "Hyperextension"
+    }
+  },
   "config": {
     "sex": {
       "male": "Homme",
@@ -1424,7 +1471,12 @@
     "celebration": {
       "validated": "Séance validée",
       "adherence": "Adhérence",
-      "continue": "Continuer"
+      "continue": "Continuer",
+      "sessionEnded": "SÉANCE TERMINÉE",
+      "topset": "Topset",
+      "topsets": "Topsets",
+      "tonnage": "Tonnage",
+      "reps": "Reps"
     },
     "coachDash": {
       "keyIndicators": "Indicateurs clés",

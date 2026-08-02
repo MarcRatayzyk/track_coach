@@ -1,6 +1,10 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ExercisePicker from './ExercisePicker.vue';
+import { localizedExerciseName } from '../utils/exerciseNames';
+
+const { t } = useI18n();
 
 const props = defineProps({
   section: {
@@ -30,6 +34,8 @@ const emit = defineEmits(['select', 'activate']);
 
 const open = ref(false);
 
+const displayName = computed(() => localizedExerciseName(props.exerciseName));
+
 function onTriggerClick() {
   if (!props.pickerEnabled) {
     emit('activate');
@@ -54,8 +60,8 @@ function handleSelect(payload) {
       class="flex w-full items-center justify-between gap-1 border-0 bg-transparent px-1 py-1 text-left text-xs text-white outline-none"
       @click.stop="onTriggerClick"
     >
-      <span v-if="exerciseName" class="block whitespace-normal break-words">{{ exerciseName }}</span>
-      <span v-else class="text-slate-500">{{ pickerEnabled ? 'Choisir un exercice' : 'Sélectionner' }}</span>
+      <span v-if="displayName" class="block whitespace-normal break-words">{{ displayName }}</span>
+      <span v-else class="text-slate-500">{{ pickerEnabled ? t('exercises.choose') : t('exercises.select') }}</span>
       <span v-if="pickerEnabled" class="shrink-0 text-[10px] text-slate-400">▾</span>
     </button>
 

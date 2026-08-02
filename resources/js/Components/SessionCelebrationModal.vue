@@ -64,7 +64,7 @@ function close() {
           <button
             type="button"
             class="flex h-10 w-10 items-center justify-center rounded-full border border-red-500/30 bg-red-950/40 text-xl text-red-100 transition hover:bg-red-900/50 hover:text-white"
-            aria-label="Fermer"
+            :aria-label="t('common.close')"
             @click="close"
           >
             ✕
@@ -92,7 +92,7 @@ function close() {
                 class="mt-5 rounded-2xl border border-red-500/30 bg-red-950/25 px-4 py-4 shadow-lg shadow-red-900/20 sm:mt-6"
               >
                 <p class="text-[10px] font-bold uppercase tracking-[0.28em] text-red-400/90">
-                  {{ (celebration.topsets?.length ?? 0) > 1 ? 'Topsets' : 'Topset' }}
+                  {{ (celebration.topsets?.length ?? 0) > 1 ? t('app.celebration.topsets') : t('app.celebration.topset') }}
                 </p>
 
                 <div v-if="(celebration.topsets?.length ?? 0) > 1" class="mt-3 space-y-3 sm:space-y-4">
@@ -127,7 +127,7 @@ function close() {
                 </div>
                 <div class="min-w-0 border-x border-slate-800 text-center">
                   <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                    Tonnage
+                    {{ t('app.celebration.tonnage') }}
                   </p>
                   <p class="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl">
                     {{ celebration.tonnageLabel }}
@@ -135,7 +135,7 @@ function close() {
                 </div>
                 <div class="min-w-0 text-center">
                   <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                    Reps
+                    {{ t('app.celebration.reps') }}
                   </p>
                   <p class="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl">
                     {{ celebration.repsLabel }}

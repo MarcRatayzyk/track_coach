@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { localizedExerciseName } from '../utils/exerciseNames';
 
 const { t } = useI18n();
 
@@ -48,7 +49,7 @@ function formatMetric(value) {
 }
 
 function title(row) {
-  const name = row.exercise_name || t('app.feedbacks.exercise');
+  const name = localizedExerciseName(row.exercise_name) || t('app.feedbacks.exercise');
   return row.section_label ? `${name} — ${row.section_label}` : name;
 }
 

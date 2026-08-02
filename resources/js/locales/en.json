@@ -68,6 +68,7 @@
     "privacy": "Privacy",
     "logOut": "Log out",
     "moreOptions": "More options",
+    "hideOptions": "Hide options",
     "installApp": "Install app",
     "closeBanner": "Dismiss banner",
     "close": "Close"
@@ -825,6 +826,52 @@
       "useThisForm": "Use this form"
     }
   },
+  "exercises": {
+    "choose": "Choose an exercise",
+    "select": "Select",
+    "noneFound": "No exercises found.",
+    "accessories": "Accessories",
+    "sets": "sets",
+    "exercise": "Exercise",
+    "names": {
+      "squat": "Squat",
+      "squat-pause": "Pause squat",
+      "squat-tempo": "Tempo squat",
+      "squat-pin": "Pin squat",
+      "box-squat": "Box squat",
+      "squat-high-bar": "High-bar squat",
+      "bench-press": "Bench press",
+      "comp-bench": "Comp bench",
+      "bench": "Bench",
+      "bench-pause": "Pause bench",
+      "spoto-press": "Spoto press",
+      "larsen-press": "Larsen press",
+      "close-grip-bench": "Close-grip bench",
+      "deadlift": "Deadlift",
+      "deadlift-conventionnel": "Conventional deadlift",
+      "deadlift-sumo": "Sumo deadlift",
+      "romanian-deadlift": "Romanian deadlift",
+      "rowing-haltere": "Dumbbell row",
+      "rowing-machine": "Machine row",
+      "triceps": "Triceps",
+      "skull-crusher": "Skull crusher",
+      "extension-triceps-poulie": "Cable triceps extension",
+      "dips": "Dips",
+      "epaules": "Shoulders",
+      "developpe-militaire": "Military press",
+      "elevations-laterales": "Lateral raises",
+      "face-pull": "Face pull",
+      "jambes-accessoire": "Leg accessories",
+      "leg-press": "Leg press",
+      "leg-curl": "Leg curl",
+      "leg-extension": "Leg extension",
+      "fentes-marchees": "Walking lunges",
+      "dos-accessoire": "Back accessories",
+      "tirage-poulie": "Lat pulldown",
+      "pull-over": "Pullover",
+      "hyperextension": "Hyperextension"
+    }
+  },
   "config": {
     "sex": {
       "male": "Male",
@@ -1424,7 +1471,12 @@
     "celebration": {
       "validated": "Session validated",
       "adherence": "Adherence",
-      "continue": "Continue"
+      "continue": "Continue",
+      "sessionEnded": "SESSION COMPLETE",
+      "topset": "Topset",
+      "topsets": "Topsets",
+      "tonnage": "Tonnage",
+      "reps": "Reps"
     },
     "coachDash": {
       "keyIndicators": "Key indicators",

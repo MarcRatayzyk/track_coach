@@ -1,6 +1,7 @@
 import i18n from '../i18n';
 import { localeTag } from '../i18n';
 import { sectionWithSchemeLabel } from '../config/programTableSections';
+import { localizedExerciseName } from './exerciseNames';
 import { epleyE1rm, resolveLoadKg } from './trainingVolume';
 
 function tt(key) {
@@ -272,9 +273,10 @@ export function formatPrescription(line) {
   if (!line?.exercise_name) {
     return '—';
   }
+  const exerciseLabel = localizedExerciseName(line.exercise_name);
   const schemeText = formatSchemePrescription(line);
   if (schemeText) {
-    return `${line.exercise_name} · ${schemeText}`;
+    return `${exerciseLabel} · ${schemeText}`;
   }
   const setsReps =
     line.sets != null && line.reps != null ? ` · ${line.sets}×${line.reps}` : '';
@@ -284,7 +286,7 @@ export function formatPrescription(line) {
       ? ` @ ${line.load_percent}% 1RM`
       : '';
   const rpePart = line.rpe != null && line.rpe !== '' ? ` RPE ${line.rpe}` : '';
-  return `${line.exercise_name}${setsReps}${loadPart || pctPart}${rpePart}`;
+  return `${exerciseLabel}${setsReps}${loadPart || pctPart}${rpePart}`;
 }
 
 /** Ex. Bench - 3x3 @ 105kg */
@@ -294,8 +296,8 @@ export function formatLineRecap(line) {
   }
 
   const label =
-    line.exercise_name.trim() ||
-    (line.lift ? defaultLiftName(line.lift) : 'Exercice');
+    localizedExerciseName(line.exercise_name)
+    || (line.lift ? defaultLiftName(line.lift) : tt('exercises.exercise'));
 
   const schemeText = formatSchemePrescription(line);
   if (schemeText) {
@@ -306,7 +308,7 @@ export function formatLineRecap(line) {
   if (line.sets != null && line.reps != null) {
     volume = `${line.sets}x${line.reps}`;
   } else if (line.sets != null) {
-    volume = `${line.sets} séries`;
+    volume = `${line.sets} ${tt('exercises.sets')}`;
   } else if (line.reps != null) {
     volume = `${line.reps} reps`;
   }
@@ -419,8 +421,8 @@ export function formatValidatedSetsRecapLines(line, validatedSets = [], oneRm = 
   // Ramp-up : une seule ligne (chaîne des paliers), jamais une ligne par validation.
   if ((line?.set_scheme ?? 'standard') === 'ramp') {
     const label =
-      line.exercise_name?.trim()
-      || (line.lift ? defaultLiftName(line.lift) : 'Exercice');
+      localizedExerciseName(line.exercise_name)
+      || (line.lift ? defaultLiftName(line.lift) : tt('exercises.exercise'));
     const chain = snaps
       .map((snap) => `${snap.reps ?? '—'}@${formatStepLoad(snap)}`)
       .join(' → ');

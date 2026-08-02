@@ -16,6 +16,7 @@ import {
   formatSchemePrescription,
   plannedSetsForLine,
 } from '../utils/programBuilder';
+import { localizedExerciseName } from '../utils/exerciseNames';
 
 const { t } = useI18n();
 
@@ -75,7 +76,7 @@ function cellValue(row, columnId) {
 
   switch (columnId) {
     case 'exercise':
-      return row.exercise_name || '—';
+      return localizedExerciseName(row.exercise_name) || '—';
     case 'main_lift':
       return row.lift ? String(row.lift).toUpperCase() : '—';
     case 'variant':
@@ -171,10 +172,10 @@ function prescriptionSummary(row) {
 function exerciseTitle(row) {
   if (normalizedLayout.value.exercise_mode === 'split_lift') {
     const lift = row.lift ? String(row.lift).toUpperCase() : '';
-    const name = row.exercise_name || '';
+    const name = localizedExerciseName(row.exercise_name) || '';
     return [lift, name].filter(Boolean).join(' — ') || '—';
   }
-  return row.exercise_name || '—';
+  return localizedExerciseName(row.exercise_name) || '—';
 }
 
 function cellTitle(row, columnId) {

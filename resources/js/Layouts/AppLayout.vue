@@ -23,6 +23,7 @@ const sidebarProfile = computed(() => page.props.auth?.sidebarProfile ?? null);
 const flash = computed(() => page.props.flash ?? {});
 const isMobileMenuOpen = ref(false);
 const showBugReportModal = ref(false);
+const sidebarExtrasOpen = ref(false);
 const { isLight, toggleTheme } = useTheme();
 const { showInstallGuide, installGuideType, closeInstallGuide } = usePwaInstall();
 const { isNative } = useNativeApp();
@@ -643,52 +644,68 @@ watch(() => page.url, () => {
             </nav>
 
             <div class="mt-auto space-y-2 border-t border-slate-800 pt-4">
-                <div class="flex justify-center px-1 py-1">
-                    <LanguageSwitcher />
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
+                    :aria-expanded="sidebarExtrasOpen"
+                    @click="sidebarExtrasOpen = !sidebarExtrasOpen"
+                >
+                    <span
+                        class="inline-block text-slate-400 transition-transform duration-200"
+                        :class="sidebarExtrasOpen ? 'rotate-90' : ''"
+                        aria-hidden="true"
+                    >›</span>
+                    <span>{{ sidebarExtrasOpen ? t('nav.hideOptions') : t('nav.moreOptions') }}</span>
+                </button>
+
+                <div v-show="sidebarExtrasOpen" class="space-y-2">
+                    <div class="flex justify-center px-1 py-1">
+                        <LanguageSwitcher />
+                    </div>
+
+                    <InstallAppButton
+                        variant="sidebar"
+                        :collapsed="false"
+                    />
+
+                    <button
+                        type="button"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
+                        :title="isLight ? t('nav.switchToDark') : t('nav.switchToLight')"
+                        @click="toggleTheme"
+                    >
+                        <UiIcon :name="isLight ? 'moon' : 'sun'" class="h-4 w-4" />
+                        <span>{{ isLight ? t('nav.darkTheme') : t('nav.lightTheme') }}</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
+                        @click="showBugReportModal = true"
+                    >
+                        <UiIcon name="alert" class="h-4 w-4" />
+                        <span>{{ t('nav.reportProblem') }}</span>
+                    </button>
+
+                    <Link
+                        href="/account/privacy"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
+                    >
+                        <UiIcon name="user-circle" class="h-4 w-4" />
+                        <span>{{ t('nav.privacy') }}</span>
+                    </Link>
+
+                    <Link
+                        href="/logout"
+                        method="post"
+                        as="button"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800/50 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-slate-800"
+                        @click="resetAnalytics"
+                    >
+                        <UiIcon name="logout" class="h-4 w-4" />
+                        <span>{{ t('nav.logOut') }}</span>
+                    </Link>
                 </div>
-
-                <InstallAppButton
-                    variant="sidebar"
-                    :collapsed="false"
-                />
-
-                <button
-                    type="button"
-                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
-                    :title="isLight ? t('nav.switchToDark') : t('nav.switchToLight')"
-                    @click="toggleTheme"
-                >
-                    <UiIcon :name="isLight ? 'moon' : 'sun'" class="h-4 w-4" />
-                    <span>{{ isLight ? t('nav.darkTheme') : t('nav.lightTheme') }}</span>
-                </button>
-
-                <button
-                    type="button"
-                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
-                    @click="showBugReportModal = true"
-                >
-                    <UiIcon name="alert" class="h-4 w-4" />
-                    <span>{{ t('nav.reportProblem') }}</span>
-                </button>
-
-                <Link
-                    href="/account/privacy"
-                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
-                >
-                    <UiIcon name="user-circle" class="h-4 w-4" />
-                    <span>{{ t('nav.privacy') }}</span>
-                </Link>
-
-                <Link
-                    href="/logout"
-                    method="post"
-                    as="button"
-                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800/50 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-slate-800"
-                    @click="resetAnalytics"
-                >
-                    <UiIcon name="logout" class="h-4 w-4" />
-                    <span>{{ t('nav.logOut') }}</span>
-                </Link>
             </div>
         </aside>
 

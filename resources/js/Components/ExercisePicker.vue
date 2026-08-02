@@ -1,7 +1,11 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import { filterExerciseCatalog } from '../utils/exerciseLibrary';
+import { localizedExerciseName } from '../utils/exerciseNames';
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -18,12 +22,12 @@ const activeTab = ref('squat');
 const accessoryLiftFilter = ref('');
 const accessoryEquipmentFilter = ref('');
 
-const selectorOptions = [
-  { id: 'squat', label: 'Squat' },
-  { id: 'bench', label: 'Bench' },
-  { id: 'deadlift', label: 'Deadlift' },
-  { id: 'accessory', label: 'Accessoires' },
-];
+const selectorOptions = computed(() => [
+  { id: 'squat', label: t('config.lifts.squat') },
+  { id: 'bench', label: t('config.lifts.bench') },
+  { id: 'deadlift', label: t('config.lifts.deadlift') },
+  { id: 'accessory', label: t('exercises.accessories') },
+]);
 
 const isAccessoryTab = computed(() => activeTab.value === 'accessory');
 
@@ -162,7 +166,7 @@ function close() {
           >
             <div class="mb-3 flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-white">{{ exercise.name }}</p>
+                <p class="truncate text-sm font-semibold text-white">{{ localizedExerciseName(exercise.name) }}</p>
                 <p class="mt-1 text-[11px] uppercase tracking-wide text-slate-500">
                   {{ exercise.lift }} · {{ exercise.category }}
                 </p>
@@ -175,7 +179,7 @@ function close() {
                 class="rounded-lg border border-emerald-600/50 bg-emerald-600/10 px-3 py-2 text-sm font-medium text-emerald-200 hover:bg-emerald-600/20"
                 @click="selectExercise(exercise)"
               >
-                {{ exercise.name }}
+                {{ localizedExerciseName(exercise.name) }}
               </button>
 
               <button
@@ -185,14 +189,14 @@ function close() {
                 class="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 hover:border-slate-600 hover:bg-slate-800"
                 @click="selectExercise(exercise, variant)"
               >
-                {{ variant.name }}
+                {{ localizedExerciseName(variant.name) }}
               </button>
             </div>
           </section>
         </div>
 
         <p v-else class="mt-6 text-center text-sm text-slate-500">
-          Aucun exercice trouvé.
+          {{ t('exercises.noneFound') }}
         </p>
       </div>
     </div>
