@@ -1,1 +1,0 @@
-import{aj as t}from"./app-DmfYwPtg.js";class l extends t{edit(e){throw console.log("edit",e),this.unimplemented("Not implemented on web.")}thumbnail(e){throw console.log("thumbnail",e),this.unimplemented("Not implemented on web.")}addListener(e,o){throw console.log("addListener",e),this.unimplemented("Not implemented on web.")}}export{l as VideoEditorWeb};

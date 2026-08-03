@@ -27,13 +27,19 @@ return [
 
     'launch_discount_percent' => (int) env('BILLING_LAUNCH_DISCOUNT_PERCENT', 50),
 
+    /**
+     * How many USD equal 1 EUR for display (USD → EUR = amount / rate).
+     * Default 1.08 ≈ mid-market. Override with BILLING_EUR_TO_USD_RATE.
+     */
+    'eur_to_usd_rate' => (float) env('BILLING_EUR_TO_USD_RATE', 1.08),
+
     /*
     |--------------------------------------------------------------------------
     | Subscription plans (monthly)
     |--------------------------------------------------------------------------
     |
-    | Create matching Products / Prices in the Stripe Dashboard and set the
-    | price IDs below. max_athletes = null means unlimited.
+    | Catalogue prices are defined in USD. EUR display = USD ÷ eur_to_usd_rate.
+    | With -50% launch: USD 24.99 / 34.99 / 44.99 (from list 49.99 / 69.99 / 89.99).
     |
     */
 
@@ -41,7 +47,6 @@ return [
         'starter' => [
             'key' => 'starter',
             'name' => 'Starter',
-            'price_eur' => 39.99,
             'price_usd' => 49.99,
             'max_athletes' => 15,
             'description' => 'Up to 15 athletes',
@@ -50,7 +55,6 @@ return [
         'growth' => [
             'key' => 'growth',
             'name' => 'Growth',
-            'price_eur' => 59.99,
             'price_usd' => 69.99,
             'max_athletes' => 40,
             'description' => '16 to 40 athletes',
@@ -59,7 +63,6 @@ return [
         'scale' => [
             'key' => 'scale',
             'name' => 'Scale',
-            'price_eur' => 79.99,
             'price_usd' => 89.99,
             'max_athletes' => null,
             'description' => '41+ athletes',

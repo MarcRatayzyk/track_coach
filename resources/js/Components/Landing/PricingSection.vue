@@ -3,11 +3,13 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
 import {
+  DEFAULT_EUR_TO_USD_RATE,
   DEFAULT_PRICING,
   currencyFromLocale,
   discountedPrice,
   formatMoneyPlain,
   listPrice,
+  usdToEur,
 } from '../../utils/pricing';
 
 const props = defineProps({
@@ -25,6 +27,10 @@ const discountPercent = computed(
   () => Number(props.pricing?.launch_discount_percent ?? DEFAULT_PRICING.launch_discount_percent) || 0,
 );
 
+const fxRate = computed(
+  () => Number(props.pricing?.eur_to_usd_rate ?? props.pricing?.plans?.[0]?.eur_to_usd_rate ?? DEFAULT_PRICING.eur_to_usd_rate) || DEFAULT_EUR_TO_USD_RATE,
+);
+
 const sharedFeatures = computed(() => [
   t('landing.pricing.sharedFeatures.programming'),
   t('landing.pricing.sharedFeatures.tracking'),
@@ -37,11 +43,14 @@ const sharedFeatures = computed(() => [
 const plans = computed(() => {
   const source = props.pricing?.plans?.length ? props.pricing.plans : DEFAULT_PRICING.plans;
   const curr = currency.value;
+  const rate = fxRate.value;
   return source.map((plan) => {
-    const list = listPrice(plan, curr);
-    const sale =
-      plan[`sale_price_${curr}`] ??
-      discountedPrice(list, discountPercent.value);
+    const list = listPrice(plan, curr, rate);
+    let sale = plan[`sale_price_${curr}`];
+    if (sale == null) {
+      const saleUsd = discountedPrice(plan.price_usd ?? list, discountPercent.value);
+      sale = curr === 'usd' ? saleUsd : usdToEur(saleUsd, rate);
+    }
     return {
       key: plan.key,
       name: t(`landing.pricing.plans.${plan.key}.name`),
@@ -50,7 +59,7 @@ const plans = computed(() => {
       href: `/subscribe/${plan.key}`,
       highlight: plan.key === 'growth',
       listPrice: list,
-      salePrice: sale,
+      salePrice: Number(sale),
       features: [...sharedFeatures.value, t(`landing.pricing.plans.${plan.key}.limit`)],
     };
   });

@@ -2,16 +2,20 @@ export const CURRENCY_STORAGE_KEY = 'pr_currency';
 
 export const PLAN_KEYS = ['starter', 'growth', 'scale'];
 
+/** USD per 1 EUR (display). EUR = USD / rate. */
+export const DEFAULT_EUR_TO_USD_RATE = 1.08;
+
 /**
- * List prices: EUR catalogue + USD conversion (marketing .99).
- * With -50% launch: EUR 19.99 / 29.99 / 39.99 — USD 24.99 / 34.99 / 44.99
+ * Catalogue in USD. Launch -50% → 24.99 / 34.99 / 44.99 USD.
+ * EUR is converted from those USD amounts.
  */
 export const DEFAULT_PRICING = {
   launch_discount_percent: 50,
+  eur_to_usd_rate: DEFAULT_EUR_TO_USD_RATE,
   plans: [
-    { key: 'starter', name: 'Starter', price_eur: 39.99, price_usd: 49.99, max_athletes: 15 },
-    { key: 'growth', name: 'Growth', price_eur: 59.99, price_usd: 69.99, max_athletes: 40 },
-    { key: 'scale', name: 'Scale', price_eur: 79.99, price_usd: 89.99, max_athletes: null },
+    { key: 'starter', name: 'Starter', price_usd: 49.99, max_athletes: 15 },
+    { key: 'growth', name: 'Growth', price_usd: 69.99, max_athletes: 40 },
+    { key: 'scale', name: 'Scale', price_usd: 89.99, max_athletes: null },
   ],
 };
 
@@ -39,15 +43,29 @@ export function storeCurrency(currency) {
   return resolved;
 }
 
-/** Prefer locale-driven currency; keep storage in sync for other pages. */
 export function syncCurrencyWithLocale(locale) {
   return storeCurrency(currencyFromLocale(locale));
 }
 
-export function listPrice(plan, currency = 'eur') {
-  const key = resolveCurrency(currency) === 'usd' ? 'price_usd' : 'price_eur';
-  const n = Number(plan?.[key] ?? plan?.price_eur ?? 0);
-  return Number.isFinite(n) ? n : 0;
+/** 24.99 USD → EUR at rate 1.08 ≈ 23.14 */
+export function usdToEur(amountUsd, rate = DEFAULT_EUR_TO_USD_RATE) {
+  const usd = Number(amountUsd);
+  const fx = Number(rate);
+  if (!Number.isFinite(usd) || !Number.isFinite(fx) || fx <= 0) {
+    return 0;
+  }
+  return Math.round((usd / fx) * 100) / 100;
+}
+
+export function listPrice(plan, currency = 'eur', rate = DEFAULT_EUR_TO_USD_RATE) {
+  const usd = Number(plan?.price_usd ?? 0);
+  if (resolveCurrency(currency) === 'usd') {
+    return Number.isFinite(usd) ? usd : 0;
+  }
+  if (plan?.price_eur != null && Number.isFinite(Number(plan.price_eur))) {
+    return Number(plan.price_eur);
+  }
+  return usdToEur(usd, rate);
 }
 
 /**

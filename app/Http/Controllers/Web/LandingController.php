@@ -31,6 +31,7 @@ class LandingController extends Controller
         return Inertia::render('LandingPage', [
             'pricing' => [
                 'launch_discount_percent' => BillingPlans::launchDiscountPercent(),
+                'eur_to_usd_rate' => BillingPlans::eurToUsdRate(),
                 'plans' => BillingPlans::forFrontend(),
             ],
         ]);
