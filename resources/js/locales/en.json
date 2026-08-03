@@ -266,25 +266,28 @@
     },
     "hero": {
       "badge": "Built for powerlifting coaches",
+      "titleMobile1": "Structure your coaching.",
+      "titleMobile2": "One platform.",
       "titleLine1": "Structure your coaching.",
-      "titleLine2": "Help your athletes progress.",
+      "titleLine2": "Help athletes progress.",
       "titleLine3": "Without juggling tools.",
-      "subtitle": "Power Roster unites programming, performance and external-factor tracking, video feedback, messages and meets in one platform.",
+      "subtitleMobile": "Programming, feedback and meets together.",
+      "subtitle": "Programming, performance tracking, video feedback, messages and meets in one place.",
       "ctaStart": "Get started",
       "ctaTrial": "14-day trial",
       "ctaDemo": "Demo",
-      "trustLine": "Free for 14 days · No credit card · French UI"
+      "trustLine": "14 days free · No card"
     },
     "pain": {
       "eyebrow": "The problem",
       "heading": "Why does coaching get lost across tools?",
       "fragmentedTitle": "Fragmented context",
-      "fragmentedDesc": "Programs here, notes there, feedback elsewhere. You juggle tools and lose track of each athlete.",
+      "fragmentedDesc": "Programs, notes and feedback scattered across tools. You lose each athlete’s thread.",
       "blurryTitle": "Blurry overview",
-      "blurryDesc": "You can’t see at a glance where an athlete stands: load, technique, recovery. Everything is scattered, nothing is linked.",
+      "blurryDesc": "Hard to see load, technique and recovery at a glance. Nothing is linked.",
       "solutionEyebrow": "The solution",
-      "solutionTitle": "Power Roster. One platform. Zero friction.",
-      "solutionBody": "All of an athlete’s coaching in one place: roster, SBD programs, messages and meets — clear overview, context always at hand.",
+      "solutionTitle": "Power Roster. One platform.",
+      "solutionBody": "Roster, SBD programs, messages and meets. Clear overview, context always at hand.",
       "cta": "Switch to Power Roster"
     },
     "features": {
@@ -306,7 +309,7 @@
         },
         "feedback": {
           "title": "Feedback & reviews",
-          "description": "Planned vs actual analysis, video and coach reply — all on one screen."
+          "description": "Planned vs actual analysis, video and coach reply, all on one screen."
         },
         "messaging": {
           "title": "Messaging",
@@ -318,7 +321,7 @@
         },
         "athleteApp": {
           "title": "Athlete app",
-          "description": "Today’s program, check-ins, videos and messages: your athlete has everything — so do you."
+          "description": "Today’s program, check-ins, videos and messages: your athlete has everything, so do you."
         },
         "import": {
           "title": "Fast import",
@@ -336,7 +339,7 @@
       "body": "Estimated 1RM and intensity trends for squat, bench, and deadlift. RPE distributions and volume overviews. A full training log and a PR page for every athlete. The numbers that drive your coaching decisions, updated automatically with every log.",
       "highlights": {
         "e1rm": "e1RM curves and average load per lift, week after week.",
-        "volume": "SBD volume, distribution and topsets — the whole block at a glance.",
+        "volume": "SBD volume, distribution and topsets, the whole block at a glance.",
         "prs": "Records and history per athlete, ready for the call brief."
       },
       "mockupAlt": "Power Roster stats dashboard: volume, e1RM and SBD distribution",
@@ -345,7 +348,7 @@
     "modularity": {
       "eyebrow": "Modularity",
       "heading": "A platform that adapts to how you coach",
-      "subtitle": "Powerlifting, strength, specific prep: you configure tables, charts and check-ins around your method — not the other way around.",
+      "subtitle": "Powerlifting, strength, specific prep: you configure tables, charts and check-ins around your method, not the other way around.",
       "pillars": {
         "tables": {
           "title": "Programming tables",
@@ -357,7 +360,7 @@
         },
         "checkins": {
           "title": "Check-ins & forms",
-          "description": "Readiness and feedback tailored to your tracking — not a one-size-fits-all questionnaire."
+          "description": "Readiness and feedback tailored to your tracking, not a one-size-fits-all questionnaire."
         }
       },
       "showcases": {
@@ -369,7 +372,7 @@
         },
         "chartBuilder": {
           "title": "Your stats, your angle",
-          "description": "Build volume, e1RM, RPE or average-load charts — by week, by lift, with your filters.",
+          "description": "Build volume, e1RM, RPE or average-load charts by week, by lift, with your filters.",
           "alt": "Custom chart builder with preview",
           "label": "Power Roster · Charts"
         }
@@ -377,7 +380,7 @@
     },
     "athleteApp": {
       "eyebrow": "Athlete app",
-      "heading": "A dedicated space for the athlete — and for you",
+      "heading": "A dedicated space for the athlete, and for you",
       "subtitle": "No more juggling tools: athletes follow their program where you coach. Shared context, shared overview.",
       "forAthlete": "For the athlete",
       "forAthleteTitle": "All coaching at their fingertips",
@@ -390,7 +393,7 @@
         },
         "feedback": {
           "title": "Integrated feedback & video",
-          "description": "Send session video, get coach annotation — context stays on the session."
+          "description": "Send session video, get coach annotation. Context stays on the session."
         },
         "checkins": {
           "title": "Check-ins & messaging",
@@ -400,7 +403,7 @@
       "coachGains": {
         "vision": {
           "title": "Full athlete overview",
-          "description": "Program, feedback, check-ins and messages linked — see where each athlete stands without rebuilding context."
+          "description": "Program, feedback, check-ins and messages linked. See where each athlete stands without rebuilding context."
         },
         "lessNags": {
           "title": "Fewer nudges, more coaching",
@@ -408,7 +411,7 @@
         },
         "loop": {
           "title": "One continuous thread",
-          "description": "What you program is what they run. Feedback returns to the right place — the loop stays closed."
+          "description": "What you program is what they run. Feedback returns to the right place. The loop stays closed."
         }
       }
     },
@@ -440,7 +443,7 @@
       "precision": {
         "big": "Precision",
         "title": "Your athletes progress",
-        "description": "Loads, RPE, PRs and feedback aligned — you adjust on facts, not gut feel."
+        "description": "Loads, RPE, PRs and feedback aligned. You adjust on facts, not gut feel."
       },
       "central": {
         "big": "1",
@@ -458,7 +461,7 @@
     "comparison": {
       "eyebrow": "Comparison",
       "heading": "Power Roster vs the patchwork",
-      "subtitle": "What you lose juggling tools — and what you gain by centralizing.",
+      "subtitle": "What you lose juggling tools, and what you gain by centralizing.",
       "capability": "Capability",
       "colPowerRoster": "Power Roster",
       "colOthers": "Other tools",
@@ -478,7 +481,7 @@
       "heading": "Simple: based on your roster",
       "subtitle": "All features included. Pricing by active athletes. Or start with a 14-day trial, no card.",
       "launchBadge": "-{percent}%",
-      "launchOffer": "Launch offer — 50% off all plans",
+      "launchOffer": "Launch offer: 50% off all plans",
       "launchDuration": "Introductory rate for the first 3 months, then standard pricing applies.",
       "currencyLabel": "Currency",
       "sharedFeatures": {
@@ -530,7 +533,7 @@
         },
         "athletesPay": {
           "q": "Do athletes have to pay?",
-          "a": "Your coach account lets you invite athletes. They join free via your invite — no separate purchase."
+          "a": "Your coach account lets you invite athletes. They join free via your invite, no separate purchase."
         },
         "timeToStart": {
           "q": "How long to get operational?",
@@ -539,8 +542,8 @@
       }
     },
     "finalCta": {
-      "heading": "Ready to transform your coaching?",
-      "subtitle": "14-day trial, no card. Or open a demo with your email to try the product right away.",
+      "heading": "Ready to coach on one platform?",
+      "subtitle": "14-day trial, no card required.",
       "trial": "14-day trial",
       "demo": "Demo"
     },

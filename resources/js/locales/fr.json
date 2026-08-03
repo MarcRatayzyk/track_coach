@@ -247,13 +247,13 @@
   },
   "landing": {
     "meta": {
-      "title": "Power Roster : Coaching powerlifting structuré",
+      "title": "Power Roster: Coaching powerlifting structuré",
       "description": "Power Roster réunit programmation, suivi SBD, vidéos annotées, messagerie et compétitions pour les coachs de powerlifting. Une seule plateforme.",
-      "ogTitle": "Power Roster : Structure ton coaching powerlifting",
+      "ogTitle": "Power Roster: Structure ton coaching powerlifting",
       "ogDescription": "La plateforme de référence pour les coachs de powerlifting. Programmes, PRs, vidéos annotées et messages au même endroit."
     },
     "nav": {
-      "homeAria": "Power Roster : Accueil",
+      "homeAria": "Power Roster: Accueil",
       "mainNavAria": "Navigation principale",
       "features": "Fonctionnalités",
       "modularity": "Modularité",
@@ -266,25 +266,28 @@
     },
     "hero": {
       "badge": "Conçu pour les coachs de powerlifting",
+      "titleMobile1": "Structure ton coaching.",
+      "titleMobile2": "Une seule plateforme.",
       "titleLine1": "Structure ton coaching.",
       "titleLine2": "Fais progresser tes athlètes.",
       "titleLine3": "Sans multiplier les outils.",
-      "subtitle": "Power Roster réunit la programmation, le suivi des performances et des facteurs externes, les retours vidéo, les messages et les compétitions dans une seule plateforme.",
+      "subtitleMobile": "Programmation, feedback et meets au même endroit.",
+      "subtitle": "Programmation, suivi, feedback vidéo, messages et meets au même endroit.",
       "ctaStart": "Commencer",
       "ctaTrial": "Essai 14j",
       "ctaDemo": "Démo",
-      "trustLine": "Gratuit 14 jours · Aucune carte bancaire · Interface en français"
+      "trustLine": "14 jours gratuits · Sans carte"
     },
     "pain": {
       "eyebrow": "Le problème",
       "heading": "Pourquoi le coaching se perd entre plusieurs outils ?",
       "fragmentedTitle": "Contexte fragmenté",
-      "fragmentedDesc": "Programmes ici, notes ailleurs, feedback encore ailleurs. Tu jongles entre outils, et tu perds le fil de chaque athlète.",
+      "fragmentedDesc": "Programmes, notes et feedback éparpillés. Tu perds le fil de chaque athlète.",
       "blurryTitle": "Vision floue",
-      "blurryDesc": "Impossible de voir d’un coup d’œil où en est un athlète : charge, technique, récupération. Tout est éparpillé, rien n’est relié.",
+      "blurryDesc": "Difficile de voir charge, technique et récupération d’un coup d’œil. Rien n’est relié.",
       "solutionEyebrow": "La solution",
-      "solutionTitle": "Power Roster. Une plateforme. Zéro friction.",
-      "solutionBody": "Tout le coaching d’un athlète au même endroit : roster, programmes SBD, messages et meets, pour une vision claire et un contexte toujours à portée de main.",
+      "solutionTitle": "Power Roster. Une plateforme.",
+      "solutionBody": "Roster, programmes SBD, messages et meets. Vision claire, contexte toujours à portée.",
       "cta": "Passer à Power Roster"
     },
     "features": {
@@ -294,7 +297,7 @@
       "items": {
         "athletes": {
           "title": "Gestion des athlètes",
-          "description": "Totaux, catégories, check-ins, adhérence et prochaines compétitions : toute la roster en un tableau."
+          "description": "Totaux, catégories, check-ins, adhérence et prochaines compétitions: toute la roster en un tableau."
         },
         "programming": {
           "title": "Programmation",
@@ -306,7 +309,7 @@
         },
         "feedback": {
           "title": "Retours & feedback",
-          "description": "Analyse prévue vs réalisé, vidéo et réponse coach : tout sur un même écran."
+          "description": "Analyse prévue vs réalisé, vidéo et réponse coach: tout sur un même écran."
         },
         "messaging": {
           "title": "Messagerie",
@@ -314,19 +317,19 @@
         },
         "competitions": {
           "title": "Compétitions",
-          "description": "Meets, countdowns J-X et plans de match : alertes urgentes incluses."
+          "description": "Meets, countdowns J-X et plans de match: alertes urgentes incluses."
         },
         "athleteApp": {
           "title": "Application athlète",
-          "description": "Programme du jour, check-ins, vidéos et messages : ton athlète a tout sous la main, toi aussi."
+          "description": "Programme du jour, check-ins, vidéos et messages: ton athlète a tout sous la main, toi aussi."
         },
         "import": {
           "title": "Importation rapide",
-          "description": "Importe un programme depuis un fichier ou une capture : le builder se remplit, tu valides et c’est prêt."
+          "description": "Importe un programme depuis un fichier ou une capture: le builder se remplit, tu valides et c’est prêt."
         },
         "stats": {
           "title": "Statistiques",
-          "description": "Graphiques volume, e1RM et répartition SBD : dashboard stats personnalisable."
+          "description": "Graphiques volume, e1RM et répartition SBD: dashboard stats personnalisable."
         }
       }
     },
@@ -336,24 +339,24 @@
       "body": "e1RM estimé et tendances d’intensité pour squat, bench et deadlift. Répartitions RPE et volumes. Journal d’entraînement et page PR pour chaque athlète. Les chiffres qui pilotent tes choix, mis à jour à chaque log.",
       "highlights": {
         "e1rm": "Courbes e1RM et charge moyenne par mouvement, semaine après semaine.",
-        "volume": "Volume SBD, répartition et topsets — tout le bloc en un coup d’œil.",
+        "volume": "Volume SBD, répartition et topsets, tout le bloc en un coup d’œil.",
         "prs": "Records et historique par athlète, prêts pour le brief d’appel."
       },
-      "mockupAlt": "Tableau de bord stats Power Roster : volume, e1RM et répartition SBD",
+      "mockupAlt": "Tableau de bord stats Power Roster: volume, e1RM et répartition SBD",
       "mockupLabel": "app.powerroster.fr / stats"
     },
     "modularity": {
       "eyebrow": "Modularité",
       "heading": "Une plateforme qui s’adapte à ta façon de coacher",
-      "subtitle": "Powerlifting, force, préparation spécifique : tu configures tableaux, graphiques et check-ins selon ta méthode, pas l’inverse.",
+      "subtitle": "Powerlifting, force, préparation spécifique: tu configures tableaux, graphiques et check-ins selon ta méthode, pas l’inverse.",
       "pillars": {
         "tables": {
           "title": "Tableaux de programmation",
-          "description": "Colonnes, modes d’exercice, charge kg · % · RPE : chaque coach construit son tableur."
+          "description": "Colonnes, modes d’exercice, charge kg · % · RPE: chaque coach construit son tableur."
         },
         "charts": {
           "title": "Graphiques sur mesure",
-          "description": "Métriques, regroupements et filtres SBD : tu visualises ce qui compte pour ta méthode."
+          "description": "Métriques, regroupements et filtres SBD: tu visualises ce qui compte pour ta méthode."
         },
         "checkins": {
           "title": "Check-ins & formulaires",
@@ -363,13 +366,13 @@
       "showcases": {
         "dayTable": {
           "title": "Ton tableau, tes colonnes",
-          "description": "Choisis ce qui apparaît dans le tableur jour : Type, Séries, Reps, Charge, RPE, Repos, Muscles… et prévisualise en live.",
-          "alt": "Configuration du tableau jour : colonnes et aperçu live",
+          "description": "Choisis ce qui apparaît dans le tableur jour: Type, Séries, Reps, Charge, RPE, Repos, Muscles… et prévisualise en live.",
+          "alt": "Configuration du tableau jour: colonnes et aperçu live",
           "label": "Power Roster · Tableau jour"
         },
         "chartBuilder": {
           "title": "Tes stats, ton angle",
-          "description": "Crée des graphiques volume, e1RM, RPE ou charge moyenne : par semaine, par lift, avec les filtres de ton choix.",
+          "description": "Crée des graphiques volume, e1RM, RPE ou charge moyenne par semaine, par lift, avec les filtres de ton choix.",
           "alt": "Constructeur de graphiques personnalisés avec aperçu",
           "label": "Power Roster · Graphiques"
         }
@@ -378,7 +381,7 @@
     "athleteApp": {
       "eyebrow": "Application athlète",
       "heading": "Un espace dédié pour l’athlète et pour toi",
-      "subtitle": "Plus besoin de jongler entre outils : l’athlète suit son programme là où tu coaches. Le contexte reste partagé, la vision globale aussi.",
+      "subtitle": "Plus besoin de jongler entre outils: l’athlète suit son programme là où tu coaches. Le contexte reste partagé, la vision globale aussi.",
       "forAthlete": "Pour l’athlète",
       "forAthleteTitle": "Tout le coaching à portée de main",
       "forCoach": "Pour le coach",
@@ -390,7 +393,7 @@
         },
         "feedback": {
           "title": "Feedback & vidéos intégrés",
-          "description": "Envoie la vidéo de séance, reçois l’annotation coach : le contexte reste attaché à la séance."
+          "description": "Envoie la vidéo de séance, reçois l’annotation coach: le contexte reste attaché à la séance."
         },
         "checkins": {
           "title": "Check-ins & messagerie",
@@ -400,7 +403,7 @@
       "coachGains": {
         "vision": {
           "title": "Vision globale par athlète",
-          "description": "Programme, retours, check-ins et messages reliés : tu vois où en est chacun sans reconstruire le contexte."
+          "description": "Programme, retours, check-ins et messages reliés: tu vois où en est chacun sans reconstruire le contexte."
         },
         "lessNags": {
           "title": "Moins de relances, plus de coaching",
@@ -408,14 +411,14 @@
         },
         "loop": {
           "title": "Un seul fil conducteur",
-          "description": "Ce que tu programmes est ce qu’il exécute. Le feedback revient au bon endroit : la boucle reste fermée."
+          "description": "Ce que tu programmes est ce qu’il exécute. Le feedback revient au bon endroit: la boucle reste fermée."
         }
       }
     },
     "demo": {
       "eyebrow": "Démonstration",
       "heading": "Le produit, pas une maquette",
-      "subtitle": "Screens réels de Power Roster : dashboard, retours, messagerie, app athlète et plus.",
+      "subtitle": "Screens réels de Power Roster: dashboard, retours, messagerie, app athlète et plus.",
       "tabsAria": "Écrans produit",
       "openDemo": "Ouvrir la démo",
       "screens": {
@@ -440,13 +443,13 @@
       "precision": {
         "big": "Précision",
         "title": "Tes athlètes progressent",
-        "description": "Charges, RPE, PRs et retours alignés : tu ajustes sur des faits, pas sur l’intuition."
+        "description": "Charges, RPE, PRs et retours alignés: tu ajustes sur des faits, pas sur l’intuition."
       },
       "central": {
         "big": "1",
         "label": "source de vérité",
         "title": "Tout est centralisé",
-        "description": "Programmes, messages, meets et historique : un seul endroit pour toute la roster."
+        "description": "Programmes, messages, meets et historique: un seul endroit pour toute la roster."
       }
     },
     "stats": {
@@ -475,10 +478,10 @@
     },
     "pricing": {
       "eyebrow": "Tarifs",
-      "heading": "Simple : selon ton roster",
+      "heading": "Simple: selon ton roster",
       "subtitle": "Toutes les fonctionnalités incluses. Tarifs selon le nombre d’athlètes actifs. Ou commence par un essai 14 jours sans carte.",
       "launchBadge": "-{percent} %",
-      "launchOffer": "Offre de lancement — −50 % sur tous les plans",
+      "launchOffer": "Offre de lancement: −50 % sur tous les plans",
       "launchDuration": "Tarif préférentiel pendant les 3 premiers mois, puis retour au tarif standard.",
       "currencyLabel": "Devise",
       "sharedFeatures": {
@@ -530,7 +533,7 @@
         },
         "athletesPay": {
           "q": "Les athlètes doivent-ils payer ?",
-          "a": "Ton compte coach te permet d’inviter tes athlètes. Ils rejoignent gratuitement via ton invitation : pas de compte séparé à acheter."
+          "a": "Ton compte coach te permet d’inviter tes athlètes. Ils rejoignent gratuitement via ton invitation: pas de compte séparé à acheter."
         },
         "timeToStart": {
           "q": "Combien de temps pour être opérationnel ?",
@@ -539,8 +542,8 @@
       }
     },
     "finalCta": {
-      "heading": "Prêt à transformer ton coaching ?",
-      "subtitle": "14 jours d’essai sans carte. Ou ouvre une démo avec ton e-mail pour tester le produit immédiatement.",
+      "heading": "Prêt à coacher sur une seule plateforme ?",
+      "subtitle": "Essai 14 jours, sans carte.",
       "trial": "Essai 14 jours",
       "demo": "Démo"
     },
@@ -557,7 +560,7 @@
       "navAria": "Pied de page"
     },
     "mockup": {
-      "alt": "Dashboard coach Power Roster : actions prioritaires et retours à traiter"
+      "alt": "Dashboard coach Power Roster: actions prioritaires et retours à traiter"
     }
   },
   "privacy": {

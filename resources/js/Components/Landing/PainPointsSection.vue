@@ -41,7 +41,7 @@ const pains = computed(() => [
                         <span class="text-lg font-bold" aria-hidden="true">✕</span>
                     </div>
                     <h3 class="mt-5 text-lg font-bold text-white">{{ pain.title }}</h3>
-                    <p class="mt-2 text-[15px] leading-relaxed text-slate-400">{{ pain.description }}</p>
+                    <p class="mt-2 text-sm leading-snug text-slate-400 sm:text-[15px] sm:leading-relaxed">{{ pain.description }}</p>
                 </FadeIn>
             </div>
 
@@ -52,7 +52,7 @@ const pains = computed(() => [
                         <h3 class="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">
                             {{ t('landing.pain.solutionTitle') }}
                         </h3>
-                        <p class="mt-3 text-base leading-relaxed text-slate-400">
+                        <p class="mt-3 hidden text-base leading-relaxed text-slate-400 sm:block">
                             {{ t('landing.pain.solutionBody') }}
                         </p>
                     </div>

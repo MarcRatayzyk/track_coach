@@ -34,7 +34,7 @@ function trackCta(ctaId) {
                         >
                             {{ t('landing.finalCta.heading') }}
                         </h2>
-                        <p class="mx-auto mt-5 max-w-lg text-base text-slate-300 sm:text-lg">
+                        <p class="mx-auto mt-4 max-w-lg text-sm text-slate-300 sm:mt-5 sm:text-lg">
                             {{ t('landing.finalCta.subtitle') }}
                         </p>
                         <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
