@@ -9,8 +9,8 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLogo from '../Components/AppLogo.vue';
-import { localeTag } from '../i18n';
 import { track } from '../utils/analytics';
+import { discountedPrice, formatMoneyPlain, currencyFromLocale, listPrice } from '../utils/pricing';
 
 const { t, locale } = useI18n();
 
@@ -21,6 +21,21 @@ const props = defineProps({
 
 const selectedPlanMeta = computed(() => props.plans.find((p) => p.key === props.selectedPlan) ?? null);
 
+const currency = computed(() => currencyFromLocale(locale.value));
+
+const selectedPlanSalePrice = computed(() => {
+    const plan = selectedPlanMeta.value;
+    if (!plan) {
+        return null;
+    }
+    const saleKey = currency.value === 'usd' ? 'sale_price_usd' : 'sale_price_eur';
+    if (plan[saleKey] != null) {
+        return Number(plan[saleKey]);
+    }
+    const discount = Number(plan.launch_discount_percent ?? 50) || 0;
+    return discountedPrice(listPrice(plan, currency.value), discount);
+});
+
 const form = useForm({
     name: '',
     email: '',
@@ -29,8 +44,8 @@ const form = useForm({
     plan: props.selectedPlan ?? '',
 });
 
-function formatPrice(amount) {
-    return Number(amount).toLocaleString(localeTag(locale.value), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function formatSalePrice(amount) {
+    return formatMoneyPlain(amount, { locale: locale.value, currency: currency.value });
 }
 
 function submit() {
@@ -115,7 +130,7 @@ function submit() {
                     class="mt-6 rounded-xl border border-blue-500/30 bg-blue-950/30 px-4 py-3 text-sm text-blue-100"
                 >
                     {{ t('auth.register.selectedPlan') }}
-                    <strong class="text-white">{{ selectedPlanMeta.name }}</strong>{{ t('auth.register.selectedPlanSuffix', { price: formatPrice(selectedPlanMeta.price_eur) }) }}
+                    <strong class="text-white">{{ selectedPlanMeta.name }}</strong>{{ t('auth.register.selectedPlanSuffix', { price: formatSalePrice(selectedPlanSalePrice) }) }}
                 </div>
 
                 <div

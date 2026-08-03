@@ -19,6 +19,13 @@ import FinalCta from '../Components/Landing/FinalCta.vue';
 import LandingFooter from '../Components/Landing/LandingFooter.vue';
 
 const { t } = useI18n();
+
+defineProps({
+    pricing: {
+        type: Object,
+        default: null,
+    },
+});
 </script>
 
 <template>
@@ -53,7 +60,7 @@ const { t } = useI18n();
             <BenefitsSection />
             <StatsSection />
             <ComparisonSection />
-            <PricingSection />
+            <PricingSection :pricing="pricing" />
             <FaqSection />
             <FinalCta />
         </main>

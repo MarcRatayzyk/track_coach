@@ -98,6 +98,51 @@ class BillingPlans
         return self::get($planKey)['price_id'] ?? null;
     }
 
+    public static function launchDiscountPercent(): int
+    {
+        return max(0, min(100, (int) config('billing.launch_discount_percent', 0)));
+    }
+
+    public static function discountedAmount(float $price, ?int $percent = null): float
+    {
+        $percent ??= self::launchDiscountPercent();
+        if ($percent <= 0) {
+            return round($price, 2);
+        }
+
+        $cents = (int) round($price * 100);
+
+        return floor($cents * (100 - $percent) / 100) / 100;
+    }
+
+    /**
+     * Plans payload for Inertia (includes list + sale prices).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function forFrontend(): array
+    {
+        $discount = self::launchDiscountPercent();
+
+        return array_values(array_map(function (array $plan) use ($discount): array {
+            $eur = (float) ($plan['price_eur'] ?? 0);
+            $usd = (float) ($plan['price_usd'] ?? $eur);
+
+            return [
+                'key' => $plan['key'] ?? null,
+                'name' => $plan['name'] ?? null,
+                'description' => $plan['description'] ?? null,
+                'max_athletes' => $plan['max_athletes'] ?? null,
+                'price_id' => $plan['price_id'] ?? null,
+                'price_eur' => $eur,
+                'price_usd' => $usd,
+                'sale_price_eur' => self::discountedAmount($eur, $discount),
+                'sale_price_usd' => self::discountedAmount($usd, $discount),
+                'launch_discount_percent' => $discount,
+            ];
+        }, self::all()));
+    }
+
     /**
      * Resolve the coach's effective plan key for seat limits / UI.
      */

@@ -608,7 +608,7 @@ watch(() => page.url, () => {
                 </div>
             </Link>
 
-            <nav class="mt-6 flex flex-1 flex-col gap-1">
+            <nav class="mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain">
                 <p
                     class="mb-1 px-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500"
                 >
@@ -643,7 +643,7 @@ watch(() => page.url, () => {
                 </Link>
             </nav>
 
-            <div class="mt-auto space-y-2 border-t border-slate-800 pt-4">
+            <div class="mt-auto shrink-0 space-y-2 border-t border-slate-800 pt-4">
                 <button
                     type="button"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-800/40 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800/70 hover:text-white"
@@ -658,7 +658,10 @@ watch(() => page.url, () => {
                     <span>{{ sidebarExtrasOpen ? t('nav.hideOptions') : t('nav.moreOptions') }}</span>
                 </button>
 
-                <div v-show="sidebarExtrasOpen" class="space-y-2">
+                <div
+                    v-show="sidebarExtrasOpen"
+                    class="max-h-[min(40vh,18rem)] space-y-2 overflow-y-auto overscroll-contain"
+                >
                     <div class="flex justify-center px-1 py-1">
                         <LanguageSwitcher />
                     </div>
@@ -694,18 +697,18 @@ watch(() => page.url, () => {
                         <UiIcon name="user-circle" class="h-4 w-4" />
                         <span>{{ t('nav.privacy') }}</span>
                     </Link>
-
-                    <Link
-                        href="/logout"
-                        method="post"
-                        as="button"
-                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800/50 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-slate-800"
-                        @click="resetAnalytics"
-                    >
-                        <UiIcon name="logout" class="h-4 w-4" />
-                        <span>{{ t('nav.logOut') }}</span>
-                    </Link>
                 </div>
+
+                <Link
+                    href="/logout"
+                    method="post"
+                    as="button"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-800/50 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-slate-800"
+                    @click="resetAnalytics"
+                >
+                    <UiIcon name="logout" class="h-4 w-4" />
+                    <span>{{ t('nav.logOut') }}</span>
+                </Link>
             </div>
         </aside>
 

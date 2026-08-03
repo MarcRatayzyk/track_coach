@@ -1,6 +1,7 @@
 import { createI18n } from 'vue-i18n';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
+import { syncCurrencyWithLocale } from './utils/pricing';
 
 export const LOCALE_STORAGE_KEY = 'pr_locale';
 
@@ -33,6 +34,7 @@ export function setAppLocale(locale) {
     if (typeof localStorage !== 'undefined') {
         localStorage.setItem(LOCALE_STORAGE_KEY, resolved);
     }
+    syncCurrencyWithLocale(resolved);
     return resolved;
 }
 

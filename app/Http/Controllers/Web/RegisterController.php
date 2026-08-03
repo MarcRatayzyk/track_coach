@@ -31,7 +31,7 @@ class RegisterController extends Controller
 
         return Inertia::render('RegisterPage', [
             'selectedPlan' => $plan,
-            'plans' => array_values(BillingPlans::all()),
+            'plans' => BillingPlans::forFrontend(),
         ]);
     }
 

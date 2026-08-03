@@ -477,6 +477,10 @@
       "eyebrow": "Tarifs",
       "heading": "Simple : selon ton roster",
       "subtitle": "Toutes les fonctionnalités incluses. Tarifs selon le nombre d’athlètes actifs. Ou commence par un essai 14 jours sans carte.",
+      "launchBadge": "-{percent} %",
+      "launchOffer": "Offre de lancement — −50 % sur tous les plans",
+      "launchDuration": "Tarif préférentiel pendant les 3 premiers mois, puis retour au tarif standard.",
+      "currencyLabel": "Devise",
       "sharedFeatures": {
         "programming": "Programmation SBD & builder",
         "tracking": "Suivi PRs, readiness & adhérence",
@@ -486,22 +490,23 @@
         "dashboard": "Dashboard coach"
       },
       "plans": {
+        "subscribe": "S’abonner",
         "starter": {
           "name": "Starter",
           "description": "Jusqu’à 15 athlètes",
-          "cta": "S’abonner : 34,99 €/mois",
+          "cta": "S’abonner",
           "limit": "Jusqu’à 15 athlètes actifs"
         },
         "growth": {
           "name": "Growth",
           "description": "De 16 à 40 athlètes",
-          "cta": "S’abonner : 49,99 €/mois",
+          "cta": "S’abonner",
           "limit": "Jusqu’à 40 athlètes actifs"
         },
         "scale": {
           "name": "Scale",
           "description": "41 athlètes et plus",
-          "cta": "S’abonner : 74,99 €/mois",
+          "cta": "S’abonner",
           "limit": "Athlètes illimités"
         }
       },
@@ -1392,6 +1397,9 @@
     "billing": {
       "title": "Abonnement",
       "subtitle": "Choisis un plan selon le nombre d’athlètes actifs. Un seul essai 14 jours par compte : après expiration, l’accès est bloqué jusqu’au paiement.",
+      "launchOffer": "Offre de lancement — −50 %",
+      "launchDuration": "Tarif préférentiel pendant les 3 premiers mois, puis retour au tarif standard.",
+      "currencyLabel": "Devise",
       "demoTitle": "Compte démo",
       "demoBody": "La démo ne peut pas être convertie en abonnement. Crée un vrai compte coach pour démarrer l’essai de 14 jours.",
       "createCoachAccount": "Créer mon compte coach",

@@ -17,7 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Subscription plans (monthly, EUR)
+    | Launch promo (display)
+    |--------------------------------------------------------------------------
+    |
+    | Applied on marketing / billing UI. Stripe Price IDs still control the
+    | amount actually charged at checkout.
+    |
+    */
+
+    'launch_discount_percent' => (int) env('BILLING_LAUNCH_DISCOUNT_PERCENT', 50),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subscription plans (monthly)
     |--------------------------------------------------------------------------
     |
     | Create matching Products / Prices in the Stripe Dashboard and set the
@@ -29,7 +41,8 @@ return [
         'starter' => [
             'key' => 'starter',
             'name' => 'Starter',
-            'price_eur' => 34.99,
+            'price_eur' => 39.99,
+            'price_usd' => 49.99,
             'max_athletes' => 15,
             'description' => 'Up to 15 athletes',
             'price_id' => env('STRIPE_PRICE_STARTER'),
@@ -37,7 +50,8 @@ return [
         'growth' => [
             'key' => 'growth',
             'name' => 'Growth',
-            'price_eur' => 49.99,
+            'price_eur' => 59.99,
+            'price_usd' => 69.99,
             'max_athletes' => 40,
             'description' => '16 to 40 athletes',
             'price_id' => env('STRIPE_PRICE_GROWTH'),
@@ -45,7 +59,8 @@ return [
         'scale' => [
             'key' => 'scale',
             'name' => 'Scale',
-            'price_eur' => 74.99,
+            'price_eur' => 79.99,
+            'price_usd' => 89.99,
             'max_athletes' => null,
             'description' => '41+ athletes',
             'price_id' => env('STRIPE_PRICE_SCALE'),

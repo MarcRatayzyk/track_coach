@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Support\BillingPlans;
 use App\Support\MobileApp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,11 @@ class LandingController extends Controller
             return redirect()->route('athlete.dashboard');
         }
 
-        return Inertia::render('LandingPage');
+        return Inertia::render('LandingPage', [
+            'pricing' => [
+                'launch_discount_percent' => BillingPlans::launchDiscountPercent(),
+                'plans' => BillingPlans::forFrontend(),
+            ],
+        ]);
     }
 }

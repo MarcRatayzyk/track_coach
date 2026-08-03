@@ -11,6 +11,12 @@ import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { localeTag } from '../i18n';
+import {
+    currencyFromLocale,
+    discountedPrice,
+    formatMoneyPlain,
+    listPrice,
+} from '../utils/pricing';
 
 const { t, locale } = useI18n();
 
@@ -23,9 +29,15 @@ const props = defineProps({
 
 const page = usePage();
 const sharedBilling = computed(() => props.billing ?? page.props.billing ?? null);
+const currency = computed(() => currencyFromLocale(locale.value));
 
 const form = useForm({
     plan: sharedBilling.value?.requiredPlan ?? 'starter',
+});
+
+const discountPercent = computed(() => {
+    const fromPlan = props.plans.find((p) => p.launch_discount_percent != null)?.launch_discount_percent;
+    return Number(fromPlan ?? 50) || 0;
 });
 
 const statusLabel = computed(() => {
@@ -41,15 +53,20 @@ const statusLabel = computed(() => {
     return map[status] ? t(map[status]) : status;
 });
 
-function formatPrice(amount) {
-    const n = Number(amount);
-    if (Number.isNaN(n)) {
-        return amount;
+function planListPrice(plan) {
+    return listPrice(plan, currency.value);
+}
+
+function planSalePrice(plan) {
+    const saleKey = currency.value === 'usd' ? 'sale_price_usd' : 'sale_price_eur';
+    if (plan?.[saleKey] != null) {
+        return Number(plan[saleKey]);
     }
-    return n.toLocaleString(localeTag(locale.value), {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+    return discountedPrice(planListPrice(plan), discountPercent.value);
+}
+
+function formatAmount(amount) {
+    return formatMoneyPlain(amount, { locale: locale.value, currency: currency.value });
 }
 
 const planFeatures = computed(() => [
@@ -83,6 +100,21 @@ function openPortal() {
             <h1 class="text-2xl font-bold tracking-tight text-white">{{ t('app.billing.title') }}</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
                 {{ t('app.billing.subtitle') }}
+            </p>
+            <p
+                v-if="discountPercent > 0"
+                class="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-200"
+            >
+                <span class="rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] uppercase text-white">
+                    -{{ discountPercent }}%
+                </span>
+                {{ t('app.billing.launchOffer') }}
+            </p>
+            <p
+                v-if="discountPercent > 0"
+                class="mt-2 text-xs text-slate-500"
+            >
+                {{ t('app.billing.launchDuration') }}
             </p>
         </header>
 
@@ -181,10 +213,18 @@ function openPortal() {
                 <p class="text-sm font-semibold uppercase tracking-wider text-blue-400">
                     {{ plan.name }}
                 </p>
-                <p class="mt-3 text-3xl font-black text-white">
-                    {{ formatPrice(plan.price_eur) }} €
-                    <span class="text-base font-medium text-slate-400">{{ t('common.perMonth') }}</span>
-                </p>
+                <div class="mt-3">
+                    <p
+                        v-if="discountPercent > 0"
+                        class="text-sm text-slate-500 line-through"
+                    >
+                        {{ formatAmount(planListPrice(plan)) }}
+                    </p>
+                    <p class="text-3xl font-black text-white">
+                        {{ formatAmount(planSalePrice(plan)) }}
+                        <span class="text-base font-medium text-slate-400">{{ t('common.perMonth') }}</span>
+                    </p>
+                </div>
                 <p class="mt-2 text-sm text-slate-400">{{ plan.description }}</p>
                 <ul class="mt-4 flex-1 space-y-2">
                     <li
@@ -221,8 +261,8 @@ function openPortal() {
                         sharedBilling?.status === 'subscribed' && sharedBilling?.plan === plan.key
                             ? t('app.billing.currentPlan')
                             : sharedBilling?.status === 'subscribed'
-                              ? t('app.billing.switchTo', { price: formatPrice(plan.price_eur) })
-                              : t('app.billing.pay', { price: formatPrice(plan.price_eur) })
+                              ? t('app.billing.switchTo', { price: formatAmount(planSalePrice(plan)) })
+                              : t('app.billing.pay', { price: formatAmount(planSalePrice(plan)) })
                     }}
                 </button>
             </article>

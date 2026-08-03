@@ -477,6 +477,10 @@
       "eyebrow": "Pricing",
       "heading": "Simple: based on your roster",
       "subtitle": "All features included. Pricing by active athletes. Or start with a 14-day trial, no card.",
+      "launchBadge": "-{percent}%",
+      "launchOffer": "Launch offer — 50% off all plans",
+      "launchDuration": "Introductory rate for the first 3 months, then standard pricing applies.",
+      "currencyLabel": "Currency",
       "sharedFeatures": {
         "programming": "SBD programming & builder",
         "tracking": "PRs, readiness & adherence tracking",
@@ -486,22 +490,23 @@
         "dashboard": "Coach dashboard"
       },
       "plans": {
+        "subscribe": "Subscribe",
         "starter": {
           "name": "Starter",
           "description": "Up to 15 athletes",
-          "cta": "Subscribe: €34.99/month",
+          "cta": "Subscribe",
           "limit": "Up to 15 active athletes"
         },
         "growth": {
           "name": "Growth",
           "description": "16 to 40 athletes",
-          "cta": "Subscribe: €49.99/month",
+          "cta": "Subscribe",
           "limit": "Up to 40 active athletes"
         },
         "scale": {
           "name": "Scale",
           "description": "41+ athletes",
-          "cta": "Subscribe: €74.99/month",
+          "cta": "Subscribe",
           "limit": "Unlimited athletes"
         }
       },
@@ -1392,6 +1397,9 @@
     "billing": {
       "title": "Billing",
       "subtitle": "Choose a plan by number of active athletes. One 14-day trial per account: after it ends, access is blocked until payment.",
+      "launchOffer": "Launch offer — 50% off",
+      "launchDuration": "Introductory rate for the first 3 months, then standard pricing applies.",
+      "currencyLabel": "Currency",
       "demoTitle": "Demo account",
       "demoBody": "The demo can’t be converted to a subscription. Create a real coach account to start the 14-day trial.",
       "createCoachAccount": "Create my coach account",

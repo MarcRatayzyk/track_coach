@@ -102,7 +102,7 @@ class BillingController extends Controller
 
         if ($user->is_demo) {
             return Inertia::render('BillingPage', [
-                'plans' => array_values(BillingPlans::all()),
+                'plans' => BillingPlans::forFrontend(),
                 'stripeConfigured' => $this->stripeConfigured(),
                 'isDemo' => true,
             ]);
@@ -116,7 +116,7 @@ class BillingController extends Controller
         }
 
         return Inertia::render('BillingPage', [
-            'plans' => array_values(BillingPlans::all()),
+            'plans' => BillingPlans::forFrontend(),
             'stripeConfigured' => $this->stripeConfigured(),
             'isDemo' => false,
             'billing' => BillingAccess::sharedProps($user),
