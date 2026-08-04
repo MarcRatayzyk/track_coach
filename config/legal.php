@@ -13,14 +13,14 @@ return [
     */
 
     'publisher' => [
-        'name' => env('LEGAL_PUBLISHER_NAME', '[À compléter — nom / raison sociale]'),
-        'legal_form' => env('LEGAL_PUBLISHER_FORM', '[À compléter — ex. auto-entrepreneur, SASU]'),
-        'address' => env('LEGAL_PUBLISHER_ADDRESS', '[À compléter — adresse postale]'),
-        'siret' => env('LEGAL_SIRET', '[À compléter]'),
-        'rcs' => env('LEGAL_RCS', '[À compléter — ville du RCS, ou « Non applicable »]'),
-        'vat' => env('LEGAL_VAT', '[À compléter — n° TVA intracommunautaire, ou « Non applicable »]'),
-        'capital' => env('LEGAL_CAPITAL', '[À compléter — capital social, ou « Non applicable »]'),
-        'director' => env('LEGAL_DIRECTOR', '[À compléter — directeur de publication]'),
+        'name' => env('LEGAL_PUBLISHER_NAME', 'Information coming soon'),
+        'legal_form' => env('LEGAL_PUBLISHER_FORM', 'Information coming soon'),
+        'address' => env('LEGAL_PUBLISHER_ADDRESS', 'Information coming soon'),
+        'siret' => env('LEGAL_SIRET', 'XXXX'),
+        'rcs' => env('LEGAL_RCS', 'XXXX'),
+        'vat' => env('LEGAL_VAT', 'XXXX'),
+        'capital' => env('LEGAL_CAPITAL', 'XXXX'),
+        'director' => env('LEGAL_DIRECTOR', 'Information coming soon'),
         'email' => env('LEGAL_EMAIL', 'contact@powerroster.fr'),
     ],
 
