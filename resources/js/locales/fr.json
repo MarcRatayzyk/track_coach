@@ -264,6 +264,12 @@
       "start": "Commencer",
       "tracking": "Suivi"
     },
+    "cta": {
+      "trial": "Essai gratuit 14 jours",
+      "trialShort": "Essai gratuit",
+      "demoPrefix": "Pas encore prêt ?",
+      "demo": "Tester la démo en 30 secondes →"
+    },
     "hero": {
       "badge": "Conçu pour les coachs de powerlifting",
       "titleMobile1": "Structure ton coaching.",
@@ -419,8 +425,10 @@
       "eyebrow": "Démonstration",
       "heading": "Le produit, pas une maquette",
       "subtitle": "Screens réels de Power Roster: dashboard, retours, messagerie, app athlète et plus.",
+      "promo": "Sandbox pré-remplie · Accès immédiat · Sans carte bancaire",
       "tabsAria": "Écrans produit",
-      "openDemo": "Ouvrir la démo",
+      "openDemo": "Lancer la démo",
+      "trialAlt": "Ou créer mon essai gratuit",
       "screens": {
         "dashboard": "Dashboard",
         "feedback": "Retours",
@@ -513,6 +521,7 @@
           "limit": "Athlètes illimités"
         }
       },
+      "footerDemo": "Pas encore convaincu ?",
       "footerNotReady": "Pas encore prêt à payer ?",
       "trial14": "Essai 14 jours",
       "alreadyAccount": "Déjà un compte ?",
@@ -556,7 +565,6 @@
       "login": "Connexion",
       "privacy": "Confidentialité",
       "copyright": "© {year} Power Roster. Tous droits réservés.",
-      "legal": "Mentions légales · Coaching powerlifting",
       "navAria": "Pied de page"
     },
     "mockup": {
@@ -569,7 +577,7 @@
     "title": "Politique de confidentialité",
     "lastUpdated": "Dernière mise à jour : {year}",
     "section1Title": "1. Responsable du traitement",
-    "section1Body": "Power Roster est une plateforme de coaching de force (powerlifting) permettant aux coachs de gérer leurs athlètes, programmes, retours vidéo et communications. Le responsable du traitement des données est l'éditeur de Power Roster.",
+    "section1Body": "Power Roster est une plateforme de coaching de force (powerlifting) permettant aux coachs de gérer leurs athlètes, programmes, retours vidéo et communications. Le responsable du traitement est {publisherName} ({publisherLegalForm}), {publisherAddress}. SIRET : {publisherSiret}. Contact : {publisherEmail}.",
     "section2Title": "2. Données collectées",
     "section2Items": {
       "account": "Données de compte : nom, adresse e-mail, rôle (coach ou athlète).",
@@ -593,6 +601,174 @@
     "section7Title": "7. Sécurité",
     "section7Body": "Les mots de passe sont chiffrés, les accès sont cloisonnés par rôle et par relation coach-athlète, et des sauvegardes régulières sont réalisées.",
     "footer": "Power Roster — Coaching powerlifting."
+  },
+  "legalCommon": {
+    "backHome": "Retour à l'accueil",
+    "lastUpdated": "Dernière mise à jour : {year}",
+    "footer": "Power Roster — Coaching powerlifting."
+  },
+  "legalLinks": {
+    "aria": "Pages légales",
+    "notice": "Mentions légales",
+    "terms": "CGU",
+    "sales": "CGV",
+    "privacy": "Confidentialité"
+  },
+  "legalNotice": {
+    "pageTitle": "Mentions légales — Power Roster",
+    "title": "Mentions légales",
+    "sections": {
+      "publisher": {
+        "title": "1. Éditeur du site",
+        "body": "Le site powerroster.fr est édité par {publisherName}, {publisherLegalForm}.\nAdresse : {publisherAddress}\nSIRET : {publisherSiret}\nRCS : {publisherRcs}\nTVA intracommunautaire : {publisherVat}\nCapital social : {publisherCapital}\nE-mail : {publisherEmail}"
+      },
+      "director": {
+        "title": "2. Directeur de publication",
+        "body": "Directeur de publication : {publisherDirector}."
+      },
+      "hosting": {
+        "title": "3. Hébergeur",
+        "body": "Le site est hébergé par {hostingName}.\nAdresse : {hostingAddress}\nTéléphone : {hostingPhone}\nSite web : {hostingWebsite}"
+      },
+      "intellectual": {
+        "title": "4. Propriété intellectuelle",
+        "body": "L'ensemble des éléments du site Power Roster (textes, graphismes, logo, logiciels, bases de données) est protégé par le droit de la propriété intellectuelle. Toute reproduction ou représentation non autorisée est interdite."
+      },
+      "liability": {
+        "title": "5. Limitation de responsabilité",
+        "body": "Power Roster s'efforce d'assurer l'exactitude des informations publiées sur le site. Toutefois, l'éditeur ne saurait être tenu responsable des erreurs, omissions ou indisponibilités temporaires du service."
+      },
+      "contact": {
+        "title": "6. Contact",
+        "body": "Pour toute question relative au site ou à son contenu : {publisherEmail}."
+      }
+    }
+  },
+  "termsOfUse": {
+    "pageTitle": "Conditions générales d'utilisation — Power Roster",
+    "title": "Conditions générales d'utilisation (CGU)",
+    "intro": "Les présentes CGU régissent l'accès et l'utilisation de la plateforme Power Roster. L'utilisation du service implique leur acceptation. Les abonnements payants sont régis par nos ",
+    "introAfterSales": ", et le traitement des données par notre ",
+    "sections": {
+      "object": {
+        "title": "1. Objet",
+        "body": "Power Roster est une plateforme en ligne destinée aux coachs de powerlifting et à leurs athlètes pour la gestion de programmes, le suivi d'entraînement, les retours vidéo et la messagerie."
+      },
+      "access": {
+        "title": "2. Accès au service",
+        "body": "L'accès nécessite la création d'un compte. Un essai gratuit de 14 jours peut être proposé aux coachs, sans obligation de paiement pendant cette période. L'éditeur se réserve le droit de suspendre l'accès en cas de maintenance ou de force majeure."
+      },
+      "accounts": {
+        "title": "3. Comptes utilisateurs",
+        "body": "Tu es responsable de la confidentialité de tes identifiants et de toutes les activités réalisées depuis ton compte. Tu t'engages à fournir des informations exactes et à les maintenir à jour."
+      },
+      "roles": {
+        "title": "4. Rôles coach et athlète",
+        "body": "Les coachs invitent leurs athlètes sur la plateforme. Les données d'un athlète sont accessibles au(x) coach(s) auxquels il est rattaché. L'athlète rejoint le service gratuitement via l'invitation de son coach."
+      },
+      "content": {
+        "title": "5. Contenus utilisateurs",
+        "body": "Tu conserves la propriété des contenus que tu publies (vidéos, messages, programmes). Tu accordes à Power Roster une licence limitée pour héberger, afficher et traiter ces contenus aux seules fins de fourniture du service."
+      },
+      "prohibited": {
+        "title": "6. Usages interdits",
+        "body": "Il est notamment interdit de :",
+        "items": {
+          "illegal": "Utiliser le service à des fins illégales ou contraires à l'ordre public.",
+          "abuse": "Perturber le fonctionnement de la plateforme ou tenter d'accéder à des données d'autres utilisateurs.",
+          "reverse": "Copier, décompiler ou tenter d'extraire le code source du service.",
+          "scraping": "Extraire automatiquement des données sans autorisation écrite préalable."
+        }
+      },
+      "availability": {
+        "title": "7. Disponibilité",
+        "body": "Power Roster est fourni « en l'état ». Nous nous efforçons d'assurer une disponibilité élevée, sans garantie de fonctionnement ininterrompu."
+      },
+      "liability": {
+        "title": "8. Responsabilité",
+        "body": "Power Roster est un outil de gestion et de suivi sportif. Il ne remplace pas un avis médical. L'éditeur n'est pas responsable des décisions d'entraînement prises par les coachs ou des résultats sportifs obtenus."
+      },
+      "termination": {
+        "title": "9. Résiliation",
+        "body": "Tu peux supprimer ton compte à tout moment depuis les paramètres de confidentialité. L'éditeur peut suspendre ou résilier un compte en cas de violation des présentes CGU, après notification lorsque cela est possible."
+      },
+      "law": {
+        "title": "10. Droit applicable",
+        "body": "Les présentes CGU sont soumises au droit français. En cas de litige, les tribunaux français seront compétents, sous réserve des dispositions légales impératives applicables aux consommateurs."
+      },
+      "contact": {
+        "title": "11. Contact",
+        "body": "Pour toute question relative aux CGU : {publisherEmail}."
+      }
+    }
+  },
+  "termsOfSale": {
+    "pageTitle": "Conditions générales de vente — Power Roster",
+    "title": "Conditions générales de vente (CGV)",
+    "intro": "Les présentes CGV s'appliquent aux abonnements Power Roster souscrits par les coachs. Elles complètent nos ",
+    "sections": {
+      "publisher": {
+        "title": "1. Vendeur",
+        "body": "Les abonnements sont proposés par {publisherName}, {publisherLegalForm}, {publisherAddress}. SIRET : {publisherSiret}. E-mail : {publisherEmail}."
+      },
+      "object": {
+        "title": "2. Objet",
+        "body": "Les présentes CGV encadrent la vente d'abonnements à la plateforme Power Roster, permettant aux coachs de gérer leurs athlètes selon le plan choisi."
+      },
+      "plans": {
+        "title": "3. Offres et tarifs",
+        "body": "Les offres disponibles au moment de la souscription sont :",
+        "items": {
+          "starter": "Starter — jusqu'à 15 athlètes actifs.",
+          "growth": "Growth — jusqu'à 40 athlètes actifs.",
+          "scale": "Scale — nombre d'athlètes illimité."
+        }
+      },
+      "trial": {
+        "title": "4. Essai gratuit",
+        "body": "Un essai gratuit de 14 jours peut être proposé sans saisie de moyen de paiement. À l'issue de l'essai, l'accès aux fonctionnalités payantes nécessite la souscription d'un abonnement."
+      },
+      "order": {
+        "title": "5. Commande",
+        "body": "La souscription s'effectue en ligne après création de compte. Le contrat est conclu lors de la validation du paiement sur la page sécurisée Stripe."
+      },
+      "payment": {
+        "title": "6. Paiement",
+        "body": "Les paiements sont traités par Stripe. Les tarifs affichés sur le site sont indiqués en euros ou dollars selon la devise proposée au moment de la commande. TVA applicable selon la réglementation en vigueur."
+      },
+      "renewal": {
+        "title": "7. Durée et renouvellement",
+        "body": "Les abonnements sont souscrits pour la durée indiquée lors de la commande (mensuelle ou annuelle) et se renouvellent tacitement pour une période identique, sauf résiliation préalable."
+      },
+      "withdrawal": {
+        "title": "8. Droit de rétractation",
+        "body": "Conformément au Code de la consommation, si tu es un consommateur, tu disposes d'un délai de 14 jours à compter de la souscription pour te rétracter, sans motif. Passé ce délai ou si tu as expressément demandé l'exécution immédiate du service numérique, le droit de rétractation peut ne plus s'appliquer conformément à la loi."
+      },
+      "cancellation": {
+        "title": "9. Résiliation",
+        "body": "Tu peux résilier ton abonnement à tout moment depuis ton espace de facturation. La résiliation prend effet à la fin de la période en cours. Aucun remboursement au prorata n'est dû pour la période entamée, sauf disposition légale contraire."
+      },
+      "liability": {
+        "title": "10. Responsabilité",
+        "body": "La responsabilité de l'éditeur est limitée au montant des sommes versées par le client au cours des 12 derniers mois, sauf faute lourde ou dol."
+      },
+      "law": {
+        "title": "11. Droit applicable et litiges",
+        "body": "Les présentes CGV sont soumises au droit français. En cas de litige, une solution amiable sera recherchée prioritairement. À défaut, compétence est attribuée aux tribunaux français, sous réserve des règles impératives de protection des consommateurs."
+      },
+      "contact": {
+        "title": "12. Contact",
+        "body": "Pour toute question relative à la facturation ou aux abonnements : {publisherEmail}."
+      }
+    }
+  },
+  "cookieConsent": {
+    "aria": "Consentement aux cookies",
+    "title": "Cookies et mesure d'audience",
+    "body": "Nous utilisons des cookies de mesure d'audience (PostHog, hébergé en UE) pour améliorer Power Roster. Tu peux accepter ou refuser. En savoir plus dans notre ",
+    "privacyLink": "politique de confidentialité",
+    "accept": "Tout accepter",
+    "reject": "Refuser"
   },
   "modals": {
     "bugReport": {

@@ -88,10 +88,6 @@ const showcases = computed(() => [
                         <p class="mt-2 text-[15px] leading-relaxed text-slate-400">{{ item.description }}</p>
                     </div>
                     <div class="relative flex-1">
-                        <div
-                            class="pointer-events-none absolute -inset-3 rounded-[28px] bg-blue-500/10 blur-2xl"
-                            aria-hidden="true"
-                        />
                         <ScreenFrame
                             :src="item.src"
                             :alt="item.alt"

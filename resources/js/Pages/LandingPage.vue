@@ -1,7 +1,6 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
-import LandingBackground from '../Components/Landing/LandingBackground.vue';
 import LandingNav from '../Components/Landing/LandingNav.vue';
 import LandingHero from '../Components/Landing/LandingHero.vue';
 import PainPointsSection from '../Components/Landing/PainPointsSection.vue';
@@ -47,16 +46,15 @@ defineProps({
     </Head>
 
     <div class="landing-page relative min-h-screen">
-        <LandingBackground />
         <LandingNav />
         <main>
             <LandingHero />
+            <DemoSection />
             <PainPointsSection />
             <FeaturesSection />
             <TrackingSection />
             <ModularitySection />
             <AthleteAppSection />
-            <DemoSection />
             <BenefitsSection />
             <StatsSection />
             <ComparisonSection />

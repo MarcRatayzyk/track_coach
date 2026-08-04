@@ -1,18 +1,19 @@
 <script setup>
 import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLogo from '../AppLogo.vue';
+import LegalFooterLinks from '../Legal/LegalFooterLinks.vue';
 
 const { t } = useI18n();
 
 const nav = computed(() => [
-    { href: '#fonctionnalites', label: t('landing.footer.features') },
-    { href: '#demo', label: t('landing.footer.demo') },
-    { href: '#pricing', label: t('landing.footer.pricing') },
-    { href: '/demo', label: t('landing.footer.demo') },
-    { href: '/register', label: t('landing.footer.register') },
-    { href: '/login', label: t('landing.footer.login') },
-    { href: '/confidentialite', label: t('landing.footer.privacy') },
+    { href: '#fonctionnalites', label: t('landing.footer.features'), external: true },
+    { href: '#demo', label: t('landing.footer.demo'), external: true },
+    { href: '#pricing', label: t('landing.footer.pricing'), external: true },
+    { href: '/demo', label: t('landing.footer.demo'), external: false },
+    { href: '/register', label: t('landing.footer.register'), external: false },
+    { href: '/login', label: t('landing.footer.login'), external: false },
 ]);
 </script>
 
@@ -30,14 +31,22 @@ const nav = computed(() => [
             </div>
 
             <nav class="flex flex-wrap gap-x-6 gap-y-2" :aria-label="t('landing.footer.navAria')">
-                <a
-                    v-for="link in nav"
-                    :key="link.href + link.label"
-                    :href="link.href"
-                    class="text-sm text-slate-400 transition hover:text-white"
-                >
-                    {{ link.label }}
-                </a>
+                <template v-for="link in nav" :key="link.href + link.label">
+                    <a
+                        v-if="link.external"
+                        :href="link.href"
+                        class="text-sm text-slate-400 transition hover:text-white"
+                    >
+                        {{ link.label }}
+                    </a>
+                    <Link
+                        v-else
+                        :href="link.href"
+                        class="text-sm text-slate-400 transition hover:text-white"
+                    >
+                        {{ link.label }}
+                    </Link>
+                </template>
             </nav>
 
             <div class="flex items-center gap-3">
@@ -51,9 +60,9 @@ const nav = computed(() => [
             </div>
         </div>
 
-        <div class="mx-auto mt-10 flex w-full max-w-[1280px] flex-col gap-2 border-t border-white/[0.05] pt-6 text-xs text-slate-600 sm:flex-row sm:justify-between">
+        <div class="mx-auto mt-10 flex w-full max-w-[1280px] flex-col gap-4 border-t border-white/[0.05] pt-6 text-xs text-slate-600">
+            <LegalFooterLinks />
             <p>{{ t('landing.footer.copyright', { year: new Date().getFullYear() }) }}</p>
-            <p>{{ t('landing.footer.legal') }}</p>
         </div>
     </footer>
 </template>

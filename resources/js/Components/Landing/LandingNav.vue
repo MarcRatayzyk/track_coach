@@ -60,11 +60,11 @@ const links = computed(() => [
                     {{ t('landing.nav.logIn') }}
                 </a>
                 <a
-                    href="#pricing"
+                    href="/register"
                     class="lp-btn-primary px-3.5 py-2 text-xs leading-none sm:px-5 sm:py-2.5 sm:text-sm"
-                    @click="trackCta('nav_commencer')"
+                    @click="trackCta('nav_trial')"
                 >
-                    {{ t('landing.nav.start') }}
+                    {{ t('landing.cta.trialShort') }}
                 </a>
             </div>
         </div>

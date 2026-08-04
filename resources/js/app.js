@@ -2,7 +2,7 @@ import '../css/app.css';
 import './bootstrap';
 import './echo';
 import './plugins/charts';
-import { createApp, h } from 'vue';
+import { createApp, h, Fragment } from 'vue';
 import { createInertiaApp, router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { initTheme } from './composables/useTheme';
@@ -11,9 +11,9 @@ import { initNativeApp } from './pwa/initNativeApp';
 import { registerServiceWorker } from './pwa/registerServiceWorker';
 import {
     identifyUser,
-    initAnalytics,
     resetAnalytics,
 } from './utils/analytics';
+import CookieConsentBanner from './Components/CookieConsentBanner.vue';
 import i18n, { setAppLocale } from './i18n';
 
 initTheme();
@@ -23,7 +23,6 @@ if (!isNativeApp) {
 }
 
 initNativeApp();
-initAnalytics();
 
 let lastIdentifiedUserId = null;
 
@@ -54,7 +53,10 @@ createInertiaApp({
         syncAnalyticsUser(props.initialPage);
         syncLocale(props.initialPage);
 
-        createApp({ render: () => h(App, props) })
+        createApp({
+            render: () =>
+                h(Fragment, null, [h(App, props), h(CookieConsentBanner)]),
+        })
             .use(plugin)
             .use(i18n)
             .mount(el);

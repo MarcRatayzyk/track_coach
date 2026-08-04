@@ -50,10 +50,6 @@ const highlights = computed(() => [
                 </FadeIn>
 
                 <FadeIn :delay="0.12" class-name="relative">
-                    <div
-                        class="pointer-events-none absolute -inset-4 rounded-[32px] bg-blue-500/10 blur-3xl sm:-inset-6"
-                        aria-hidden="true"
-                    />
                     <ScreenFrame
                         src="/images/landing/stats.png"
                         :alt="t('landing.tracking.mockupAlt')"

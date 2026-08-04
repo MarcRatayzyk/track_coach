@@ -1,1 +1,0 @@
-import{D as a}from"./app-T9oBNk6z.js";function i(r){return String(r??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")}function l(r){const e=String(r??"").trim();if(!e)return e;const t=i(e);if(!t)return e;const n=`exercises.names.${t}`;return a.global.te(n)?a.global.t(n):e}export{l};

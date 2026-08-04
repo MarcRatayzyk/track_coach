@@ -264,6 +264,12 @@
       "start": "Get started",
       "tracking": "Tracking"
     },
+    "cta": {
+      "trial": "Start 14-day free trial",
+      "trialShort": "Free trial",
+      "demoPrefix": "Not ready yet?",
+      "demo": "Try the demo in 30 seconds →"
+    },
     "hero": {
       "badge": "Built for powerlifting coaches",
       "titleMobile1": "Structure your coaching.",
@@ -419,8 +425,10 @@
       "eyebrow": "Demo",
       "heading": "The real product, not a mockup",
       "subtitle": "Real Power Roster screens: dashboard, feedback, messaging, athlete app and more.",
+      "promo": "Pre-filled sandbox · Instant access · No credit card",
       "tabsAria": "Product screens",
-      "openDemo": "Open demo",
+      "openDemo": "Launch demo",
+      "trialAlt": "Or start my free trial",
       "screens": {
         "dashboard": "Dashboard",
         "feedback": "Feedback",
@@ -513,6 +521,7 @@
           "limit": "Unlimited athletes"
         }
       },
+      "footerDemo": "Not convinced yet?",
       "footerNotReady": "Not ready to pay?",
       "trial14": "14-day trial",
       "alreadyAccount": "Already have an account?",
@@ -556,7 +565,6 @@
       "login": "Log in",
       "privacy": "Privacy",
       "copyright": "© {year} Power Roster. All rights reserved.",
-      "legal": "Legal notice · Powerlifting coaching",
       "navAria": "Footer"
     },
     "mockup": {
@@ -569,7 +577,7 @@
     "title": "Privacy policy",
     "lastUpdated": "Last updated: {year}",
     "section1Title": "1. Data controller",
-    "section1Body": "Power Roster is a strength coaching (powerlifting) platform that lets coaches manage athletes, programs, video feedback and communications. The data controller is the publisher of Power Roster.",
+    "section1Body": "Power Roster is a strength coaching (powerlifting) platform that lets coaches manage athletes, programs, video feedback and communications. The data controller is {publisherName} ({publisherLegalForm}), {publisherAddress}. SIRET: {publisherSiret}. Contact: {publisherEmail}.",
     "section2Title": "2. Data collected",
     "section2Items": {
       "account": "Account data: name, email address, role (coach or athlete).",
@@ -593,6 +601,174 @@
     "section7Title": "7. Security",
     "section7Body": "Passwords are hashed, access is scoped by role and coach–athlete relationship, and regular backups are performed.",
     "footer": "Power Roster — Powerlifting coaching."
+  },
+  "legalCommon": {
+    "backHome": "Back to home",
+    "lastUpdated": "Last updated: {year}",
+    "footer": "Power Roster — Powerlifting coaching."
+  },
+  "legalLinks": {
+    "aria": "Legal pages",
+    "notice": "Legal notice",
+    "terms": "Terms of use",
+    "sales": "Terms of sale",
+    "privacy": "Privacy"
+  },
+  "legalNotice": {
+    "pageTitle": "Legal notice — Power Roster",
+    "title": "Legal notice",
+    "sections": {
+      "publisher": {
+        "title": "1. Site publisher",
+        "body": "The site powerroster.fr is published by {publisherName}, {publisherLegalForm}.\nAddress: {publisherAddress}\nSIRET: {publisherSiret}\nRCS: {publisherRcs}\nVAT number: {publisherVat}\nShare capital: {publisherCapital}\nEmail: {publisherEmail}"
+      },
+      "director": {
+        "title": "2. Publication director",
+        "body": "Publication director: {publisherDirector}."
+      },
+      "hosting": {
+        "title": "3. Hosting provider",
+        "body": "The site is hosted by {hostingName}.\nAddress: {hostingAddress}\nPhone: {hostingPhone}\nWebsite: {hostingWebsite}"
+      },
+      "intellectual": {
+        "title": "4. Intellectual property",
+        "body": "All elements of the Power Roster site (text, graphics, logo, software, databases) are protected by intellectual property law. Any unauthorized reproduction or representation is prohibited."
+      },
+      "liability": {
+        "title": "5. Limitation of liability",
+        "body": "Power Roster strives to keep published information accurate. However, the publisher cannot be held liable for errors, omissions or temporary unavailability of the service."
+      },
+      "contact": {
+        "title": "6. Contact",
+        "body": "For any question about the site or its content: {publisherEmail}."
+      }
+    }
+  },
+  "termsOfUse": {
+    "pageTitle": "Terms of use — Power Roster",
+    "title": "Terms of use",
+    "intro": "These terms govern access to and use of the Power Roster platform. Using the service means you accept them. Paid subscriptions are governed by our ",
+    "introAfterSales": ", and data processing by our ",
+    "sections": {
+      "object": {
+        "title": "1. Purpose",
+        "body": "Power Roster is an online platform for powerlifting coaches and their athletes to manage programs, training follow-up, video feedback and messaging."
+      },
+      "access": {
+        "title": "2. Access to the service",
+        "body": "Access requires creating an account. Coaches may be offered a 14-day free trial with no payment obligation during that period. The publisher may suspend access for maintenance or force majeure."
+      },
+      "accounts": {
+        "title": "3. User accounts",
+        "body": "You are responsible for keeping your credentials confidential and for all activity on your account. You agree to provide accurate information and keep it up to date."
+      },
+      "roles": {
+        "title": "4. Coach and athlete roles",
+        "body": "Coaches invite their athletes to the platform. An athlete's data is accessible to the coach(es) they are linked to. Athletes join the service free of charge via their coach's invitation."
+      },
+      "content": {
+        "title": "5. User content",
+        "body": "You retain ownership of content you publish (videos, messages, programs). You grant Power Roster a limited licence to host, display and process that content solely to provide the service."
+      },
+      "prohibited": {
+        "title": "6. Prohibited uses",
+        "body": "In particular, you must not:",
+        "items": {
+          "illegal": "Use the service for illegal purposes or in violation of public order.",
+          "abuse": "Disrupt the platform or attempt to access other users' data.",
+          "reverse": "Copy, decompile or attempt to extract the service source code.",
+          "scraping": "Automatically extract data without prior written authorisation."
+        }
+      },
+      "availability": {
+        "title": "7. Availability",
+        "body": "Power Roster is provided \"as is\". We strive for high availability but do not guarantee uninterrupted operation."
+      },
+      "liability": {
+        "title": "8. Liability",
+        "body": "Power Roster is a sports management and follow-up tool. It does not replace medical advice. The publisher is not liable for training decisions made by coaches or sports outcomes."
+      },
+      "termination": {
+        "title": "9. Termination",
+        "body": "You may delete your account at any time from privacy settings. The publisher may suspend or terminate an account for breach of these terms, with notice when possible."
+      },
+      "law": {
+        "title": "10. Governing law",
+        "body": "These terms are governed by French law. Any dispute shall fall under the jurisdiction of French courts, subject to mandatory consumer protection rules."
+      },
+      "contact": {
+        "title": "11. Contact",
+        "body": "For any question about these terms: {publisherEmail}."
+      }
+    }
+  },
+  "termsOfSale": {
+    "pageTitle": "Terms of sale — Power Roster",
+    "title": "Terms of sale",
+    "intro": "These terms apply to Power Roster subscriptions purchased by coaches. They supplement our ",
+    "sections": {
+      "publisher": {
+        "title": "1. Seller",
+        "body": "Subscriptions are offered by {publisherName}, {publisherLegalForm}, {publisherAddress}. SIRET: {publisherSiret}. Email: {publisherEmail}."
+      },
+      "object": {
+        "title": "2. Purpose",
+        "body": "These terms govern the sale of Power Roster subscriptions, allowing coaches to manage their athletes according to the chosen plan."
+      },
+      "plans": {
+        "title": "3. Offers and pricing",
+        "body": "Available offers at the time of purchase are:",
+        "items": {
+          "starter": "Starter — up to 15 active athletes.",
+          "growth": "Growth — up to 40 active athletes.",
+          "scale": "Scale — unlimited athletes."
+        }
+      },
+      "trial": {
+        "title": "4. Free trial",
+        "body": "A 14-day free trial may be offered without entering payment details. After the trial, access to paid features requires an active subscription."
+      },
+      "order": {
+        "title": "5. Order",
+        "body": "Subscriptions are purchased online after account creation. The contract is formed when payment is confirmed on Stripe's secure checkout page."
+      },
+      "payment": {
+        "title": "6. Payment",
+        "body": "Payments are processed by Stripe. Prices shown on the site are in euros or dollars depending on the currency offered at checkout. VAT applies according to applicable regulations."
+      },
+      "renewal": {
+        "title": "7. Term and renewal",
+        "body": "Subscriptions run for the period stated at purchase (monthly or annual) and renew automatically for the same period unless cancelled beforehand."
+      },
+      "withdrawal": {
+        "title": "8. Right of withdrawal",
+        "body": "If you are a consumer, you have 14 days from subscription to withdraw without giving a reason. After that period, or if you expressly requested immediate access to the digital service, the right of withdrawal may no longer apply under applicable law."
+      },
+      "cancellation": {
+        "title": "9. Cancellation",
+        "body": "You may cancel your subscription at any time from your billing area. Cancellation takes effect at the end of the current billing period. No pro-rata refund is due for the started period unless required by law."
+      },
+      "liability": {
+        "title": "10. Liability",
+        "body": "The publisher's liability is limited to amounts paid by the customer over the previous 12 months, except in cases of gross negligence or fraud."
+      },
+      "law": {
+        "title": "11. Governing law and disputes",
+        "body": "These terms are governed by French law. In case of dispute, an amicable solution will be sought first. Failing that, French courts shall have jurisdiction, subject to mandatory consumer protection rules."
+      },
+      "contact": {
+        "title": "12. Contact",
+        "body": "For billing or subscription questions: {publisherEmail}."
+      }
+    }
+  },
+  "cookieConsent": {
+    "aria": "Cookie consent",
+    "title": "Cookies and analytics",
+    "body": "We use audience measurement cookies (PostHog, hosted in the EU) to improve Power Roster. You can accept or decline. Learn more in our ",
+    "privacyLink": "privacy policy",
+    "accept": "Accept all",
+    "reject": "Decline"
   },
   "modals": {
     "bugReport": {

@@ -7,8 +7,6 @@ const { t } = useI18n();
 
 <template>
     <div class="lp-mockup-stage relative mx-auto w-full max-w-[420px] sm:max-w-[460px] lg:max-w-[480px]">
-        <div class="lp-mockup-glow" />
-
         <div class="lp-mockup-frame relative z-10">
             <ScreenFrame
                 src="/images/landing/actions.png"

@@ -120,7 +120,7 @@ function formatAmount(amount) {
             class="relative flex h-full flex-col rounded-[22px] border p-6 sm:p-7"
             :class="
               plan.highlight
-                ? 'border-blue-400/40 bg-blue-500/10 shadow-[0_0_40px_-16px_rgba(59,130,246,0.55)]'
+                ? 'border-blue-400/40 bg-blue-500/10'
                 : 'lp-glass'
             "
           >
@@ -184,12 +184,12 @@ function formatAmount(amount) {
 
       <FadeIn :delay="0.25" class-name="mt-10 text-center">
         <p class="text-sm text-slate-500">
-          {{ t('landing.pricing.footerNotReady') }}
-          <a href="/start-trial" class="font-semibold text-blue-400 hover:underline">{{ t('landing.pricing.trial14') }}</a>
+          {{ t('landing.pricing.footerDemo') }}
+          <a href="/demo" class="font-semibold text-blue-400 hover:underline">{{ t('landing.pricing.demo') }}</a>
+          ·
+          <a href="/register" class="font-semibold text-blue-400 hover:underline">{{ t('landing.pricing.trial14') }}</a>
           · {{ t('landing.pricing.alreadyAccount') }}
           <a href="/login" class="font-semibold text-blue-400 hover:underline">{{ t('landing.pricing.logIn') }}</a>
-          ·
-          <a href="/demo" class="font-semibold text-blue-400 hover:underline">{{ t('landing.pricing.demo') }}</a>
         </p>
       </FadeIn>
     </div>

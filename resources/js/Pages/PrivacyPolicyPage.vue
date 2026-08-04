@@ -1,9 +1,14 @@
 <script setup>
+import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLogo from '../Components/AppLogo.vue';
+import LegalFooterLinks from '../Components/Legal/LegalFooterLinks.vue';
+import { useLegalPublisher } from '../composables/useLegalPublisher';
 
 const { t } = useI18n();
+const { vars } = useLegalPublisher();
+const year = computed(() => new Date().getFullYear());
 </script>
 
 <template>
@@ -23,13 +28,13 @@ const { t } = useI18n();
 
     <main class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <h1 class="text-3xl font-bold tracking-tight text-white">{{ t('privacy.title') }}</h1>
-      <p class="mt-2 text-sm text-slate-500">{{ t('privacy.lastUpdated', { year: new Date().getFullYear() }) }}</p>
+      <p class="mt-2 text-sm text-slate-500">{{ t('privacy.lastUpdated', { year }) }}</p>
 
       <div class="mt-8 space-y-8 text-sm leading-relaxed text-slate-300">
         <section>
           <h2 class="text-lg font-semibold text-white">{{ t('privacy.section1Title') }}</h2>
           <p class="mt-2">
-            {{ t('privacy.section1Body') }}
+            {{ t('privacy.section1Body', vars) }}
           </p>
         </section>
 
@@ -87,8 +92,9 @@ const { t } = useI18n();
     </main>
 
     <footer class="border-t border-slate-800/80">
-      <div class="mx-auto max-w-4xl px-4 py-6 text-sm text-slate-500 sm:px-6">
-        {{ t('privacy.footer') }}
+      <div class="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6 text-sm text-slate-500 sm:px-6">
+        <LegalFooterLinks />
+        <p>{{ t('privacy.footer') }}</p>
       </div>
     </footer>
   </div>

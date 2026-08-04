@@ -55,6 +55,7 @@ class RegisterController extends Controller
             'initial_setup_completed_at' => now(),
             // Abonnement sans paiement : pas d'essai consommé → l'utilisateur pourra démarrer l'essai plus tard.
             'trial_ends_at' => $wantsTrial ? now()->addDays($trialDays) : null,
+            'email_verified_at' => $wantsTrial ? now() : null,
             'is_demo' => false,
         ]);
 
@@ -65,8 +66,6 @@ class RegisterController extends Controller
             $request->session()->put('subscribe_plan', $plan);
         }
 
-        $emailSent = ActivationDelivery::sendCoachEmailVerification($coach);
-
         if ($wantsTrial) {
             MailSendSupport::attempt(
                 fn () => Mail::to($coach)->send(new CoachTrialStartedMail(
@@ -76,29 +75,17 @@ class RegisterController extends Controller
                     route('dashboard'),
                 )),
             );
-        }
 
-        if ($plan) {
-            return redirect()
-                ->route('billing.checkout.plan', ['plan' => $plan])
-                ->with('success', __('messages.auth.register_created_pay'));
-        }
-
-        if (ActivationDelivery::usesManualLinks()) {
             return redirect()
                 ->route('dashboard')
                 ->with('success', __('messages.auth.register_created_trial_invite', ['days' => $trialDays]));
         }
 
-        $redirect = redirect()
-            ->route('verification.notice')
-            ->with('success', __('messages.auth.register_created_trial_confirm', ['days' => $trialDays]));
+        ActivationDelivery::sendCoachEmailVerification($coach);
 
-        if (! $emailSent) {
-            $redirect = $redirect->with('error', MailSendSupport::deliveryFailedMessage());
-        }
-
-        return $redirect;
+        return redirect()
+            ->route('billing.checkout.plan', ['plan' => $plan])
+            ->with('success', __('messages.auth.register_created_pay'));
     }
 
     private function resolvePlan(mixed $plan): ?string

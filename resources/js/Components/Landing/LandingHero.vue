@@ -2,13 +2,9 @@
 import { motion } from 'motion-v';
 import { useI18n } from 'vue-i18n';
 import DashboardMockup from './DashboardMockup.vue';
-import { track } from '../../utils/analytics';
+import LandingCta from './LandingCta.vue';
 
 const { t } = useI18n();
-
-function trackCta(ctaId) {
-    track('cta_clicked', { cta_id: ctaId });
-}
 </script>
 
 <template>
@@ -19,7 +15,7 @@ function trackCta(ctaId) {
                     :initial="{ opacity: 0, y: 16 }"
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ duration: 0.5, delay: 0.05 }"
-                    class="hidden items-center gap-2 rounded-full border border-blue-400/25 bg-blue-500/10 px-3.5 py-1.5 text-[13px] font-medium text-blue-300 shadow-[0_0_24px_-8px_rgba(59,130,246,0.5)] sm:inline-flex"
+                    class="hidden items-center gap-2 rounded-full border border-blue-400/25 bg-blue-500/10 px-3.5 py-1.5 text-[13px] font-medium text-blue-300 sm:inline-flex"
                 >
                     <span class="relative flex h-1.5 w-1.5">
                         <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
@@ -59,32 +55,9 @@ function trackCta(ctaId) {
                     :initial="{ opacity: 0, y: 20 }"
                     :animate="{ opacity: 1, y: 0 }"
                     :transition="{ duration: 0.6, delay: 0.32 }"
-                    class="mt-7 flex flex-wrap items-center gap-3 sm:mt-9 sm:gap-4"
+                    class="mt-7 sm:mt-9"
                 >
-                    <a
-                        href="#pricing"
-                        class="lp-btn-primary px-7 py-3.5 text-[15px] leading-none sm:px-8 sm:py-4 sm:text-base"
-                        @click="trackCta('hero_commencer')"
-                    >
-                        <span>{{ t('landing.hero.ctaStart') }}</span>
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                        </svg>
-                    </a>
-                    <a
-                        href="/start-trial"
-                        class="lp-btn-secondary px-7 py-3.5 text-[15px] leading-none sm:px-8 sm:py-4 sm:text-base"
-                        @click="trackCta('hero_trial')"
-                    >
-                        {{ t('landing.hero.ctaTrial') }}
-                    </a>
-                    <a
-                        href="/demo"
-                        class="lp-btn-secondary hidden px-7 py-3.5 text-[15px] leading-none sm:inline-flex sm:px-8 sm:py-4 sm:text-base"
-                        @click="trackCta('hero_demo')"
-                    >
-                        {{ t('landing.hero.ctaDemo') }}
-                    </a>
+                    <LandingCta cta-id="hero_trial" />
                 </motion.div>
 
                 <motion.p

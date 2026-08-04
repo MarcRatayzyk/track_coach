@@ -1,13 +1,9 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
-import { track } from '../../utils/analytics';
+import LandingCta from './LandingCta.vue';
 
 const { t } = useI18n();
-
-function trackCta(ctaId) {
-    track('cta_clicked', { cta_id: ctaId });
-}
 </script>
 
 <template>
@@ -15,20 +11,9 @@ function trackCta(ctaId) {
         <div class="mx-auto w-full max-w-[1280px]">
             <FadeIn>
                 <div
-                    class="relative overflow-hidden rounded-[28px] border border-blue-400/25 px-8 py-16 text-center sm:px-12 sm:py-20 lg:px-16"
-                    style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.35) 0%, rgba(5, 11, 30, 0.95) 45%, rgba(15, 23, 42, 0.9) 100%)"
+                    class="relative overflow-hidden rounded-[28px] border border-blue-400/25 bg-[#0f172a] px-8 py-16 text-center sm:px-12 sm:py-20 lg:px-16"
                 >
-                    <div
-                        class="pointer-events-none absolute -left-20 top-0 h-64 w-64 rounded-full bg-blue-500/30 blur-3xl"
-                        aria-hidden="true"
-                    />
-                    <div
-                        class="pointer-events-none absolute -right-16 bottom-0 h-56 w-56 rounded-full bg-blue-400/20 blur-3xl"
-                        aria-hidden="true"
-                    />
-
-                    <div class="relative">
-                        <h2
+                    <h2
                             id="final-cta-heading"
                             class="mx-auto max-w-2xl text-3xl font-black tracking-[-0.03em] text-white sm:text-4xl lg:text-5xl"
                         >
@@ -37,23 +22,9 @@ function trackCta(ctaId) {
                         <p class="mx-auto mt-4 max-w-lg text-sm text-slate-300 sm:mt-5 sm:text-lg">
                             {{ t('landing.finalCta.subtitle') }}
                         </p>
-                        <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
-                            <a
-                                href="/start-trial"
-                                class="lp-btn-primary px-10 py-4 text-base leading-none sm:text-lg"
-                                @click="trackCta('final_register')"
-                            >
-                                {{ t('landing.finalCta.trial') }}
-                            </a>
-                            <a
-                                href="/demo"
-                                class="lp-btn-secondary px-10 py-4 text-base leading-none sm:text-lg"
-                                @click="trackCta('final_demo')"
-                            >
-                                {{ t('landing.finalCta.demo') }}
-                            </a>
+                        <div class="mt-10">
+                            <LandingCta cta-id="final_trial" align="center" size="large" />
                         </div>
-                    </div>
                 </div>
             </FadeIn>
         </div>

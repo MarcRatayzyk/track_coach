@@ -47,6 +47,9 @@ Route::get('/downloads/power-roster.apk', ApkDownloadController::class)
     ->name('downloads.apk');
 
 Route::inertia('/confidentialite', 'PrivacyPolicyPage')->name('privacy');
+Route::inertia('/mentions-legales', 'LegalNoticePage')->name('legal.notice');
+Route::inertia('/cgu', 'TermsOfUsePage')->name('legal.terms');
+Route::inertia('/cgv', 'TermsOfSalePage')->name('legal.sales');
 
 Route::get('/subscribe/{plan}', [BillingController::class, 'subscribe'])
     ->whereIn('plan', ['starter', 'growth', 'scale'])

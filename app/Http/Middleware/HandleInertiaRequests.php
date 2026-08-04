@@ -70,6 +70,7 @@ class HandleInertiaRequests extends Middleware
                 'name' => config('app.name'),
                 'manualActivationLinks' => fn () => ActivationDelivery::usesManualLinks(),
             ],
+            'legal' => fn () => config('legal'),
             'messagingInbox' => function () use ($request) {
                 $user = $request->user();
                 if (! $user || ! BillingAccess::hasAppAccess($user)) {

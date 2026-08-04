@@ -101,14 +101,14 @@ const features = computed(() => [
                 </p>
             </FadeIn>
 
-            <div class="mt-14 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="mt-14 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3">
                 <FadeIn
                     v-for="(f, i) in features"
                     :key="f.key"
                     :delay="Math.min(i * 0.05, 0.35)"
-                    class-name="group lp-glass lp-glass-hover flex flex-col overflow-hidden rounded-[20px]"
+                    class-name="group lp-glass lp-glass-hover flex flex-col overflow-hidden rounded-[16px] sm:rounded-[20px]"
                 >
-                    <div class="relative h-[140px] overflow-hidden border-b border-white/[0.06] bg-[#070d1f]">
+                    <div class="relative h-[88px] overflow-hidden border-b border-white/[0.06] bg-[#070d1f] sm:h-[140px]">
                         <img
                             :src="f.image"
                             :alt="f.title"
@@ -123,14 +123,14 @@ const features = computed(() => [
                         />
                     </div>
 
-                    <div class="flex flex-1 flex-col p-6">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400 transition group-hover:bg-blue-500/25">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <div class="flex flex-1 flex-col p-3.5 sm:p-6">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400 transition group-hover:bg-blue-500/25 sm:h-10 sm:w-10 sm:rounded-xl">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" :d="f.path" />
                             </svg>
                         </div>
-                        <h3 class="mt-4 text-lg font-bold text-white">{{ f.title }}</h3>
-                        <p class="mt-1.5 text-[15px] leading-relaxed text-slate-400">{{ f.description }}</p>
+                        <h3 class="mt-2.5 text-sm font-bold text-white sm:mt-4 sm:text-lg">{{ f.title }}</h3>
+                        <p class="mt-1 text-xs leading-relaxed text-slate-400 sm:mt-1.5 sm:text-[15px]">{{ f.description }}</p>
                     </div>
                 </FadeIn>
             </div>

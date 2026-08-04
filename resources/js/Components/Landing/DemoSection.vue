@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
 import ScreenFrame from './ScreenFrame.vue';
+import { track } from '../../utils/analytics';
 
 const { t } = useI18n();
 
@@ -54,6 +55,10 @@ const active = ref(0);
 function select(i) {
     active.value = i;
 }
+
+function trackDemo(id) {
+    track('cta_clicked', { cta_id: id });
+}
 </script>
 
 <template>
@@ -74,6 +79,28 @@ function select(i) {
                 <p class="mx-auto mt-4 max-w-xl text-base text-slate-400 sm:text-lg">
                     {{ t('landing.demo.subtitle') }}
                 </p>
+                <p class="mx-auto mt-2 max-w-lg text-sm font-medium text-blue-300/90">
+                    {{ t('landing.demo.promo') }}
+                </p>
+            </FadeIn>
+
+            <FadeIn :delay="0.08" class-name="mt-8">
+                <div class="mx-auto flex max-w-lg flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+                    <a
+                        href="/demo"
+                        class="lp-btn-primary flex items-center justify-center px-7 py-3.5 text-[15px] leading-none sm:text-base"
+                        @click="trackDemo('demo_section_launch')"
+                    >
+                        {{ t('landing.demo.openDemo') }}
+                    </a>
+                    <a
+                        href="/register"
+                        class="lp-btn-secondary flex items-center justify-center px-7 py-3.5 text-[15px] leading-none sm:text-base"
+                        @click="trackDemo('demo_section_trial')"
+                    >
+                        {{ t('landing.demo.trialAlt') }}
+                    </a>
+                </div>
             </FadeIn>
 
             <FadeIn :delay="0.1" class-name="mt-10">
@@ -91,7 +118,7 @@ function select(i) {
                         class="rounded-xl border px-3.5 py-2 text-sm font-semibold transition"
                         :class="
                             active === i
-                                ? 'border-blue-400/40 bg-blue-500/15 text-blue-300 shadow-[0_0_24px_-8px_rgba(59,130,246,0.5)]'
+                                ? 'border-blue-400/40 bg-blue-500/15 text-blue-300'
                                 : 'border-white/10 bg-white/[0.02] text-slate-400 hover:border-white/20 hover:text-white'
                         "
                         @click="select(i)"
@@ -104,10 +131,6 @@ function select(i) {
             <FadeIn :delay="0.15" class-name="mt-8">
                 <div class="relative mx-auto w-full max-w-[720px]">
                     <div
-                        class="pointer-events-none absolute -inset-4 rounded-[28px] bg-blue-500/10 blur-2xl"
-                        aria-hidden="true"
-                    />
-                    <div
                         v-for="(screen, i) in screens"
                         :key="screen.id"
                         v-show="active === i"
@@ -119,14 +142,6 @@ function select(i) {
                             :label="`Power Roster · ${screen.label}`"
                             loading="lazy"
                         />
-                    </div>
-                    <div class="mt-6 text-center">
-                        <a
-                            href="/demo"
-                            class="lp-btn-primary inline-flex px-6 py-3 text-sm leading-none"
-                        >
-                            {{ t('landing.demo.openDemo') }}
-                        </a>
                     </div>
                 </div>
             </FadeIn>

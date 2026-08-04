@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
+import LandingCta from './LandingCta.vue';
 
 const { t } = useI18n();
 
@@ -56,12 +57,7 @@ const pains = computed(() => [
                             {{ t('landing.pain.solutionBody') }}
                         </p>
                     </div>
-                    <a
-                        href="/register"
-                        class="lp-btn-primary shrink-0 px-7 py-3.5 text-[15px] leading-none"
-                    >
-                        {{ t('landing.pain.cta') }}
-                    </a>
+                    <LandingCta cta-id="pain_trial" />
                 </div>
             </FadeIn>
         </div>
