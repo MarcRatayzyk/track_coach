@@ -13,11 +13,42 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  theme: {
+    type: Object,
+    default: null,
+  },
+  copy: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['close']);
 
 const slideIndex = ref(0);
+
+function parseHex(hex) {
+  if (!hex || typeof hex !== 'string') {
+    return null;
+  }
+  let h = hex.trim().replace('#', '');
+  if (h.length === 3) {
+    h = h.split('').map((c) => c + c).join('');
+  }
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) {
+    return null;
+  }
+  const n = Number.parseInt(h, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255, hex: `#${h}` };
+}
+
+function gradientFromHex(hex) {
+  const rgb = parseHex(hex);
+  if (!rgb) {
+    return null;
+  }
+  return `linear-gradient(to bottom, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.82), #020617 55%, #020617)`;
+}
 
 const slides = computed(() => {
   const data = props.awards;
@@ -31,14 +62,14 @@ const slides = computed(() => {
       kind: 'intro',
       title: t('modals.rosterAwards.title'),
       subtitle: data.month_label ?? t('modals.rosterAwards.thisMonth'),
-      hint: t('modals.rosterAwards.hint'),
+      hint: props.copy?.intro_hint || t('modals.rosterAwards.hint'),
     },
     ...data.screens,
     {
       id: 'outro',
       kind: 'outro',
-      title: t('modals.rosterAwards.outroTitle'),
-      subtitle: t('modals.rosterAwards.outroSubtitle'),
+      title: props.copy?.outro_title || t('modals.rosterAwards.outroTitle'),
+      subtitle: props.copy?.outro_subtitle || t('modals.rosterAwards.outroSubtitle'),
     },
   ];
 });
@@ -74,7 +105,21 @@ function prev() {
   }
 }
 
+const activeAccentHex = computed(() => {
+  if (!props.theme) {
+    return null;
+  }
+  const key = currentSlide.value?.award_key;
+  if (key && props.theme[key]) {
+    return props.theme[key];
+  }
+  return props.theme.default_accent || null;
+});
+
 const awardAccent = computed(() => {
+  if (activeAccentHex.value) {
+    return '';
+  }
   const key = currentSlide.value?.award_key;
   if (key === 'steps') {
     return 'from-emerald-900/80 via-slate-950 to-slate-950';
@@ -87,6 +132,16 @@ const awardAccent = computed(() => {
   }
   return 'from-violet-950 via-slate-950 to-slate-950';
 });
+
+const bgStyle = computed(() => {
+  const gradient = gradientFromHex(activeAccentHex.value);
+  return gradient ? { backgroundImage: gradient } : null;
+});
+
+const accentTextStyle = computed(() => {
+  const hex = parseHex(activeAccentHex.value);
+  return hex ? { color: hex.hex } : null;
+});
 </script>
 
 <template>
@@ -95,6 +150,7 @@ const awardAccent = computed(() => {
       v-if="open && awards"
       class="fixed inset-0 z-[70] flex flex-col text-white"
       :class="['bg-gradient-to-b', awardAccent]"
+      :style="bgStyle"
       role="dialog"
       aria-modal="true"
     >
@@ -120,7 +176,7 @@ const awardAccent = computed(() => {
       <div class="relative flex flex-1 flex-col px-6 pb-6" @click="next">
         <div class="flex flex-1 flex-col justify-center">
           <template v-if="currentSlide?.kind === 'intro'">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-200">{{ t('modals.rosterAwards.brand') }}</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-200" :style="accentTextStyle">{{ t('modals.rosterAwards.brand') }}</p>
             <h2 class="mt-4 text-4xl font-bold leading-tight">{{ currentSlide.title }}</h2>
             <p class="mt-3 text-lg text-slate-200">{{ currentSlide.subtitle }}</p>
             <p class="mt-8 text-sm text-slate-400">{{ currentSlide.hint }}</p>
@@ -148,7 +204,7 @@ const awardAccent = computed(() => {
           </template>
 
           <template v-else-if="currentSlide?.kind === 'outro'">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-200">{{ t('modals.rosterAwards.upNext') }}</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-200" :style="accentTextStyle">{{ t('modals.rosterAwards.upNext') }}</p>
             <h2 class="mt-4 text-3xl font-bold">{{ currentSlide.title }}</h2>
             <p class="mt-3 text-lg text-slate-300">{{ currentSlide.subtitle }}</p>
           </template>

@@ -55,6 +55,16 @@ class LoginController extends Controller
 
         $user = Auth::user();
 
+        if ($user->isDisabled()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'Ce compte a été désactivé.',
+            ]);
+        }
+
         if ($user->initial_setup_completed_at === null) {
             Auth::logout();
             $request->session()->invalidate();
@@ -70,6 +80,10 @@ class LoginController extends Controller
         }
 
         $request->session()->regenerate();
+
+        if ($user->role === 'admin') {
+            return redirect()->intended(route('admin.dashboard'));
+        }
 
         if ($user->role === 'coach' && ! $user->hasVerifiedEmail() && ! ActivationDelivery::usesManualLinks()) {
             return redirect()->route('verification.notice');
@@ -101,6 +115,10 @@ class LoginController extends Controller
 
     private function redirectAuthenticatedUser(User $user): RedirectResponse
     {
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
         if ($user->role === 'coach' && ! $user->hasVerifiedEmail() && ! ActivationDelivery::usesManualLinks()) {
             return redirect()->route('verification.notice');
         }

@@ -10,6 +10,10 @@ class BillingAccess
 {
     public static function hasAppAccess(User $user): bool
     {
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         if ($user->role === 'athlete') {
             $coach = $user->primaryCoach();
 
@@ -208,6 +212,12 @@ class BillingAccess
     {
         if (! $user) {
             return null;
+        }
+
+        if ($user->role === 'admin') {
+            return [
+                'hasAccess' => true,
+            ];
         }
 
         if ($user->role === 'athlete') {

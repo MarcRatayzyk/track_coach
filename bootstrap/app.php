@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnableCrossOriginIsolation;
 use App\Http\Middleware\EnsureCoachHasBillingAccess;
 use App\Http\Middleware\EnsureEmailIsVerifiedUnlessManual;
+use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsCoach;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SecurityHeaders::class,
         ]);
         $middleware->alias([
+            'admin' => EnsureUserIsAdmin::class,
             'coach' => EnsureUserIsCoach::class,
             'verified' => EnsureEmailIsVerifiedUnlessManual::class,
             'billing' => EnsureCoachHasBillingAccess::class,
@@ -45,7 +47,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo('/login');
 
         $middleware->redirectUsersTo(function (Request $request): string {
-            if ($request->user()?->role === 'athlete') {
+            $role = $request->user()?->role;
+
+            if ($role === 'admin') {
+                return route('admin.dashboard');
+            }
+
+            if ($role === 'athlete') {
                 return route('athlete.dashboard');
             }
 

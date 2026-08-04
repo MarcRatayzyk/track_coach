@@ -35,6 +35,14 @@ class AuthSidebarSupport
      */
     public static function profileLinkForUser(User $user): ?array
     {
+        if ($user->role === 'admin') {
+            return [
+                'label' => $user->name,
+                'subtitle' => 'Administration',
+                'href' => route('admin.dashboard'),
+            ];
+        }
+
         if ($user->role === 'coach') {
             return [
                 'label' => $user->name,

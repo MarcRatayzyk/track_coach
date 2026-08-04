@@ -17,6 +17,10 @@ class EnsureCoachHasBillingAccess
             return $next($request);
         }
 
+        if ($user->role === 'admin') {
+            return $next($request);
+        }
+
         if (BillingAccess::hasAppAccess($user)) {
             return $next($request);
         }

@@ -8,6 +8,7 @@ export default {
 
 <script setup>
 import { useI18n } from 'vue-i18n';
+import { usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import AthleteDailyCheckInModal from '../Components/AthleteDailyCheckInModal.vue';
 import AthleteDashboardHeader from '../Components/AthleteDashboardHeader.vue';
@@ -17,6 +18,7 @@ import WrappedStoryModal from '../Components/WrappedStoryModal.vue';
 import { WEEKDAY_LABELS } from '../utils/programBuilder';
 
 const { t } = useI18n();
+const page = usePage();
 
 const props = defineProps({
   athleteName: { type: String, required: true },
@@ -332,6 +334,8 @@ onMounted(() => {
     <WrappedStoryModal
       :open="wrappedModalOpen"
       :wrapped="activeWrapped"
+      :theme="page.props.storyThemes?.wrapped ?? null"
+      :copy="page.props.storyThemes?.wrappedCopy ?? null"
       @close="closeWrappedStory"
       @share="sharePayload"
     />

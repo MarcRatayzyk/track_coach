@@ -35,6 +35,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'trial_ends_at',
         'is_demo',
         'demo_expires_at',
+        'disabled_at',
     ];
 
     protected $hidden = [
@@ -48,8 +49,19 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'email_verified_at' => 'datetime',
         'trial_ends_at' => 'datetime',
         'demo_expires_at' => 'datetime',
+        'disabled_at' => 'datetime',
         'is_demo' => 'boolean',
     ];
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isDisabled(): bool
+    {
+        return $this->disabled_at !== null;
+    }
 
     public function activeAthleteCount(): int
     {

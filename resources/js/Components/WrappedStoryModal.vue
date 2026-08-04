@@ -15,6 +15,14 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  theme: {
+    type: Object,
+    default: null,
+  },
+  copy: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['close', 'share']);
@@ -24,9 +32,9 @@ const slideIndex = ref(0);
 const liftStep = ref(0);
 
 const LIFT_METRICS = computed(() => [
-  { key: 'heaviest_bar', headline: t('modals.wrapped.heaviestBar'), unit: 'kg', hint: t('modals.wrapped.heaviestBarHint') },
-  { key: 'tonnage', headline: t('modals.wrapped.tonnage'), unit: 'kg', hint: t('modals.wrapped.tonnageHint') },
-  { key: 'top_e1rm', headline: t('modals.wrapped.topE1rm'), unit: 'kg', hint: t('modals.wrapped.topE1rmHint') },
+  { key: 'heaviest_bar', headline: t('modals.wrapped.heaviestBar'), unit: 'kg', hint: t('modals.wrapped.heaviestBarHint'), decimals: 0 },
+  { key: 'tonnage', headline: t('modals.wrapped.tonnage'), unit: 'kg', hint: t('modals.wrapped.tonnageHint'), decimals: 0 },
+  { key: 'top_e1rm', headline: t('modals.wrapped.topE1rm'), unit: 'kg', hint: t('modals.wrapped.topE1rmHint'), decimals: 1 },
 ]);
 
 const LIFT_THEMES = {
@@ -50,6 +58,59 @@ const LIFT_THEMES = {
   },
 };
 
+function liftLabel(key) {
+  const map = {
+    squat: t('modals.wrapped.lifts.squat'),
+    bench: t('modals.wrapped.lifts.bench'),
+    deadlift: t('modals.wrapped.lifts.deadlift'),
+  };
+  return map[key] || key;
+}
+
+function wrappedTitle(data) {
+  if (data?.variant === 'monthly_wrapped') {
+    return t('modals.wrapped.monthlyTitle');
+  }
+  if (data?.variant === 'weekly_wrapped') {
+    return t('modals.wrapped.weeklyTitle');
+  }
+  return data?.label || '';
+}
+
+function parseHex(hex) {
+  if (!hex || typeof hex !== 'string') {
+    return null;
+  }
+  let h = hex.trim().replace('#', '');
+  if (h.length === 3) {
+    h = h.split('').map((c) => c + c).join('');
+  }
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) {
+    return null;
+  }
+  const n = Number.parseInt(h, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255, hex: `#${h}` };
+}
+
+function gradientFromHex(hex) {
+  const rgb = parseHex(hex);
+  if (!rgb) {
+    return null;
+  }
+  return `linear-gradient(to bottom, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.92), #020617 52%, #020617)`;
+}
+
+function rgbaFromHex(hex, alpha) {
+  const rgb = parseHex(hex);
+  if (!rgb) {
+    return null;
+  }
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+}
+
+const brandLabel = computed(() => props.copy?.brand_label || t('modals.wrapped.brand'));
+const keepGoingLabel = computed(() => props.copy?.keep_going || t('modals.wrapped.keepGoing'));
+
 const slides = computed(() => {
   const data = props.wrapped;
   if (!data) {
@@ -60,7 +121,7 @@ const slides = computed(() => {
     {
       id: 'intro',
       kind: 'intro',
-      title: data.label,
+      title: wrappedTitle(data),
       subtitle: `${data.period_start} → ${data.period_end}`,
     },
     {
@@ -76,24 +137,64 @@ const slides = computed(() => {
       id: `lift-${lift.key}`,
       kind: 'lift',
       lift,
-      title: lift.label,
+      title: liftLabel(lift.key),
+    });
+  }
+
+  if (data.recap) {
+    list.push({
+      id: 'recap',
+      kind: 'recap',
+      title: t('modals.wrapped.recapTitle'),
+      subtitle: t('modals.wrapped.recapHint'),
+      metrics: data.recap,
     });
   }
 
   list.push({
     id: 'outro',
     kind: 'outro',
-    title: data.label,
-    subtitle: t('modals.wrapped.keepGoing'),
+    title: wrappedTitle(data),
+    subtitle: keepGoingLabel.value,
   });
 
   return list;
 });
 
+const comparisonLabel = computed(() => {
+  if (props.wrapped?.variant === 'monthly_wrapped') {
+    return t('modals.wrapped.previousMonth');
+  }
+  return t('modals.wrapped.previousWeek');
+});
+
+const vsLabel = computed(() => t('modals.wrapped.vsPrevious', { label: comparisonLabel.value }));
+
 const currentSlide = computed(() => slides.value[slideIndex.value] ?? null);
 const isFirst = computed(() => slideIndex.value <= 0);
 const isLast = computed(() => slideIndex.value >= slides.value.length - 1);
 const isLift = computed(() => currentSlide.value?.kind === 'lift');
+
+const stackedLiftMetrics = computed(() => {
+  if (!isLift.value || liftStep.value <= 0) {
+    return [];
+  }
+  return LIFT_METRICS.value.slice(0, liftStep.value);
+});
+
+const currentLiftMetric = computed(() => LIFT_METRICS.value[liftStep.value] ?? null);
+const canRevealMoreLift = computed(() => isLift.value && liftStep.value < LIFT_METRICS.value.length - 1);
+
+const activeAccentHex = computed(() => {
+  if (!props.theme) {
+    return null;
+  }
+  if (isLift.value) {
+    const key = currentSlide.value?.lift?.key;
+    return props.theme[key] || props.theme.default_accent || null;
+  }
+  return props.theme.default_accent || null;
+});
 
 const liftTheme = computed(() => {
   const key = currentSlide.value?.lift?.key;
@@ -105,22 +206,40 @@ const liftTheme = computed(() => {
   };
 });
 
-const revealedLiftMetrics = computed(() => {
-  if (!isLift.value) return [];
-  return LIFT_METRICS.value.slice(0, liftStep.value + 1);
-});
-
-const currentLiftMetric = computed(() => LIFT_METRICS.value[liftStep.value] ?? null);
-const canRevealMoreLift = computed(() => isLift.value && liftStep.value < LIFT_METRICS.value.length - 1);
-
 const bgClass = computed(() => {
+  if (activeAccentHex.value) {
+    return '';
+  }
   if (isLift.value) return liftTheme.value.accent;
   return 'from-violet-950 via-slate-950 to-slate-950';
 });
 
+const bgStyle = computed(() => {
+  const gradient = gradientFromHex(activeAccentHex.value);
+  return gradient ? { backgroundImage: gradient } : null;
+});
+
+const glowStyle = computed(() => {
+  const color = rgbaFromHex(activeAccentHex.value, 0.35);
+  return color ? { backgroundColor: color } : null;
+});
+
 const primaryButtonClass = computed(() => {
+  if (activeAccentHex.value) {
+    return 'shadow-black/40 hover:brightness-110';
+  }
   if (isLift.value) return liftTheme.value.button;
   return 'bg-violet-600 hover:bg-violet-500 shadow-violet-900/40';
+});
+
+const primaryButtonStyle = computed(() => {
+  const hex = parseHex(activeAccentHex.value);
+  return hex ? { backgroundColor: hex.hex } : null;
+});
+
+const accentTextStyle = computed(() => {
+  const hex = parseHex(activeAccentHex.value);
+  return hex ? { color: hex.hex } : null;
 });
 
 watch(
@@ -215,10 +334,77 @@ function nextLabel() {
     return t('common.close');
   }
   if (isLift.value) {
+    const next = slides.value[slideIndex.value + 1];
+    if (next?.kind === 'recap') {
+      return t('modals.wrapped.seeRecap');
+    }
     return t('modals.wrapped.nextLift');
   }
   return t('common.next');
 }
+
+function formatMetricDisplay(value, decimals = 0) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  return Number(value).toLocaleString(undefined, {
+    maximumFractionDigits: decimals,
+    minimumFractionDigits: decimals > 0 ? Math.min(decimals, 1) : 0,
+  });
+}
+
+const heaviestRecap = computed(() => {
+  const metrics = currentSlide.value?.kind === 'recap' ? currentSlide.value.metrics : null;
+  if (!metrics?.heaviest_bar) {
+    return null;
+  }
+  return {
+    byLift: metrics.heaviest_bar.by_lift ?? [],
+    total: metrics.heaviest_bar.total ?? null,
+  };
+});
+
+const e1rmRecap = computed(() => {
+  const metrics = currentSlide.value?.kind === 'recap' ? currentSlide.value.metrics : null;
+  if (!metrics?.top_e1rm) {
+    return null;
+  }
+  return {
+    byLift: metrics.top_e1rm.by_lift ?? [],
+    total: metrics.top_e1rm.total ?? null,
+  };
+});
+
+const featuredRecapStats = computed(() => {
+  const metrics = currentSlide.value?.kind === 'recap' ? currentSlide.value.metrics : null;
+  if (!metrics) {
+    return [];
+  }
+
+  return [
+    {
+      key: 'total_tonnage',
+      title: t('modals.wrapped.tonnage'),
+      unit: 'kg',
+      decimals: 0,
+      metric: metrics.total_tonnage,
+    },
+    {
+      key: 'total_sets',
+      title: t('modals.wrapped.sets'),
+      unit: '',
+      decimals: 0,
+      metric: metrics.total_sets,
+    },
+    {
+      key: 'total_training_minutes',
+      title: t('modals.wrapped.trainingTime'),
+      unit: t('modals.wrapped.trainingTimeUnit'),
+      decimals: 0,
+      metric: metrics.total_training_minutes,
+    },
+  ];
+});
 
 const overviewItems = computed(() => [
   { key: 'total_tonnage', label: t('modals.wrapped.tonnage'), suffix: 'kg' },
@@ -235,12 +421,14 @@ const overviewItems = computed(() => [
       v-if="open && wrapped"
       class="fixed inset-0 z-[70] flex flex-col bg-gradient-to-b text-white transition-[background] duration-500"
       :class="bgClass"
+      :style="bgStyle"
       role="dialog"
       aria-modal="true"
     >
       <div
         class="pointer-events-none absolute inset-x-0 top-0 h-56 opacity-70 blur-3xl transition-colors duration-500"
-        :class="isLift ? liftTheme.glow : 'bg-violet-500/25'"
+        :class="activeAccentHex ? '' : (isLift ? liftTheme.glow : 'bg-violet-500/25')"
+        :style="glowStyle"
         aria-hidden="true"
       />
 
@@ -276,11 +464,12 @@ const overviewItems = computed(() => [
           >
             <motion.p
               class="text-xs font-semibold uppercase tracking-[0.25em] text-violet-300"
+              :style="accentTextStyle"
               :initial="{ opacity: 0, y: 10 }"
               :animate="{ opacity: 1, y: 0 }"
               :transition="{ delay: 0.1, duration: 0.35 }"
             >
-              {{ t('modals.wrapped.brand') }}
+              {{ brandLabel }}
             </motion.p>
             <motion.h2
               class="mt-5 text-4xl font-bold leading-tight sm:text-5xl"
@@ -316,7 +505,7 @@ const overviewItems = computed(() => [
             :animate="{ opacity: 1, y: 0 }"
             :transition="{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }"
           >
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">{{ t('modals.wrapped.volume') }}</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300" :style="accentTextStyle">{{ t('modals.wrapped.volume') }}</p>
             <h2 class="mt-3 text-2xl font-bold sm:text-3xl">{{ currentSlide.title }}</h2>
             <div class="mt-7 grid gap-2.5">
               <motion.div
@@ -354,11 +543,12 @@ const overviewItems = computed(() => [
             </div>
           </motion.div>
 
-          <!-- LIFT (1 screen / mouvement, métriques en cascade) -->
+          <!-- LIFT (même écran : au clic la métrique remonte, la suivante s’affiche en dessous) -->
           <div
             v-else-if="currentSlide?.kind === 'lift'"
             :key="`lift-${currentSlide.lift.key}-${slideIndex}`"
-            class="relative"
+            class="relative cursor-pointer"
+            @click="next"
           >
             <motion.div
               :initial="{ opacity: 0, y: 24, scale: 0.97 }"
@@ -377,82 +567,218 @@ const overviewItems = computed(() => [
                 </span>
               </div>
 
-              <motion.h2
-                :key="`headline-${liftStep}`"
-                class="mt-4 text-2xl font-bold sm:text-3xl"
-                :initial="{ opacity: 0, y: 14 }"
-                :animate="{ opacity: 1, y: 0 }"
-                :transition="{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }"
-              >
-                {{ currentLiftMetric?.headline }}
-              </motion.h2>
-              <motion.p
-                :key="`hint-${liftStep}`"
-                class="mt-1.5 text-sm text-slate-400"
-                :initial="{ opacity: 0 }"
-                :animate="{ opacity: 1 }"
-                :transition="{ delay: 0.1, duration: 0.3 }"
-              >
-                {{ currentLiftMetric?.hint }}
-              </motion.p>
+              <!-- Précédentes : remontent en haut ; nouvelle métrique en dessous (hero) -->
+              <div v-if="stackedLiftMetrics.length" class="mt-5 space-y-2.5">
+                <motion.div
+                  v-for="(metric, index) in stackedLiftMetrics"
+                  :key="`stack-${metric.key}-${liftStep}`"
+                  class="rounded-2xl bg-white/8 px-4 py-3"
+                  :initial="{ opacity: 0, y: 24, scale: 0.97 }"
+                  :animate="{ opacity: 1, y: 0, scale: 1 }"
+                  :transition="{ delay: index * 0.05, duration: 0.35, ease: [0.22, 1, 0.36, 1] }"
+                >
+                  <p class="text-xs font-medium text-slate-400">{{ metric.headline }}</p>
+                  <div class="mt-1 flex items-end justify-between gap-3">
+                    <p class="text-2xl font-bold tabular-nums tracking-tight text-white">
+                      <template v-if="metricValue(currentSlide.lift?.[metric.key]) !== null">
+                        {{ formatMetricDisplay(metricValue(currentSlide.lift[metric.key]), metric.decimals) }}
+                        <span class="ml-1 text-sm font-semibold text-slate-400">{{ metric.unit }}</span>
+                      </template>
+                      <template v-else>—</template>
+                    </p>
+                    <p
+                      v-if="currentSlide.lift?.[metric.key]?.delta"
+                      class="max-w-[55%] text-right text-[11px] font-semibold leading-snug"
+                      :class="deltaClass(currentSlide.lift[metric.key].delta)"
+                    >
+                      {{ vsLabel }}
+                      {{ formatDelta(currentSlide.lift[metric.key].delta) }}
+                    </p>
+                  </div>
+                </motion.div>
+              </div>
 
               <motion.div
-                :key="`hero-${currentSlide.lift.key}-${liftStep}`"
-                class="mt-8"
-                :initial="{ opacity: 0, scale: 0.85, y: 20 }"
-                :animate="{ opacity: 1, scale: 1, y: 0 }"
-                :transition="{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }"
+                :key="`hero-block-${currentSlide.lift.key}-${liftStep}`"
+                class="mt-6"
+                :initial="{ opacity: 0, y: 36, scale: 0.94 }"
+                :animate="{ opacity: 1, y: 0, scale: 1 }"
+                :transition="{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }"
               >
-                <p class="text-6xl font-bold tracking-tight tabular-nums sm:text-7xl">
-                  <template
-                    v-if="metricValue(currentSlide.lift?.[currentLiftMetric?.key]) !== null"
+                <h2 class="text-2xl font-bold sm:text-3xl">{{ currentLiftMetric?.headline }}</h2>
+                <p class="mt-1.5 text-sm text-slate-400">{{ currentLiftMetric?.hint }}</p>
+
+                <div class="mt-6">
+                  <p class="text-6xl font-bold tracking-tight tabular-nums sm:text-7xl">
+                    <template
+                      v-if="metricValue(currentSlide.lift?.[currentLiftMetric?.key]) !== null"
+                    >
+                      <AnimatedCounter
+                        :value="metricValue(currentSlide.lift[currentLiftMetric.key])"
+                        :decimals="currentLiftMetric.decimals ?? 0"
+                        :duration="900"
+                      />
+                      <span class="ml-2 text-2xl font-semibold text-slate-400">{{
+                        currentLiftMetric.unit
+                      }}</span>
+                    </template>
+                    <template v-else>—</template>
+                  </p>
+                  <p
+                    v-if="currentSlide.lift?.[currentLiftMetric?.key]?.delta"
+                    class="mt-4 text-sm font-semibold"
+                    :class="deltaClass(currentSlide.lift[currentLiftMetric.key].delta)"
                   >
-                    <AnimatedCounter
-                      :value="metricValue(currentSlide.lift[currentLiftMetric.key])"
-                      :decimals="currentLiftMetric.key === 'top_e1rm' ? 1 : 0"
-                      :duration="900"
-                    />
-                    <span class="ml-2 text-2xl font-semibold text-slate-400">{{
-                      currentLiftMetric.unit
-                    }}</span>
-                  </template>
-                  <template v-else>—</template>
-                </p>
-                <p
-                  v-if="currentSlide.lift?.[currentLiftMetric?.key]?.delta"
-                  class="mt-4 text-sm font-semibold"
-                  :class="deltaClass(currentSlide.lift[currentLiftMetric.key].delta)"
+                    {{ vsLabel }}
+                    {{ formatDelta(currentSlide.lift[currentLiftMetric.key].delta) }}
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+
+          <!-- RECAP : barre par lift, e1RM discret, tonnage / séries / temps en avant -->
+          <motion.div
+            v-else-if="currentSlide?.kind === 'recap'"
+            :key="`recap-${slideIndex}`"
+            class="cursor-pointer"
+            :initial="{ opacity: 0, y: 20 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }"
+            @click="next"
+          >
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300" :style="accentTextStyle">
+              {{ brandLabel }}
+            </p>
+            <h2 class="mt-2 text-2xl font-bold sm:text-3xl">{{ currentSlide.title }}</h2>
+            <p class="mt-1 text-sm text-slate-400">{{ currentSlide.subtitle }}</p>
+
+            <div class="mt-5 space-y-5">
+              <!-- Stats mises en avant -->
+              <motion.div
+                class="grid grid-cols-3 gap-2"
+                :initial="{ opacity: 0, y: 14 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ duration: 0.35 }"
+              >
+                <div
+                  v-for="item in featuredRecapStats"
+                  :key="item.key"
+                  class="rounded-2xl bg-white/10 px-2.5 py-3 text-center"
                 >
-                  vs {{ wrapped?.comparison_label ?? t('modals.wrapped.vsPreviousDefault') }}
-                  {{ formatDelta(currentSlide.lift[currentLiftMetric.key].delta) }}
-                </p>
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-300">{{ item.title }}</p>
+                  <p class="mt-1.5 text-xl font-bold tabular-nums tracking-tight text-white sm:text-2xl">
+                    <template v-if="metricValue(item.metric) !== null">
+                      {{ formatMetricDisplay(metricValue(item.metric), item.decimals) }}
+                      <span v-if="item.unit" class="text-[11px] font-medium text-slate-400">{{ item.unit }}</span>
+                    </template>
+                    <template v-else>—</template>
+                  </p>
+                  <p
+                    v-if="item.metric?.delta"
+                    class="mt-1 text-[10px] font-semibold"
+                    :class="deltaClass(item.metric.delta)"
+                  >
+                    {{ formatDelta(item.metric.delta) }}
+                  </p>
+                </div>
               </motion.div>
 
-              <!-- Historique des métriques déjà révélées (sauf la courante) -->
-              <div
-                v-if="revealedLiftMetrics.length > 1"
-                class="mt-8 space-y-2 border-t border-white/10 pt-5"
+              <!-- Barre la plus lourde -->
+              <motion.section
+                v-if="heaviestRecap"
+                :initial="{ opacity: 0, y: 12 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :transition="{ delay: 0.08, duration: 0.35 }"
               >
-                <motion.div
-                  v-for="(metric, index) in revealedLiftMetrics.slice(0, -1)"
-                  :key="metric.key"
-                  class="flex items-center justify-between rounded-xl border border-white/8 bg-white/5 px-3 py-2.5"
-                  :initial="{ opacity: 0, y: 8 }"
-                  :animate="{ opacity: 0.85, y: 0 }"
-                  :transition="{ delay: index * 0.05, duration: 0.25 }"
+                <div class="mb-2.5 flex items-baseline justify-between gap-2">
+                  <h3 class="text-sm font-semibold text-white">{{ t('modals.wrapped.heaviestBar') }}</h3>
+                  <span class="text-[10px] uppercase tracking-wider text-slate-500">{{ t('modals.wrapped.perLift') }}</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  <div
+                    v-for="lift in heaviestRecap.byLift"
+                    :key="`bar-${lift.key}`"
+                    class="rounded-xl bg-white/8 px-2.5 py-2.5"
+                  >
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{{ liftLabel(lift.key) }}</p>
+                    <p class="mt-1 text-xl font-bold tabular-nums text-white">
+                      <template v-if="lift.value !== null && lift.value !== undefined">
+                        {{ formatMetricDisplay(lift.value, 0) }}
+                        <span class="text-[11px] font-medium text-slate-400">kg</span>
+                      </template>
+                      <template v-else>—</template>
+                    </p>
+                    <p
+                      v-if="lift.delta"
+                      class="mt-1 text-[10px] font-semibold"
+                      :class="deltaClass(lift.delta)"
+                    >
+                      {{ formatDelta(lift.delta) }}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  v-if="heaviestRecap.total"
+                  class="mt-2 flex items-center justify-between rounded-xl bg-white/10 px-3 py-2.5"
                 >
-                  <span class="text-xs text-slate-400">{{ metric.headline }}</span>
-                  <span class="text-sm font-semibold tabular-nums text-slate-200">
-                    <template v-if="metricValue(currentSlide.lift?.[metric.key]) !== null">
-                      {{ metricValue(currentSlide.lift[metric.key]) }}
-                      {{ metric.unit }}
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-300">{{ t('modals.wrapped.total') }}</p>
+                    <p class="mt-0.5 text-2xl font-bold tabular-nums text-white">
+                      <template v-if="heaviestRecap.total.value !== null && heaviestRecap.total.value !== undefined">
+                        {{ formatMetricDisplay(heaviestRecap.total.value, 0) }}
+                        <span class="text-sm font-medium text-slate-400">kg</span>
+                      </template>
+                      <template v-else>—</template>
+                    </p>
+                  </div>
+                  <p
+                    v-if="heaviestRecap.total.delta"
+                    class="max-w-[45%] text-right text-[11px] font-semibold leading-snug"
+                    :class="deltaClass(heaviestRecap.total.delta)"
+                  >
+                    {{ vsLabel }}
+                    {{ formatDelta(heaviestRecap.total.delta) }}
+                  </p>
+                </div>
+              </motion.section>
+
+              <!-- e1RM discret -->
+              <motion.section
+                v-if="e1rmRecap"
+                class="rounded-xl bg-white/[0.03] px-3 py-2.5"
+                :initial="{ opacity: 0 }"
+                :animate="{ opacity: 1 }"
+                :transition="{ delay: 0.14, duration: 0.3 }"
+              >
+                <p class="text-[10px] font-medium uppercase tracking-wider text-slate-500">{{ t('modals.wrapped.topE1rm') }}</p>
+                <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+                  <span
+                    v-for="lift in e1rmRecap.byLift"
+                    :key="`e1rm-${lift.key}`"
+                    class="tabular-nums"
+                  >
+                    <span class="text-slate-500">{{ liftLabel(lift.key) }}</span>
+                    {{ ' ' }}
+                    <span class="font-semibold text-slate-300">
+                      <template v-if="lift.value !== null && lift.value !== undefined">
+                        {{ formatMetricDisplay(lift.value, 1) }} kg
+                      </template>
+                      <template v-else>—</template>
+                    </span>
+                  </span>
+                  <span v-if="e1rmRecap.total" class="ml-auto font-semibold tabular-nums text-slate-300">
+                    {{ t('modals.wrapped.total') }}
+                    {{ ' ' }}
+                    <template v-if="e1rmRecap.total.value !== null && e1rmRecap.total.value !== undefined">
+                      {{ formatMetricDisplay(e1rmRecap.total.value, 1) }} kg
                     </template>
                     <template v-else>—</template>
                   </span>
-                </motion.div>
-              </div>
-            </motion.div>
-          </div>
+                </div>
+              </motion.section>
+            </div>
+          </motion.div>
 
           <!-- OUTRO -->
           <motion.div
@@ -463,12 +789,14 @@ const overviewItems = computed(() => [
             :animate="{ opacity: 1, y: 0, scale: 1 }"
             :transition="{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }"
           >
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">{{ t('modals.wrapped.bravo') }}</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300" :style="accentTextStyle">{{ t('modals.wrapped.bravo') }}</p>
             <h2 class="mt-4 text-3xl font-bold sm:text-4xl">{{ currentSlide.title }}</h2>
             <p class="mt-3 text-lg text-slate-300">{{ currentSlide.subtitle }}</p>
             <motion.button
               type="button"
-              class="mt-10 w-full rounded-2xl bg-violet-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/40 transition hover:bg-violet-500"
+              class="mt-10 w-full rounded-2xl px-4 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110"
+              :class="primaryButtonStyle ? 'shadow-black/40' : 'bg-violet-600 shadow-violet-900/40 hover:bg-violet-500'"
+              :style="primaryButtonStyle"
               :initial="{ opacity: 0, y: 12 }"
               :animate="{ opacity: 1, y: 0 }"
               :transition="{ delay: 0.25, duration: 0.35 }"
@@ -494,6 +822,7 @@ const overviewItems = computed(() => [
             type="button"
             class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition"
             :class="primaryButtonClass"
+            :style="primaryButtonStyle"
             :initial="{ opacity: 0.6, scale: 0.94 }"
             :animate="{ opacity: 1, scale: 1 }"
             :transition="{ duration: 0.25 }"

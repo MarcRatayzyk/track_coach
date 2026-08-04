@@ -12,6 +12,12 @@ class EnsureEmailIsVerifiedUnlessManual
 {
     public function handle(Request $request, Closure $next, ?string $redirectToRoute = null): Response
     {
+        $user = $request->user();
+
+        if ($user?->role === 'admin') {
+            return $next($request);
+        }
+
         if (ActivationDelivery::usesManualLinks()) {
             return $next($request);
         }

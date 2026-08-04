@@ -906,7 +906,24 @@
       "adherence": "Adhérence",
       "sets": "Séries",
       "reps": "Reps",
-      "tonnagePerSet": "Tonnage / série"
+      "tonnagePerSet": "Tonnage / série",
+      "recapTitle": "Récap de la période",
+      "recapHint": "Par mouvement + totaux",
+      "trainingTime": "Temps d’entraînement",
+      "trainingTimeHint": "Estimation totale",
+      "trainingTimeUnit": "min",
+      "seeRecap": "Voir le récap",
+      "total": "Total",
+      "perLift": "Par mouvement",
+      "previousWeek": "la semaine précédente",
+      "previousMonth": "le mois précédent",
+      "weeklyTitle": "Récap hebdo",
+      "monthlyTitle": "Récap mensuel",
+      "lifts": {
+        "squat": "Squat",
+        "bench": "Bench",
+        "deadlift": "Terre"
+      }
     },
     "videoTrim": {
       "title": "Rogner la vidéo",

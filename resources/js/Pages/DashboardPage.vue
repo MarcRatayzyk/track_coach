@@ -368,6 +368,8 @@ onMounted(() => {
       <CoachRosterAwardsModal
         :open="showRosterAwardsModal"
         :awards="monthlyReadinessAwards"
+        :theme="page.props.storyThemes?.awards ?? null"
+        :copy="page.props.storyThemes?.awardsCopy ?? null"
         @close="closeRosterAwards"
       />
     </template>

@@ -216,6 +216,7 @@ class AthleteWrappedPresenter
 
         $overview = $this->overviewPayload($currentStats, $previousStats);
         $lifts = $this->liftsPayload($currentStats['lifts'], $previousStats['lifts']);
+        $recap = $this->recapPayload($currentStats, $previousStats);
 
         $shareText = "{$athlete->name} · {$label} : {$currentStats['total_reps']} reps, {$currentStats['total_sets']} séries, "
             ."{$currentStats['total_tonnage']} kg de tonnage"
@@ -230,6 +231,7 @@ class AthleteWrappedPresenter
             'session_count' => $sessions->count(),
             'overview' => $overview,
             'lifts' => $lifts,
+            'recap' => $recap,
             'share_payload' => [
                 'variant' => $variant,
                 'athlete_name' => $athlete->name,
@@ -261,6 +263,7 @@ class AthleteWrappedPresenter
      *     total_sets: int,
      *     total_reps: int,
      *     total_tonnage: int,
+     *     total_training_minutes: int,
      *     lifts: array<string, array{heaviest_bar: float, top_e1rm: float, tonnage: float}>
      * }
      */
@@ -269,15 +272,27 @@ class AthleteWrappedPresenter
         $totalSets = 0;
         $totalReps = 0;
         $totalTonnage = 0.0;
+        $totalTrainingMinutes = 0;
         $lifts = $this->emptyLiftStats();
 
         foreach ($sessions as $session) {
             $mainLift = $session->main_lift ?? 'squat';
+            $sessionHadWork = false;
 
             foreach (($session->items ?? []) as $item) {
                 $sets = (int) ($item['sets'] ?? 0);
                 $reps = (int) ($item['reps'] ?? 0);
                 $load = (float) ($item['load'] ?? 0);
+                $timedMinutes = (int) ($item['scheme_config']['duration_minutes'] ?? 0);
+
+                if ($timedMinutes > 0) {
+                    $totalTrainingMinutes += $timedMinutes;
+                    $sessionHadWork = true;
+                } elseif ($sets > 0) {
+                    // Estimation : ~2,5 min par série (effort + repos).
+                    $totalTrainingMinutes += (int) round($sets * 2.5);
+                    $sessionHadWork = true;
+                }
 
                 if ($sets <= 0 || $reps <= 0) {
                     continue;
@@ -304,13 +319,90 @@ class AthleteWrappedPresenter
                     }
                 }
             }
+
+            if ($sessionHadWork) {
+                $totalTrainingMinutes += 5;
+            }
         }
 
         return [
             'total_sets' => $totalSets,
             'total_reps' => $totalReps,
             'total_tonnage' => (int) round($totalTonnage),
+            'total_training_minutes' => $totalTrainingMinutes,
             'lifts' => $lifts,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $current
+     * @param  array<string, mixed>  $previous
+     * @return array<string, mixed>
+     */
+    private function recapPayload(array $current, array $previous): array
+    {
+        $heaviestByLift = [];
+        $e1rmByLift = [];
+        $curHeaviestTotal = 0.0;
+        $prevHeaviestTotal = 0.0;
+        $curE1rmTotal = 0.0;
+        $prevE1rmTotal = 0.0;
+
+        foreach (self::LIFTS as $key => $label) {
+            $curBar = (float) ($current['lifts'][$key]['heaviest_bar'] ?? 0);
+            $prevBar = (float) ($previous['lifts'][$key]['heaviest_bar'] ?? 0);
+            $curE1rm = (float) ($current['lifts'][$key]['top_e1rm'] ?? 0);
+            $prevE1rm = (float) ($previous['lifts'][$key]['top_e1rm'] ?? 0);
+
+            $heaviestByLift[] = [
+                'key' => $key,
+                'label' => $label,
+                'value' => $this->roundOrNull($curBar),
+                'delta' => $this->delta($curBar, $prevBar),
+            ];
+            $e1rmByLift[] = [
+                'key' => $key,
+                'label' => $label,
+                'value' => $this->roundOrNull($curE1rm, 1),
+                'delta' => $this->delta($curE1rm, $prevE1rm),
+            ];
+
+            $curHeaviestTotal += $curBar;
+            $prevHeaviestTotal += $prevBar;
+            $curE1rmTotal += $curE1rm;
+            $prevE1rmTotal += $prevE1rm;
+        }
+
+        return [
+            'heaviest_bar' => [
+                'by_lift' => $heaviestByLift,
+                'total' => [
+                    'value' => $this->roundOrNull($curHeaviestTotal),
+                    'delta' => $this->delta($curHeaviestTotal, $prevHeaviestTotal),
+                ],
+            ],
+            'top_e1rm' => [
+                'by_lift' => $e1rmByLift,
+                'total' => [
+                    'value' => $this->roundOrNull($curE1rmTotal, 1),
+                    'delta' => $this->delta($curE1rmTotal, $prevE1rmTotal),
+                ],
+            ],
+            'total_tonnage' => [
+                'value' => $current['total_tonnage'] ?? 0,
+                'delta' => $this->delta($current['total_tonnage'] ?? 0, $previous['total_tonnage'] ?? 0),
+            ],
+            'total_sets' => [
+                'value' => $current['total_sets'] ?? 0,
+                'delta' => $this->delta($current['total_sets'] ?? 0, $previous['total_sets'] ?? 0),
+            ],
+            'total_training_minutes' => [
+                'value' => $current['total_training_minutes'] ?? 0,
+                'delta' => $this->delta(
+                    $current['total_training_minutes'] ?? 0,
+                    $previous['total_training_minutes'] ?? 0,
+                ),
+            ],
         ];
     }
 

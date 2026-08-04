@@ -21,6 +21,10 @@ class LandingController extends Controller
         $user = $request->user();
 
         if ($user) {
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
+
             if ($user->role === 'coach') {
                 return redirect()->route('dashboard');
             }

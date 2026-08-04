@@ -906,7 +906,24 @@
       "adherence": "Adherence",
       "sets": "Sets",
       "reps": "Reps",
-      "tonnagePerSet": "Tonnage / set"
+      "tonnagePerSet": "Tonnage / set",
+      "recapTitle": "Period recap",
+      "recapHint": "Per lift + totals",
+      "trainingTime": "Training time",
+      "trainingTimeHint": "Estimated total",
+      "trainingTimeUnit": "min",
+      "seeRecap": "See recap",
+      "total": "Total",
+      "perLift": "Per lift",
+      "previousWeek": "the previous week",
+      "previousMonth": "the previous month",
+      "weeklyTitle": "Weekly Wrapped",
+      "monthlyTitle": "Monthly Wrapped",
+      "lifts": {
+        "squat": "Squat",
+        "bench": "Bench",
+        "deadlift": "Deadlift"
+      }
     },
     "videoTrim": {
       "title": "Trim video",

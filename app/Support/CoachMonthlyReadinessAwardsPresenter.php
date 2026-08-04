@@ -330,13 +330,20 @@ class CoachMonthlyReadinessAwardsPresenter
      */
     private function stepsScreen(array $winner): array
     {
+        $copy = AppSettingsRepository::get(AppSettingsRepository::KEY_ROSTER_AWARDS_COPY);
+        $steps = $copy['steps'] ?? [];
+
         return [
             'id' => 'most_steps',
             'kind' => 'roster_award',
             'award_key' => 'steps',
-            'eyebrow' => 'Hall of Fame · Pas',
-            'title' => 'Le podomètre a fondu',
-            'punchline' => $winner['athlete_name'].' a fait marcher le groupe… littéralement.',
+            'eyebrow' => $steps['eyebrow'] ?? 'Hall of Fame · Pas',
+            'title' => $steps['title'] ?? 'Le podomètre a fondu',
+            'punchline' => str_replace(
+                '{name}',
+                $winner['athlete_name'],
+                $steps['punchline'] ?? '{name} a fait marcher le groupe… littéralement.',
+            ),
             'athlete_name' => $winner['athlete_name'],
             'value_label' => $winner['display_value'].' pas',
             'footnote' => 'Cumul du mois · '.$winner['days'].' jour'.($winner['days'] > 1 ? 's' : '').' saisi'.($winner['days'] > 1 ? 's' : ''),
@@ -349,13 +356,20 @@ class CoachMonthlyReadinessAwardsPresenter
      */
     private function kcalScreen(array $winner): array
     {
+        $copy = AppSettingsRepository::get(AppSettingsRepository::KEY_ROSTER_AWARDS_COPY);
+        $kcal = $copy['kcal'] ?? [];
+
         return [
             'id' => 'most_kcal',
             'kind' => 'roster_award',
             'award_key' => 'kcal',
-            'eyebrow' => 'Hall of Fame · Assiette',
-            'title' => 'Le roi / la reine de la fourchette',
-            'punchline' => $winner['athlete_name'].' a mis le plus de carburant dans le réservoir.',
+            'eyebrow' => $kcal['eyebrow'] ?? 'Hall of Fame · Assiette',
+            'title' => $kcal['title'] ?? 'Le roi / la reine de la fourchette',
+            'punchline' => str_replace(
+                '{name}',
+                $winner['athlete_name'],
+                $kcal['punchline'] ?? '{name} a mis le plus de carburant dans le réservoir.',
+            ),
             'athlete_name' => $winner['athlete_name'],
             'value_label' => $winner['display_value'],
             'footnote' => 'Cumul estimé du mois · '.$winner['days'].' jour'.($winner['days'] > 1 ? 's' : '').' saisi'.($winner['days'] > 1 ? 's' : ''),
@@ -368,13 +382,20 @@ class CoachMonthlyReadinessAwardsPresenter
      */
     private function sleepScreen(array $winner): array
     {
+        $copy = AppSettingsRepository::get(AppSettingsRepository::KEY_ROSTER_AWARDS_COPY);
+        $sommeil = $copy['sommeil'] ?? [];
+
         return [
             'id' => 'biggest_sleeper',
             'kind' => 'roster_award',
             'award_key' => 'sommeil',
-            'eyebrow' => 'Hall of Fame · Oreiller',
-            'title' => 'Le plus gros dormeur',
-            'punchline' => $winner['athlete_name'].' collectionne les heures de lit comme des médailles.',
+            'eyebrow' => $sommeil['eyebrow'] ?? 'Hall of Fame · Oreiller',
+            'title' => $sommeil['title'] ?? 'Le plus gros dormeur',
+            'punchline' => str_replace(
+                '{name}',
+                $winner['athlete_name'],
+                $sommeil['punchline'] ?? '{name} collectionne les heures de lit comme des médailles.',
+            ),
             'athlete_name' => $winner['athlete_name'],
             'value_label' => 'Souvent '.$winner['display_value'],
             'footnote' => 'Meilleure moyenne sommeil du mois · '.$winner['days'].' nuit'.($winner['days'] > 1 ? 's' : ''),

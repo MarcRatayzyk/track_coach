@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Web\Admin\AdminDashboardController;
+use App\Http\Controllers\Web\Admin\AdminDesignController;
+use App\Http\Controllers\Web\Admin\AdminUserController;
 use App\Http\Controllers\Web\CompetitionLiveController;
 use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Controllers\Web\ForgotPasswordController;
@@ -95,6 +98,16 @@ Route::middleware('auth')->group(function (): void {
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/subscription/blocked', [BillingController::class, 'blocked'])
         ->name('subscription.blocked');
+
+    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function (): void {
+        Route::get('/', AdminDashboardController::class)->name('dashboard');
+        Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+        Route::patch('/users/{user}/disable', [AdminUserController::class, 'toggleDisable'])->name('users.disable');
+        Route::patch('/users/{user}/extend-trial', [AdminUserController::class, 'extendTrial'])->name('users.extend-trial');
+        Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+        Route::get('/design', [AdminDesignController::class, 'edit'])->name('design.edit');
+        Route::put('/design', [AdminDesignController::class, 'update'])->name('design.update');
+    });
 
     Route::middleware('billing')->group(function (): void {
         Route::get('/athlete/dashboard', [AppPageController::class, 'athleteDashboard'])

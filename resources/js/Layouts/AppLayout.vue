@@ -32,6 +32,7 @@ let baselineViewportHeight = 0;
 let focusOutTimer = 0;
 
 const isCoach = computed(() => user.value?.role === 'coach');
+const isAdmin = computed(() => user.value?.role === 'admin');
 const messagingInbox = computed(() => page.props.messagingInbox ?? null);
 let messagingPollTimer = null;
 const subscribedThreadChannels = [];
@@ -229,6 +230,9 @@ const coachNavDefs = [
 const billing = computed(() => page.props.billing ?? null);
 const isDemoAccount = computed(() => Boolean(user.value?.is_demo || billing.value?.isDemo));
 const homeHref = computed(() => {
+    if (isAdmin.value) {
+        return '/admin';
+    }
     if (isCoach.value) {
         return billing.value?.hasAccess ? '/dashboard' : '/billing';
     }
@@ -284,6 +288,13 @@ watch(
 const navItems = computed(() => {
     if (!user.value) {
         return [];
+    }
+    if (isAdmin.value) {
+        return [
+            { label: 'Dashboard', shortLabel: 'Admin', href: '/admin', pattern: '/admin', icon: 'dashboard' },
+            { label: 'Utilisateurs', shortLabel: 'Users', href: '/admin/users', pattern: '/admin/users', icon: 'users' },
+            { label: 'Design', shortLabel: 'Design', href: '/admin/design', pattern: '/admin/design', icon: 'clipboard' },
+        ];
     }
     if (!isCoach.value) {
         if (billing.value?.hasAccess === false) {
@@ -358,6 +369,9 @@ const navItems = computed(() => {
 
 function navActive(pattern) {
     const url = page.url.split('?')[0];
+    if (pattern === '/admin') {
+        return url === '/admin' || url === '/admin/';
+    }
     if (pattern === '/athletes') {
         return url === '/athletes' || url.startsWith('/athletes/');
     }
@@ -603,7 +617,7 @@ watch(() => page.url, () => {
                     <p
                         class="mt-1.5 inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-300"
                     >
-                        {{ user.role === 'coach' ? t('common.coach') : t('common.athlete') }}
+                        {{ user.role === 'coach' ? t('common.coach') : (user.role === 'admin' ? 'Admin' : t('common.athlete')) }}
                     </p>
                 </div>
             </Link>

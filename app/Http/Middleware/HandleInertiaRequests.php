@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Exercise;
+use App\Support\AppSettingsRepository;
 use App\Support\AuthSidebarSupport;
 use App\Support\ActivationDelivery;
 use App\Support\BillingAccess;
@@ -71,6 +72,14 @@ class HandleInertiaRequests extends Middleware
                 'manualActivationLinks' => fn () => ActivationDelivery::usesManualLinks(),
             ],
             'legal' => fn () => config('legal'),
+            'storyThemes' => function () use ($request) {
+                $user = $request->user();
+                if (! $user) {
+                    return null;
+                }
+
+                return AppSettingsRepository::storyThemesPayload();
+            },
             'messagingInbox' => function () use ($request) {
                 $user = $request->user();
                 if (! $user || ! BillingAccess::hasAppAccess($user)) {

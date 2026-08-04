@@ -86,19 +86,37 @@ class SecurityHeaders
      */
     private function reverbConnectSources(): array
     {
-        $host = trim((string) config('broadcasting.connections.reverb.options.host'));
+        $options = config('broadcasting.connections.reverb.options', []);
+        $host = trim((string) ($options['host'] ?? ''));
         if ($host === '') {
             return ['wss:', 'ws:'];
         }
 
         $host = preg_replace('#^https?://#', '', $host) ?: $host;
+        $host = preg_replace('#:\d+$#', '', $host) ?: $host;
+
+        $port = (int) ($options['port'] ?? 0);
+        $scheme = (string) ($options['scheme'] ?? 'https');
+        $authority = $this->hostWithPort($host, $port, $scheme);
 
         return [
-            "wss://{$host}",
-            "ws://{$host}",
-            "https://{$host}",
-            "http://{$host}",
+            "wss://{$authority}",
+            "ws://{$authority}",
+            "https://{$authority}",
+            "http://{$authority}",
         ];
+    }
+
+    private function hostWithPort(string $host, int $port, string $scheme): string
+    {
+        if ($port <= 0) {
+            return $host;
+        }
+
+        $isDefault = ($scheme === 'https' && $port === 443)
+            || ($scheme === 'http' && $port === 80);
+
+        return $isDefault ? $host : "{$host}:{$port}";
     }
 
     /**
