@@ -5,7 +5,11 @@ import { useI18n } from 'vue-i18n';
 import { filterEntriesByRange } from '../utils/athleteOverviewStats';
 import ReadinessDynamicFields from './ReadinessDynamicFields.vue';
 import ReadinessWeekTable from './ReadinessWeekTable.vue';
-import { emptyValuesForFields } from '../config/readinessFormFields';
+import {
+  averageExternalFactorScore,
+  emptyValuesForFields,
+  externalFactorScoreTone,
+} from '../config/readinessFormFields';
 
 const { t } = useI18n();
 
@@ -72,6 +76,12 @@ const readinessLast7d = computed(() =>
 
 const checkins7d = computed(() => readinessLast7d.value.length);
 
+const avgExternalFactors = computed(() =>
+  averageExternalFactorScore(fields.value, props.readinessRecent, { days: 7 }),
+);
+
+const avgExternalFactorsTone = computed(() => externalFactorScoreTone(avgExternalFactors.value));
+
 function submitReadiness() {
   readinessFormState.post(`/athletes/${props.athleteId}/readiness`, {
     preserveScroll: true,
@@ -91,7 +101,18 @@ function submitBodyWeight() {
     :class="compact ? 'p-3' : 'flex h-full flex-col p-4'"
   >
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-sm font-semibold text-white">{{ t('athleteUi.readiness.externalFactors') }}</h2>
+      <div class="flex flex-wrap items-center gap-2">
+        <h2 class="text-sm font-semibold text-white">{{ t('athleteUi.readiness.externalFactors') }}</h2>
+        <span
+          v-if="avgExternalFactors != null"
+          class="rounded-lg border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-[11px] font-semibold"
+          :class="avgExternalFactorsTone"
+          :title="t('athleteUi.stats.avgExternalFactorsHint')"
+        >
+          {{ t('athleteUi.stats.avgExternalFactors') }}
+          {{ avgExternalFactors.toLocaleString(undefined, { maximumFractionDigits: 1 }) }}/5
+        </span>
+      </div>
       <div
         class="rounded-lg border border-emerald-500/30 bg-emerald-950/20 px-2.5 py-1.5 text-center"
       >

@@ -234,6 +234,75 @@ export function localizeReadinessFields(fields) {
   return (fields ?? []).map((field) => localizeReadinessField(field));
 }
 
+/** ISO dates for the last N calendar days ending today (inclusive), oldest → newest. */
+export function rollingLastDaysIso(days = 7) {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const out = [];
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+    out.push(date.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
+/**
+ * Average of select-type external factors on a 1–5 scale (options ordered worst → best).
+ * Defaults to the last 7 rolling days.
+ */
+export function averageExternalFactorScore(fields = [], entries = [], { days = 7 } = {}) {
+  const window = new Set(rollingLastDaysIso(days));
+  const selectFields = (fields ?? []).filter(
+    (field) => field?.type === 'select' && Array.isArray(field.options) && field.options.length > 0,
+  );
+  if (!selectFields.length) {
+    return null;
+  }
+
+  let sum = 0;
+  let count = 0;
+  for (const entry of entries ?? []) {
+    if (!window.has(entry?.entry_date)) {
+      continue;
+    }
+    const values = entry?.values ?? {};
+    for (const field of selectFields) {
+      const raw = values[field.id];
+      if (raw == null || raw === '') {
+        continue;
+      }
+      const idx = field.options.findIndex((opt) => String(opt.value) === String(raw));
+      if (idx < 0) {
+        continue;
+      }
+      const maxIdx = field.options.length - 1;
+      const score = maxIdx === 0 ? 5 : 1 + (idx / maxIdx) * 4;
+      sum += score;
+      count += 1;
+    }
+  }
+
+  if (!count) {
+    return null;
+  }
+
+  return Math.round((sum / count) * 10) / 10;
+}
+
+export function externalFactorScoreTone(score) {
+  if (score == null) {
+    return 'text-slate-500';
+  }
+  if (score >= 4) {
+    return 'text-emerald-400';
+  }
+  if (score >= 3) {
+    return 'text-amber-400';
+  }
+  return 'text-red-400';
+}
+
 export function validateReadinessFieldsDraft(fields) {
   const errors = [];
   if (!Array.isArray(fields) || fields.length === 0) {

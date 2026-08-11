@@ -2175,7 +2175,7 @@
       "maj": "MAJ",
       "ok": "OK",
       "day": "Jour",
-      "noEntryWeek": "Aucune saisie cette semaine.",
+      "noEntryWeek": "Aucune saisie sur les 7 derniers jours.",
       "days": {
         "sun": "Dim",
         "mon": "Lun",
@@ -2284,6 +2284,8 @@
       "sessionsOnDay": "{completed}/{planned} séances au bon jour",
       "weight": "Poids",
       "externalFactors": "Facteurs externes",
+      "avgExternalFactors": "Moy.",
+      "avgExternalFactorsHint": "Moyenne des facteurs externes (échelles qualitatives) sur les 7 derniers jours.",
       "noExternalData": "Aucune saisie de facteurs externes sur cette période.",
       "prProgression": "Progression des PR",
       "savePr": "Enregistrer un PR",

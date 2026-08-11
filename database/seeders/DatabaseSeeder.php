@@ -102,7 +102,7 @@ class DatabaseSeeder extends Seeder
     {
         return [
             'daily' => [
-                'name' => 'Camille Bernard',
+                'name' => 'Madison Brooks',
                 'email' => 'daily@trackcoach.dev',
                 'weight_category' => 'f63',
                 'sex' => 'female',
@@ -119,7 +119,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['3-6'],
             ],
             'weekly' => [
-                'name' => 'Hugo Martin',
+                'name' => 'Jake Thompson',
                 'email' => 'athlete@trackcoach.dev',
                 'weight_category' => 'm93',
                 'sex' => 'male',
@@ -137,7 +137,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['2-4', '4-6'],
             ],
             'return' => [
-                'name' => 'Léa Petit',
+                'name' => 'Olivia Parker',
                 'email' => 'return@trackcoach.dev',
                 'weight_category' => 'f76',
                 'sex' => 'female',
@@ -152,7 +152,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['1-6', '3-4', '5-6', '6-4'],
             ],
             'thomas' => [
-                'name' => 'Thomas Dubois',
+                'name' => 'Ethan Carter',
                 'email' => 'thomas@trackcoach.dev',
                 'weight_category' => 'm83',
                 'sex' => 'male',
@@ -168,7 +168,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['2-6'],
             ],
             'sarah' => [
-                'name' => 'Sarah Moreau',
+                'name' => 'Sarah Mitchell',
                 'email' => 'sarah@trackcoach.dev',
                 'weight_category' => 'f57',
                 'sex' => 'female',
@@ -185,7 +185,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => [],
             ],
             'nicolas' => [
-                'name' => 'Nicolas Leroy',
+                'name' => 'Noah Reynolds',
                 'email' => 'nicolas@trackcoach.dev',
                 'weight_category' => 'm105',
                 'sex' => 'male',
@@ -201,7 +201,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['3-2', '5-4'],
             ],
             'emma' => [
-                'name' => 'Emma Rousseau',
+                'name' => 'Emma Sullivan',
                 'email' => 'emma@trackcoach.dev',
                 'weight_category' => 'f69',
                 'sex' => 'female',
@@ -218,7 +218,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['4-4'],
             ],
             'antoine' => [
-                'name' => 'Antoine Girard',
+                'name' => 'Anthony Garcia',
                 'email' => 'antoine@trackcoach.dev',
                 'weight_category' => 'm120',
                 'sex' => 'male',
@@ -234,7 +234,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['1-4', '2-2'],
             ],
             'julie' => [
-                'name' => 'Julie Lambert',
+                'name' => 'Julia Bennett',
                 'email' => 'julie@trackcoach.dev',
                 'weight_category' => 'f47',
                 'sex' => 'female',
@@ -251,7 +251,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['3-6'],
             ],
             'maxime' => [
-                'name' => 'Maxime Fontaine',
+                'name' => 'Max Foster',
                 'email' => 'maxime@trackcoach.dev',
                 'weight_category' => 'm74',
                 'sex' => 'male',
@@ -268,7 +268,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['2-4', '3-4'],
             ],
             'chloe' => [
-                'name' => 'Chloé Bertrand',
+                'name' => 'Chloe Bryant',
                 'email' => 'chloe@trackcoach.dev',
                 'weight_category' => 'f84',
                 'sex' => 'female',
@@ -284,7 +284,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['1-2', '4-6', '5-2'],
             ],
             'lucas' => [
-                'name' => 'Lucas Perrin',
+                'name' => 'Lucas Price',
                 'email' => 'lucas@trackcoach.dev',
                 'weight_category' => 'm59',
                 'sex' => 'male',
@@ -301,7 +301,7 @@ class DatabaseSeeder extends Seeder
                 'skip_sessions' => ['5-6'],
             ],
             'ines' => [
-                'name' => 'Inès Renault',
+                'name' => 'Iris Ramirez',
                 'email' => 'ines@trackcoach.dev',
                 'weight_category' => 'f76',
                 'sex' => 'female',
@@ -569,7 +569,7 @@ class DatabaseSeeder extends Seeder
                 'week_id' => $week->id,
                 'day_number' => 2,
                 'main_lift' => ProgramTrainingDay::LIFT_SQUAT,
-                'session_label' => 'Lower comp',
+                'session_label' => 'Bas compétition',
             ]);
 
             $this->createProgramExercise($squatDay, 0, ProgramDayExercise::SECTION_TOPSET, 'Squat pause', 'squat', 1, $squatTopReps[$weekNumber - 1], null, $squatTopPct[$weekNumber - 1]);
@@ -581,7 +581,7 @@ class DatabaseSeeder extends Seeder
                 'week_id' => $week->id,
                 'day_number' => 4,
                 'main_lift' => ProgramTrainingDay::LIFT_BENCH,
-                'session_label' => 'Upper comp',
+                'session_label' => 'Haut compétition',
             ]);
 
             $this->createProgramExercise($benchDay, 0, ProgramDayExercise::SECTION_TOPSET, 'Bench pause', 'bench', 1, $benchTopReps[$weekNumber - 1], null, $benchTopPct[$weekNumber - 1]);
@@ -593,7 +593,7 @@ class DatabaseSeeder extends Seeder
                 'week_id' => $week->id,
                 'day_number' => 3,
                 'main_lift' => ProgramTrainingDay::LIFT_BENCH,
-                'session_label' => 'Upper technique',
+                'session_label' => 'Haut technique',
             ]);
 
             $this->createProgramExercise($midWeekDay, 0, ProgramDayExercise::SECTION_TOPSET, 'Bench technique', 'bench', 1, $benchTopReps[$weekNumber - 1], null, max(60, $benchTopPct[$weekNumber - 1] - 8));
@@ -605,7 +605,7 @@ class DatabaseSeeder extends Seeder
                 'week_id' => $week->id,
                 'day_number' => 6,
                 'main_lift' => ProgramTrainingDay::LIFT_DEADLIFT,
-                'session_label' => 'Pull & posterior',
+                'session_label' => 'Tirage & postérieur',
             ]);
 
             $this->createProgramExercise($deadliftDay, 0, ProgramDayExercise::SECTION_TOPSET, 'Deadlift conventionnel', 'deadlift', 1, $deadliftTopReps[$weekNumber - 1], null, $deadliftTopPct[$weekNumber - 1]);

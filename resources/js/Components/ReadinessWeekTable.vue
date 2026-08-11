@@ -3,7 +3,12 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { localeTag } from '../i18n';
 import { formatCalendarFr } from '../utils/formatDates';
-import { localizeReadinessFields, resolveOptionColor, resolveOptionLabel } from '../config/readinessFormFields';
+import {
+  localizeReadinessFields,
+  resolveOptionColor,
+  resolveOptionLabel,
+  rollingLastDaysIso,
+} from '../config/readinessFormFields';
 
 const { t, locale } = useI18n();
 
@@ -38,34 +43,21 @@ const sortedFields = computed(() =>
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
 );
 
-/** Semaine en cours (lundi → dimanche). */
+/** 7 derniers jours glissants (aujourd'hui inclus), du plus ancien au plus récent. */
 const dayRows = computed(() => {
   const byDate = new Map(
     (props.entries ?? []).map((entry) => [entry.entry_date, entry]),
   );
 
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-
-  const day = today.getDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() + mondayOffset);
-
-  const rows = [];
-  for (let i = 0; i < 7; i += 1) {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + i);
-    const iso = date.toISOString().slice(0, 10);
-    rows.push({
+  return rollingLastDaysIso(7).map((iso) => {
+    const date = new Date(`${iso}T12:00:00`);
+    return {
       date: iso,
       label: DAY_LABELS.value[date.getDay()],
       fullLabel: formatCalendarFr(iso, 'medium'),
       entry: byDate.get(iso) ?? null,
-    });
-  }
-
-  return rows;
+    };
+  });
 });
 
 function cellValue(row, field) {

@@ -2175,7 +2175,7 @@
       "maj": "Upd.",
       "ok": "OK",
       "day": "Day",
-      "noEntryWeek": "No entries this week.",
+      "noEntryWeek": "No entries in the last 7 days.",
       "days": {
         "sun": "Sun",
         "mon": "Mon",
@@ -2284,6 +2284,8 @@
       "sessionsOnDay": "{completed}/{planned} sessions on the right day",
       "weight": "Weight",
       "externalFactors": "External factors",
+      "avgExternalFactors": "Avg",
+      "avgExternalFactorsHint": "Average of external factors (qualitative scales) over the last 7 days.",
       "noExternalData": "No external factor entries for this period.",
       "prProgression": "PR progression",
       "savePr": "Log a PR",

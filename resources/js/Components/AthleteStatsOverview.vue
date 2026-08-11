@@ -1,6 +1,10 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {
+  averageExternalFactorScore,
+  externalFactorScoreTone,
+} from '../config/readinessFormFields';
 import { filterEntriesByRange } from '../utils/athleteOverviewStats';
 import AthletePrForm from './AthletePrForm.vue';
 import BodyWeightTrendChart from './charts/BodyWeightTrendChart.vue';
@@ -93,6 +97,12 @@ const filteredReadiness = computed(() =>
 const filteredBodyWeight = computed(() =>
   filterEntriesByRange(props.bodyWeightRecent, 'entry_date', wellnessTimeRange.value),
 );
+
+const avgExternalFactors = computed(() =>
+  averageExternalFactorScore(props.readinessForm?.fields ?? [], props.readinessRecent, { days: 7 }),
+);
+
+const avgExternalFactorsTone = computed(() => externalFactorScoreTone(avgExternalFactors.value));
 </script>
 
 <template>
@@ -146,7 +156,18 @@ const filteredBodyWeight = computed(() =>
 
     <article class="mt-3 min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50 p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 class="text-sm font-semibold text-white">{{ t('athleteUi.stats.externalFactors') }}</h3>
+        <div class="flex flex-wrap items-center gap-2">
+          <h3 class="text-sm font-semibold text-white">{{ t('athleteUi.stats.externalFactors') }}</h3>
+          <span
+            v-if="avgExternalFactors != null"
+            class="rounded-lg border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-[11px] font-semibold"
+            :class="avgExternalFactorsTone"
+            :title="t('athleteUi.stats.avgExternalFactorsHint')"
+          >
+            {{ t('athleteUi.stats.avgExternalFactors') }}
+            {{ avgExternalFactors.toLocaleString(undefined, { maximumFractionDigits: 1 }) }}/5
+          </span>
+        </div>
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="option in wellnessTimeRangeOptions"
