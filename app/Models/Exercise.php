@@ -49,14 +49,16 @@ class Exercise extends Model
     }
 
     /**
-     * Catégorie d'accessoire déjà présente au catalogue
-     * (jambes, dos, triceps, épaules, rowing).
-     * Les pectoraux n'ont pas de carte dédiée : ils partent dans Épaules,
-     * et le coach peut changer la catégorie à l'édition.
+     * Catégorie d'accessoire du catalogue
+     * (jambes, dos, pectoraux, triceps, épaules, rowing).
      */
     public static function inferAccessoryGroupSlug(?string $lift, ?string $movementPattern): string
     {
         $muscle = mb_strtolower(Str::ascii((string) $movementPattern));
+
+        if (str_contains($muscle, 'pector') || str_contains($muscle, 'chest')) {
+            return 'pectoraux-accessoire';
+        }
 
         if (str_contains($muscle, 'triceps')) {
             return 'triceps';

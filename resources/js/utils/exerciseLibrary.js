@@ -36,6 +36,10 @@ export function inferAccessoryGroupSlug(exercise) {
   const muscle = normalizeMuscle(exercise?.movement_pattern);
   const lift = exercise?.lift;
 
+  if (muscle.includes('pector') || muscle.includes('chest')) {
+    return 'pectoraux-accessoire';
+  }
+
   if (muscle.includes('triceps')) {
     return 'triceps';
   }

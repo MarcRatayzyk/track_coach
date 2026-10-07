@@ -54,6 +54,13 @@ class ExerciseLibrarySeeder extends Seeder
                 'variants' => ['Développé militaire', 'Élévations latérales', 'Face pull'],
             ],
             [
+                'name' => 'Pectoraux accessoire',
+                'lift' => Exercise::LIFT_BENCH,
+                'category' => Exercise::CATEGORY_ACCESSORY,
+                'equipment' => 'machine',
+                'variants' => ['Pec fly', 'Développé machine pectoraux', 'Écarté poulie'],
+            ],
+            [
                 'name' => 'Jambes accessoire',
                 'lift' => Exercise::LIFT_SQUAT,
                 'category' => Exercise::CATEGORY_ACCESSORY,
