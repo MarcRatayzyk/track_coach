@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
-import { filterExerciseCatalog } from '../utils/exerciseLibrary';
+import { localizedExerciseName } from '../utils/exerciseNames';
+import { filterExerciseCatalog, resolveAccessoryParentId } from '../utils/exerciseLibrary';
 
 const props = defineProps({
   defaultLift: {
@@ -85,21 +86,31 @@ const chips = computed(() => {
   return items;
 });
 
+function chipsForExercise(exercise) {
+  const variants = exercise.variants ?? [];
+
+  return variants.length
+    ? variants.map((variant) => buildChip(exercise, variant))
+    : [buildChip(exercise)];
+}
+
 const accessoryGroups = computed(() => {
   if (!props.accessoryPanel || activeFilter.value !== 'accessory') {
     return [];
   }
 
-  return exercises.value.map((exercise) => {
-    const variants = exercise.variants ?? [];
-    const groupChips = variants.length
-      ? variants.map((variant) => buildChip(exercise, variant))
-      : [buildChip(exercise)];
+  const groups = exercises.value.filter((exercise) => !exercise.is_custom);
+  const customs = exercises.value.filter((exercise) => exercise.is_custom);
+
+  return groups.map((exercise) => {
+    const extraChips = customs
+      .filter((custom) => Number(resolveAccessoryParentId(custom, groups)) === Number(exercise.id))
+      .flatMap((custom) => chipsForExercise(custom));
 
     return {
       id: exercise.id,
-      label: exercise.name,
-      chips: groupChips,
+      label: localizedExerciseName(exercise.name),
+      chips: [...chipsForExercise(exercise), ...extraChips],
     };
   });
 });
@@ -201,22 +212,22 @@ watch(
 
     <div
       v-if="showAccessoryPanel"
-      class="mt-2 space-y-2.5 rounded-xl border border-slate-800 bg-slate-950/70 p-2.5"
+      class="mt-1.5 grid grid-cols-2 gap-1.5 rounded-lg border border-slate-800 bg-slate-950/70 p-1.5"
     >
       <div
         v-for="group in accessoryGroups"
         :key="group.id"
-        class="rounded-lg border border-slate-800/80 bg-slate-900/40 p-2"
+        class="rounded-md border border-slate-800/80 bg-slate-900/40 p-1.5"
       >
         <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
           {{ group.label }}
         </p>
-        <div class="mt-1.5 flex flex-wrap gap-1.5">
+        <div class="mt-1 flex flex-wrap gap-1">
           <button
             v-for="chip in group.chips"
             :key="chip.key"
             type="button"
-            class="rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition"
+            class="rounded-md border px-2 py-1 text-left text-[11px] font-medium transition"
             :class="
               isChipSelected(chip)
                 ? '!border-emerald-500 !bg-emerald-600 !text-white shadow-sm shadow-emerald-900/30'
@@ -228,7 +239,7 @@ watch(
           </button>
         </div>
       </div>
-      <p v-if="!accessoryGroups.length" class="py-2 text-center text-xs text-slate-500">
+      <p v-if="!accessoryGroups.length" class="col-span-2 py-2 text-center text-xs text-slate-500">
         Aucun accessoire disponible.
       </p>
     </div>

@@ -139,9 +139,9 @@ function removeRow() {
 
 <template>
   <aside
-    class="flex w-[36rem] shrink-0 flex-col rounded-xl border border-slate-800 bg-slate-900/90 shadow-lg"
+    class="flex h-full max-h-[calc(100vh-2rem)] w-[36rem] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900/90 shadow-lg"
   >
-    <div class="flex items-center justify-between gap-2 border-b border-slate-800 px-4 py-2.5">
+    <div class="flex shrink-0 items-center justify-between gap-2 border-b border-slate-800 px-3 py-2">
       <div class="min-w-0">
         <p class="text-[11px] font-semibold uppercase tracking-wide text-blue-300">{{ t('programBuilder.rowEditor.quickEdit') }}</p>
         <p class="truncate text-sm font-semibold text-white">
@@ -169,7 +169,7 @@ function removeRow() {
       </div>
     </div>
 
-    <div v-if="row" class="space-y-3 px-4 py-3">
+    <div v-if="row" class="tc-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2">
       <div>
         <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ t('programBuilder.rowEditor.type') }}</p>
         <div class="mt-1.5 flex gap-1.5">
@@ -279,7 +279,7 @@ function removeRow() {
       {{ t('programBuilder.rowEditor.emptyHint') }}
     </div>
 
-    <div v-if="row" class="border-t border-slate-800 px-4 py-2.5">
+    <div v-if="row" class="shrink-0 border-t border-slate-800 px-3 py-2">
       <button
         type="button"
         class="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"

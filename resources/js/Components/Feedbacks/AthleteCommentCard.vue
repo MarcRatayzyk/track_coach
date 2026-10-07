@@ -53,7 +53,7 @@ const title = computed(() =>
       class="mt-4 rounded-[14px] border border-slate-800 bg-slate-900/50 p-3"
     >
       <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-        Notes de séance
+        {{ t('app.feedbacks.sessionNotes') }}
       </p>
       <ul class="mt-2 space-y-1.5">
         <li

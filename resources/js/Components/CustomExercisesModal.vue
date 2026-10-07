@@ -1,8 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import { localizedExerciseName } from '../utils/exerciseNames';
+import { builtinAccessoryExercises, resolveAccessoryParentId } from '../utils/exerciseLibrary';
 
 const { t } = useI18n();
 
@@ -21,9 +22,7 @@ const mainLiftExercises = computed(() =>
   catalog.value.filter((exercise) => !exercise.is_custom && exercise.category === 'main_lift'),
 );
 
-const accessoryExercises = computed(() =>
-  catalog.value.filter((exercise) => exercise.category === 'accessory'),
-);
+const accessoryGroups = computed(() => builtinAccessoryExercises(catalog.value));
 
 const editingId = ref(null);
 const search = ref('');
@@ -33,7 +32,10 @@ const form = useForm({
   lift: 'general',
   category: 'accessory',
   movement_pattern: '',
+  parent_exercise_id: null,
 });
+
+const parentTouched = ref(false);
 
 const liftOptions = computed(() => [
   { value: 'squat', label: t('config.lifts.squat') },
@@ -64,9 +66,25 @@ const muscleOptions = computed(() => [
 const liftLabelByValue = computed(() => Object.fromEntries(liftOptions.value.map((option) => [option.value, option.label])));
 const categoryLabelByValue = computed(() => Object.fromEntries(categoryOptions.value.map((option) => [option.value, option.label])));
 
+const accessoryGroupOptions = computed(() =>
+  accessoryGroups.value.map((exercise) => ({
+    value: exercise.id,
+    label: localizedExerciseName(exercise.name),
+  })),
+);
+
+function accessoryGroupLabel(exercise) {
+  const parentId = resolveAccessoryParentId(exercise, accessoryGroups.value);
+  const group = accessoryGroups.value.find((item) => item.id === parentId);
+
+  return group ? localizedExerciseName(group.name) : null;
+}
+
 function exerciseMeta(exercise) {
   const lift = liftLabelByValue.value[exercise.lift] ?? exercise.lift;
-  const category = categoryLabelByValue.value[exercise.category] ?? exercise.category;
+  const category = exercise.is_custom && exercise.category === 'accessory'
+    ? (accessoryGroupLabel(exercise) ?? categoryLabelByValue.value[exercise.category] ?? exercise.category)
+    : (categoryLabelByValue.value[exercise.category] ?? exercise.category);
   const muscle = exercise.movement_pattern ? String(exercise.movement_pattern) : null;
   return [lift, category, muscle].filter(Boolean).join(' · ');
 }
@@ -85,8 +103,27 @@ function matchesSearch(exercise) {
 }
 
 const filteredMainLifts = computed(() => mainLiftExercises.value.filter(matchesSearch));
-const filteredAccessories = computed(() => accessoryExercises.value.filter(matchesSearch));
 const filteredCustom = computed(() => customExercises.value.filter(matchesSearch));
+
+const accessoryCards = computed(() => {
+  const groups = accessoryGroups.value;
+  const customs = catalog.value.filter((exercise) => exercise.is_custom && exercise.category === 'accessory');
+
+  return groups
+    .map((group) => {
+      const extras = customs.filter((exercise) => Number(resolveAccessoryParentId(exercise, groups)) === Number(group.id));
+
+      return {
+        ...group,
+        chipNames: [...new Set([
+          ...variantNames(group),
+          ...extras.flatMap((exercise) => variantNames(exercise)),
+        ])],
+        searchable: [group, ...extras],
+      };
+    })
+    .filter((card) => card.searchable.some((exercise) => matchesSearch(exercise)));
+});
 
 function variantNames(exercise) {
   const variants = exercise.variants ?? [];
@@ -96,19 +133,50 @@ function variantNames(exercise) {
   return variants.map((variant) => localizedExerciseName(variant.name));
 }
 
+function suggestedParentId() {
+  return resolveAccessoryParentId({
+    is_custom: true,
+    category: 'accessory',
+    lift: form.lift,
+    movement_pattern: form.movement_pattern,
+    parent_exercise_id: null,
+  }, accessoryGroups.value);
+}
+
 function resetForm() {
   editingId.value = null;
+  parentTouched.value = false;
   form.reset();
   form.clearErrors();
+  form.parent_exercise_id = suggestedParentId();
 }
 
 function startEdit(exercise) {
   editingId.value = exercise.id;
+  parentTouched.value = true;
   form.name = exercise.name;
   form.lift = exercise.lift;
   form.category = exercise.category;
   form.movement_pattern = exercise.movement_pattern ?? '';
+  form.parent_exercise_id = exercise.category === 'accessory'
+    ? resolveAccessoryParentId(exercise, accessoryGroups.value)
+    : null;
 }
+
+watch(
+  () => [form.category, form.lift, form.movement_pattern, accessoryGroups.value],
+  () => {
+    if (form.category !== 'accessory') {
+      form.parent_exercise_id = null;
+      return;
+    }
+
+    if (!parentTouched.value || !form.parent_exercise_id) {
+      form.parent_exercise_id = suggestedParentId();
+    }
+  },
+  { immediate: true },
+);
 
 function submit() {
   if (editingId.value) {
@@ -206,6 +274,23 @@ function close() {
                   {{ option.label }}
                 </option>
               </select>
+            </label>
+
+            <label v-if="form.category === 'accessory'" class="block text-sm">
+              <span class="text-slate-300">{{ t('modals.customExercises.placeIn') }}</span>
+              <select
+                v-model="form.parent_exercise_id"
+                required
+                class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
+                @change="parentTouched = true"
+              >
+                <option v-for="option in accessoryGroupOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+              <span v-if="form.errors.parent_exercise_id" class="text-xs text-red-400">
+                {{ form.errors.parent_exercise_id }}
+              </span>
             </label>
 
             <label class="block text-sm">
@@ -317,13 +402,13 @@ function close() {
             </div>
           </section>
 
-          <section v-if="filteredAccessories.length" class="mt-8">
+          <section v-if="accessoryCards.length" class="mt-8">
             <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              {{ t('modals.customExercises.accessories', { count: filteredAccessories.length }) }}
+              {{ t('modals.customExercises.accessories', { count: accessoryCards.length }) }}
             </h3>
             <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <article
-                v-for="exercise in filteredAccessories"
+                v-for="exercise in accessoryCards"
                 :key="`acc-${exercise.id}`"
                 class="rounded-xl border border-emerald-900/40 bg-slate-950/50 p-3"
               >
@@ -331,7 +416,7 @@ function close() {
                 <p class="mt-0.5 text-xs text-slate-500">{{ exerciseMeta(exercise) }}</p>
                 <div class="mt-2.5 flex flex-wrap gap-1.5">
                   <span
-                    v-for="name in variantNames(exercise)"
+                    v-for="name in exercise.chipNames"
                     :key="`${exercise.id}-${name}`"
                     class="rounded-md border border-emerald-500/30 bg-emerald-950/25 px-2 py-1 text-xs text-emerald-100"
                   >
@@ -343,7 +428,7 @@ function close() {
           </section>
 
           <p
-            v-if="!filteredCustom.length && !filteredMainLifts.length && !filteredAccessories.length"
+            v-if="!filteredCustom.length && !filteredMainLifts.length && !accessoryCards.length"
             class="mt-8 text-sm text-slate-500"
           >
             {{ t('modals.customExercises.noMatch') }}

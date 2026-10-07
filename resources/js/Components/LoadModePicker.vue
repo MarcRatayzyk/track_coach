@@ -125,7 +125,7 @@ watch(
         step="0.5"
         placeholder="Ex. 82.5"
         class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 text-white"
-        :class="compact ? 'px-3 py-3 text-lg font-semibold' : 'px-3 py-3 text-xl font-semibold'"
+        :class="compact ? 'px-3 py-1.5 text-base font-semibold' : 'px-3 py-3 text-xl font-semibold'"
         @input="updateField('load_percent', $event.target.value)"
       />
     </label>
@@ -144,7 +144,7 @@ watch(
         step="0.5"
         placeholder="Ex. 140"
         class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 text-white"
-        :class="compact ? 'px-3 py-3 text-lg font-semibold' : 'px-3 py-3 text-xl font-semibold'"
+        :class="compact ? 'px-3 py-1.5 text-base font-semibold' : 'px-3 py-3 text-xl font-semibold'"
         @input="updateField('load', $event.target.value)"
       />
     </label>

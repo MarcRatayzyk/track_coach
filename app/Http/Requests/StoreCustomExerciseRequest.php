@@ -39,6 +39,15 @@ class StoreCustomExerciseRequest extends FormRequest
                 'other',
             ])],
             'movement_pattern' => ['nullable', 'string', 'max:80'],
+            'parent_exercise_id' => [
+                Rule::requiredIf(fn () => $this->input('category') === Exercise::CATEGORY_ACCESSORY),
+                'nullable',
+                'integer',
+                Rule::exists('exercises', 'id')->where(fn ($query) => $query
+                    ->where('category', Exercise::CATEGORY_ACCESSORY)
+                    ->where('is_custom', false)
+                    ->whereNull('coach_id')),
+            ],
         ];
     }
 }

@@ -69,6 +69,9 @@ class ExerciseLibraryController extends Controller
             'category' => $validated['category'],
             'equipment' => $validated['equipment'] ?? 'other',
             'movement_pattern' => $validated['movement_pattern'] ?? null,
+            'parent_exercise_id' => $validated['category'] === Exercise::CATEGORY_ACCESSORY
+                ? $validated['parent_exercise_id']
+                : null,
         ]);
 
         if ($request->wantsJson()) {
@@ -88,6 +91,10 @@ class ExerciseLibraryController extends Controller
                 $validated['name'],
                 $exercise->id,
             );
+        }
+
+        if (($validated['category'] ?? $exercise->category) !== Exercise::CATEGORY_ACCESSORY) {
+            $validated['parent_exercise_id'] = null;
         }
 
         $exercise->update($validated);
