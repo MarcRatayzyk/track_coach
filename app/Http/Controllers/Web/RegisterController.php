@@ -29,9 +29,12 @@ class RegisterController extends Controller
             $request->session()->forget('subscribe_plan');
         }
 
+        $accountType = $request->query('account') === 'self' && ! $plan ? 'self' : 'coach';
+
         return Inertia::render('RegisterPage', [
             'selectedPlan' => $plan,
             'plans' => BillingPlans::forFrontend(),
+            'accountType' => $accountType,
         ]);
     }
 

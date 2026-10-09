@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FadeIn from './FadeIn.vue';
+import { track } from '../../utils/analytics';
 
 const { t } = useI18n();
 
@@ -117,6 +118,31 @@ const coachGains = computed(() => [
                     </ul>
                 </FadeIn>
             </div>
+
+            <FadeIn :delay="0.15" class-name="mt-8">
+                <div class="rounded-[22px] border border-emerald-400/25 bg-emerald-500/[0.06] px-6 py-6 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-8">
+                    <div>
+                        <p class="text-lg font-bold text-white">{{ t('landing.athleteApp.selfTitle') }}</p>
+                        <p class="mt-1 max-w-xl text-sm leading-relaxed text-slate-400">{{ t('landing.athleteApp.selfBody') }}</p>
+                    </div>
+                    <div class="mt-4 flex shrink-0 flex-wrap gap-2 sm:mt-0">
+                        <a
+                            href="/register?account=self"
+                            class="lp-btn-primary px-5 py-3 text-sm leading-none"
+                            @click="track('cta_clicked', { cta_id: 'athlete_self_signup' })"
+                        >
+                            {{ t('landing.athleteApp.selfSignup') }}
+                        </a>
+                        <a
+                            href="/login"
+                            class="inline-flex items-center justify-center rounded-xl border border-white/15 px-5 py-3 text-sm font-semibold leading-none text-white transition hover:border-emerald-300/40 hover:text-emerald-200"
+                            @click="track('cta_clicked', { cta_id: 'athlete_self_login' })"
+                        >
+                            {{ t('landing.athleteApp.selfLogin') }}
+                        </a>
+                    </div>
+                </div>
+            </FadeIn>
         </div>
     </section>
 </template>

@@ -53,5 +53,26 @@ function trackClick(id) {
                 {{ t('landing.cta.demo') }}
             </a>
         </p>
+        <p
+            class="mt-2 text-xs text-slate-400 sm:text-sm"
+            :class="align === 'center' ? 'mx-auto max-w-md' : ''"
+        >
+            {{ t('landing.cta.selfLead') }}
+            <a
+                href="/register?account=self"
+                class="font-semibold text-emerald-300 hover:text-emerald-200 hover:underline"
+                @click="trackClick(`${ctaId}_self_signup`)"
+            >
+                {{ t('landing.cta.selfSignup') }}
+            </a>
+            ·
+            <a
+                href="/login"
+                class="font-semibold text-emerald-300 hover:text-emerald-200 hover:underline"
+                @click="trackClick(`${ctaId}_self_login`)"
+            >
+                {{ t('landing.cta.selfLogin') }}
+            </a>
+        </p>
     </div>
 </template>

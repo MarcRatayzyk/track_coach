@@ -271,6 +271,7 @@
       "pricing": "Tarifs",
       "faq": "FAQ",
       "logIn": "Se connecter",
+      "selfCoach": "Athlète",
       "start": "Commencer",
       "tracking": "Suivi"
     },
@@ -278,7 +279,10 @@
       "trial": "Essai gratuit 14 jours",
       "trialShort": "Essai gratuit",
       "demoPrefix": "Pas encore prêt ?",
-      "demo": "Tester la démo en 30 secondes →"
+      "demo": "Tester la démo en 30 secondes →",
+      "selfLead": "Tu t’entraînes seul ?",
+      "selfSignup": "Créer un compte gratuit",
+      "selfLogin": "Se connecter"
     },
     "hero": {
       "badge": "Conçu pour les coachs de powerlifting",
@@ -399,6 +403,10 @@
       "heading": "Un espace dédié pour l’athlète et pour toi",
       "subtitle": "Plus besoin de jongler entre outils: l’athlète suit son programme là où tu coaches. Le contexte reste partagé, la vision globale aussi.",
       "forAthlete": "Pour l’athlète",
+      "selfTitle": "Tu t’entraînes sans coach ?",
+      "selfBody": "Crée un compte gratuit, programme tes blocs et ajuste les séries du jour.",
+      "selfSignup": "Créer mon compte",
+      "selfLogin": "Se connecter",
       "forAthleteTitle": "Tout le coaching à portée de main",
       "forCoach": "Pour le coach",
       "forCoachTitle": "Ce que tu as à y gagner",
@@ -572,6 +580,7 @@
       "demo": "Démo",
       "pricing": "Tarifs",
       "register": "Inscription",
+      "selfCoach": "Compte athlète",
       "login": "Connexion",
       "privacy": "Confidentialité",
       "copyright": "© {year} Power Roster. Tous droits réservés.",

@@ -13,6 +13,7 @@ const nav = computed(() => [
     { href: '#pricing', label: t('landing.footer.pricing'), external: true },
     { href: '/demo', label: t('landing.footer.demo'), external: false },
     { href: '/register', label: t('landing.footer.register'), external: false },
+    { href: '/register?account=self', label: t('landing.footer.selfCoach'), external: false },
     { href: '/login', label: t('landing.footer.login'), external: false },
 ]);
 </script>

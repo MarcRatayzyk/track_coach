@@ -271,6 +271,7 @@
       "pricing": "Pricing",
       "faq": "FAQ",
       "logIn": "Log in",
+      "selfCoach": "Athlete",
       "start": "Get started",
       "tracking": "Tracking"
     },
@@ -278,7 +279,10 @@
       "trial": "Start 14-day free trial",
       "trialShort": "Free trial",
       "demoPrefix": "Not ready yet?",
-      "demo": "Try the demo in 30 seconds →"
+      "demo": "Try the demo in 30 seconds →",
+      "selfLead": "Training on your own?",
+      "selfSignup": "Create a free account",
+      "selfLogin": "Log in"
     },
     "hero": {
       "badge": "Built for powerlifting coaches",
@@ -399,6 +403,10 @@
       "heading": "A dedicated space for the athlete, and for you",
       "subtitle": "No more juggling tools: athletes follow their program where you coach. Shared context, shared overview.",
       "forAthlete": "For the athlete",
+      "selfTitle": "Training without a coach?",
+      "selfBody": "Create a free account, program your blocks and adjust today’s sets.",
+      "selfSignup": "Create my account",
+      "selfLogin": "Log in",
       "forAthleteTitle": "All coaching at their fingertips",
       "forCoach": "For the coach",
       "forCoachTitle": "What you gain",
@@ -572,6 +580,7 @@
       "demo": "Demo",
       "pricing": "Pricing",
       "register": "Sign up",
+      "selfCoach": "Athlete account",
       "login": "Log in",
       "privacy": "Privacy",
       "copyright": "© {year} Power Roster. All rights reserved.",

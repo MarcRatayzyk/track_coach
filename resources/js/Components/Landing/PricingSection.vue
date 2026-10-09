@@ -191,6 +191,12 @@ function formatAmount(amount) {
           · {{ t('landing.pricing.alreadyAccount') }}
           <a href="/login" class="font-semibold text-blue-400 hover:underline">{{ t('landing.pricing.logIn') }}</a>
         </p>
+        <p class="mt-3 text-sm text-slate-400">
+          {{ t('landing.cta.selfLead') }}
+          <a href="/register?account=self" class="font-semibold text-emerald-300 hover:underline">{{ t('landing.cta.selfSignup') }}</a>
+          ·
+          <a href="/login" class="font-semibold text-emerald-300 hover:underline">{{ t('landing.cta.selfLogin') }}</a>
+        </p>
       </FadeIn>
     </div>
   </section>

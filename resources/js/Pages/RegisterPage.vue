@@ -17,6 +17,7 @@ const { t, locale } = useI18n();
 const props = defineProps({
     selectedPlan: { type: String, default: null },
     plans: { type: Array, default: () => [] },
+    accountType: { type: String, default: 'coach' },
 });
 
 const selectedPlanMeta = computed(() => props.plans.find((p) => p.key === props.selectedPlan) ?? null);
@@ -42,7 +43,7 @@ const form = useForm({
     password: '',
     password_confirmation: '',
     plan: props.selectedPlan ?? '',
-    account_type: 'coach',
+    account_type: props.accountType === 'self' ? 'self' : 'coach',
 });
 
 const isSelfSignup = computed(() => !props.selectedPlan && form.account_type === 'self');

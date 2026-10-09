@@ -53,6 +53,13 @@ const links = computed(() => [
             <div class="flex shrink-0 items-center gap-2 sm:gap-3">
                 <LanguageSwitcher variant="landing" />
                 <a
+                    href="/register?account=self"
+                    class="hidden rounded-xl px-3 py-2 text-xs font-semibold text-slate-300 transition hover:text-white sm:inline sm:px-4 sm:text-sm"
+                    @click="trackCta('nav_self_coach')"
+                >
+                    {{ t('landing.nav.selfCoach') }}
+                </a>
+                <a
                     href="/login"
                     class="rounded-xl px-3 py-2 text-xs font-semibold text-slate-300 transition hover:text-white sm:px-4 sm:text-sm"
                     @click="trackCta('nav_login')"
