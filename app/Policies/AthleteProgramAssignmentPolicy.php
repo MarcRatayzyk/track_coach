@@ -9,12 +9,16 @@ class AthleteProgramAssignmentPolicy
 {
     public function manage(User $user, AthleteProgramAssignment $assignment): bool
     {
-        if ($user->role !== 'coach') {
+        $assignment->loadMissing('template');
+
+        if ($assignment->template?->coach_id !== $user->id) {
             return false;
         }
 
-        $assignment->loadMissing('template');
+        if ($user->isSelfCoached()) {
+            return (int) $assignment->athlete_id === (int) $user->id;
+        }
 
-        return $assignment->template?->coach_id === $user->id;
+        return $user->role === 'coach';
     }
 }

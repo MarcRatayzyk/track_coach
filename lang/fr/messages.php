@@ -27,6 +27,7 @@ return [
 
     'sidebar' => [
         'coach_profile_subtitle' => 'Mon profil & stats roster',
+        'self_coached' => 'Auto-coaching',
         'my_coach' => 'Mon coach — :name',
         'view_profile' => 'Voir le profil',
     ],
@@ -85,6 +86,7 @@ return [
         'imported_one' => '1 séance importée.',
         'imported_many' => ':count séances importées.',
         'cell_cleared' => 'Case vidée.',
+        'today_only' => 'Tu ne peux modifier que la séance du jour de ton bloc actif.',
     ],
 
     'programs' => [

@@ -129,7 +129,7 @@ function deleteBlock(block) {
     </p>
 
     <form class="mt-5 grid gap-4 sm:grid-cols-2" @submit.prevent="submit">
-      <label class="block text-sm text-slate-400 sm:col-span-2">
+      <label v-if="athletes.length > 1" class="block text-sm text-slate-400 sm:col-span-2">
         {{ t('common.athlete') }}
         <select
           v-model="form.athlete_id"

@@ -15,11 +15,11 @@ class ExerciseLibraryController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+        abort_unless($user?->canProgramTraining(), 403);
+
         $query = Exercise::query()
-            ->when(
-                $request->user()?->role === 'coach',
-                fn ($builder) => $builder->forCoach($request->user()),
-            )
+            ->forCoach($user)
             ->with('variants')
             ->orderBy('name');
 

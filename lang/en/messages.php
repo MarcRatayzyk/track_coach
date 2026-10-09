@@ -27,6 +27,7 @@ return [
 
     'sidebar' => [
         'coach_profile_subtitle' => 'My profile & roster stats',
+        'self_coached' => 'Self-coaching',
         'my_coach' => 'My coach — :name',
         'view_profile' => 'View profile',
     ],
@@ -85,6 +86,7 @@ return [
         'imported_one' => '1 session imported.',
         'imported_many' => ':count sessions imported.',
         'cell_cleared' => 'Cell cleared.',
+        'today_only' => 'You can only edit today’s session on your active block.',
     ],
 
     'programs' => [

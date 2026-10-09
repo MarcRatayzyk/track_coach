@@ -8,7 +8,7 @@ class AssignProgramTemplateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role === 'coach';
+        return $this->user()?->canProgramTraining() === true;
     }
 
     protected function prepareForValidation(): void
@@ -35,8 +35,18 @@ class AssignProgramTemplateRequest extends FormRequest
                 return;
             }
 
+            $athleteId = (int) $this->input('athlete_id');
+
+            if ($coach->isSelfCoached()) {
+                if ($athleteId !== (int) $coach->id) {
+                    $validator->errors()->add('athlete_id', __('messages.validation.athlete_not_in_roster'));
+                }
+
+                return;
+            }
+
             $isOnRoster = $coach->athletes()
-                ->where('users.id', (int) $this->input('athlete_id'))
+                ->where('users.id', $athleteId)
                 ->where('users.role', 'athlete')
                 ->exists();
 

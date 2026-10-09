@@ -51,6 +51,14 @@ class AuthSidebarSupport
             ];
         }
 
+        if ($user->isSelfCoached()) {
+            return [
+                'label' => $user->name,
+                'subtitle' => __('messages.sidebar.self_coached'),
+                'href' => route('athletes.show', $user),
+            ];
+        }
+
         $coach = self::coachSummaryForAthlete($user);
         if ($coach === null) {
             return [

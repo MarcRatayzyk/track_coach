@@ -9,7 +9,7 @@ class StoreProgramBlockRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role === 'coach';
+        return $this->user()?->canProgramTraining() === true;
     }
 
     public function rules(): array
@@ -37,6 +37,15 @@ class StoreProgramBlockRequest extends FormRequest
             }
 
             $athleteId = (int) $this->input('athlete_id');
+
+            if ($coach->isSelfCoached()) {
+                if ($athleteId !== (int) $coach->id) {
+                    $validator->errors()->add('athlete_id', __('messages.validation.athlete_not_in_roster'));
+                }
+
+                return;
+            }
+
             $isOnRoster = $coach->athletes()
                 ->where('users.id', $athleteId)
                 ->where('users.role', 'athlete')

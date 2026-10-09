@@ -44,6 +44,30 @@ class RegisterController extends Controller
             $request->session()->forget('subscribe_plan');
         }
 
+        $accountType = $validated['account_type'] ?? 'coach';
+        if ($plan) {
+            $accountType = 'coach';
+        }
+
+        if ($accountType === 'self') {
+            $athlete = User::query()->create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+                'role' => 'athlete',
+                'self_coached' => true,
+                'initial_setup_completed_at' => now(),
+                'trial_ends_at' => null,
+                'email_verified_at' => now(),
+                'is_demo' => false,
+            ]);
+
+            Auth::login($athlete);
+            $request->session()->regenerate();
+
+            return redirect()->route('athlete.dashboard');
+        }
+
         $wantsTrial = $plan === null;
         $trialDays = (int) config('billing.trial_days', 14);
 

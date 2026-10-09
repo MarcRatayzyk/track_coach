@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Support\AuthRedirect;
 use App\Support\BillingPlans;
 use App\Support\MobileApp;
 use Illuminate\Http\RedirectResponse;
@@ -21,15 +22,7 @@ class LandingController extends Controller
         $user = $request->user();
 
         if ($user) {
-            if ($user->role === 'admin') {
-                return redirect()->route('admin.dashboard');
-            }
-
-            if ($user->role === 'coach') {
-                return redirect()->route('dashboard');
-            }
-
-            return redirect()->route('athlete.dashboard');
+            return redirect()->to(AuthRedirect::homeUrl($user));
         }
 
         return Inertia::render('LandingPage', [

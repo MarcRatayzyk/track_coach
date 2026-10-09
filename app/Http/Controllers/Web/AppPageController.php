@@ -44,8 +44,12 @@ class AppPageController extends Controller
         CoachFeedbackMetricsService $feedbackMetrics,
         CoachAlertsService $alertsService,
         CoachTodaySessionsService $todaySessionsService,
-    ): Response {
+    ): Response|RedirectResponse {
         $coach = auth()->user();
+
+        if ($coach->isSelfCoached()) {
+            return redirect()->route('athlete.dashboard');
+        }
 
         $athleteIds = $coach->athletes()
             ->where('users.role', 'athlete')
@@ -190,9 +194,14 @@ class AppPageController extends Controller
         ]);
     }
 
-    public function athletes(CoachAthleteRosterService $rosterService): Response
+    public function athletes(CoachAthleteRosterService $rosterService): Response|RedirectResponse
     {
         $coach = auth()->user();
+
+        if ($coach->isSelfCoached()) {
+            return redirect()->route('athlete.dashboard');
+        }
+
         $coachForm = ReadinessFormSupport::ensureCoachHasDefaultForm($coach);
 
         return Inertia::render('AthletesListPage', [
@@ -201,9 +210,14 @@ class AppPageController extends Controller
         ]);
     }
 
-    public function competitions(): Response
+    public function competitions(): Response|RedirectResponse
     {
         $coach = auth()->user();
+
+        if ($coach->isSelfCoached()) {
+            return redirect()->route('athlete.dashboard');
+        }
+
         $payload = CoachCompetitionsPresenter::forCoach($coach);
 
         $athletes = $coach->athletes()
@@ -320,11 +334,17 @@ class AppPageController extends Controller
     {
         $coach = auth()->user();
 
-        $athletes = $coach->athletes()
-            ->where('users.role', 'athlete')
-            ->orderBy('users.name')
-            ->select('users.id', 'users.name')
-            ->get();
+        if ($coach->isSelfCoached()) {
+            $athletes = collect([
+                ['id' => $coach->id, 'name' => $coach->name],
+            ]);
+        } else {
+            $athletes = $coach->athletes()
+                ->where('users.role', 'athlete')
+                ->orderBy('users.name')
+                ->select('users.id', 'users.name')
+                ->get();
+        }
 
         $templateIds = ProgramTemplate::query()
             ->where('coach_id', $coach->id)
@@ -373,6 +393,10 @@ class AppPageController extends Controller
     public function messaging(Request $request): Response|RedirectResponse
     {
         $user = auth()->user();
+
+        if ($user->isSelfCoached()) {
+            return redirect()->route('athlete.dashboard');
+        }
 
         if ($user->role === 'athlete') {
             return $this->athleteMessaging($request, $user);

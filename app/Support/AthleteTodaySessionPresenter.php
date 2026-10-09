@@ -44,6 +44,7 @@ class AthleteTodaySessionPresenter
             return [
                 'status' => 'session',
                 'date' => $dateString,
+                'assignment_id' => $assignment->id,
                 'program_name' => $assignment->template?->name,
                 'week_number' => $week?->week_number,
                 'block_type' => $week?->block_type,

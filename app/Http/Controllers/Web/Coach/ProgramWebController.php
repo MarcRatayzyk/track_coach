@@ -19,7 +19,10 @@ use App\Http\Requests\StoreProgramBlockRequest;
 use App\Http\Requests\StoreProgramSessionRequest;
 use App\Http\Requests\UpdateProgramBlockWarmupRequest;
 use App\Models\AthleteProgramAssignment;
+use App\Support\ActiveProgramAssignmentSupport;
+use App\Support\ProgramSchedule;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\ValidationException;
 
 class ProgramWebController extends Controller
 {
@@ -140,13 +143,52 @@ class ProgramWebController extends Controller
         UpsertProgramSessionAction $action,
     ): RedirectResponse {
         $this->authorize('manage', $assignment);
+
+        if ($request->input('return_to') === 'today') {
+            $this->assertTodayPrescription($request, $assignment);
+        }
+
         $tab = $request->input('builder_tab', $request->query('tab'));
 
         $action->execute($request, $assignment);
 
+        if ($request->input('return_to') === 'today' && $request->user()?->isSelfCoached()) {
+            return redirect()
+                ->route('athlete.dashboard')
+                ->with('success', __('messages.sessions.saved'));
+        }
+
         return redirect()
             ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
             ->with('success', __('messages.sessions.saved'));
+    }
+
+    private function assertTodayPrescription(
+        StoreProgramSessionRequest $request,
+        AthleteProgramAssignment $assignment,
+    ): void {
+        $user = $request->user();
+        abort_unless($user?->isSelfCoached(), 403);
+
+        $today = now()->startOfDay();
+        $active = ActiveProgramAssignmentSupport::forAthleteOnDate($user, $today);
+
+        $assignment->loadMissing('template.weeks.trainingDays');
+        $trainingDay = ProgramSchedule::resolveTrainingDayForDate($assignment, $today);
+        $week = ProgramSchedule::weekForAssignmentOnDate($assignment, $today);
+
+        $matchesToday = $active !== null
+            && $active->id === $assignment->id
+            && $trainingDay !== null
+            && $week !== null
+            && (int) $request->input('week_number') === (int) $week->week_number
+            && (int) $request->input('weekday') === (int) $trainingDay->day_number;
+
+        if (! $matchesToday) {
+            throw ValidationException::withMessages([
+                'weekday' => __('messages.sessions.today_only'),
+            ]);
+        }
     }
 
     public function bulkUpsertSessions(

@@ -14,6 +14,10 @@ class BillingAccess
             return true;
         }
 
+        if ($user->isSelfCoached()) {
+            return true;
+        }
+
         if ($user->role === 'athlete') {
             $coach = $user->primaryCoach();
 
@@ -223,6 +227,7 @@ class BillingAccess
         if ($user->role === 'athlete') {
             return [
                 'hasAccess' => self::hasAppAccess($user),
+                'selfCoached' => $user->isSelfCoached(),
             ];
         }
 

@@ -32,6 +32,7 @@ let baselineViewportHeight = 0;
 let focusOutTimer = 0;
 
 const isCoach = computed(() => user.value?.role === 'coach');
+const isSelfCoached = computed(() => Boolean(user.value?.self_coached));
 const isAdmin = computed(() => user.value?.role === 'admin');
 const messagingInbox = computed(() => page.props.messagingInbox ?? null);
 let messagingPollTimer = null;
@@ -301,7 +302,7 @@ const navItems = computed(() => {
             return [];
         }
 
-        return [
+        const items = [
             {
                 label: t('nav.home'),
                 shortLabel: t('nav.home'),
@@ -330,7 +331,18 @@ const navItems = computed(() => {
                 pattern: '/feedbacks',
                 icon: 'video',
             },
-            {
+        ];
+
+        if (isSelfCoached.value) {
+            items.splice(1, 0, {
+                label: t('nav.programs'),
+                shortLabel: t('nav.programsShort'),
+                href: '/program-builder',
+                pattern: '/program-builder',
+                icon: 'clipboard',
+            });
+        } else {
+            items.push({
                 label: t('nav.messaging'),
                 shortLabel: t('nav.messages'),
                 href: messagingInbox.value?.thread_id
@@ -339,8 +351,10 @@ const navItems = computed(() => {
                 pattern: '/messaging',
                 icon: 'chat',
                 unreadCount: messagingInbox.value?.unread_count ?? 0,
-            },
-        ];
+            });
+        }
+
+        return items;
     }
 
     // Paywall: only Abonnement is reachable until subscription / trial is active.

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Support\ActivationDelivery;
+use App\Support\AuthRedirect;
 use App\Support\MailSendSupport;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
@@ -18,11 +19,11 @@ class EmailVerificationController extends Controller
         if (ActivationDelivery::usesManualLinks()) {
             ActivationDelivery::markCoachEmailVerified($request->user());
 
-            return redirect()->intended($this->homeFor($request->user()));
+            return AuthRedirect::afterLogin($request, $request->user());
         }
 
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended($this->homeFor($request->user()));
+            return AuthRedirect::afterLogin($request, $request->user());
         }
 
         return Inertia::render('VerifyEmailPage', [
@@ -42,20 +43,20 @@ class EmailVerificationController extends Controller
             $user->forceFill(['initial_setup_completed_at' => now()])->save();
         }
 
-        return redirect()->intended($this->homeFor($user))
+        return AuthRedirect::afterLogin($request, $user)
             ->with('success', __('messages.auth.email_confirmed'));
     }
 
     public function resend(Request $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended($this->homeFor($request->user()));
+            return AuthRedirect::afterLogin($request, $request->user());
         }
 
         if (ActivationDelivery::usesManualLinks()) {
             ActivationDelivery::markCoachEmailVerified($request->user());
 
-            return redirect()->intended($this->homeFor($request->user()));
+            return AuthRedirect::afterLogin($request, $request->user());
         }
 
         $sent = ActivationDelivery::sendCoachEmailVerification($request->user());
@@ -65,12 +66,5 @@ class EmailVerificationController extends Controller
         }
 
         return back()->with('status', 'verification-link-sent');
-    }
-
-    private function homeFor(\App\Models\User $user): string
-    {
-        return $user->role === 'coach'
-            ? route('dashboard')
-            : route('athlete.dashboard');
     }
 }

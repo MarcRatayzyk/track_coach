@@ -12,7 +12,7 @@ class EnsureUserIsCoach
     {
         $user = $request->user();
 
-        if (! $user || $user->role !== 'coach') {
+        if (! $user || ! $user->canProgramTraining()) {
             abort(403, 'Cette section est réservée aux coachs.');
         }
 

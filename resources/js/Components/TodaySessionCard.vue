@@ -1,6 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
-import { Link, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
@@ -21,6 +21,7 @@ import { buildSessionCelebrationPayload } from '../utils/sessionCelebration';
 import { track } from '../utils/analytics';
 
 const { t } = useI18n();
+const page = usePage();
 
 const props = defineProps({
   todaySession: {
@@ -42,6 +43,10 @@ const props = defineProps({
 });
 
 const workItems = ref([]);
+const prescriptionItems = ref([]);
+const editingPrescription = ref(false);
+const prescriptionSaving = ref(false);
+const prescriptionError = ref('');
 const expandedItemKey = ref(null);
 const celebrationOpen = ref(false);
 const celebrationData = ref(null);
@@ -68,7 +73,13 @@ const form = useForm({
   notes: null,
 });
 
+const isSelfCoached = computed(() => Boolean(page.props.auth?.user?.self_coached));
 const status = computed(() => props.todaySession?.status ?? 'no_program');
+const canEditPrescription = computed(() => (
+  isSelfCoached.value
+  && status.value === 'session'
+  && props.todaySession?.assignment_id
+));
 const session = computed(() => props.todaySession?.session ?? null);
 const mainLift = computed(() => session.value?.main_lift ?? 'squat');
 
@@ -350,6 +361,90 @@ function saveItemNote() {
 function closeCelebration() {
   celebrationOpen.value = false;
 }
+
+function clonePrescriptionItems() {
+  return (session.value?.items ?? [])
+    .filter((row) => row.section !== 'warmup')
+    .map((row) => ({
+      ...row,
+      exercise_name: row.exercise_name ?? '',
+      sets: Number(row.sets) || 1,
+      reps: Number(row.reps) || 1,
+      load: row.load ?? '',
+    }));
+}
+
+function startPrescriptionEdit() {
+  prescriptionError.value = '';
+  prescriptionItems.value = clonePrescriptionItems();
+  editingPrescription.value = true;
+}
+
+function addPrescriptionItem() {
+  prescriptionItems.value.push({
+    section: 'accessory',
+    exercise_name: '',
+    sets: 3,
+    reps: 8,
+    load: '',
+    lift: mainLift.value,
+    set_scheme: 'straight',
+  });
+}
+
+function removePrescriptionItem(index) {
+  prescriptionItems.value.splice(index, 1);
+}
+
+function savePrescription() {
+  if (!canEditPrescription.value || !session.value) {
+    return;
+  }
+
+  const named = prescriptionItems.value.every((row) => String(row.exercise_name ?? '').trim() !== '');
+  if (!named) {
+    prescriptionError.value = t('app.todaySession.setNameRequired');
+    return;
+  }
+
+  const warmupItems = (session.value.items ?? []).filter((row) => row.section === 'warmup');
+  const items = [
+    ...warmupItems,
+    ...prescriptionItems.value.map((row) => ({
+      ...row,
+      exercise_name: String(row.exercise_name).trim(),
+      sets: Number(row.sets),
+      reps: Number(row.reps),
+      load: row.load === '' || row.load == null ? null : Number(String(row.load).replace(',', '.')),
+    })),
+  ];
+
+  prescriptionSaving.value = true;
+  prescriptionError.value = '';
+  router.put(`/coach/program-blocks/${props.todaySession.assignment_id}/sessions`, {
+    week_number: session.value.week_number,
+    weekday: session.value.weekday,
+    main_lift: session.value.main_lift,
+    session_label: session.value.session_label,
+    notes: session.value.notes,
+    warmup_override: Boolean(session.value.warmup_override),
+    warmup_notes: session.value.warmup_notes,
+    items,
+    blocks: [],
+    return_to: 'today',
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      editingPrescription.value = false;
+    },
+    onError: (errors) => {
+      prescriptionError.value = Object.values(errors).flat().filter(Boolean).join(' ');
+    },
+    onFinish: () => {
+      prescriptionSaving.value = false;
+    },
+  });
+}
 </script>
 
 <template>
@@ -397,6 +492,91 @@ function closeCelebration() {
             </span>
           </li>
         </ul>
+      </div>
+
+      <div v-if="canEditPrescription" class="mt-3 space-y-2 border-t border-slate-800 pt-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-slate-500"
+            @click="editingPrescription ? (editingPrescription = false) : startPrescriptionEdit()"
+          >
+            {{ editingPrescription ? t('app.todaySession.doneEditing') : t('app.todaySession.editSets') }}
+          </button>
+        </div>
+
+        <div v-if="editingPrescription" class="space-y-2">
+          <div
+            v-for="(row, index) in prescriptionItems"
+            :key="`prescription-${index}`"
+            class="grid grid-cols-2 items-end gap-2 rounded-lg border border-slate-800 p-2 sm:grid-cols-[minmax(0,1fr)_4.5rem_4.5rem_5rem_auto]"
+          >
+            <label class="col-span-2 text-[10px] text-slate-400 sm:col-span-1">
+              {{ t('app.todaySession.setName') }}
+              <input
+                v-model="row.exercise_name"
+                type="text"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white"
+              />
+            </label>
+            <label class="text-[10px] text-slate-400">
+              {{ t('app.todaySession.sets') }}
+              <input
+                v-model.number="row.sets"
+                type="number"
+                min="1"
+                max="10"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white"
+              />
+            </label>
+            <label class="text-[10px] text-slate-400">
+              {{ t('app.todaySession.reps') }}
+              <input
+                v-model.number="row.reps"
+                type="number"
+                min="1"
+                max="200"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white"
+              />
+            </label>
+            <label class="text-[10px] text-slate-400">
+              {{ t('app.todaySession.load') }}
+              <input
+                v-model="row.load"
+                type="text"
+                inputmode="decimal"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white"
+              />
+            </label>
+            <button
+              type="button"
+              class="mb-0.5 rounded-md border border-red-500/40 px-2 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-950/40"
+              @click="removePrescriptionItem(index)"
+            >
+              {{ t('common.remove') }}
+            </button>
+          </div>
+
+          <p v-if="prescriptionError" class="text-xs text-red-400">{{ prescriptionError }}</p>
+
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-slate-500"
+              @click="addPrescriptionItem"
+            >
+              {{ t('app.todaySession.addSet') }}
+            </button>
+            <button
+              type="button"
+              class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+              :disabled="prescriptionSaving"
+              @click="savePrescription"
+            >
+              {{ t('app.todaySession.saveSets') }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div v-if="sortedWorkItems.length" class="mt-3 space-y-2 border-t border-slate-800 pt-3">
@@ -456,7 +636,15 @@ function closeCelebration() {
 
     <template v-else>
       <p class="mt-3 text-xs text-slate-400">
-        Aucun programme actif. Contacte ton coach.
+        <template v-if="isSelfCoached">
+          {{ t('app.todaySession.noProgramSelf') }}
+          <Link href="/program-builder" class="font-semibold text-blue-300 hover:text-blue-200">
+            {{ t('nav.programs') }}
+          </Link>
+        </template>
+        <template v-else>
+          {{ t('app.todaySession.noProgramCoach') }}
+        </template>
       </p>
     </template>
   </section>

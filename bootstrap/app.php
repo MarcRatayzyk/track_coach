@@ -47,17 +47,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo('/login');
 
         $middleware->redirectUsersTo(function (Request $request): string {
-            $role = $request->user()?->role;
-
-            if ($role === 'admin') {
-                return route('admin.dashboard');
+            $user = $request->user();
+            if (! $user) {
+                return route('dashboard');
             }
 
-            if ($role === 'athlete') {
-                return route('athlete.dashboard');
-            }
-
-            return route('dashboard');
+            return \App\Support\AuthRedirect::homeUrl($user);
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {

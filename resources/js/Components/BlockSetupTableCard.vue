@@ -101,7 +101,7 @@ const fieldClass =
     </p>
 
     <form class="mt-3 flex flex-wrap items-end gap-2" @submit.prevent="submit">
-      <label class="min-w-[9rem] flex-1 text-[11px] text-slate-400">
+      <label v-if="athletes.length > 1" class="min-w-[9rem] flex-1 text-[11px] text-slate-400">
         {{ t('common.athlete') }}
         <select v-model="form.athlete_id" required :class="fieldClass">
           <option v-for="athlete in athletes" :key="athlete.id" :value="athlete.id">

@@ -42,7 +42,10 @@ const form = useForm({
     password: '',
     password_confirmation: '',
     plan: props.selectedPlan ?? '',
+    account_type: 'coach',
 });
+
+const isSelfSignup = computed(() => !props.selectedPlan && form.account_type === 'self');
 
 function formatSalePrice(amount) {
     return formatMoneyPlain(amount, { locale: locale.value, currency: currency.value });
@@ -52,7 +55,11 @@ function submit() {
     form.post('/register', {
         preserveScroll: true,
         onSuccess: () => {
-            track('user_registered', { role: 'coach', plan: form.plan || null });
+            track('user_registered', {
+                role: form.account_type === 'self' ? 'athlete' : 'coach',
+                plan: form.plan || null,
+                account_type: form.account_type,
+            });
         },
     });
 }
@@ -76,11 +83,14 @@ function submit() {
                     />
                 </Link>
                 <h1 class="mt-14 max-w-lg text-4xl font-bold leading-tight text-white xl:text-5xl">
-                    {{ t('auth.register.brandTitle') }}
+                    {{ isSelfSignup ? t('auth.register.selfBrandTitle') : t('auth.register.brandTitle') }}
                 </h1>
                 <p class="mt-5 max-w-md text-lg leading-relaxed text-slate-400">
                     <template v-if="selectedPlanMeta">
                         {{ t('auth.register.brandSubtitlePlan') }}
+                    </template>
+                    <template v-else-if="isSelfSignup">
+                        {{ t('auth.register.selfBrandSubtitle') }}
                     </template>
                     <template v-else>
                         {{ t('auth.register.brandSubtitleTrial') }}
@@ -90,16 +100,17 @@ function submit() {
             <ol class="relative mt-12 space-y-4 text-slate-300">
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">1</span>
-                    <span>{{ t('auth.register.step1') }}</span>
+                    <span>{{ isSelfSignup ? t('auth.register.selfStep1') : t('auth.register.step1') }}</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">2</span>
                     <span v-if="selectedPlanMeta">{{ t('auth.register.step2Plan') }}</span>
+                    <span v-else-if="isSelfSignup">{{ t('auth.register.selfStep2') }}</span>
                     <span v-else>{{ t('auth.register.step2Trial') }}</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-sm font-bold text-blue-400">3</span>
-                    <span>{{ t('auth.register.step3') }}</span>
+                    <span>{{ isSelfSignup ? t('auth.register.selfStep3') : t('auth.register.step3') }}</span>
                 </li>
             </ol>
         </div>
@@ -114,7 +125,9 @@ function submit() {
                     {{ t('auth.register.backHome') }}
                 </Link>
 
-                <h2 class="mt-6 text-3xl font-bold text-white lg:mt-0">{{ t('auth.register.title') }}</h2>
+                <h2 class="mt-6 text-3xl font-bold text-white lg:mt-0">
+                    {{ isSelfSignup ? t('auth.register.selfTitle') : t('auth.register.title') }}
+                </h2>
                 <p class="mt-2 text-slate-400">
                     {{ t('auth.register.alreadyRegistered') }}
                     <Link
@@ -125,12 +138,42 @@ function submit() {
                     </Link>
                 </p>
 
+                <div v-if="!selectedPlan" class="mt-6 grid grid-cols-2 gap-2">
+                    <button
+                        type="button"
+                        class="rounded-xl border px-3 py-3 text-sm font-semibold transition"
+                        :class="form.account_type === 'coach'
+                            ? 'border-blue-500 bg-blue-600/20 text-white'
+                            : 'border-slate-700 text-slate-300 hover:border-slate-500'"
+                        @click="form.account_type = 'coach'"
+                    >
+                        {{ t('auth.register.choiceCoach') }}
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-xl border px-3 py-3 text-sm font-semibold transition"
+                        :class="form.account_type === 'self'
+                            ? 'border-emerald-500 bg-emerald-600/15 text-white'
+                            : 'border-slate-700 text-slate-300 hover:border-slate-500'"
+                        @click="form.account_type = 'self'"
+                    >
+                        {{ t('auth.register.choiceSelf') }}
+                    </button>
+                </div>
+
                 <div
                     v-if="selectedPlanMeta"
                     class="mt-6 rounded-xl border border-blue-500/30 bg-blue-950/30 px-4 py-3 text-sm text-blue-100"
                 >
                     {{ t('auth.register.selectedPlan') }}
                     <strong class="text-white">{{ selectedPlanMeta.name }}</strong>{{ t('auth.register.selectedPlanSuffix', { price: formatSalePrice(selectedPlanSalePrice) }) }}
+                </div>
+
+                <div
+                    v-else-if="isSelfSignup"
+                    class="mt-6 rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-100/90"
+                >
+                    {{ t('auth.register.selfBanner') }}
                 </div>
 
                 <div
@@ -205,6 +248,7 @@ function submit() {
                     >
                         <span v-if="form.processing">{{ t('auth.register.submitCreating') }}</span>
                         <span v-else-if="selectedPlanMeta">{{ t('auth.register.submitPay') }}</span>
+                        <span v-else-if="isSelfSignup">{{ t('auth.register.selfSubmit') }}</span>
                         <span v-else>{{ t('auth.register.submitTrial') }}</span>
                         <span v-if="!form.processing" aria-hidden="true">→</span>
                     </button>

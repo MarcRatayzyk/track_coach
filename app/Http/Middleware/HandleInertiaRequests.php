@@ -50,6 +50,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $request->user()->email,
                     'role' => $request->user()->role,
                     'is_demo' => (bool) $request->user()->is_demo,
+                    'self_coached' => $request->user()->isSelfCoached(),
                 ] : null,
                 'sidebarProfile' => fn () => $request->user()
                     ? AuthSidebarSupport::profileLinkForUser($request->user())
@@ -94,7 +95,7 @@ class HandleInertiaRequests extends Middleware
             },
             'exerciseLibrary' => function () use ($request) {
                 $user = $request->user();
-                if (! $user || $user->role !== 'coach' || ! BillingAccess::coachHasAppAccess($user)) {
+                if (! $user || ! $user->canProgramTraining() || ! BillingAccess::hasAppAccess($user)) {
                     return [];
                 }
 

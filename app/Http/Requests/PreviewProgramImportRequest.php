@@ -8,7 +8,7 @@ class PreviewProgramImportRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role === 'coach';
+        return $this->user()?->canProgramTraining() === true;
     }
 
     public function rules(): array

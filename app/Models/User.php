@@ -31,6 +31,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'email',
         'password',
         'role',
+        'self_coached',
         'initial_setup_completed_at',
         'trial_ends_at',
         'is_demo',
@@ -51,11 +52,22 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'demo_expires_at' => 'datetime',
         'disabled_at' => 'datetime',
         'is_demo' => 'boolean',
+        'self_coached' => 'boolean',
     ];
 
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function isSelfCoached(): bool
+    {
+        return (bool) $this->self_coached;
+    }
+
+    public function canProgramTraining(): bool
+    {
+        return $this->role === 'coach' || $this->isSelfCoached();
     }
 
     public function isDisabled(): bool

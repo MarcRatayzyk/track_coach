@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\ActivationDelivery;
+use App\Support\AuthRedirect;
 use App\Support\BillingPlans;
 use App\Support\MobileApp;
 use Illuminate\Http\RedirectResponse;
@@ -81,10 +82,6 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        if ($user->role === 'admin') {
-            return redirect()->intended(route('admin.dashboard'));
-        }
-
         if ($user->role === 'coach' && ! $user->hasVerifiedEmail() && ! ActivationDelivery::usesManualLinks()) {
             return redirect()->route('verification.notice');
         }
@@ -92,13 +89,13 @@ class LoginController extends Controller
         if ($user->role === 'coach') {
             $plan = $request->session()->get('subscribe_plan');
             if (is_string($plan) && array_key_exists($plan, BillingPlans::all())) {
+                $request->session()->forget('url.intended');
+
                 return redirect()->route('billing.checkout.plan', ['plan' => $plan]);
             }
-
-            return redirect()->intended(route('dashboard'));
         }
 
-        return redirect()->intended(route('athlete.dashboard'));
+        return AuthRedirect::afterLogin($request, $user);
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -115,10 +112,6 @@ class LoginController extends Controller
 
     private function redirectAuthenticatedUser(User $user): RedirectResponse
     {
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-
         if ($user->role === 'coach' && ! $user->hasVerifiedEmail() && ! ActivationDelivery::usesManualLinks()) {
             return redirect()->route('verification.notice');
         }
@@ -128,10 +121,8 @@ class LoginController extends Controller
             if (is_string($plan) && array_key_exists($plan, BillingPlans::all()) && ! $user->is_demo) {
                 return redirect()->route('billing.checkout.plan', ['plan' => $plan]);
             }
-
-            return redirect()->route('dashboard');
         }
 
-        return redirect()->route('athlete.dashboard');
+        return redirect()->to(AuthRedirect::homeUrl($user));
     }
 }
