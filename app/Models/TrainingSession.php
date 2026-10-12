@@ -17,11 +17,17 @@ class TrainingSession extends Model
         'bench',
         'deadlift',
         'notes',
+        'timer_started_at',
+        'timer_elapsed_seconds',
+        'finished_at',
     ];
 
     protected $casts = [
         'session_date' => 'date',
         'items' => 'array',
+        'timer_started_at' => 'datetime',
+        'timer_elapsed_seconds' => 'integer',
+        'finished_at' => 'datetime',
     ];
 
     public function athlete(): BelongsTo

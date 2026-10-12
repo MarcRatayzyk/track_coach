@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 
 class AthleteWrappedPresenter
 {
-  private const LIFTS = [
+    private const LIFTS = [
         'squat' => 'Squat',
         'bench' => 'Bench',
         'deadlift' => 'Terre',
@@ -272,27 +272,17 @@ class AthleteWrappedPresenter
         $totalSets = 0;
         $totalReps = 0;
         $totalTonnage = 0.0;
-        $totalTrainingMinutes = 0;
+        $totalTrainingSeconds = 0;
         $lifts = $this->emptyLiftStats();
 
         foreach ($sessions as $session) {
             $mainLift = $session->main_lift ?? 'squat';
-            $sessionHadWork = false;
+            $totalTrainingSeconds += TrainingSessionSupport::recordedSeconds($session);
 
             foreach (($session->items ?? []) as $item) {
                 $sets = (int) ($item['sets'] ?? 0);
                 $reps = (int) ($item['reps'] ?? 0);
                 $load = (float) ($item['load'] ?? 0);
-                $timedMinutes = (int) ($item['scheme_config']['duration_minutes'] ?? 0);
-
-                if ($timedMinutes > 0) {
-                    $totalTrainingMinutes += $timedMinutes;
-                    $sessionHadWork = true;
-                } elseif ($sets > 0) {
-                    // Estimation : ~2,5 min par série (effort + repos).
-                    $totalTrainingMinutes += (int) round($sets * 2.5);
-                    $sessionHadWork = true;
-                }
 
                 if ($sets <= 0 || $reps <= 0) {
                     continue;
@@ -319,17 +309,13 @@ class AthleteWrappedPresenter
                     }
                 }
             }
-
-            if ($sessionHadWork) {
-                $totalTrainingMinutes += 5;
-            }
         }
 
         return [
             'total_sets' => $totalSets,
             'total_reps' => $totalReps,
             'total_tonnage' => (int) round($totalTonnage),
-            'total_training_minutes' => $totalTrainingMinutes,
+            'total_training_minutes' => (int) round($totalTrainingSeconds / 60),
             'lifts' => $lifts,
         ];
     }

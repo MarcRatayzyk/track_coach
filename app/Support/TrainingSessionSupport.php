@@ -3,9 +3,13 @@
 namespace App\Support;
 
 use App\Models\TrainingSession;
+use Carbon\CarbonInterface;
 
 class TrainingSessionSupport
 {
+    /** Un segment ouvert oublié ne doit pas compter plusieurs jours dans le récap. */
+    public const MAX_TIMER_SEGMENT_SECONDS = 8 * 60 * 60;
+
     /**
      * @return array<string, mixed>
      */
@@ -21,7 +25,41 @@ class TrainingSessionSupport
             'bench' => $session->bench,
             'deadlift' => $session->deadlift,
             'notes' => $session->notes,
+            'timer_started_at' => $session->timer_started_at?->toIso8601String(),
+            'timer_elapsed_seconds' => (int) $session->timer_elapsed_seconds,
+            'finished_at' => $session->finished_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Secondes chronométrées : segments déjà arrêtés + segment encore en cours.
+     * Le départ est une date, donc le temps continue même si l'app est fermée.
+     */
+    public static function recordedSeconds(TrainingSession $session, ?CarbonInterface $now = null): int
+    {
+        $elapsed = max(0, (int) $session->timer_elapsed_seconds);
+        $startedAt = $session->timer_started_at;
+
+        if ($startedAt === null) {
+            return $elapsed;
+        }
+
+        $now = $now ?? now();
+        $open = (int) max(0, $startedAt->diffInSeconds($now, absolute: false));
+
+        return $elapsed + min($open, self::MAX_TIMER_SEGMENT_SECONDS);
+    }
+
+    public static function closeOpenTimer(TrainingSession $session, ?CarbonInterface $now = null): void
+    {
+        if ($session->timer_started_at === null) {
+            return;
+        }
+
+        $now = $now ?? now();
+        $open = (int) max(0, $session->timer_started_at->diffInSeconds($now, absolute: false));
+        $session->timer_elapsed_seconds = max(0, (int) $session->timer_elapsed_seconds) + min($open, self::MAX_TIMER_SEGMENT_SECONDS);
+        $session->timer_started_at = null;
     }
 
     /**

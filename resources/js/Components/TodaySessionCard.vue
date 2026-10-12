@@ -1,7 +1,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
   applySchemeStepToLine,
@@ -50,6 +50,13 @@ const prescriptionError = ref('');
 const expandedItemKey = ref(null);
 const celebrationOpen = ref(false);
 const celebrationData = ref(null);
+const timerBusy = ref(false);
+const finishing = ref(false);
+const pendingStartAt = ref(null);
+const clock = ref(Date.now());
+const MAX_TIMER_SEGMENT_SECONDS = 8 * 60 * 60;
+
+let clockTimer = null;
 
 function itemKey(item) {
   return `${item.section}-${item.line?.exercise_name ?? ''}`;
@@ -142,6 +149,104 @@ const allSeriesValidated = computed(() => {
   }
   return sortedWorkItems.value.every((item) => isBlockFullyValidated(item));
 });
+
+const sessionFinished = computed(() => Boolean(props.todayLoggedSession?.finished_at));
+
+const timerStartedAt = computed(() => {
+  if (sessionFinished.value) {
+    return null;
+  }
+  return props.todayLoggedSession?.timer_started_at || pendingStartAt.value;
+});
+
+const timerRunning = computed(() => Boolean(timerStartedAt.value));
+
+const elapsedSeconds = computed(() => {
+  const stored = Math.max(0, Number(props.todayLoggedSession?.timer_elapsed_seconds ?? 0));
+  const startedAt = timerStartedAt.value;
+  if (!startedAt) {
+    return stored;
+  }
+  const startMs = Date.parse(startedAt);
+  if (!Number.isFinite(startMs)) {
+    return stored;
+  }
+  const open = Math.max(0, Math.floor((clock.value - startMs) / 1000));
+  return stored + Math.min(open, MAX_TIMER_SEGMENT_SECONDS);
+});
+
+const formattedElapsed = computed(() => {
+  const total = Math.max(0, elapsedSeconds.value);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  const pad = (value) => String(value).padStart(2, '0');
+  if (hours > 0) {
+    return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  return `${minutes}:${pad(seconds)}`;
+});
+
+const timerButtonLabel = computed(() => {
+  if (timerRunning.value) {
+    return formattedElapsed.value;
+  }
+  if (elapsedSeconds.value > 0) {
+    return `${formattedElapsed.value} · ${t('app.todaySession.startTimer')}`;
+  }
+  return t('app.todaySession.startTimer');
+});
+
+function syncClock() {
+  clock.value = Date.now();
+}
+
+onMounted(() => {
+  clockTimer = window.setInterval(syncClock, 1000);
+  document.addEventListener('visibilitychange', syncClock);
+
+  const local = readLocalTimer();
+  if (
+    status.value === 'session'
+    && !sessionFinished.value
+    && !props.todayLoggedSession?.timer_started_at
+    && local?.startedAt
+  ) {
+    pendingStartAt.value = local.startedAt;
+    syncClock();
+    timerBusy.value = true;
+    router.post(
+      `/athletes/${props.athleteId}/training-sessions/timer/start`,
+      timerPayload(local.startedAt),
+      {
+        preserveScroll: true,
+        preserveState: true,
+        onFinish: () => {
+          timerBusy.value = false;
+          syncClock();
+        },
+      },
+    );
+  }
+});
+
+onUnmounted(() => {
+  if (clockTimer !== null) {
+    window.clearInterval(clockTimer);
+  }
+  document.removeEventListener('visibilitychange', syncClock);
+});
+
+watch(
+  () => props.todayLoggedSession?.timer_started_at,
+  (startedAt) => {
+    if (startedAt) {
+      pendingStartAt.value = null;
+      clearLocalTimer();
+    }
+  },
+  { immediate: true },
+);
 
 function applySnapshotToLine(line, snapshot) {
   if (!line || !snapshot) {
@@ -362,6 +467,122 @@ function closeCelebration() {
   celebrationOpen.value = false;
 }
 
+function timerStorageKey() {
+  return `tc-session-timer-${props.athleteId}-${props.todaySession?.date ?? ''}`;
+}
+
+function readLocalTimer() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(timerStorageKey());
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalTimer(startedAt) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  window.localStorage.setItem(timerStorageKey(), JSON.stringify({ startedAt }));
+}
+
+function clearLocalTimer() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  window.localStorage.removeItem(timerStorageKey());
+}
+
+function timerPayload(startedAt = null) {
+  return {
+    session_date: props.todaySession.date,
+    main_lift: mainLift.value,
+    session_label: session.value?.session_label ?? null,
+    ...(startedAt ? { started_at: startedAt } : {}),
+  };
+}
+
+function openCelebration() {
+  celebrationData.value = buildSessionCelebrationPayload({
+    sessionTitle: sessionTitle.value,
+    workItems: expandValidatedSetsToItems(workItems.value),
+    plannedItems: (session.value?.items ?? []).filter((row) => row.section !== 'warmup'),
+    oneRm: props.oneRm,
+    mainLift: mainLift.value,
+  });
+  celebrationOpen.value = true;
+}
+
+function toggleTimer() {
+  if (sessionFinished.value || timerBusy.value || status.value !== 'session') {
+    return;
+  }
+
+  const running = timerRunning.value;
+  const startedAt = running ? null : (pendingStartAt.value || new Date().toISOString());
+  if (running) {
+    pendingStartAt.value = null;
+    clearLocalTimer();
+  } else {
+    pendingStartAt.value = startedAt;
+    writeLocalTimer(startedAt);
+    syncClock();
+  }
+
+  timerBusy.value = true;
+  router.post(
+    `/athletes/${props.athleteId}/training-sessions/timer/${running ? 'stop' : 'start'}`,
+    timerPayload(startedAt),
+    {
+      preserveScroll: true,
+      preserveState: true,
+      onError: () => {
+        if (!running) {
+          return;
+        }
+        pendingStartAt.value = null;
+      },
+      onFinish: () => {
+        timerBusy.value = false;
+        syncClock();
+      },
+    },
+  );
+}
+
+function finishSession() {
+  if (sessionFinished.value || finishing.value || status.value !== 'session') {
+    return;
+  }
+
+  const partial = !allSeriesValidated.value;
+  const startedAt = timerStartedAt.value;
+  pendingStartAt.value = null;
+  clearLocalTimer();
+  finishing.value = true;
+  router.post(
+    `/athletes/${props.athleteId}/training-sessions/finish`,
+    timerPayload(startedAt),
+    {
+      preserveScroll: true,
+      preserveState: true,
+      onSuccess: () => {
+        if (partial) {
+          openCelebration();
+        }
+      },
+      onFinish: () => {
+        finishing.value = false;
+        syncClock();
+      },
+    },
+  );
+}
+
 function clonePrescriptionItems() {
   return (session.value?.items ?? [])
     .filter((row) => row.section !== 'warmup')
@@ -450,9 +671,36 @@ function savePrescription() {
 <template>
   <section class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
     <div class="flex flex-wrap items-start justify-between gap-2">
-      <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400/80">{{ t('app.todaySession.title') }}</p>
+      <div class="flex min-w-0 items-center gap-2">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-blue-400/80">{{ t('app.todaySession.title') }}</p>
+        <button
+          v-if="status === 'session' && !sessionFinished"
+          type="button"
+          class="inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-[11px] font-medium text-slate-500 transition hover:text-slate-300 disabled:opacity-60"
+          :disabled="timerBusy"
+          :aria-pressed="timerRunning"
+          :aria-label="timerRunning ? t('app.todaySession.stopTimer') : t('app.todaySession.startTimer')"
+          @click="toggleTimer"
+        >
+          <span
+            class="h-1.5 w-1.5 rounded-full"
+            :class="timerRunning ? 'bg-emerald-400/80' : 'bg-slate-600'"
+          />
+          <span class="tabular-nums">{{ timerButtonLabel }}</span>
+        </button>
+        <span
+          v-else-if="status === 'session' && elapsedSeconds > 0"
+          class="tabular-nums text-[11px] font-medium text-slate-500"
+        >
+          {{ formattedElapsed }}
+        </span>
+      </div>
       <span
-        v-if="allSeriesValidated"
+        v-if="sessionFinished"
+        class="rounded-lg border border-emerald-500/40 bg-emerald-950/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300"
+      >{{ t('app.todaySession.finished') }}</span>
+      <span
+        v-else-if="allSeriesValidated"
         class="rounded-lg border border-emerald-500/40 bg-emerald-950/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300"
       >{{ t('app.todaySession.validated') }}</span>
       <span
@@ -601,7 +849,16 @@ function savePrescription() {
         {{ t('app.todaySession.noExercises') }}
       </p>
 
-      <div class="mt-3 border-t border-slate-800 pt-3">
+      <div class="mt-3 space-y-2 border-t border-slate-800 pt-3">
+        <button
+          v-if="!sessionFinished"
+          type="button"
+          class="flex w-full items-center justify-center rounded-lg border border-slate-700 px-3 py-2.5 text-sm font-semibold text-slate-200 hover:border-slate-500 disabled:opacity-60"
+          :disabled="finishing || form.processing"
+          @click="finishSession"
+        >
+          {{ t('app.todaySession.finish') }}
+        </button>
         <Link
           href="/feedbacks"
           class="flex w-full items-center justify-center rounded-lg border border-slate-700 px-3 py-2.5 text-sm font-semibold text-slate-200 hover:border-slate-500"

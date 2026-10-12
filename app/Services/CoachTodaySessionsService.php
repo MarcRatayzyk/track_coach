@@ -93,8 +93,9 @@ class CoachTodaySessionsService
                 continue;
             }
 
-            $loggedItems = $this->mergeLoggedItems($sessionsByAthlete->get($athlete->id) ?? collect());
-            $progressStatus = $this->resolveProgressStatus($trainingDay, $loggedItems);
+            $athleteSessions = $sessionsByAthlete->get($athlete->id) ?? collect();
+            $loggedItems = $this->mergeLoggedItems($athleteSessions);
+            $progressStatus = $this->resolveProgressStatus($trainingDay, $loggedItems, $athleteSessions);
 
             $frequency = FeedbackFrequencySupport::frequencyFor($athlete);
             $feedback = $frequency === AthleteProfile::FREQUENCY_DAILY
@@ -169,10 +170,15 @@ class CoachTodaySessionsService
 
     /**
      * @param  list<array<string, mixed>>  $loggedItems
+     * @param  Collection<int, TrainingSession>  $sessions
      * @return 'not_started'|'in_progress'|'done'
      */
-    private function resolveProgressStatus(ProgramTrainingDay $trainingDay, array $loggedItems): string
+    private function resolveProgressStatus(ProgramTrainingDay $trainingDay, array $loggedItems, Collection $sessions): string
     {
+        if ($sessions->contains(fn (TrainingSession $session): bool => $session->finished_at !== null)) {
+            return 'done';
+        }
+
         $planned = $this->plannedWorkLines($trainingDay);
         $loggedByKey = $this->groupLoggedByKey($loggedItems);
         $totalLoggedSets = 0;

@@ -132,6 +132,12 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             ->name('media.messages.show');
 
         Route::get('/athletes/{athlete}', [AppPageController::class, 'athlete'])->name('athletes.show');
+        Route::post('/athletes/{athlete}/training-sessions/timer/start', [AthleteDataWebController::class, 'startTrainingSessionTimer'])
+            ->name('athletes.training-sessions.timer.start');
+        Route::post('/athletes/{athlete}/training-sessions/timer/stop', [AthleteDataWebController::class, 'stopTrainingSessionTimer'])
+            ->name('athletes.training-sessions.timer.stop');
+        Route::post('/athletes/{athlete}/training-sessions/finish', [AthleteDataWebController::class, 'finishTrainingSession'])
+            ->name('athletes.training-sessions.finish');
         Route::post('/athletes/{athlete}/training-sessions', [AthleteDataWebController::class, 'storeTrainingSession'])
             ->name('athletes.training-sessions.store');
         Route::put('/athletes/{athlete}/training-sessions/{trainingSession}', [AthleteDataWebController::class, 'updateTrainingSession'])
