@@ -10,6 +10,7 @@ export default {
 import { useI18n } from 'vue-i18n';
 import { usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onMounted, ref } from 'vue';
+import BecomeSelfCoachedButton from '../Components/BecomeSelfCoachedButton.vue';
 import AthleteDailyCheckInModal from '../Components/AthleteDailyCheckInModal.vue';
 import AthleteDashboardHeader from '../Components/AthleteDashboardHeader.vue';
 import AthleteReadinessCheckIn from '../Components/AthleteReadinessCheckIn.vue';
@@ -41,6 +42,7 @@ const props = defineProps({
   },
 });
 
+const isSelfCoached = computed(() => Boolean(page.props.auth?.user?.self_coached));
 const checkInModalOpen = ref(false);
 const activeWrapped = ref(null);
 const wrappedModalOpen = ref(false);
@@ -224,6 +226,8 @@ onMounted(() => {
 
 <template>
   <div class="space-y-3 lg:space-y-4">
+    <BecomeSelfCoachedButton v-if="!isSelfCoached" />
+
     <AthleteDashboardHeader
       v-if="todaySession?.status !== 'session'"
       :athlete-id="athleteId"

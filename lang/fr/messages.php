@@ -64,6 +64,7 @@ return [
         'demo_cannot_add' => 'La démo ne permet pas d’ajouter d’athlètes. Crée un vrai compte pour gérer ton roster.',
         'cannot_add_with_subscription' => 'Impossible d’ajouter un athlète avec ton abonnement actuel.',
         'seat_limit_reached' => 'Tu as atteint la limite de :limit athlètes de ton plan. Passe à un plan supérieur.',
+        'now_self_coached' => 'Tu es en auto-coaching. Tu peux créer tes programmes, gratuitement.',
     ],
 
     'records' => [

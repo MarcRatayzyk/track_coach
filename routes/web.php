@@ -14,6 +14,7 @@ use App\Http\Controllers\Web\AppPageController;
 use App\Http\Controllers\Web\AthleteCompetitionController;
 use App\Http\Controllers\Web\AthleteBodyWeightController;
 use App\Http\Controllers\Web\AthleteReadinessController;
+use App\Http\Controllers\Web\AthleteSelfCoachingController;
 use App\Http\Controllers\Web\BillingController;
 use App\Http\Controllers\Web\BugReportController;
 use App\Http\Controllers\Web\Coach\AthleteDataWebController;
@@ -98,6 +99,8 @@ Route::middleware('auth')->group(function (): void {
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/subscription/blocked', [BillingController::class, 'blocked'])
         ->name('subscription.blocked');
+    Route::post('/athlete/self-coaching', [AthleteSelfCoachingController::class, 'store'])
+        ->name('athlete.self-coaching.store');
 
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/', AdminDashboardController::class)->name('dashboard');

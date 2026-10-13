@@ -7,10 +7,17 @@ export default {
 </script>
 
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import BecomeSelfCoachedButton from '../Components/BecomeSelfCoachedButton.vue';
 
 const { t } = useI18n();
+const page = usePage();
+const canBecomeSelfCoached = computed(() => {
+    const user = page.props.auth?.user;
+    return user?.role === 'athlete' && !user?.self_coached;
+});
 </script>
 
 <template>
@@ -23,6 +30,10 @@ const { t } = useI18n();
             <p class="mt-3 text-sm leading-relaxed text-slate-400">
                 {{ t('auth.subscriptionBlocked.body') }}
             </p>
+            <BecomeSelfCoachedButton
+                v-if="canBecomeSelfCoached"
+                class="mt-6 text-left"
+            />
             <Link
                 href="/logout"
                 method="post"

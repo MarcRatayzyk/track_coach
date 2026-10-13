@@ -64,6 +64,7 @@ return [
         'demo_cannot_add' => 'The demo does not allow adding athletes. Create a real account to manage your roster.',
         'cannot_add_with_subscription' => 'Unable to add an athlete with your current subscription.',
         'seat_limit_reached' => 'You have reached the :limit athlete limit of your plan. Upgrade to a higher plan.',
+        'now_self_coached' => 'You are now self-coached. You can build your own programs, for free.',
     ],
 
     'records' => [

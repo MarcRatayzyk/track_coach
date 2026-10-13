@@ -2,6 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import BecomeSelfCoachedButton from '../Components/BecomeSelfCoachedButton.vue';
 import InstallAppButton from '../Components/InstallAppButton.vue';
 import InstallAppGuideModal from '../Components/InstallAppGuideModal.vue';
 import AppLogo from '../Components/AppLogo.vue';
@@ -33,6 +34,7 @@ let focusOutTimer = 0;
 
 const isCoach = computed(() => user.value?.role === 'coach');
 const isSelfCoached = computed(() => Boolean(user.value?.self_coached));
+const canBecomeSelfCoached = computed(() => user.value?.role === 'athlete' && !isSelfCoached.value);
 const isAdmin = computed(() => user.value?.role === 'admin');
 const messagingInbox = computed(() => page.props.messagingInbox ?? null);
 let messagingPollTimer = null;
@@ -578,6 +580,12 @@ watch(() => page.url, () => {
                 <span>{{ t('nav.reportProblem') }}</span>
             </button>
 
+            <BecomeSelfCoachedButton
+                v-if="canBecomeSelfCoached"
+                variant="menu"
+                class="mt-1"
+            />
+
             <Link
                 href="/account/privacy"
                 class="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-200 transition hover:bg-slate-800/60"
@@ -717,6 +725,11 @@ watch(() => page.url, () => {
                         <UiIcon name="alert" class="h-4 w-4" />
                         <span>{{ t('nav.reportProblem') }}</span>
                     </button>
+
+                    <BecomeSelfCoachedButton
+                        v-if="canBecomeSelfCoached"
+                        variant="sidebar"
+                    />
 
                     <Link
                         href="/account/privacy"
