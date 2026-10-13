@@ -2,12 +2,12 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatCalendarFr } from '../utils/formatDates';
+import { localizedExerciseName } from '../utils/exerciseNames';
 import {
   formatLineRecap,
-  formatPrescription,
   sessionDayOrdinalInWeek,
+  validatedSetsFromLoggedItems,
 } from '../utils/programBuilder';
-import { sectionBadgeClass, sectionOption } from '../config/programTableSections';
 
 const { t } = useI18n();
 
@@ -54,20 +54,164 @@ const hasWarmup = computed(() => {
   return Boolean(String(warmup.notes ?? '').trim()) || (warmup.items?.length ?? 0) > 0;
 });
 
-const exerciseLines = computed(() => {
-  const items = (props.session?.items ?? []).filter((item) => item.section !== 'warmup');
+function normalizeName(value) {
+  return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function numberOrNull(value) {
+  if (value == null || value === '') {
+    return null;
+  }
+  const parsed = Number(String(value).replace(',', '.'));
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function plannedSets(line) {
+  const scheme = line?.set_scheme ?? 'standard';
+  if (scheme === 'ramp') {
+    const steps = line?.scheme_config?.steps ?? [];
+    if (steps.length) {
+      return steps.map((step) => ({
+        reps: numberOrNull(step.reps),
+        load: numberOrNull(step.load),
+        load_percent: numberOrNull(step.load_percent),
+        rpe: numberOrNull(step.rpe),
+      }));
+    }
+  }
+
+  const count = scheme === 'cluster' ? 1 : Math.max(1, Number(line?.sets ?? 1) || 1);
+  const reps = scheme === 'cluster'
+    ? numberOrNull(line?.scheme_config?.reps ?? line?.reps)
+    : numberOrNull(line?.reps);
+
+  return Array.from({ length: count }, () => ({
+    reps,
+    load: numberOrNull(line?.load),
+    load_percent: numberOrNull(line?.load_percent),
+    rpe: numberOrNull(line?.rpe),
+  }));
+}
+
+function formatSet(set) {
+  if (!set) {
+    return '—';
+  }
+  const reps = set.reps != null ? String(set.reps) : '—';
+  if (set.load != null) {
+    return `${reps} × ${set.load} kg`;
+  }
+  if (set.load_percent != null) {
+    return `${reps} × ${set.load_percent}%`;
+  }
+  if (set.rpe != null) {
+    return `${reps} × RPE ${set.rpe}`;
+  }
+  return reps;
+}
+
+function sameValue(left, right) {
+  if (left == null && right == null) {
+    return true;
+  }
+  if (left == null || right == null) {
+    return false;
+  }
+  return Math.abs(Number(left) - Number(right)) < 0.051;
+}
+
+function setsMatch(planned, actual) {
+  if (!planned || !actual) {
+    return false;
+  }
+  if (!sameValue(planned.reps, actual.reps)) {
+    return false;
+  }
+  if (planned.load != null || actual.load != null) {
+    return sameValue(planned.load, actual.load);
+  }
+  if (planned.load_percent != null || actual.load_percent != null) {
+    return sameValue(planned.load_percent, actual.load_percent);
+  }
+  if (planned.rpe != null || actual.rpe != null) {
+    return sameValue(planned.rpe, actual.rpe);
+  }
+  return true;
+}
+
+const comparisonRows = computed(() => {
   const order = { topset: 0, backoff: 1, accessory: 2 };
+  const plannedItems = [...(props.session?.items ?? [])]
+    .filter((item) => (item.section ?? item.line?.section) !== 'warmup')
+    .sort((a, b) => (order[a.section] ?? 9) - (order[b.section] ?? 9));
 
-  return [...items].sort((a, b) => (order[a.section] ?? 9) - (order[b.section] ?? 9));
+  const date = props.selectedCell?.date;
+  const loggedItems = (props.programBlock?.training_sessions ?? [])
+    .filter((entry) => entry.session_date === date)
+    .flatMap((entry) => entry.items ?? []);
+  const used = new Set();
+
+  function takeActualSets(line) {
+    const name = normalizeName(line?.exercise_name);
+    const matches = [];
+    loggedItems.forEach((item, index) => {
+      if (used.has(index)) {
+        return;
+      }
+      const loggedLine = item?.line ?? item;
+      if (normalizeName(loggedLine?.exercise_name) !== name) {
+        return;
+      }
+      used.add(index);
+      matches.push(item);
+    });
+    return validatedSetsFromLoggedItems(matches);
+  }
+
+  const rows = [];
+
+  plannedItems.forEach((item) => {
+    const line = item?.line ?? item;
+    const planned = plannedSets(line);
+    const actual = takeActualSets(line);
+    const count = Math.max(planned.length, actual.length, 1);
+    const exercise = localizedExerciseName(line?.exercise_name) || line?.exercise_name || '—';
+
+    for (let index = 0; index < count; index += 1) {
+      const plannedSet = planned[index] ?? null;
+      const actualSet = actual[index] ?? null;
+      rows.push({
+        key: `${exercise}-${index}-${rows.length}`,
+        exercise: index === 0 ? exercise : '',
+        setNumber: index + 1,
+        plannedLabel: formatSet(plannedSet),
+        actualLabel: formatSet(actualSet),
+        match: setsMatch(plannedSet, actualSet),
+      });
+    }
+  });
+
+  loggedItems.forEach((item, index) => {
+    if (used.has(index)) {
+      return;
+    }
+    const line = item?.line ?? item;
+    const actual = validatedSetsFromLoggedItems([item]);
+    const exercise = localizedExerciseName(line?.exercise_name) || line?.exercise_name || '—';
+    actual.forEach((set, setIndex) => {
+      rows.push({
+        key: `extra-${index}-${setIndex}`,
+        exercise: setIndex === 0 ? exercise : '',
+        setNumber: setIndex + 1,
+        plannedLabel: '—',
+        actualLabel: formatSet(set),
+        match: false,
+      });
+    });
+  });
+
+  return rows;
 });
-
-function exerciseLineText(line) {
-  return formatLineRecap(line) || formatPrescription(line);
-}
-
-function sectionLabel(section) {
-  return sectionOption(section).label;
-}
 </script>
 
 <template>
@@ -113,23 +257,31 @@ function sectionLabel(section) {
       </ul>
     </div>
 
-    <template v-if="session && exerciseLines.length">
-      <ul class="mt-4 space-y-2 border-t border-slate-800 pt-4">
-        <li
-          v-for="(line, index) in exerciseLines"
-          :key="`${line.section}-${index}`"
-          class="flex flex-wrap items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm"
-        >
-          <span
-            class="inline-flex shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-            :class="sectionBadgeClass(line.section)"
+    <div v-if="comparisonRows.length" class="mt-4 overflow-x-auto border-t border-slate-800 pt-4">
+      <table class="w-full min-w-[18rem] border-collapse text-left text-xs">
+        <thead>
+          <tr class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            <th class="px-2 py-1.5 font-semibold">{{ t('athleteUi.programSession.exercise') }}</th>
+            <th class="px-2 py-1.5 font-semibold">{{ t('athleteUi.programSession.set') }}</th>
+            <th class="px-2 py-1.5 font-semibold">{{ t('athleteUi.programSession.planned') }}</th>
+            <th class="px-2 py-1.5 font-semibold">{{ t('athleteUi.programSession.done') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="row in comparisonRows"
+            :key="row.key"
+            class="border-t border-slate-800/80"
+            :class="row.match ? 'bg-emerald-500/15 text-emerald-100' : 'bg-red-500/15 text-red-100'"
           >
-            {{ sectionLabel(line.section) }}
-          </span>
-          <span class="text-slate-200">{{ exerciseLineText(line) }}</span>
-        </li>
-      </ul>
-    </template>
+            <td class="px-2 py-2 font-medium text-white">{{ row.exercise }}</td>
+            <td class="px-2 py-2 tabular-nums">{{ row.setNumber }}</td>
+            <td class="px-2 py-2 tabular-nums">{{ row.plannedLabel }}</td>
+            <td class="px-2 py-2 tabular-nums">{{ row.actualLabel }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <p
       v-else-if="!hasWarmup"

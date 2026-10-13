@@ -2232,7 +2232,11 @@
       "weekDayLabel": "Week {week} · Day {day}",
       "weekDayLabelNamed": "Week {week} · Day {day} — {label}",
       "warmup": "Warm-up",
-      "noSession": "No session programmed for this day."
+      "noSession": "No session programmed for this day.",
+      "exercise": "Exercise",
+      "set": "Set",
+      "planned": "Planned",
+      "done": "Done"
     },
     "readiness": {
       "externalFactors": "External factors",
