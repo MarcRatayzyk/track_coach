@@ -12,11 +12,16 @@ import {
   itemSectionTitle,
   plannedSetsForLine,
   sessionToDay,
+  SET_OPTIONS,
   snapshotValidatedSet,
   validatedSetsFromLoggedItems,
 } from '../utils/programBuilder';
 import TodaySessionSetBlock from './TodaySessionSetBlock.vue';
+import ExerciseVariantStrip from './ExerciseVariantStrip.vue';
+import OptionButtonGroup from './OptionButtonGroup.vue';
+import ScrollPicker from './ScrollPicker.vue';
 import SessionCelebrationModal from './SessionCelebrationModal.vue';
+import { localizedExerciseName } from '../utils/exerciseNames';
 import { buildSessionCelebrationPayload } from '../utils/sessionCelebration';
 import { track } from '../utils/analytics';
 
@@ -603,15 +608,43 @@ function finishSession() {
   );
 }
 
+const prescriptionRepOptions = Array.from({ length: 20 }, (_, index) => index + 1);
+const prescriptionKgOptions = (() => {
+  const values = [];
+  for (let kg = 0; kg <= 300; kg += 2.5) {
+    values.push(Number(kg.toFixed(1)));
+  }
+  return values;
+})();
+const prescriptionPercentOptions = (() => {
+  const values = [];
+  for (let percent = 20; percent <= 110; percent += 2.5) {
+    values.push(Number(percent.toFixed(1)));
+  }
+  return values;
+})();
+
+function prescriptionChargeMode(row) {
+  if (row?.load_mode === 'percent' || (row?.load_percent != null && row.load_percent !== '')) {
+    return 'percent';
+  }
+  return 'kg';
+}
+
 function clonePrescriptionItems() {
   return (session.value?.items ?? [])
     .filter((row) => row.section !== 'warmup')
     .map((row) => ({
       ...row,
+      exercise_variant_id: row.exercise_variant_id ?? null,
       exercise_name: row.exercise_name ?? '',
+      lift: row.lift ?? mainLift.value,
+      set_scheme: row.set_scheme === 'straight' ? 'standard' : (row.set_scheme ?? 'standard'),
       sets: Number(row.sets) || 1,
       reps: Number(row.reps) || 1,
-      load: row.load ?? '',
+      load: row.load ?? null,
+      load_percent: row.load_percent ?? null,
+      load_mode: prescriptionChargeMode(row),
     }));
 }
 
@@ -624,13 +657,37 @@ function startPrescriptionEdit() {
 function addPrescriptionItem() {
   prescriptionItems.value.push({
     section: 'accessory',
+    exercise_variant_id: null,
     exercise_name: '',
+    lift: mainLift.value,
+    set_scheme: 'standard',
     sets: 3,
     reps: 8,
-    load: '',
-    lift: mainLift.value,
-    set_scheme: 'straight',
+    load: null,
+    load_percent: null,
+    load_mode: 'kg',
   });
+}
+
+function selectPrescriptionExercise(index, selected) {
+  const row = prescriptionItems.value[index];
+  if (!row || !selected) {
+    return;
+  }
+  row.exercise_variant_id = selected.exercise_variant_id ?? null;
+  row.exercise_name = selected.exercise_name ?? '';
+  if (selected.lift) {
+    row.lift = selected.lift;
+  }
+}
+
+function setPrescriptionChargeMode(row, mode) {
+  row.load_mode = mode;
+  if (mode === 'kg') {
+    row.load_percent = null;
+    return;
+  }
+  row.load = null;
 }
 
 function removePrescriptionItem(index) {
@@ -651,13 +708,22 @@ function savePrescription() {
   const warmupItems = (session.value.items ?? []).filter((row) => row.section === 'warmup');
   const items = [
     ...warmupItems,
-    ...prescriptionItems.value.map((row) => ({
-      ...row,
-      exercise_name: String(row.exercise_name).trim(),
-      sets: Number(row.sets),
-      reps: Number(row.reps),
-      load: row.load === '' || row.load == null ? null : Number(String(row.load).replace(',', '.')),
-    })),
+    ...prescriptionItems.value.map((row) => {
+      const mode = prescriptionChargeMode(row);
+      return {
+        ...row,
+        exercise_name: String(row.exercise_name).trim(),
+        exercise_variant_id: row.exercise_variant_id ?? null,
+        set_scheme: row.set_scheme === 'straight' ? 'standard' : (row.set_scheme ?? 'standard'),
+        sets: Number(row.sets),
+        reps: Number(row.reps),
+        load_mode: mode,
+        load: mode === 'kg' && row.load != null && row.load !== '' ? Number(row.load) : null,
+        load_percent: mode === 'percent' && row.load_percent != null && row.load_percent !== ''
+          ? Number(row.load_percent)
+          : null,
+      };
+    }),
   ];
 
   prescriptionSaving.value = true;
@@ -773,57 +839,96 @@ function savePrescription() {
           </button>
         </div>
 
-        <div v-if="editingPrescription" class="space-y-2">
-          <div
+        <div v-if="editingPrescription" class="space-y-3">
+          <article
             v-for="(row, index) in prescriptionItems"
             :key="`prescription-${index}`"
-            class="grid grid-cols-2 items-end gap-2 rounded-lg border border-slate-800 p-2 sm:grid-cols-[minmax(0,1fr)_4.5rem_4.5rem_5rem_auto]"
+            class="rounded-xl border border-slate-800 bg-slate-950/50 p-3"
           >
-            <label class="col-span-2 text-[10px] text-slate-400 sm:col-span-1">
-              {{ t('app.todaySession.setName') }}
-              <input
-                v-model="row.exercise_name"
-                type="text"
-                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white"
-              />
-            </label>
-            <label class="text-[10px] text-slate-400">
-              {{ t('app.todaySession.sets') }}
-              <input
-                v-model.number="row.sets"
-                type="number"
-                min="1"
-                max="10"
-                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white"
-              />
-            </label>
-            <label class="text-[10px] text-slate-400">
-              {{ t('app.todaySession.reps') }}
-              <input
-                v-model.number="row.reps"
-                type="number"
-                min="1"
-                max="200"
-                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white"
-              />
-            </label>
-            <label class="text-[10px] text-slate-400">
-              {{ t('app.todaySession.load') }}
-              <input
-                v-model="row.load"
-                type="text"
-                inputmode="decimal"
-                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white"
-              />
-            </label>
-            <button
-              type="button"
-              class="mb-0.5 rounded-md border border-red-500/40 px-2 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-950/40"
-              @click="removePrescriptionItem(index)"
-            >
-              {{ t('common.remove') }}
-            </button>
-          </div>
+            <div class="flex items-start justify-between gap-2">
+              <p class="min-w-0 text-sm font-semibold text-white">
+                {{ row.exercise_name ? localizedExerciseName(row.exercise_name) : t('app.todaySession.chooseExercise') }}
+              </p>
+              <button
+                type="button"
+                class="shrink-0 rounded-md border border-red-500/40 px-2 py-1 text-xs font-semibold text-red-300 hover:bg-red-950/40"
+                @click="removePrescriptionItem(index)"
+              >
+                {{ t('common.remove') }}
+              </button>
+            </div>
+
+            <ExerciseVariantStrip
+              class="mt-2"
+              accessory-panel
+              :default-lift="row.lift || mainLift"
+              :exercise-variant-id="row.exercise_variant_id"
+              :exercise-name="row.exercise_name"
+              @select="selectPrescriptionExercise(index, $event)"
+            />
+
+            <OptionButtonGroup
+              class="mt-3"
+              :model-value="row.sets"
+              :options="SET_OPTIONS"
+              :columns="5"
+              dense
+              :label="t('app.todaySession.sets')"
+              @update:model-value="row.sets = $event"
+            />
+
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <div class="min-w-0">
+                <p class="mb-1 text-center text-[10px] font-medium text-slate-400">{{ t('app.todaySession.reps') }}</p>
+                <ScrollPicker
+                  v-model="row.reps"
+                  :options="prescriptionRepOptions"
+                  :item-height="32"
+                  :visible-count="3"
+                  :aria-label="t('app.todaySession.reps')"
+                />
+              </div>
+              <div class="min-w-0">
+                <div class="mb-1 flex items-center justify-center gap-1">
+                  <button
+                    type="button"
+                    class="rounded px-2 py-0.5 text-[10px] font-semibold"
+                    :class="prescriptionChargeMode(row) === 'kg' ? 'bg-blue-600 text-white' : 'border border-slate-700 text-slate-400'"
+                    @click="setPrescriptionChargeMode(row, 'kg')"
+                  >
+                    kg
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded px-2 py-0.5 text-[10px] font-semibold"
+                    :class="prescriptionChargeMode(row) === 'percent' ? 'bg-blue-600 text-white' : 'border border-slate-700 text-slate-400'"
+                    @click="setPrescriptionChargeMode(row, 'percent')"
+                  >
+                    %
+                  </button>
+                </div>
+                <ScrollPicker
+                  v-if="prescriptionChargeMode(row) === 'kg'"
+                  v-model="row.load"
+                  allow-empty
+                  :options="prescriptionKgOptions"
+                  :item-height="32"
+                  :visible-count="3"
+                  :aria-label="t('app.todaySession.load')"
+                />
+                <ScrollPicker
+                  v-else
+                  v-model="row.load_percent"
+                  allow-empty
+                  :options="prescriptionPercentOptions"
+                  :format="(value) => `${value}%`"
+                  :item-height="32"
+                  :visible-count="3"
+                  :aria-label="t('app.todaySession.load')"
+                />
+              </div>
+            </div>
+          </article>
 
           <p v-if="prescriptionError" class="text-xs text-red-400">{{ prescriptionError }}</p>
 
