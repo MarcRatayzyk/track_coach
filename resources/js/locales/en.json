@@ -2237,7 +2237,19 @@
       "exercise": "Exercise",
       "set": "Set",
       "planned": "Planned",
-      "done": "Done"
+      "done": "Done",
+      "edit": "Edit session",
+      "addSet": "Add a set",
+      "removeSet": "Delete set",
+      "addExercise": "Add an exercise",
+      "removeExercise": "Remove",
+      "chooseExercise": "Choose an exercise",
+      "reps": "Reps",
+      "load": "Load",
+      "save": "Save",
+      "deleteSession": "Delete session",
+      "nameRequired": "Choose an exercise for every row.",
+      "setRequired": "Each exercise needs at least one set."
     },
     "readiness": {
       "externalFactors": "External factors",

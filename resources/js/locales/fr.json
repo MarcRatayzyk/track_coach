@@ -2237,7 +2237,19 @@
       "exercise": "Exercice",
       "set": "Série",
       "planned": "Prévu",
-      "done": "Fait"
+      "done": "Fait",
+      "edit": "Modifier la séance",
+      "addSet": "Ajouter une série",
+      "removeSet": "Supprimer la série",
+      "addExercise": "Ajouter un exercice",
+      "removeExercise": "Retirer",
+      "chooseExercise": "Choisis un exercice",
+      "reps": "Reps",
+      "load": "Charge",
+      "save": "Enregistrer",
+      "deleteSession": "Supprimer la séance",
+      "nameRequired": "Choisis un exercice pour chaque ligne.",
+      "setRequired": "Chaque exercice doit avoir au moins une série."
     },
     "readiness": {
       "externalFactors": "Facteurs externes",

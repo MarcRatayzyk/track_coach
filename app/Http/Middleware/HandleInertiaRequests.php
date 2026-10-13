@@ -95,7 +95,11 @@ class HandleInertiaRequests extends Middleware
             },
             'exerciseLibrary' => function () use ($request) {
                 $user = $request->user();
-                if (! $user || ! $user->canProgramTraining() || ! BillingAccess::hasAppAccess($user)) {
+                if (! $user || ! BillingAccess::hasAppAccess($user)) {
+                    return [];
+                }
+
+                if (! $user->canProgramTraining() && $user->role !== 'athlete') {
                     return [];
                 }
 

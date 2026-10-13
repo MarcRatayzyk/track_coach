@@ -1,13 +1,15 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { router } from '@inertiajs/vue3';
 import { formatCalendarFr } from '../utils/formatDates';
 import { localizedExerciseName } from '../utils/exerciseNames';
 import {
   formatLineRecap,
   sessionDayOrdinalInWeek,
 } from '../utils/programBuilder';
-import { buildComparisonRows } from '../utils/sessionComparison';
+import { buildComparisonRows, editableExercises } from '../utils/sessionComparison';
+import LoggedSessionSetEditor from './LoggedSessionSetEditor.vue';
 
 const { t } = useI18n();
 
@@ -54,19 +56,157 @@ const hasWarmup = computed(() => {
   return Boolean(String(warmup.notes ?? '').trim()) || (warmup.items?.length ?? 0) > 0;
 });
 
-const comparisonRows = computed(() => {
+const editingLog = ref(false);
+const savingLog = ref(false);
+const logError = ref('');
+const draftExercises = ref([]);
+
+function localToday() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+const selectedDate = computed(() => props.selectedCell?.date ?? null);
+
+const canEditLog = computed(() => {
+  const date = selectedDate.value;
+  return Boolean(date && props.programBlock?.athlete_id && date <= localToday());
+});
+
+const plannedItems = computed(() => {
   const order = { topset: 0, backoff: 1, accessory: 2 };
-  const plannedItems = [...(props.session?.items ?? [])]
+  return [...(props.session?.items ?? [])]
     .filter((item) => (item.section ?? item.line?.section) !== 'warmup')
     .sort((a, b) => (order[a.section ?? a.line?.section] ?? 9) - (order[b.section ?? b.line?.section] ?? 9));
-
-  const date = props.selectedCell?.date;
-  const loggedItems = (props.programBlock?.training_sessions ?? [])
-    .filter((entry) => String(entry.session_date ?? '').slice(0, 10) === date)
-    .flatMap((entry) => entry.items ?? []);
-
-  return buildComparisonRows(plannedItems, loggedItems, localizedExerciseName);
 });
+
+const loggedSession = computed(() => {
+  const date = selectedDate.value;
+  return (props.programBlock?.training_sessions ?? []).find(
+    (entry) => String(entry.session_date ?? '').slice(0, 10) === date,
+  ) ?? null;
+});
+
+const loggedItems = computed(() => loggedSession.value?.items ?? []);
+
+const comparisonRows = computed(() => buildComparisonRows(
+  plannedItems.value,
+  loggedItems.value,
+  localizedExerciseName,
+));
+
+watch(selectedDate, () => {
+  editingLog.value = false;
+  logError.value = '';
+});
+
+function startEdit() {
+  const seeded = editableExercises(plannedItems.value, loggedItems.value);
+  draftExercises.value = seeded.length
+    ? seeded
+    : [{
+      section: 'accessory',
+      exercise_variant_id: null,
+      exercise_name: '',
+      lift: 'squat',
+      sets: [{ reps: 5, load: null, load_percent: null, load_mode: 'kg' }],
+    }];
+  logError.value = '';
+  editingLog.value = true;
+}
+
+function sessionPayload(items) {
+  const lift = items.find((item) => ['squat', 'bench', 'deadlift'].includes(item.lift))?.lift
+    ?? loggedSession.value?.main_lift
+    ?? props.session?.main_lift
+    ?? 'squat';
+
+  return {
+    session_date: selectedDate.value,
+    main_lift: lift,
+    session_label: loggedSession.value?.session_label ?? props.session?.session_label ?? null,
+    notes: loggedSession.value?.notes ?? null,
+    items,
+    blocks: [],
+  };
+}
+
+function saveLog() {
+  const named = draftExercises.value.every((exercise) => String(exercise.exercise_name ?? '').trim() !== '');
+  if (!named) {
+    logError.value = t('athleteUi.programSession.nameRequired');
+    return;
+  }
+  const withSets = draftExercises.value.every((exercise) => (exercise.sets ?? []).length > 0);
+  if (!withSets) {
+    logError.value = t('athleteUi.programSession.setRequired');
+    return;
+  }
+
+  const items = draftExercises.value.flatMap((exercise) => (exercise.sets ?? []).map((set) => {
+    const mode = set.load_mode === 'percent' ? 'percent' : 'kg';
+    return {
+      section: exercise.section || 'accessory',
+      exercise_variant_id: exercise.exercise_variant_id ?? null,
+      exercise_name: String(exercise.exercise_name).trim(),
+      lift: exercise.lift || 'squat',
+      set_scheme: 'standard',
+      sets: 1,
+      reps: Number(set.reps),
+      load: mode === 'kg' && set.load != null && set.load !== '' ? Number(set.load) : null,
+      load_percent: mode === 'percent' && set.load_percent != null && set.load_percent !== ''
+        ? Number(set.load_percent)
+        : null,
+    };
+  }));
+
+  const athleteId = props.programBlock.athlete_id;
+  const existing = loggedSession.value;
+  savingLog.value = true;
+  logError.value = '';
+  const visit = {
+    preserveScroll: true,
+    onSuccess: () => {
+      editingLog.value = false;
+    },
+    onError: (errors) => {
+      logError.value = Object.values(errors).flat().filter(Boolean).join(' ');
+    },
+    onFinish: () => {
+      savingLog.value = false;
+    },
+  };
+
+  if (existing?.id) {
+    router.put(`/athletes/${athleteId}/training-sessions/${existing.id}`, sessionPayload(items), visit);
+    return;
+  }
+  router.post(`/athletes/${athleteId}/training-sessions`, sessionPayload(items), visit);
+}
+
+function deleteLog() {
+  const existing = loggedSession.value;
+  if (!existing?.id) {
+    editingLog.value = false;
+    return;
+  }
+  savingLog.value = true;
+  logError.value = '';
+  router.delete(`/athletes/${props.programBlock.athlete_id}/training-sessions/${existing.id}`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      editingLog.value = false;
+    },
+    onError: (errors) => {
+      logError.value = Object.values(errors).flat().filter(Boolean).join(' ');
+    },
+    onFinish: () => {
+      savingLog.value = false;
+    },
+  });
+}
 </script>
 
 <template>
@@ -78,14 +218,24 @@ const comparisonRows = computed(() => {
           {{ formatCalendarFr(selectedCell.date, 'medium') }}
         </p>
       </div>
-      <button
-        v-if="selectedCell"
-        type="button"
-        class="text-xs text-slate-500 hover:text-slate-300"
-        @click="emit('close')"
-      >
-        {{ t('common.close') }}
-      </button>
+      <div class="flex shrink-0 items-center gap-3">
+        <button
+          v-if="canEditLog && !editingLog"
+          type="button"
+          class="rounded-lg border border-blue-500/40 px-2 py-1 text-xs font-semibold text-blue-200 hover:bg-blue-500/10"
+          @click="startEdit"
+        >
+          {{ t('athleteUi.programSession.edit') }}
+        </button>
+        <button
+          v-if="selectedCell"
+          type="button"
+          class="text-xs text-slate-500 hover:text-slate-300"
+          @click="emit('close')"
+        >
+          {{ t('common.close') }}
+        </button>
+      </div>
     </div>
 
     <div
@@ -112,7 +262,18 @@ const comparisonRows = computed(() => {
       </ul>
     </div>
 
-    <div v-if="comparisonRows.length" class="mt-4 overflow-x-auto border-t border-slate-800 pt-4">
+    <LoggedSessionSetEditor
+      v-if="editingLog"
+      v-model:exercises="draftExercises"
+      :saving="savingLog"
+      :error="logError"
+      :can-delete-session="Boolean(loggedSession?.id)"
+      @save="saveLog"
+      @cancel="editingLog = false"
+      @delete-session="deleteLog"
+    />
+
+    <div v-else-if="comparisonRows.length" class="mt-4 overflow-x-auto border-t border-slate-800 pt-4">
       <table class="w-full min-w-[18rem] border-collapse text-left text-xs">
         <thead>
           <tr class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">

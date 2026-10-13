@@ -155,6 +155,91 @@ function pushRow(rows, { exercise, setNumber, planned, actual }) {
  * Une série faite occupe la ligne de la série prévue du même exercice.
  * Les séries en trop ne sont ajoutées qu'après ce compte, pas à la place d'un autre exercice.
  */
+function snapshotFromLine(line) {
+  const load = numberOrNull(line?.load);
+  const loadPercent = numberOrNull(line?.load_percent);
+  return {
+    reps: numberOrNull(line?.reps) ?? 1,
+    load,
+    load_percent: loadPercent,
+    load_mode: loadPercent != null && load == null ? 'percent' : 'kg',
+  };
+}
+
+function pushExerciseSets(exercises, source) {
+  const sets = source.sets.filter(Boolean);
+  if (!sets.length) {
+    return;
+  }
+  const last = exercises[exercises.length - 1];
+  const same = last
+    && last.section === source.section
+    && last.exercise_name === source.exercise_name
+    && last.exercise_variant_id === source.exercise_variant_id;
+  if (same) {
+    last.sets.push(...sets);
+    return;
+  }
+  exercises.push({
+    section: source.section || 'accessory',
+    exercise_variant_id: source.exercise_variant_id ?? null,
+    exercise_name: source.exercise_name ?? '',
+    lift: source.lift ?? null,
+    sets,
+  });
+}
+
+/** Séries éditables : le réalisé s'il existe, sinon la séance prévue. */
+export function editableExercises(plannedItems = [], loggedItems = []) {
+  const fromLog = [];
+  loggedItems.forEach((item) => {
+    const line = lineOf(item);
+    const section = sectionOf(item, line);
+    if (section === 'warmup' || !String(line?.exercise_name ?? '').trim()) {
+      return;
+    }
+    const count = Math.max(1, Number(line?.sets ?? 1) || 1);
+    const snap = snapshotFromLine(line);
+    if (snap.reps == null && snap.load == null && snap.load_percent == null) {
+      return;
+    }
+    pushExerciseSets(fromLog, {
+      section,
+      exercise_variant_id: variantId(line),
+      exercise_name: line.exercise_name,
+      lift: line.lift ?? null,
+      sets: Array.from({ length: count }, () => ({ ...snap })),
+    });
+  });
+
+  if (fromLog.length) {
+    return fromLog;
+  }
+
+  const fromPlan = [];
+  plannedItems.forEach((item) => {
+    const line = lineOf(item);
+    const section = sectionOf(item, line);
+    if (section === 'warmup' || !String(line?.exercise_name ?? '').trim()) {
+      return;
+    }
+    pushExerciseSets(fromPlan, {
+      section,
+      exercise_variant_id: variantId(line),
+      exercise_name: line.exercise_name,
+      lift: line.lift ?? null,
+      sets: plannedSetsForComparison(line).map((set) => ({
+        reps: set.reps ?? 1,
+        load: set.load,
+        load_percent: set.load_percent,
+        load_mode: set.load_percent != null && set.load == null ? 'percent' : 'kg',
+      })),
+    });
+  });
+
+  return fromPlan;
+}
+
 export function buildComparisonRows(plannedItems = [], loggedItems = [], localize = (name) => name) {
   const entries = [];
   loggedItems.forEach((item) => {
