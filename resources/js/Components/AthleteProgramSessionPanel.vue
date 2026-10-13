@@ -6,8 +6,8 @@ import { localizedExerciseName } from '../utils/exerciseNames';
 import {
   formatLineRecap,
   sessionDayOrdinalInWeek,
-  validatedSetsFromLoggedItems,
 } from '../utils/programBuilder';
+import { buildComparisonRows } from '../utils/sessionComparison';
 
 const { t } = useI18n();
 
@@ -54,163 +54,18 @@ const hasWarmup = computed(() => {
   return Boolean(String(warmup.notes ?? '').trim()) || (warmup.items?.length ?? 0) > 0;
 });
 
-function normalizeName(value) {
-  return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
-}
-
-function numberOrNull(value) {
-  if (value == null || value === '') {
-    return null;
-  }
-  const parsed = Number(String(value).replace(',', '.'));
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function plannedSets(line) {
-  const scheme = line?.set_scheme ?? 'standard';
-  if (scheme === 'ramp') {
-    const steps = line?.scheme_config?.steps ?? [];
-    if (steps.length) {
-      return steps.map((step) => ({
-        reps: numberOrNull(step.reps),
-        load: numberOrNull(step.load),
-        load_percent: numberOrNull(step.load_percent),
-        rpe: numberOrNull(step.rpe),
-      }));
-    }
-  }
-
-  const count = scheme === 'cluster' ? 1 : Math.max(1, Number(line?.sets ?? 1) || 1);
-  const reps = scheme === 'cluster'
-    ? numberOrNull(line?.scheme_config?.reps ?? line?.reps)
-    : numberOrNull(line?.reps);
-
-  return Array.from({ length: count }, () => ({
-    reps,
-    load: numberOrNull(line?.load),
-    load_percent: numberOrNull(line?.load_percent),
-    rpe: numberOrNull(line?.rpe),
-  }));
-}
-
-function formatSet(set) {
-  if (!set) {
-    return '—';
-  }
-  const reps = set.reps != null ? String(set.reps) : '—';
-  if (set.load != null) {
-    return `${reps} × ${set.load} kg`;
-  }
-  if (set.load_percent != null) {
-    return `${reps} × ${set.load_percent}%`;
-  }
-  if (set.rpe != null) {
-    return `${reps} × RPE ${set.rpe}`;
-  }
-  return reps;
-}
-
-function sameValue(left, right) {
-  if (left == null && right == null) {
-    return true;
-  }
-  if (left == null || right == null) {
-    return false;
-  }
-  return Math.abs(Number(left) - Number(right)) < 0.051;
-}
-
-function setsMatch(planned, actual) {
-  if (!planned || !actual) {
-    return false;
-  }
-  if (!sameValue(planned.reps, actual.reps)) {
-    return false;
-  }
-  if (planned.load != null || actual.load != null) {
-    return sameValue(planned.load, actual.load);
-  }
-  if (planned.load_percent != null || actual.load_percent != null) {
-    return sameValue(planned.load_percent, actual.load_percent);
-  }
-  if (planned.rpe != null || actual.rpe != null) {
-    return sameValue(planned.rpe, actual.rpe);
-  }
-  return true;
-}
-
 const comparisonRows = computed(() => {
   const order = { topset: 0, backoff: 1, accessory: 2 };
   const plannedItems = [...(props.session?.items ?? [])]
     .filter((item) => (item.section ?? item.line?.section) !== 'warmup')
-    .sort((a, b) => (order[a.section] ?? 9) - (order[b.section] ?? 9));
+    .sort((a, b) => (order[a.section ?? a.line?.section] ?? 9) - (order[b.section ?? b.line?.section] ?? 9));
 
   const date = props.selectedCell?.date;
   const loggedItems = (props.programBlock?.training_sessions ?? [])
-    .filter((entry) => entry.session_date === date)
+    .filter((entry) => String(entry.session_date ?? '').slice(0, 10) === date)
     .flatMap((entry) => entry.items ?? []);
-  const used = new Set();
 
-  function takeActualSets(line) {
-    const name = normalizeName(line?.exercise_name);
-    const matches = [];
-    loggedItems.forEach((item, index) => {
-      if (used.has(index)) {
-        return;
-      }
-      const loggedLine = item?.line ?? item;
-      if (normalizeName(loggedLine?.exercise_name) !== name) {
-        return;
-      }
-      used.add(index);
-      matches.push(item);
-    });
-    return validatedSetsFromLoggedItems(matches);
-  }
-
-  const rows = [];
-
-  plannedItems.forEach((item) => {
-    const line = item?.line ?? item;
-    const planned = plannedSets(line);
-    const actual = takeActualSets(line);
-    const count = Math.max(planned.length, actual.length, 1);
-    const exercise = localizedExerciseName(line?.exercise_name) || line?.exercise_name || '—';
-
-    for (let index = 0; index < count; index += 1) {
-      const plannedSet = planned[index] ?? null;
-      const actualSet = actual[index] ?? null;
-      rows.push({
-        key: `${exercise}-${index}-${rows.length}`,
-        exercise: index === 0 ? exercise : '',
-        setNumber: index + 1,
-        plannedLabel: formatSet(plannedSet),
-        actualLabel: formatSet(actualSet),
-        match: setsMatch(plannedSet, actualSet),
-      });
-    }
-  });
-
-  loggedItems.forEach((item, index) => {
-    if (used.has(index)) {
-      return;
-    }
-    const line = item?.line ?? item;
-    const actual = validatedSetsFromLoggedItems([item]);
-    const exercise = localizedExerciseName(line?.exercise_name) || line?.exercise_name || '—';
-    actual.forEach((set, setIndex) => {
-      rows.push({
-        key: `extra-${index}-${setIndex}`,
-        exercise: setIndex === 0 ? exercise : '',
-        setNumber: setIndex + 1,
-        plannedLabel: '—',
-        actualLabel: formatSet(set),
-        match: false,
-      });
-    });
-  });
-
-  return rows;
+  return buildComparisonRows(plannedItems, loggedItems, localizedExerciseName);
 });
 </script>
 

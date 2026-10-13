@@ -5,15 +5,16 @@ namespace App\Http\Controllers\Web\Coach;
 use App\Actions\AssignProgramBlockAction;
 use App\Actions\BulkAssignProgramTemplateAction;
 use App\Actions\BulkUpsertProgramSessionsAction;
+use App\Actions\ClaimSelfCoachedProgramAction;
 use App\Actions\ClearProgramSessionAction;
 use App\Actions\CreateProgramBlockAction;
 use App\Actions\DeleteProgramBlockAction;
 use App\Actions\DuplicateProgramTemplateAction;
 use App\Actions\UpdateProgramBlockWarmupAction;
 use App\Actions\UpsertProgramSessionAction;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\BulkAssignProgramTemplateRequest;
 use App\Http\Requests\BulkUpsertProgramSessionsRequest;
-use App\Http\Controllers\Controller;
 use App\Http\Requests\ClearProgramSessionRequest;
 use App\Http\Requests\StoreProgramBlockRequest;
 use App\Http\Requests\StoreProgramSessionRequest;
@@ -40,6 +41,17 @@ class ProgramWebController extends Controller
         return $params;
     }
 
+    private function authorizeManage(AthleteProgramAssignment $assignment): void
+    {
+        $user = request()->user();
+
+        if ($user !== null) {
+            app(ClaimSelfCoachedProgramAction::class)->execute($user, $assignment);
+        }
+
+        $this->authorize('manage', $assignment);
+    }
+
     public function storeBlock(
         StoreProgramBlockRequest $request,
         CreateProgramBlockAction $action,
@@ -56,7 +68,7 @@ class ProgramWebController extends Controller
         AthleteProgramAssignment $assignment,
         DeleteProgramBlockAction $action,
     ): RedirectResponse {
-        $this->authorize('manage', $assignment);
+        $this->authorizeManage($assignment);
 
         $action->execute($assignment);
 
@@ -69,7 +81,7 @@ class ProgramWebController extends Controller
         AthleteProgramAssignment $assignment,
         DuplicateProgramTemplateAction $action,
     ): RedirectResponse {
-        $this->authorize('manage', $assignment);
+        $this->authorizeManage($assignment);
 
         $assignment->loadMissing('template');
 
@@ -90,7 +102,7 @@ class ProgramWebController extends Controller
         AthleteProgramAssignment $assignment,
         BulkAssignProgramTemplateAction $action,
     ): RedirectResponse {
-        $this->authorize('manage', $assignment);
+        $this->authorizeManage($assignment);
 
         $assignment->loadMissing('template');
 
@@ -112,7 +124,7 @@ class ProgramWebController extends Controller
         AthleteProgramAssignment $assignment,
         AssignProgramBlockAction $action,
     ): RedirectResponse {
-        $this->authorize('manage', $assignment);
+        $this->authorizeManage($assignment);
         $tab = request()->input('builder_tab', request()->query('tab'));
 
         $action->execute($assignment);
@@ -135,7 +147,7 @@ class ProgramWebController extends Controller
         AthleteProgramAssignment $assignment,
         UpdateProgramBlockWarmupAction $action,
     ): RedirectResponse {
-        $this->authorize('manage', $assignment);
+        $this->authorizeManage($assignment);
         $tab = $request->input('builder_tab', $request->query('tab'));
 
         $action->execute($request, $assignment);
@@ -150,7 +162,7 @@ class ProgramWebController extends Controller
         AthleteProgramAssignment $assignment,
         UpsertProgramSessionAction $action,
     ): RedirectResponse {
-        $this->authorize('manage', $assignment);
+        $this->authorizeManage($assignment);
 
         if ($request->input('return_to') === 'today') {
             $this->assertTodayPrescription($request, $assignment);
@@ -204,7 +216,7 @@ class ProgramWebController extends Controller
         AthleteProgramAssignment $assignment,
         BulkUpsertProgramSessionsAction $action,
     ): RedirectResponse {
-        $this->authorize('manage', $assignment);
+        $this->authorizeManage($assignment);
         $tab = $request->input('builder_tab', $request->query('tab'));
 
         $count = $action->execute($request, $assignment);
@@ -219,7 +231,7 @@ class ProgramWebController extends Controller
         AthleteProgramAssignment $assignment,
         ClearProgramSessionAction $action,
     ): RedirectResponse {
-        $this->authorize('manage', $assignment);
+        $this->authorizeManage($assignment);
         $tab = $request->input('builder_tab', $request->query('tab'));
 
         $action->execute($request, $assignment);

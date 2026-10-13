@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\ClaimSelfCoachedProgramAction;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AthleteSelfCoachingController extends Controller
 {
@@ -17,12 +19,16 @@ class AthleteSelfCoachingController extends Controller
             403,
         );
 
-        $athlete->forceFill([
-            'self_coached' => true,
-            'initial_setup_completed_at' => $athlete->initial_setup_completed_at ?? now(),
-        ])->save();
+        DB::transaction(function () use ($athlete): void {
+            $athlete->forceFill([
+                'self_coached' => true,
+                'initial_setup_completed_at' => $athlete->initial_setup_completed_at ?? now(),
+            ])->save();
 
-        $athlete->coaches()->detach();
+            $athlete->coaches()->detach();
+
+            app(ClaimSelfCoachedProgramAction::class)->claimAll($athlete);
+        });
 
         return redirect()
             ->route('athlete.dashboard')

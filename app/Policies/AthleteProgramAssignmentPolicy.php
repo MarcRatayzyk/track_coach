@@ -11,7 +11,7 @@ class AthleteProgramAssignmentPolicy
     {
         $assignment->loadMissing('template');
 
-        if ($assignment->template?->coach_id !== $user->id) {
+        if ((int) $assignment->template?->coach_id !== (int) $user->id) {
             return false;
         }
 
