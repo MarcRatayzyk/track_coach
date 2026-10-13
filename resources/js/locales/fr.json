@@ -1733,6 +1733,7 @@
       "sessionNotStarted": "Pas encore faite",
       "sessionInProgress": "En cours",
       "sessionDone": "Fait",
+      "sessionTimer": "Chrono {time}",
       "sessionNotStartedStatus": "pas encore faite",
       "sessionInProgressStatus": "en cours",
       "sessionDoneStatus": "faite",
@@ -1833,7 +1834,14 @@
     "athleteDash": {
       "wrappedTitle": "Ton récap hebdo & mensuel",
       "wrappedReady": "Ton récap est prêt : volume, adhérence et stats Squat / Bench / Terre.",
-      "seeRecap": "Voir mon recap"
+      "seeRecap": "Voir mon recap",
+      "selfCoachEyebrow": "Auto-coaching",
+      "selfCoachTitle": "Passer en auto-coaching",
+      "selfCoachBody": "Tu récupères les outils du coach : programmes, exercices et séries du jour. L’accès reste gratuit, sans abonnement.",
+      "selfCoachAction": "Passer en auto-coaching",
+      "selfCoachConfirmHint": "Ton coach est retiré de ton compte. Tu gardes tes séances et le programme déjà en cours.",
+      "selfCoachConfirm": "Confirmer",
+      "selfCoachCancel": "Annuler"
     },
     "charts": {
       "emptyVolume": "Programme des séances pour voir le volume par semaine.",
@@ -2058,6 +2066,10 @@
       "noBlockWarmup": "Aucun échauffement défini sur le bloc.",
       "warmupPlaceholder": "Instructions spécifiques à cette séance…",
       "warmupHint": "Ajoute les exercices d’échauffement avec le bouton ci-dessous.",
+      "durationHours": "Durée (h)",
+      "durationMinutes": "Durée (min)",
+      "durationSeconds": "Durée (s)",
+      "durationHint": "Chrono de la séance. Modifie-le si tu corriges une séance déjà faite.",
       "notesOptional": "Notes (optionnel)",
       "notesPlaceholder": "Ressenti, consignes, remarques…",
       "deleteSession": "Supprimer la séance",
@@ -2242,6 +2254,7 @@
       "adherence": "Adhérence : {percent}%",
       "adherenceTitle": "Adhérence : {percent}% ({matched}/{total} critères)",
       "edit": "Modifier",
+      "timer": "Chrono {time}",
       "note": "Note : {note}",
       "weekdaysShort": {
         "mon": "Lun",
@@ -2357,6 +2370,7 @@
       "validateSet": "Valider la série",
       "validated": "Validée",
       "validatedSets": "Séries validées",
+      "undoLastSet": "Annuler la dernière série",
       "clusterTarget": "Objectif cluster : {target}",
       "rampProgress": "Palier {current} sur {total}",
       "setProgress": "Série {current} sur {total}",

@@ -21,6 +21,7 @@ class UpsertTrainingSessionRequest extends FormRequest
         return array_merge([
             'session_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'timer_elapsed_seconds' => ['nullable', 'integer', 'min:0', 'max:86400'],
             'items.*.athlete_note' => ['nullable', 'string', 'max:1000'],
         ], $this->programSessionDayRules());
     }

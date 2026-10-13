@@ -412,6 +412,43 @@ function saveSession({ onSuccess } = {}) {
   }
 }
 
+function undoLastSet(key) {
+  const item = workItems.value.find((row) => itemKey(row) === key);
+  if (!item?.validatedSets?.length) {
+    return;
+  }
+
+  item.validatedSets = item.validatedSets.slice(0, -1);
+  const nextCount = item.validatedSets.length;
+
+  if (nextCount === 0) {
+    const planned = (session.value?.items ?? []).find(
+      (row) => `${row.section}-${row.exercise_name ?? ''}` === key,
+    );
+    if (planned) {
+      const line = hydrateExerciseLine({ ...planned, lift: planned.lift ?? mainLift.value });
+      applySchemeStepToLine(line, 0);
+      item.line = {
+        ...line,
+        athlete_note: item.line?.athlete_note ?? null,
+      };
+      item.plannedSets = plannedSetsForLine(line);
+    } else {
+      item.line.rpe = null;
+    }
+  } else {
+    applySnapshotToLine(item.line, item.validatedSets[nextCount - 1]);
+    item.line.sets = item.plannedSets;
+    if (nextCount < totalSetsFor(item)) {
+      item.line.rpe = null;
+      applySchemeStepToLine(item.line, nextCount);
+    }
+  }
+
+  expandedItemKey.value = key;
+  saveSession();
+}
+
 function validateItem(key) {
   const item = workItems.value.find((row) => itemKey(row) === key);
   if (!item) {
@@ -842,6 +879,7 @@ function savePrescription() {
           :saving="form.processing"
           @toggle="toggleItem(itemKey(item))"
           @validate="validateItem(itemKey(item))"
+          @undo="undoLastSet(itemKey(item))"
           @save-note="saveItemNote"
         />
       </div>

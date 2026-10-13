@@ -1733,6 +1733,7 @@
       "sessionNotStarted": "Not started",
       "sessionInProgress": "In progress",
       "sessionDone": "Done",
+      "sessionTimer": "Timer {time}",
       "sessionNotStartedStatus": "not started",
       "sessionInProgressStatus": "in progress",
       "sessionDoneStatus": "done",
@@ -1833,7 +1834,14 @@
     "athleteDash": {
       "wrappedTitle": "Your weekly & monthly wrap",
       "wrappedReady": "Your wrap is ready: volume, adherence and Squat / Bench / Deadlift stats.",
-      "seeRecap": "See my wrap"
+      "seeRecap": "See my wrap",
+      "selfCoachEyebrow": "Self-coaching",
+      "selfCoachTitle": "Switch to self-coaching",
+      "selfCoachBody": "You get the coach tools: programs, exercises and today’s sets. Access stays free, with no subscription.",
+      "selfCoachAction": "Switch to self-coaching",
+      "selfCoachConfirmHint": "Your coach is removed from your account. You keep your sessions and the program already in progress.",
+      "selfCoachConfirm": "Confirm",
+      "selfCoachCancel": "Cancel"
     },
     "charts": {
       "emptyVolume": "Program sessions to see weekly volume.",
@@ -2058,6 +2066,10 @@
       "noBlockWarmup": "No warm-up defined on the block.",
       "warmupPlaceholder": "Instructions specific to this session…",
       "warmupHint": "Add warm-up exercises with the button below.",
+      "durationHours": "Duration (h)",
+      "durationMinutes": "Duration (min)",
+      "durationSeconds": "Duration (s)",
+      "durationHint": "Session timer. Change it when correcting a completed session.",
       "notesOptional": "Notes (optional)",
       "notesPlaceholder": "Feel, cues, remarks…",
       "deleteSession": "Delete session",
@@ -2242,6 +2254,7 @@
       "adherence": "Adherence: {percent}%",
       "adherenceTitle": "Adherence: {percent}% ({matched}/{total} checks)",
       "edit": "Edit",
+      "timer": "Timer {time}",
       "note": "Note: {note}",
       "weekdaysShort": {
         "mon": "Mon",
@@ -2357,6 +2370,7 @@
       "validateSet": "Validate set",
       "validated": "Done",
       "validatedSets": "Validated sets",
+      "undoLastSet": "Undo last set",
       "clusterTarget": "Cluster target: {target}",
       "rampProgress": "Step {current} of {total}",
       "setProgress": "Set {current} of {total}",

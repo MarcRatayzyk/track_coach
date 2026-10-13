@@ -54,7 +54,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['toggle', 'validate', 'save-note']);
+const emit = defineEmits(['toggle', 'validate', 'save-note', 'undo']);
 
 const line = computed(() => props.item.line ?? {});
 
@@ -499,6 +499,14 @@ const pickerVisible = 3;
           >
             {{ recapLine }}
           </p>
+          <button
+            type="button"
+            class="pt-1 text-left text-[11px] font-semibold text-slate-400 hover:text-slate-200 disabled:opacity-50"
+            :disabled="saving"
+            @click="emit('undo')"
+          >
+            {{ t('athleteUi.todaySessionSet.undoLastSet') }}
+          </button>
         </div>
 
         <p v-if="clusterTarget" class="mb-3 rounded-lg border border-violet-500/30 bg-violet-950/20 px-2.5 py-2 text-xs font-medium text-violet-200">
@@ -600,6 +608,14 @@ const pickerVisible = 3;
           >
             {{ recapLine }}
           </p>
+          <button
+            type="button"
+            class="pt-1 text-left text-[11px] font-semibold text-slate-400 hover:text-slate-200 disabled:opacity-50"
+            :disabled="saving"
+            @click="emit('undo')"
+          >
+            {{ t('athleteUi.todaySessionSet.undoLastSet') }}
+          </button>
         </div>
         <p class="text-xs text-emerald-300/90">
           {{ t('athleteUi.todaySessionSet.exerciseValidated') }}

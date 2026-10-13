@@ -11,6 +11,7 @@ import {
   indexTrainingSessionsByDate,
 } from '../utils/monthCalendar';
 import { formatLineRecap } from '../utils/programBuilder';
+import { formatSessionDuration, sessionRecordedSeconds } from '../utils/formatSessionDuration';
 import { sectionBadgeClass, sectionOption } from '../config/programTableSections';
 import { scoreDayAdherence } from '../utils/sessionAdherence';
 import { useI18n } from 'vue-i18n';
@@ -268,6 +269,10 @@ function editTrainingSession(session) {
   emit('edit-session', session);
 }
 
+function sessionTimerLabel(session) {
+  return formatSessionDuration(sessionRecordedSeconds(session));
+}
+
 function scrollToCurrentMonth() {
   nextTick(() => {
     const container = scrollContainerRef.value;
@@ -506,6 +511,12 @@ onMounted(() => {
                 :title="t('athleteUi.calendar.adherenceTitle', { percent: selectedDetail.adherence.percentage, matched: selectedDetail.adherence.matchedChecks, total: selectedDetail.adherence.totalChecks })"
               >
                 {{ t('athleteUi.calendar.adherence', { percent: selectedDetail.adherence.percentage }) }}
+              </span>
+              <span
+                v-if="sessionTimerLabel(session)"
+                class="tabular-nums text-[10px] font-semibold uppercase tracking-wide text-violet-200"
+              >
+                {{ t('athleteUi.calendar.timer', { time: sessionTimerLabel(session) }) }}
               </span>
             </div>
             <button

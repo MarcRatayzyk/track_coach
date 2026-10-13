@@ -35,6 +35,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showDuration: {
+    type: Boolean,
+    default: false,
+  },
   defaultWarmup: {
     type: Object,
     default: () => ({ notes: null, items: [] }),
@@ -45,6 +49,42 @@ const sessionLabel = defineModel('sessionLabel', { type: String, default: '' });
 const sessionDate = defineModel('sessionDate', { type: String, default: '' });
 const day = defineModel('day', { type: Object, required: true });
 const notes = defineModel('notes', { type: String, default: '' });
+const timerElapsedSeconds = defineModel('timerElapsedSeconds', { type: Number, default: 0 });
+
+const durationHours = computed({
+  get() {
+    return Math.floor(Math.max(0, Number(timerElapsedSeconds.value) || 0) / 3600);
+  },
+  set(value) {
+    const hours = Math.min(23, Math.max(0, Number(value) || 0));
+    const rest = Math.max(0, Number(timerElapsedSeconds.value) || 0) % 3600;
+    timerElapsedSeconds.value = hours * 3600 + rest;
+  },
+});
+
+const durationMinutes = computed({
+  get() {
+    return Math.floor((Math.max(0, Number(timerElapsedSeconds.value) || 0) % 3600) / 60);
+  },
+  set(value) {
+    const minutes = Math.min(59, Math.max(0, Number(value) || 0));
+    const total = Math.max(0, Number(timerElapsedSeconds.value) || 0);
+    const hours = Math.floor(total / 3600);
+    const seconds = total % 60;
+    timerElapsedSeconds.value = hours * 3600 + minutes * 60 + seconds;
+  },
+});
+
+const durationSeconds = computed({
+  get() {
+    return Math.max(0, Number(timerElapsedSeconds.value) || 0) % 60;
+  },
+  set(value) {
+    const seconds = Math.min(59, Math.max(0, Number(value) || 0));
+    const total = Math.max(0, Number(timerElapsedSeconds.value) || 0);
+    timerElapsedSeconds.value = total - (total % 60) + seconds;
+  },
+});
 
 defineEmits(['save', 'delete', 'close']);
 
@@ -215,6 +255,42 @@ function formatErrorMessages(errors) {
       </div>
 
       <TrainingDayEditor v-model="day" :allow-warmup="showWarmup && warmupOverride" />
+    </div>
+
+    <div v-if="showDuration" class="mt-4 grid grid-cols-3 gap-2">
+      <label class="block text-sm text-slate-400">
+        {{ t('programBuilder.sessionDayEditor.durationHours') }}
+        <input
+          v-model.number="durationHours"
+          type="number"
+          min="0"
+          max="23"
+          class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm tabular-nums text-white"
+        />
+      </label>
+      <label class="block text-sm text-slate-400">
+        {{ t('programBuilder.sessionDayEditor.durationMinutes') }}
+        <input
+          v-model.number="durationMinutes"
+          type="number"
+          min="0"
+          max="59"
+          class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm tabular-nums text-white"
+        />
+      </label>
+      <label class="block text-sm text-slate-400">
+        {{ t('programBuilder.sessionDayEditor.durationSeconds') }}
+        <input
+          v-model.number="durationSeconds"
+          type="number"
+          min="0"
+          max="59"
+          class="mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm tabular-nums text-white"
+        />
+      </label>
+      <p class="col-span-3 text-xs text-slate-500">
+        {{ t('programBuilder.sessionDayEditor.durationHint') }}
+      </p>
     </div>
 
     <label v-if="showNotes" class="mt-4 block text-sm text-slate-400">

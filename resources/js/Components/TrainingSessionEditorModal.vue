@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import SessionDayEditorPanel from './SessionDayEditorPanel.vue';
+import { sessionRecordedSeconds } from '../utils/formatSessionDuration';
 import { formatCalendarFr } from '../utils/formatDates';
 import {
   dayToSessionPayload,
@@ -37,6 +38,8 @@ const day = ref(sessionToDay(props.session));
 const sessionLabel = ref(props.session?.session_label ?? '');
 const sessionDate = ref(props.session?.session_date?.slice?.(0, 10) ?? props.defaultDate ?? '');
 const notes = ref(props.session?.notes ?? '');
+const timerElapsedSeconds = ref(0);
+const durationBaseline = ref(0);
 
 const form = useForm({
   session_date: '',
@@ -45,6 +48,7 @@ const form = useForm({
   items: [],
   blocks: [],
   notes: null,
+  timer_elapsed_seconds: null,
 });
 
 const isEditing = computed(() => Boolean(props.session?.id));
@@ -66,6 +70,9 @@ function resetFromProps() {
     props.session?.session_date?.toString?.().slice(0, 10) ?? props.defaultDate ?? '';
   notes.value = props.session?.notes ?? '';
   day.value.session_label = sessionLabel.value;
+  const recorded = props.session?.id ? sessionRecordedSeconds(props.session) : 0;
+  durationBaseline.value = recorded;
+  timerElapsedSeconds.value = recorded;
 }
 
 watch(
@@ -100,6 +107,8 @@ function save() {
   form.items = payload.items;
   form.blocks = payload.blocks;
   form.notes = payload.notes;
+  const nextTimer = Math.max(0, Math.round(Number(timerElapsedSeconds.value) || 0));
+  form.timer_elapsed_seconds = nextTimer !== durationBaseline.value ? nextTimer : null;
 
   if (isEditing.value) {
     form.put(`/athletes/${props.athleteId}/training-sessions/${props.session.id}`, {
@@ -167,7 +176,9 @@ function deleteSession() {
           v-model:session-label="sessionLabel"
           v-model:session-date="sessionDate"
           v-model:notes="notes"
+          v-model:timer-elapsed-seconds="timerElapsedSeconds"
           :title="headerTitle"
+          show-duration
           :processing="form.processing"
           :errors="form.errors"
           :show-delete="isEditing"

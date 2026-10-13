@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Support\FeedbackFrequencySupport;
 use App\Support\ProgramSchedule;
 use App\Support\SetSchemeSupport;
+use App\Support\TrainingSessionSupport;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -28,6 +29,7 @@ class CoachTodaySessionsService
      *     has_feedback: bool,
      *     session_feedback_id: int|null,
      *     feedback_frequency: string,
+     *     timer_elapsed_seconds: int,
      * }>
      */
     public function forCoach(User $coach): array
@@ -105,6 +107,11 @@ class CoachTodaySessionsService
             $sessionLabel = $trainingDay->session_label
                 ?: ($trainingDay->main_lift ? ucfirst((string) $trainingDay->main_lift) : null);
 
+            $timerSeconds = 0;
+            foreach ($athleteSessions as $loggedSession) {
+                $timerSeconds += TrainingSessionSupport::recordedSeconds($loggedSession);
+            }
+
             $rows[] = [
                 'athlete_id' => (int) $athlete->id,
                 'athlete' => [
@@ -118,6 +125,7 @@ class CoachTodaySessionsService
                 'has_feedback' => $feedback !== null,
                 'session_feedback_id' => $feedback?->id,
                 'feedback_frequency' => $frequency,
+                'timer_elapsed_seconds' => $timerSeconds,
             ];
         }
 

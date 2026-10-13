@@ -112,6 +112,11 @@ class TrainingSessionSupport
             'bench' => $totals['bench'],
             'deadlift' => $totals['deadlift'],
         ]);
+
+        if (array_key_exists('timer_elapsed_seconds', $validated) && $validated['timer_elapsed_seconds'] !== null) {
+            $session->timer_elapsed_seconds = max(0, (int) $validated['timer_elapsed_seconds']);
+            $session->timer_started_at = null;
+        }
     }
 
     /**

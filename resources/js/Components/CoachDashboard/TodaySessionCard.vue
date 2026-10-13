@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n';
 import { Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import UiIcon from '../UiIcon.vue';
+import { formatSessionDuration } from '../../utils/formatSessionDuration';
 import { athleteInitials, cardHover } from './dashboardUi';
 
 const { t } = useI18n();
@@ -53,6 +54,8 @@ const borderClass = computed(() => {
   }
   return 'border-slate-800/80 bg-slate-950/40';
 });
+
+const timerLabel = computed(() => formatSessionDuration(props.session.timer_elapsed_seconds));
 
 const subtitle = computed(() => {
   const parts = [];
@@ -117,6 +120,12 @@ function openCard() {
         >
           <UiIcon name="list" class="h-3 w-3" />
           {{ feedbackBadge.label }}
+        </span>
+        <span
+          v-if="timerLabel"
+          class="inline-flex items-center rounded-full border border-slate-600/60 bg-slate-900/70 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-200"
+        >
+          {{ t('app.coachDash.sessionTimer', { time: timerLabel }) }}
         </span>
       </div>
     </div>
