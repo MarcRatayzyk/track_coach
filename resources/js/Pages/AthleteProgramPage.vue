@@ -8,7 +8,8 @@ export default {
 
 <script setup>
 import { useI18n } from 'vue-i18n';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import { formatCalendarFr } from '../utils/formatDates';
 import { BLOCK_TYPES, findCalendarCellByDate } from '../utils/programBuilder';
 import AthleteProgramSessionPanel from '../Components/AthleteProgramSessionPanel.vue';
@@ -16,6 +17,8 @@ import AthleteProgramTableView from '../Components/AthleteProgramTableView.vue';
 import ProgramBlockCalendar from '../Components/ProgramBlockCalendar.vue';
 import ProgramBlockStatsTab from '../Components/ProgramBlockStatsTab.vue';
 const { t } = useI18n();
+const page = usePage();
+const isSelfCoached = computed(() => Boolean(page.props.auth?.user?.self_coached));
 
 const props = defineProps({
   programBlock: { type: Object, default: null },
@@ -33,6 +36,23 @@ const activeTab = ref(
 );
 
 const selectedCell = ref(null);
+
+function readViewWeek() {
+  const max = Number(props.programBlock?.week_count ?? 0);
+  const fromQuery = Number(
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('week') : NaN,
+  );
+  if (Number.isFinite(fromQuery) && fromQuery >= 1 && (!max || fromQuery <= max)) {
+    return fromQuery;
+  }
+  const current = Number(props.blockProgress?.week_current);
+  if (Number.isFinite(current) && current >= 1 && (!max || current <= max)) {
+    return current;
+  }
+  return 1;
+}
+
+const viewWeek = ref(readViewWeek());
 
 const hasProgram = computed(() => Boolean(props.programBlock));
 
@@ -72,12 +92,43 @@ const selectedSession = computed(() => {
   return props.programBlock.sessions?.[selectedCell.value.key] ?? null;
 });
 
+const editWeek = computed(() => {
+  if (activeTab.value === 'calendar' && selectedCell.value?.weekNumber) {
+    return selectedCell.value.weekNumber;
+  }
+  return viewWeek.value;
+});
+
+const editHref = computed(() => {
+  const id = props.programBlock?.id;
+  if (!id) {
+    return '/program-builder';
+  }
+  return `/program-builder?assignment=${id}&week=${editWeek.value}`;
+});
+
+function writeProgramUrl() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const url = new URL(window.location.href);
+  if (activeTab.value === 'calendar') {
+    url.searchParams.delete('tab');
+  } else {
+    url.searchParams.set('tab', activeTab.value);
+  }
+  url.searchParams.set('week', String(viewWeek.value || 1));
+  window.history.replaceState({}, '', url.toString());
+}
+
 function setTab(tabId) {
   activeTab.value = tabId;
-  const base = '/athlete/program';
-  const url = tabId === 'calendar' ? base : `${base}?tab=${tabId}`;
-  window.history.replaceState({}, '', url);
+  writeProgramUrl();
 }
+
+watch(viewWeek, () => {
+  writeProgramUrl();
+});
 
 function onSelectCell(cell) {
   selectedCell.value = {
@@ -86,6 +137,9 @@ function onSelectCell(cell) {
     date: cell.date,
     key: cell.key,
   };
+  if (cell.weekNumber) {
+    viewWeek.value = cell.weekNumber;
+  }
 }
 
 function clearSelection() {
@@ -107,8 +161,8 @@ onMounted(() => {
       date,
     );
     if (cell) {
-      onSelectCell(cell);
       activeTab.value = 'calendar';
+      onSelectCell(cell);
     }
     return;
   }
@@ -143,12 +197,23 @@ onMounted(() => {
             <template v-if="programBlock.date_end">
               {{ t('app.athleteProgram.to', { end: formatCalendarFr(programBlock.date_end, 'medium') }) }}
             </template>
-            · {{ t('app.athleteProgram.weeks', programBlock.week_count) }}
+            <template v-if="!isSelfCoached">
+              · {{ t('app.athleteProgram.weeks', programBlock.week_count) }}
+            </template>
           </p>
         </div>
-        <span class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-1 text-xs font-medium text-slate-300">
-          {{ blockTypeLabel }}
-        </span>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-1 text-xs font-medium text-slate-300">
+            {{ blockTypeLabel }}
+          </span>
+          <Link
+            v-if="isSelfCoached"
+            :href="editHref"
+            class="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-500"
+          >
+            {{ t('app.athleteProgram.editThisWeek') }}
+          </Link>
+        </div>
       </div>
 
       <div v-if="blockProgress?.week_current" class="mt-3">
@@ -171,8 +236,15 @@ onMounted(() => {
     >
       <h1 class="text-lg font-semibold text-white">{{ t('app.athleteProgram.emptyTitle') }}</h1>
       <p class="mt-2 text-sm text-slate-500">
-        {{ t('app.athleteProgram.emptyBody') }}
+        {{ isSelfCoached ? t('app.athleteProgram.emptyBodySelf') : t('app.athleteProgram.emptyBody') }}
       </p>
+      <Link
+        v-if="isSelfCoached"
+        href="/program-builder"
+        class="mt-4 inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+      >
+        {{ t('nav.build') }}
+      </Link>
     </div>
 
     <div
@@ -239,6 +311,7 @@ onMounted(() => {
 
       <AthleteProgramTableView
         v-else-if="activeTab === 'table'"
+        v-model:week="viewWeek"
         :program-block="programBlock"
       />
 

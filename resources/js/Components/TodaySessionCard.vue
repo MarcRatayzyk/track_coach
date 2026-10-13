@@ -915,9 +915,9 @@ function savePrescription() {
     <template v-else>
       <p class="mt-3 text-xs text-slate-400">
         <template v-if="isSelfCoached">
-          {{ t('app.todaySession.noProgramSelf') }}
+            {{ t('app.todaySession.noProgramSelf') }}
           <Link href="/program-builder" class="font-semibold text-blue-300 hover:text-blue-200">
-            {{ t('nav.programs') }}
+            {{ t('nav.build') }}
           </Link>
         </template>
         <template v-else>

@@ -1,10 +1,12 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { router, useForm } from '@inertiajs/vue3';
+import { router, useForm, usePage } from '@inertiajs/vue3';
 import { track } from '../utils/analytics';
 
 const { t } = useI18n();
+const page = usePage();
+const isSelfCoached = computed(() => Boolean(page.props.auth?.user?.self_coached));
 
 const props = defineProps({
   athletes: {
@@ -97,7 +99,7 @@ const fieldClass =
   <section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg sm:p-4">
     <h2 class="text-base font-semibold text-white">{{ t('programBuilder.blockSetupTable.title') }}</h2>
     <p class="mt-0.5 text-xs leading-relaxed text-slate-400">
-      {{ t('programBuilder.blockSetupTable.subtitle') }}
+      {{ isSelfCoached ? t('programBuilder.blockSetupTable.subtitleSelf') : t('programBuilder.blockSetupTable.subtitle') }}
     </p>
 
     <form class="mt-3 flex flex-wrap items-end gap-2" @submit.prevent="submit">

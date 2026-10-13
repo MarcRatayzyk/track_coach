@@ -16,12 +16,14 @@ export default {
 
 <script setup>
 import { useI18n } from 'vue-i18n';
-const { t } = useI18n();
-
 import { computed, ref } from 'vue';
-
-import { router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { track } from '../utils/analytics';
+import { formatCalendarFr } from '../utils/formatDates';
+
+const { t } = useI18n();
+const page = usePage();
+const isSelfCoached = computed(() => Boolean(page.props.auth?.user?.self_coached));
 
 import BlockSetupCard from '../Components/BlockSetupCard.vue';
 import BlockSetupTableCard from '../Components/BlockSetupTableCard.vue';
@@ -178,6 +180,24 @@ const pendingPasteAction = ref(null);
 const showCalendar = computed(() => Boolean(props.activeBlock));
 
 const isAssigned = computed(() => props.activeBlock?.status === 'active');
+
+function readBuilderWeek() {
+  if (typeof window === 'undefined') {
+    return 1;
+  }
+  const week = Number(new URLSearchParams(window.location.search).get('week'));
+  const max = Number(props.activeBlock?.week_count ?? 0);
+  if (Number.isFinite(week) && week >= 1 && (!max || week <= max)) {
+    return week;
+  }
+  return 1;
+}
+
+const builderWeek = ref(readBuilderWeek());
+
+const myWeekHref = computed(
+  () => `/athlete/program?tab=table&week=${builderWeek.value || 1}`,
+);
 
 const athletePrSummary = computed(() => {
   const pr = props.activeBlock?.athlete_one_rm;
@@ -350,7 +370,7 @@ function assignBlockToAthlete() {
 
   router.post(
     `/coach/program-blocks/${props.activeBlock.id}/assign`,
-    { builder_tab: activeTab.value },
+    { builder_tab: activeTab.value, week: builderWeek.value },
     {
 
       preserveScroll: true,
@@ -717,11 +737,72 @@ function clearClipboard() {
 
       <div>
 
-        <h1 class="text-2xl font-bold text-white">{{ t('app.programs.title') }}</h1>
+        <h1 v-if="!(isSelfCoached && showCalendar)" class="text-2xl font-bold text-white">
+          {{ isSelfCoached ? t('nav.build') : t('app.programs.title') }}
+        </h1>
 
         <p v-if="!showCalendar" class="mt-3 max-w-3xl text-base leading-relaxed text-slate-400">
           {{ t('app.programs.spreadsheetIntro') }}
         </p>
+
+        <template v-else-if="isSelfCoached">
+          <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500">{{ t('nav.build') }}</p>
+          <h1 class="text-2xl font-bold text-white">{{ activeBlock.name }}</h1>
+          <p class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-slate-400">
+            <span>{{ t('app.athleteProgram.weekProgress', { current: builderWeek, total: activeBlock.week_count }) }}</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ t('app.athleteProgram.fromTo', { start: formatCalendarFr(activeBlock.date_start, 'medium') }) }}</span>
+            <span
+              v-if="!isAssigned"
+              class="rounded-md bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-300"
+            >
+              {{ t('programBuilder.shared.draft') }}
+            </span>
+            <span v-if="!isAssigned" class="text-xs text-amber-200/80">
+              {{ t('app.programs.draftOnlySelf') }}
+            </span>
+            <button
+              type="button"
+              class="rounded-xl px-3 py-1.5 text-sm font-semibold transition disabled:opacity-50"
+              :class="
+                isAssigned
+                  ? 'border border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                  : 'bg-blue-600 text-white hover:bg-blue-500'
+              "
+              :disabled="assigning || isAssigned"
+              @click="assignBlockToAthlete"
+            >
+              {{
+                assigning
+                  ? t('app.programs.assigning')
+                  : isAssigned
+                    ? t('app.programs.publishedSelf')
+                    : t('app.programs.publishSelf')
+              }}
+            </button>
+            <Link
+              v-if="isAssigned"
+              :href="myWeekHref"
+              class="rounded-xl border border-slate-600 px-3 py-1.5 text-sm font-semibold text-slate-200 hover:border-slate-500 hover:bg-slate-800/60"
+            >
+              {{ t('app.programs.viewMyWeek') }}
+            </Link>
+            <button
+              v-else
+              type="button"
+              disabled
+              class="rounded-xl border border-slate-700 px-3 py-1.5 text-sm font-semibold text-slate-500"
+            >
+              {{ t('app.programs.viewMyWeek') }}
+            </button>
+          </p>
+          <p
+            v-if="athletePrSummary"
+            class="mt-2 inline-flex rounded-lg border border-slate-800 bg-slate-950/60 px-2.5 py-1 text-xs tabular-nums text-slate-400"
+          >
+            S {{ athletePrSummary.squat }} · B {{ athletePrSummary.bench }} · D {{ athletePrSummary.deadlift }} kg
+          </p>
+        </template>
 
         <p v-else class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-base text-slate-400">
 
@@ -939,6 +1020,7 @@ function clearClipboard() {
       <ProgramBlockTableBuilderV2
         v-else-if="activeTab === 'table_v2'"
         :active-block="activeBlock"
+        @update:week="builderWeek = $event"
       />
 
       <div

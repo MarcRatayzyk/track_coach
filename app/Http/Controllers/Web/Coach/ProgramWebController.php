@@ -117,6 +117,14 @@ class ProgramWebController extends Controller
 
         $action->execute($assignment);
 
+        if (request()->user()?->isSelfCoached()) {
+            $week = max(1, (int) request()->input('week', 1));
+
+            return redirect()
+                ->route('athlete.program', ['tab' => 'table', 'week' => $week])
+                ->with('success', __('messages.programs.block_saved_assigned'));
+        }
+
         return redirect()
             ->route('program.builder', $this->builderRouteParams($assignment->id, is_string($tab) ? $tab : null))
             ->with('success', __('messages.programs.block_saved_assigned'));

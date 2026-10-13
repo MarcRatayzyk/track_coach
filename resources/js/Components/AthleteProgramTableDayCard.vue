@@ -157,6 +157,13 @@ function prescriptionSummary(row) {
     if (load !== '—') {
       parts.push(load);
     }
+    if (
+      row.rpe != null
+      && row.rpe !== ''
+      && !String(load).startsWith('RPE ')
+    ) {
+      parts.push(`RPE ${row.rpe}`);
+    }
   }
 
   if (row.rest_seconds != null && row.rest_seconds !== '') {

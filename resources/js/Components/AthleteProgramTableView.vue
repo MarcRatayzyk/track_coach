@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AthleteProgramTableDayCard from './AthleteProgramTableDayCard.vue';
 import { sessionDayOrdinalInWeek } from '../utils/programBuilder';
@@ -13,7 +13,7 @@ const props = defineProps({
   },
 });
 
-const activeWeek = ref(1);
+const activeWeek = defineModel('week', { type: Number, default: 1 });
 
 const weekNumbers = computed(() =>
   Array.from({ length: Number(props.programBlock?.week_count ?? 0) }, (_, index) => index + 1),

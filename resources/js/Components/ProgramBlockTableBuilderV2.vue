@@ -9,6 +9,8 @@ import { useProgramTableBuilder } from '../composables/useProgramTableBuilder';
 
 const { t } = useI18n();
 
+const emit = defineEmits(['update:week']);
+
 const props = defineProps({
   activeBlock: {
     type: Object,
@@ -91,7 +93,8 @@ watch(selectedWeek, (week) => {
   const url = new URL(window.location.href);
   url.searchParams.set('week', String(week));
   window.history.replaceState({}, '', url.toString());
-});
+  emit('update:week', week);
+}, { immediate: true });
 
 const activeWeekNumber = computed(() => selectedWeek.value);
 

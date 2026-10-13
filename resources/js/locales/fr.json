@@ -1364,6 +1364,10 @@
       "assigning": "Assignation…",
       "assigned": "Publié",
       "saveAndAssign": "Publier à l'athlète",
+      "publishSelf": "Publier dans Ma semaine",
+      "publishedSelf": "Dans Ma semaine",
+      "draftOnlySelf": "Pas encore dans Ma semaine",
+      "viewMyWeek": "Voir ma semaine",
       "draftOnlyYou": "L'athlète ne voit pas encore ce bloc.",
       "spreadsheetIntro": "Crée un bloc puis remplis les séances dans un format tableur, jour par jour.",
       "deleteSession": "Supprimer séance",
@@ -1390,6 +1394,8 @@
       "weekProgress": "Semaine {current} / {total}",
       "emptyTitle": "Programme",
       "emptyBody": "Aucun bloc actif pour le moment. Ton coach te l’assignera bientôt.",
+      "emptyBodySelf": "Aucun bloc publié. Construis ta semaine, puis publie-la.",
+      "editThisWeek": "Modifier cette semaine",
       "tabCalendar": "Calendrier",
       "tabSpreadsheet": "Tableur",
       "tabStats": "Graphiques & stats",
@@ -1712,7 +1718,7 @@
       "finish": "Terminer la séance",
       "finished": "Séance terminée",
       "noProgramCoach": "Aucun programme actif. Contacte ton coach.",
-      "noProgramSelf": "Aucun programme actif. Crée un bloc dans Programmes, puis active-le."
+      "noProgramSelf": "Aucun programme actif. Crée-le puis publie-le depuis"
     },
     "athletePr": {
       "titleDefault": "Enregistrer un PR officiel",
@@ -2044,6 +2050,7 @@
     "blockSetupTable": {
       "title": "Nouveau tableur",
       "subtitle": "Choisis l’athlète, le nombre de semaines et le nombre de jours à afficher, puis remplis les séances dans une vue type tableur.",
+      "subtitleSelf": "Choisis le nombre de semaines et le nombre de jours, puis remplis les séances.",
       "blockName": "Nom du bloc",
       "blockNamePlaceholder": "Ex. Bloc force tableur",
       "weekCount": "Semaines",

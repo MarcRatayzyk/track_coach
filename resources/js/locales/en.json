@@ -1364,6 +1364,10 @@
       "assigning": "Assigning…",
       "assigned": "Published",
       "saveAndAssign": "Publish to the athlete",
+      "publishSelf": "Publish to My week",
+      "publishedSelf": "In My week",
+      "draftOnlySelf": "Not in My week yet",
+      "viewMyWeek": "View my week",
       "draftOnlyYou": "The athlete cannot see this block yet.",
       "spreadsheetIntro": "Create a block, then fill each session in a spreadsheet, day by day.",
       "deleteSession": "Delete session",
@@ -1390,6 +1394,8 @@
       "weekProgress": "Week {current} / {total}",
       "emptyTitle": "Program",
       "emptyBody": "No active block yet. Your coach will assign one soon.",
+      "emptyBodySelf": "No published block yet. Build your week, then publish it.",
+      "editThisWeek": "Edit this week",
       "tabCalendar": "Calendar",
       "tabSpreadsheet": "Spreadsheet",
       "tabStats": "Charts & stats",
@@ -1712,7 +1718,7 @@
       "finish": "Finish session",
       "finished": "Session finished",
       "noProgramCoach": "No active program. Contact your coach.",
-      "noProgramSelf": "No active program. Create a block in Programs, then activate it."
+      "noProgramSelf": "No active program. Create it, then publish it from"
     },
     "athletePr": {
       "titleDefault": "Log an official PR",
@@ -2044,6 +2050,7 @@
     "blockSetupTable": {
       "title": "New spreadsheet",
       "subtitle": "Choose the athlete, number of weeks and days to display, then fill sessions in a spreadsheet view.",
+      "subtitleSelf": "Choose the number of weeks and days, then fill the sessions.",
       "blockName": "Block name",
       "blockNamePlaceholder": "E.g. Spreadsheet strength block",
       "weekCount": "Weeks",
