@@ -455,7 +455,6 @@ function validateItem(key) {
     return;
   }
 
-  const wasAllValidated = allSeriesValidated.value;
   const total = totalSetsFor(item);
   const snapshot = snapshotValidatedSet(item.line);
   if (!snapshot) {
@@ -480,20 +479,7 @@ function validateItem(key) {
     applySchemeStepToLine(item.line, nextCount);
   }
 
-  saveSession({
-    onSuccess: () => {
-      if (!wasAllValidated && allSeriesValidated.value) {
-        celebrationData.value = buildSessionCelebrationPayload({
-          sessionTitle: sessionTitle.value,
-          workItems: expandValidatedSetsToItems(workItems.value),
-          plannedItems: (session.value?.items ?? []).filter((row) => row.section !== 'warmup'),
-          oneRm: props.oneRm,
-          mainLift: mainLift.value,
-        });
-        celebrationOpen.value = true;
-      }
-    },
-  });
+  saveSession();
 }
 
 function saveItemNote() {
@@ -596,7 +582,6 @@ function finishSession() {
     return;
   }
 
-  const partial = !allSeriesValidated.value;
   const startedAt = timerStartedAt.value;
   pendingStartAt.value = null;
   clearLocalTimer();
@@ -608,9 +593,7 @@ function finishSession() {
       preserveScroll: true,
       preserveState: true,
       onSuccess: () => {
-        if (partial) {
-          openCelebration();
-        }
+        openCelebration();
       },
       onFinish: () => {
         finishing.value = false;

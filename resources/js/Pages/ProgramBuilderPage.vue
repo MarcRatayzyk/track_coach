@@ -147,9 +147,9 @@ const pasting = ref(false);
 const pasteMode = ref(false);
 const customExercisesOpen = ref(false);
 const importModalOpen = ref(false);
-const activeTab = ref(
-  ['calendar', 'table', 'table_v2', 'stats'].includes(initialTab) ? initialTab : 'table_v2',
-);
+const toolsOpen = ref(false);
+const confirmingSessionDelete = ref(false);
+const activeTab = ref(initialTab === 'stats' ? 'stats' : 'table_v2');
 
 
 
@@ -294,23 +294,7 @@ function deleteSelectedSession() {
 
   }
 
-
-
-  if (
-
-    !window.confirm(
-
-      t('app.programs.deleteSessionConfirm'),
-
-    )
-
-  ) {
-
-    return;
-
-  }
-
-
+  confirmingSessionDelete.value = false;
 
   deleting.value = true;
 
@@ -597,22 +581,6 @@ function pasteWeek(targetWeekNumber) {
 
 
 
-  if (
-
-    !window.confirm(
-
-      t('app.programs.pasteWeekConfirm', { from: clipboardWeek.value.weekNumber, to: targetWeekNumber }),
-
-    )
-
-  ) {
-
-    return;
-
-  }
-
-
-
   openIncrementModal({
 
     type: 'week',
@@ -749,18 +717,10 @@ function clearClipboard() {
 
       <div>
 
-        <h1 class="text-2xl font-bold text-white">Programmes</h1>
+        <h1 class="text-2xl font-bold text-white">{{ t('app.programs.title') }}</h1>
 
         <p v-if="!showCalendar" class="mt-3 max-w-3xl text-base leading-relaxed text-slate-400">
-
-          <template v-if="activeTab === 'table' || activeTab === 'table_v2'">
-            Crée un bloc puis remplis les séances dans un format tableur, jour par jour.
-          </template>
-
-          <template v-else>
-            Crée un bloc pour un athlète, puis programme chaque séance sur le calendrier.
-          </template>
-
+          {{ t('app.programs.spreadsheetIntro') }}
         </p>
 
         <p v-else class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-base text-slate-400">
@@ -788,15 +748,13 @@ function clearClipboard() {
           <span>du {{ activeBlock.date_start }}</span>
 
           <span
-
             v-if="!isAssigned"
-
             class="rounded-md bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-300"
-
           >
-
-            Brouillon
-
+            {{ t('programBuilder.shared.draft') }}
+          </span>
+          <span v-if="!isAssigned" class="text-xs text-amber-200/80">
+            {{ t('app.programs.draftOnlyYou') }}
           </span>
 
           <button
@@ -841,45 +799,50 @@ function clearClipboard() {
 
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="relative">
         <button
           type="button"
           class="rounded-xl border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-800/60"
-          @click="customExercisesOpen = true"
+          @click="toolsOpen = !toolsOpen"
         >
-          Mes exercices
+          {{ t('programBuilder.shared.tools') }}
         </button>
-        <button
-          v-if="activeBlock?.id"
-          type="button"
-          class="rounded-xl border border-blue-500/50 bg-blue-500/10 px-3 py-2 text-sm font-semibold text-blue-200 hover:border-blue-400 hover:bg-blue-500/20"
-          @click="importModalOpen = true"
+        <div
+          v-if="toolsOpen"
+          class="absolute right-0 z-20 mt-2 flex w-52 flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-xl"
         >
-          Importer
-        </button>
-        <a
-          v-if="activeBlock?.id"
-          :href="`/coach/program-blocks/${activeBlock.id}/export-pdf`"
-          class="rounded-xl border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-800/60"
-        >
-          {{ t('programBuilder.shared.exportPdf') }}
-        </a>
-
-      <button
-
-        v-if="showCalendar"
-
-        type="button"
-
-        class="text-sm font-medium text-slate-400 hover:text-white"
-
-        @click="backToSetup"
-
-      >
-
-        {{ t('programBuilder.shared.newBlock') }}
-
-      </button>
+          <button
+            type="button"
+            class="px-3 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800"
+            @click="customExercisesOpen = true; toolsOpen = false"
+          >
+            {{ t('programBuilder.shared.myExercises') }}
+          </button>
+          <button
+            v-if="activeBlock?.id"
+            type="button"
+            class="px-3 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800"
+            @click="importModalOpen = true; toolsOpen = false"
+          >
+            {{ t('programBuilder.shared.importProgram') }}
+          </button>
+          <a
+            v-if="activeBlock?.id"
+            :href="`/coach/program-blocks/${activeBlock.id}/export-pdf`"
+            class="px-3 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-800"
+            @click="toolsOpen = false"
+          >
+            {{ t('programBuilder.shared.exportPdf') }}
+          </a>
+          <button
+            v-if="showCalendar"
+            type="button"
+            class="px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-slate-800"
+            @click="backToSetup(); toolsOpen = false"
+          >
+            {{ t('programBuilder.shared.newBlock') }}
+          </button>
+        </div>
       </div>
 
     </div>
@@ -1005,20 +968,32 @@ function clearClipboard() {
 
           <div class="flex flex-wrap gap-2">
 
+            <template v-if="confirmingSessionDelete">
+              <span class="text-xs text-red-200">{{ t('app.programs.deleteSessionConfirm') }}</span>
+              <button
+                type="button"
+                class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-40"
+                :disabled="deleting"
+                @click="deleteSelectedSession"
+              >
+                {{ deleting ? t('common.deleting') : t('common.delete') }}
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-600 px-3 py-1.5 text-xs text-slate-200"
+                @click="confirmingSessionDelete = false"
+              >
+                {{ t('common.cancel') }}
+              </button>
+            </template>
             <button
-
+              v-else
               type="button"
-
               class="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-medium text-red-300 hover:bg-red-950/40 disabled:opacity-40"
-
               :disabled="!selectedHasSession || deleting"
-
-              @click="deleteSelectedSession"
-
+              @click="confirmingSessionDelete = true"
             >
-
-              {{ deleting ? t('common.deleting') : t('app.programs.deleteSession') }}
-
+              {{ t('app.programs.deleteSession') }}
             </button>
 
             <button

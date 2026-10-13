@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import ProgramSessionInstructionsModal from './ProgramSessionInstructionsModal.vue';
@@ -142,6 +142,12 @@ const rows = ref([]);
 const sessionLabel = ref(props.defaultSessionLabel);
 const sessionNotes = ref('');
 const persistedSessionLabel = ref(props.defaultSessionLabel);
+const saveState = ref('idle');
+const confirmingDelete = ref(false);
+let hydrating = false;
+let lastSavedKey = '';
+let saveTimer = null;
+let saveQueued = false;
 
 const form = useForm({
   week_number: props.weekNumber,
@@ -154,16 +160,15 @@ const form = useForm({
   builder_tab: props.builderTab,
 });
 
-watch(
-  () => props.session,
-  (session) => {
-    rows.value = normaliseRows(session?.items ?? []);
-    sessionLabel.value = session?.session_label ?? props.defaultSessionLabel;
-    persistedSessionLabel.value = sessionLabel.value;
-    sessionNotes.value = session?.notes ?? '';
-  },
-  { immediate: true },
-);
+function applySession(session) {
+  hydrating = true;
+  rows.value = normaliseRows(session?.items ?? []);
+  sessionLabel.value = session?.session_label ?? props.defaultSessionLabel;
+  persistedSessionLabel.value = sessionLabel.value;
+  sessionNotes.value = session?.notes ?? '';
+  hydrating = false;
+  lastSavedKey = snapshotKey();
+}
 
 watch(
   () => props.builderTab,
@@ -280,7 +285,43 @@ function buildItemsPayload() {
   });
 }
 
-function saveSession() {
+function snapshotKey() {
+  return JSON.stringify({
+    label: uppercaseSessionLabel(sessionLabel.value?.trim() || props.defaultSessionLabel),
+    notes: sessionNotes.value?.trim() || '',
+    items: buildItemsPayload(),
+  });
+}
+
+watch(
+  () => props.session,
+  (session) => {
+    if (lastSavedKey !== '' && snapshotKey() !== lastSavedKey) {
+      return;
+    }
+
+    applySession(session);
+  },
+  { immediate: true },
+);
+
+function flushSave() {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+
+  const key = snapshotKey();
+
+  if (key === lastSavedKey || populatedRows.value.length === 0) {
+    return;
+  }
+
+  if (form.processing) {
+    saveQueued = true;
+    return;
+  }
+
   form.builder_tab = props.builderTab;
   form.week_number = props.weekNumber;
   form.weekday = props.weekday;
@@ -289,9 +330,50 @@ function saveSession() {
   form.main_lift = primaryLift.value;
   form.items = buildItemsPayload();
   form.blocks = [];
+  saveState.value = 'saving';
 
-  form.put(`/coach/program-blocks/${props.assignmentId}/sessions`, programSessionVisitOptions());
+  form.put(
+    `/coach/program-blocks/${props.assignmentId}/sessions`,
+    programSessionVisitOptions({
+      onSuccess: () => {
+        if (snapshotKey() === key) {
+          lastSavedKey = key;
+          persistedSessionLabel.value = sessionLabel.value;
+          saveState.value = 'saved';
+        }
+      },
+      onError: () => {
+        saveState.value = 'error';
+      },
+      onFinish: () => {
+        if (saveQueued || snapshotKey() !== key) {
+          saveQueued = false;
+          scheduleSave();
+        }
+      },
+    }),
+  );
 }
+
+function scheduleSave() {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+  }
+
+  saveTimer = setTimeout(flushSave, 700);
+}
+
+watch(snapshotKey, (key) => {
+  if (hydrating || key === lastSavedKey) {
+    return;
+  }
+
+  scheduleSave();
+});
+
+onBeforeUnmount(() => {
+  flushSave();
+});
 
 function copySession() {
   emit('copy-session', { weekNumber: props.weekNumber, weekday: props.weekday });
@@ -318,21 +400,13 @@ function onSessionLabelInput(event) {
 }
 
 function commitSessionLabel() {
-  const normalized = uppercaseSessionLabel(sessionLabel.value?.trim() || props.defaultSessionLabel);
-  sessionLabel.value = normalized;
-
-  if (normalized === persistedSessionLabel.value) {
-    return;
-  }
-
-  persistedSessionLabel.value = normalized;
-  saveSession();
+  sessionLabel.value = uppercaseSessionLabel(sessionLabel.value?.trim() || props.defaultSessionLabel);
 }
 
 function saveInstructions({ sessionNotes: notes }) {
   sessionNotes.value = notes;
-  saveSession();
   closeInstructionsModal();
+  flushSave();
 }
 
 const selectedRowId = computed(() => {
@@ -510,10 +584,29 @@ function selectRow(index) {
           >
             {{ t('programBuilder.shared.paste') }}
           </button>
+          <template v-if="confirmingDelete">
+            <span class="px-1 text-[10px] text-red-200">{{ t('programBuilder.dayCard.deleteConfirm') }}</span>
+            <button
+              type="button"
+              class="rounded-md border border-red-700 bg-red-950/50 px-2 py-1 text-[10px] font-semibold text-red-200"
+              @click="deleteSession"
+            >
+              {{ t('common.delete') }}
+            </button>
+            <button
+              type="button"
+              class="rounded-md border border-slate-600 px-2 py-1 text-[10px] text-slate-300"
+              @click="confirmingDelete = false"
+            >
+              {{ t('common.cancel') }}
+            </button>
+          </template>
           <button
+            v-else
             type="button"
+            :disabled="!hasSession"
             class="rounded-md border border-red-900 px-2 py-1 text-[10px] text-red-300 hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-40"
-            @click="deleteSession"
+            @click="confirmingDelete = true"
           >
             {{ t('programBuilder.dayCard.deleteDay') }}
           </button>
@@ -580,14 +673,11 @@ function selectRow(index) {
           {{ t('programBuilder.dayCard.addRow') }}
         </button>
 
-        <button
-          type="button"
-          :disabled="form.processing"
-          class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-          @click="saveSession"
-        >
-          {{ form.processing ? t('programBuilder.shared.saving') : t('common.save') }}
-        </button>
+        <p class="self-center text-[11px] text-slate-500">
+          <template v-if="saveState === 'saving' || form.processing">{{ t('programBuilder.shared.saving') }}</template>
+          <template v-else-if="saveState === 'saved'">{{ t('programBuilder.shared.saved') }}</template>
+          <template v-else-if="saveState === 'error'">{{ t('programBuilder.shared.saveError') }}</template>
+        </p>
       </div>
     </div>
 

@@ -1,4 +1,5 @@
 <script setup>
+import { Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import CelebrationBarbell from './CelebrationBarbell.vue';
 const { t } = useI18n();
@@ -143,11 +144,17 @@ function close() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                class="mt-6 inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-500 sm:mt-8"
-                @click="close"
-              >{{ t('app.celebration.continue') }}</button>
+              <div class="mt-6 flex flex-col items-center gap-3 sm:mt-8">
+                <button
+                  type="button"
+                  class="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-500"
+                  @click="close"
+                >{{ t('app.celebration.continue') }}</button>
+                <Link
+                  href="/feedbacks"
+                  class="text-sm font-medium text-slate-300 underline decoration-slate-600 underline-offset-4 hover:text-white"
+                >{{ t('app.celebration.leaveFeedback') }}</Link>
+              </div>
             </div>
           </Transition>
         </div>

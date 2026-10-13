@@ -313,8 +313,8 @@ const navItems = computed(() => {
                 icon: 'dashboard',
             },
             {
-                label: t('nav.program'),
-                shortLabel: t('nav.programsShort'),
+                label: t('nav.myWeek'),
+                shortLabel: t('nav.myWeekShort'),
                 href: '/athlete/program',
                 pattern: '/athlete/program',
                 icon: 'clipboard',
@@ -337,8 +337,8 @@ const navItems = computed(() => {
 
         if (isSelfCoached.value) {
             items.splice(1, 0, {
-                label: t('nav.programs'),
-                shortLabel: t('nav.programsShort'),
+                label: t('nav.build'),
+                shortLabel: t('nav.buildShort'),
                 href: '/program-builder',
                 pattern: '/program-builder',
                 icon: 'clipboard',

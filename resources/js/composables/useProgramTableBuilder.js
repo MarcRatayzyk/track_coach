@@ -164,17 +164,6 @@ export function useProgramTableBuilder(activeBlock, builderTab = 'table') {
       return;
     }
 
-    if (
-      !window.confirm(
-        t('programBuilder.composables.deleteSessionConfirm', {
-          day: weekdayShortLabel(weekday),
-          week: weekNumber,
-        }),
-      )
-    ) {
-      return;
-    }
-
     deleting.value = true;
     router.delete(
       `/coach/program-blocks/${toValue(activeBlock).id}/sessions`,
@@ -380,17 +369,6 @@ export function useProgramTableBuilder(activeBlock, builderTab = 'table') {
 
   function pasteWeek(targetWeekNumber) {
     if (!clipboardWeek.value || !toValue(activeBlock)?.id || pasting.value) {
-      return;
-    }
-
-    if (
-      !window.confirm(
-        t('programBuilder.composables.pasteWeekConfirm', {
-          source: clipboardWeek.value.weekNumber,
-          target: targetWeekNumber,
-        }),
-      )
-    ) {
       return;
     }
 

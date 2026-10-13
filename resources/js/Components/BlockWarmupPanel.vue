@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useForm } from '@inertiajs/vue3';
 import { emptyExerciseLine } from '../utils/programBuilder';
@@ -20,6 +20,11 @@ const props = defineProps({
 const emit = defineEmits(['saved']);
 
 const open = ref(false);
+const saveState = ref('idle');
+let hydrating = false;
+let lastSavedKey = '';
+let saveTimer = null;
+let saveQueued = false;
 
 const form = useForm({
   default_warmup_notes: '',
@@ -27,7 +32,37 @@ const form = useForm({
   builder_tab: props.builderTab,
 });
 
-function syncFromBlock() {
+function warmupPayloadItems(items = form.default_warmup_items) {
+  return (items ?? [])
+    .filter((item) => String(item.exercise_name ?? '').trim())
+    .map((item) => ({
+      exercise_name: String(item.exercise_name).trim(),
+      exercise_variant_id: item.exercise_variant_id || null,
+      lift: item.lift || null,
+      sets: item.sets != null && item.sets !== '' ? Number(item.sets) : null,
+      reps: item.reps != null && item.reps !== '' ? Number(item.reps) : null,
+      load: item.load != null && item.load !== '' ? Number(item.load) : null,
+      load_percent:
+        item.load_percent != null && item.load_percent !== '' ? Number(item.load_percent) : null,
+      rpe: item.rpe != null && item.rpe !== '' ? Number(item.rpe) : null,
+      rest_seconds:
+        item.rest_seconds != null && item.rest_seconds !== '' ? Number(item.rest_seconds) : null,
+    }));
+}
+
+function warmupKey() {
+  return JSON.stringify({
+    notes: String(form.default_warmup_notes ?? '').trim(),
+    items: warmupPayloadItems(),
+  });
+}
+
+function applyBlock() {
+  if (lastSavedKey !== '' && warmupKey() !== lastSavedKey) {
+    return;
+  }
+
+  hydrating = true;
   form.default_warmup_notes = props.activeBlock?.default_warmup_notes ?? '';
   form.default_warmup_items = (props.activeBlock?.default_warmup_items ?? []).map((item) => ({
     ...emptyExerciseLine(''),
@@ -35,11 +70,25 @@ function syncFromBlock() {
   }));
   form.builder_tab = props.builderTab;
   form.clearErrors();
+  hydrating = false;
+  lastSavedKey = warmupKey();
 }
 
 watch(
-  () => [props.activeBlock?.id, props.activeBlock?.default_warmup_notes, props.activeBlock?.default_warmup_items],
-  () => syncFromBlock(),
+  () => props.activeBlock?.id,
+  (id, previous) => {
+    if (previous == null || id === previous) {
+      return;
+    }
+
+    lastSavedKey = '';
+    applyBlock();
+  },
+);
+
+watch(
+  () => [props.activeBlock?.default_warmup_notes, props.activeBlock?.default_warmup_items],
+  () => applyBlock(),
   { immediate: true, deep: true },
 );
 
@@ -70,34 +119,70 @@ function removeItem(index) {
 }
 
 function save() {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+
+  const key = warmupKey();
+
+  if (key === lastSavedKey) {
+    return;
+  }
+
+  if (form.processing) {
+    saveQueued = true;
+    return;
+  }
+
+  saveState.value = 'saving';
   form
     .transform((data) => ({
       ...data,
-      default_warmup_items: (data.default_warmup_items ?? [])
-        .filter((item) => String(item.exercise_name ?? '').trim())
-        .map((item) => ({
-          exercise_variant_id: item.exercise_variant_id || null,
-          exercise_name: String(item.exercise_name).trim(),
-          lift: item.lift || null,
-          sets: item.sets != null && item.sets !== '' ? Number(item.sets) : null,
-          reps: item.reps != null && item.reps !== '' ? Number(item.reps) : null,
-          load: item.load != null && item.load !== '' ? Number(item.load) : null,
-          load_percent:
-            item.load_percent != null && item.load_percent !== ''
-              ? Number(item.load_percent)
-              : null,
-          rpe: item.rpe != null && item.rpe !== '' ? Number(item.rpe) : null,
-          rest_seconds:
-            item.rest_seconds != null && item.rest_seconds !== ''
-              ? Number(item.rest_seconds)
-              : null,
-        })),
+      default_warmup_items: warmupPayloadItems(data.default_warmup_items),
     }))
     .put(`/coach/program-blocks/${props.activeBlock.id}/warmup`, {
       preserveScroll: true,
-      onSuccess: () => emit('saved'),
+      preserveState: true,
+      only: ['activeBlock'],
+      onSuccess: () => {
+        if (warmupKey() === key) {
+          lastSavedKey = key;
+          saveState.value = 'saved';
+        }
+        emit('saved');
+      },
+      onError: () => {
+        saveState.value = 'error';
+      },
+      onFinish: () => {
+        if (saveQueued || warmupKey() !== key) {
+          saveQueued = false;
+          scheduleSave();
+        }
+      },
     });
 }
+
+function scheduleSave() {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+  }
+
+  saveTimer = setTimeout(save, 700);
+}
+
+watch(warmupKey, (key) => {
+  if (hydrating || key === lastSavedKey) {
+    return;
+  }
+
+  scheduleSave();
+});
+
+onBeforeUnmount(() => {
+  save();
+});
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-sm text-white placeholder:text-slate-600';
@@ -122,7 +207,18 @@ const inputClass =
           }}
         </p>
       </div>
-      <span class="text-slate-500">{{ open ? '▾' : '▸' }}</span>
+      <span class="flex items-center gap-2 text-slate-500">
+        <span v-if="saveState === 'saving' || form.processing" class="text-[10px] font-medium text-sky-300">
+          {{ t('programBuilder.shared.saving') }}
+        </span>
+        <span v-else-if="saveState === 'saved'" class="text-[10px] font-medium text-emerald-300">
+          {{ t('programBuilder.shared.saved') }}
+        </span>
+        <span v-else-if="saveState === 'error'" class="text-[10px] font-medium text-red-300">
+          {{ t('programBuilder.shared.saveError') }}
+        </span>
+        <span>{{ open ? '▾' : '▸' }}</span>
+      </span>
     </button>
 
     <div v-if="open" class="space-y-4 border-t border-sky-500/20 px-4 py-4">
@@ -202,15 +298,6 @@ const inputClass =
       <p v-if="Object.keys(form.errors).length" class="text-sm text-red-400">
         {{ Object.values(form.errors).flat().join(' ') }}
       </p>
-
-      <button
-        type="button"
-        class="rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
-        :disabled="form.processing"
-        @click="save"
-      >
-{{ form.processing ? t('programBuilder.shared.saving') : t('programBuilder.warmup.save') }}
-      </button>
     </div>
   </section>
 </template>

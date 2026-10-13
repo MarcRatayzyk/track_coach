@@ -108,20 +108,19 @@ function save() {
 
 const hasSavedSession = computed(() => Boolean(props.session?.id));
 
-function deleteSession() {
+const confirmingDelete = ref(false);
+
+function requestDelete() {
   if (!hasSavedSession.value) {
     emit('close');
     return;
   }
 
-  if (
-    !window.confirm(
-      t('programBuilder.sessionEditor.deleteConfirm'),
-    )
-  ) {
-    return;
-  }
+  confirmingDelete.value = true;
+}
 
+function deleteSession() {
+  confirmingDelete.value = false;
   form.week_number = props.selectedCell.weekNumber;
   form.weekday = props.selectedCell.weekday;
 
@@ -134,6 +133,24 @@ function deleteSession() {
 
 <template>
   <div class="flex flex-col rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+    <div v-if="confirmingDelete" class="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-red-500/40 bg-red-950/30 px-3 py-2">
+      <p class="text-sm text-red-100">{{ t('programBuilder.sessionEditor.deleteConfirm') }}</p>
+      <button
+        type="button"
+        class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500"
+        :disabled="form.processing"
+        @click="deleteSession"
+      >
+        {{ t('common.delete') }}
+      </button>
+      <button
+        type="button"
+        class="rounded-lg border border-slate-600 px-3 py-1.5 text-xs text-slate-200"
+        @click="confirmingDelete = false"
+      >
+        {{ t('common.cancel') }}
+      </button>
+    </div>
     <SessionDayEditorPanel
       v-model:day="day"
       v-model:session-label="sessionLabel"
@@ -141,12 +158,12 @@ function deleteSession() {
       :title="headerTitle"
       :processing="form.processing"
       :errors="form.errors"
-      :show-delete="hasSavedSession"
+      :show-delete="hasSavedSession && !confirmingDelete"
       show-notes
       show-warmup
       :default-warmup="defaultWarmup"
       @save="save"
-      @delete="deleteSession"
+      @delete="requestDelete"
       @close="emit('close')"
     />
   </div>
